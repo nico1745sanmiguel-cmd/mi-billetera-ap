@@ -3,62 +3,54 @@ import Navbar from './Components/Layout/Navbar';
 import Dashboard from './Components/Dashboard/Dashboard';
 import MyCards from './Components/Cards/MyCards';
 import NewPurchase from './Components/Purchase/NewPurchase';
-import Importer from './Components/Importer';
+// Puedes dejar el Importador comentado por si lo usas de nuevo en el futuro
+// import Importer from './Components/Importer'; 
 
-// IMPORTANTE: Importamos la base de datos y las funciones de Firebase
 import { db } from './firebase';
 import { collection, onSnapshot, addDoc, query, orderBy } from 'firebase/firestore';
 
 export default function App() {
   const [view, setView] = useState('dashboard');
-
-  // Las tarjetas las dejamos fijas por ahora (para no complicar más hoy)
-  const [cards, setCards] = useState([
-    { id: 1, name: 'Visa Banco Nacion', bank: 'Nacion', limit: 160000, closeDay: 6, dueDay: 19, color: '#005f73' }, // Azul petroleo
-    { id: 2, name: 'Visa Santa Cruz', bank: 'Santa Cruz', limit: 3072000, closeDay: 20, dueDay: 1, color: '#ae2012' }, // Rojo
-    { id: 3, name: 'Visa BBVA', bank: 'BBVA', limit: 2000000, closeDay: 20, dueDay: 2, color: '#0a9396' }, // Verde azulado
-  ]);
-
-  // Aquí guardaremos las compras que vienen de la nube
+  const [cards, setCards] = useState([]);
   const [transactions, setTransactions] = useState([]);
 
-  // --- EFECTO MÁGICO: Escuchar la base de datos en tiempo real ---
+  // --- 1. Cargar TARJETAS desde Firebase ---
   useEffect(() => {
-    // 1. Definimos qué queremos traer (la colección 'transactions' ordenada por fecha)
-    const q = query(collection(db, 'transactions'), orderBy('date', 'desc'));
+    // Escuchamos la colección "cards"
+    const unsubscribe = onSnapshot(collection(db, 'cards'), (snapshot) => {
+      const docs = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setCards(docs);
+    });
+    return () => unsubscribe();
+  }, []);
 
-    // 2. Nos "suscribimos". Cada vez que algo cambie en la nube, esto se ejecuta solo.
+  // --- 2. Cargar COMPRAS desde Firebase ---
+  useEffect(() => {
+    // Escuchamos la colección "transactions" ordenada por fecha
+    const q = query(collection(db, 'transactions'), orderBy('date', 'desc'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const docs = snapshot.docs.map(doc => ({
-        id: doc.id, // Firebase nos da un ID único raro (ej: "8s7d6f8sd7")
+        id: doc.id,
         ...doc.data()
       }));
       setTransactions(docs);
     });
-
-    // Limpieza al salir
     return () => unsubscribe();
   }, []);
 
-  // --- FUNCIÓN PARA GUARDAR EN LA NUBE ---
+  // Función para guardar nueva compra (usada por NewPurchase)
   const addTransaction = async (t) => {
     try {
-      // Preparamos los datos (sacamos el ID temporal porque Firebase pone uno propio)
-      const { id, ...dataToSave } = t;
-      
-      // Enviamos a Firebase
+      const { id, ...dataToSave } = t; 
       await addDoc(collection(db, 'transactions'), dataToSave);
-      
-      // Volvemos al inicio
       setView('dashboard');
     } catch (error) {
       console.error("Error guardando:", error);
-      alert("Hubo un error al guardar. Revisa la consola.");
+      alert("Error al guardar la compra.");
     }
-  };
-
-  const addCard = (c) => {
-    setCards([...cards, c]);
   };
 
   return (
@@ -66,10 +58,17 @@ export default function App() {
       <Navbar currentView={view} setView={setView} />
       
       <main className="max-w-5xl mx-auto p-4 mt-4">
-        {/* Pasamos los datos "transactions" que ahora vienen de Firebase */}
+        {/* Vista Resumen */}
         {view === 'dashboard' && <Dashboard transactions={transactions} cards={cards} />}
+        
+        {/* Vista Nueva Compra */}
         {view === 'purchase' && <NewPurchase cards={cards} onSave={addTransaction} transactions={transactions} />}
-        {view === 'cards' && <MyCards cards={cards} onAddCard={addCard} />}
+        
+        {/* Vista Mis Tarjetas (Ya no necesita onAddCard porque lo maneja internamente) */}
+        {view === 'cards' && <MyCards cards={cards} />}
+
+        {/* Importador (Descomenta si necesitas cargar más datos masivos) */}
+        {/* <Importer cards={cards} /> */}
       </main>
     </div>
   );
