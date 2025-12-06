@@ -3,6 +3,7 @@ import Navbar from './Components/Layout/Navbar';
 import Dashboard from './Components/Dashboard/Dashboard';
 import MyCards from './Components/Cards/MyCards';
 import NewPurchase from './Components/Purchase/NewPurchase';
+import Importer from './Components/Importer';
 
 // IMPORTANTE: Importamos la base de datos y las funciones de Firebase
 import { db } from './firebase';
@@ -13,9 +14,9 @@ export default function App() {
 
   // Las tarjetas las dejamos fijas por ahora (para no complicar más hoy)
   const [cards, setCards] = useState([
-    { id: 1, name: 'Visa Santander', bank: 'Santander', limit: 4500000, closeDay: 24, dueDay: 5, color: '#e63946' },
-    { id: 2, name: 'Mastercard BBVA', bank: 'BBVA', limit: 3200000, closeDay: 18, dueDay: 2, color: '#1d3557' },
-    { id: 3, name: 'Amex Galicia', bank: 'Galicia', limit: 8500000, closeDay: 15, dueDay: 28, color: '#e9c46a' },
+    { id: 1, name: 'Visa Banco Nacion', bank: 'Nacion', limit: 160000, closeDay: 6, dueDay: 19, color: '#005f73' }, // Azul petroleo
+    { id: 2, name: 'Visa Santa Cruz', bank: 'Santa Cruz', limit: 3072000, closeDay: 20, dueDay: 1, color: '#ae2012' }, // Rojo
+    { id: 3, name: 'Visa BBVA', bank: 'BBVA', limit: 2000000, closeDay: 20, dueDay: 2, color: '#0a9396' }, // Verde azulado
   ]);
 
   // Aquí guardaremos las compras que vienen de la nube
