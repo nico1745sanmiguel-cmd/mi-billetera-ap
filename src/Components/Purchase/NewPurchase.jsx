@@ -80,7 +80,7 @@ export default function NewPurchase({ cards, onSave, transactions }) {
     };
   }, [form.amount, form.interest, form.bonus, form.installments]);
 
-  // --- PROYECCIÓN FUTURA MEJORADA (DESGLOSE CARD vs GLOBAL) ---
+  // --- PROYECCIÓN FUTURA ---
   const futureImpact = useMemo(() => {
     if (purchaseCalc.total <= 0) return [];
     const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
@@ -94,7 +94,6 @@ export default function NewPurchase({ cards, onSave, transactions }) {
         const targetDate = new Date(localPurchaseDate.getFullYear(), localPurchaseDate.getMonth() + i, 1);
         const monthLabel = `${months[targetDate.getMonth()]} ${targetDate.getFullYear().toString().substr(2)}`;
         
-        // Calculamos deuda existente GLOBAL y de la TARJETA ACTUAL para ese mes
         let existingGlobal = 0;
         let existingCard = 0;
 
@@ -103,12 +102,9 @@ export default function NewPurchase({ cards, onSave, transactions }) {
             const tLocal = new Date(tDate.valueOf() + tDate.getTimezoneOffset() * 60000);
             const tEnd = new Date(tLocal.getFullYear(), tLocal.getMonth() + Number(t.installments), 1);
             
-            // Si la compra vieja impacta en este mes target
             if (targetDate >= new Date(tLocal.getFullYear(), tLocal.getMonth(), 1) && targetDate < tEnd) {
                  const monthlyVal = Number(t.monthlyInstallment) || 0;
                  existingGlobal += monthlyVal;
-                 
-                 // Si además es de la misma tarjeta que estamos usando ahora
                  if (t.cardId == form.cardId) {
                     existingCard += monthlyVal;
                  }
@@ -117,8 +113,8 @@ export default function NewPurchase({ cards, onSave, transactions }) {
 
         projection.push({
             month: monthLabel,
-            newCardTotal: existingCard + purchaseCalc.quota,    // Deuda Vieja Tarjeta + Cuota Nueva
-            newGlobalTotal: existingGlobal + purchaseCalc.quota // Deuda Vieja Global + Cuota Nueva
+            newCardTotal: existingCard + purchaseCalc.quota,
+            newGlobalTotal: existingGlobal + purchaseCalc.quota
         });
     }
     return projection;
@@ -207,11 +203,20 @@ export default function NewPurchase({ cards, onSave, transactions }) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="md:col-span-2">
                 <label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wide">2. ¿Qué vas a comprar?</label>
-                <input required name="description" value={form.description} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-gray-800 placeholder-gray-300" placeholder="Descripción del gasto" />
+                <input 
+                    required name="description" value={form.description} onChange={handleChange} 
+                    className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-gray-800 placeholder-gray-300" 
+                    placeholder="Descripción del gasto" 
+                />
             </div>
             <div>
                 <label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wide">3. Monto Total</label>
-                <input required type="text" name="amount" value={form.amount} onChange={handleMoneyChange} className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none font-mono text-xl font-bold text-gray-800" placeholder="$ 0" autoComplete="off"/>
+                <input 
+                    required type="text" name="amount" value={form.amount} onChange={handleMoneyChange} 
+                    inputMode="numeric" // TECLADO NUMÉRICO
+                    className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none font-mono text-xl font-bold text-gray-800" 
+                    placeholder="$ 0" autoComplete="off"
+                />
             </div>
             <div>
                  <label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wide">Fecha</label>
@@ -219,41 +224,55 @@ export default function NewPurchase({ cards, onSave, transactions }) {
             </div>
         </div>
 
-        {/* --- 3. FINANCIACIÓN --- */}
+        {/* --- 3. FINANCIACIÓN (NUEVO LAYOUT) --- */}
         <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
             <label className="block text-xs font-bold text-gray-400 mb-3 uppercase tracking-wide">4. Plan de Pagos</label>
-            <div className="grid grid-cols-3 gap-4">
-                <div className="col-span-3 md:col-span-1">
+            
+            {/* GRID DE 2 COLUMNAS PARA MÓVIL */}
+            <div className="grid grid-cols-2 gap-4">
+                
+                {/* Cuotas: Ocupa las 2 columnas (ancho completo) */}
+                <div className="col-span-2">
                     <label className="block text-[10px] font-bold text-gray-500 mb-1">Cuotas</label>
-                    <select name="installments" value={form.installments} onChange={handleChange} className="w-full p-2.5 border border-gray-300 rounded-lg bg-white focus:outline-none text-sm font-bold">
+                    <select name="installments" value={form.installments} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-lg bg-white focus:outline-none text-sm font-bold shadow-sm">
                         {[1, 3, 6, 9, 12, 18, 24].map(n => <option key={n} value={n}>{n} {n===1 ? 'pago' : 'cuotas'}</option>)}
                     </select>
                 </div>
+
+                {/* Interés: Mitad izquierda */}
                 <div>
                     <label className="block text-[10px] font-bold text-gray-500 mb-1">Interés (%)</label>
-                    <input type="number" name="interest" value={form.interest} onChange={handleChange} className="w-full p-2.5 border border-gray-300 rounded-lg focus:outline-none text-sm text-center" placeholder="0" />
+                    <input 
+                        type="number" name="interest" value={form.interest} onChange={handleChange} 
+                        inputMode="numeric" // TECLADO NUMÉRICO
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none text-sm text-center shadow-sm" placeholder="0" 
+                    />
                 </div>
+
+                {/* Bonif: Mitad derecha (Igual de ancho que interés) */}
                 <div>
                     <label className="block text-[10px] font-bold text-gray-500 mb-1">Bonif. ($)</label>
-                    <input type="text" name="bonus" value={form.bonus} onChange={handleMoneyChange} className="w-full p-2.5 border border-gray-300 rounded-lg focus:outline-none text-sm text-center text-green-600 font-bold" placeholder="$ 0" />
+                    <input 
+                        type="text" name="bonus" value={form.bonus} onChange={handleMoneyChange} 
+                        inputMode="numeric" // TECLADO NUMÉRICO
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none text-sm text-center text-green-600 font-bold shadow-sm" placeholder="$ 0" 
+                    />
                 </div>
             </div>
         </div>
 
-        {/* --- 4. SIMULADOR DE IMPACTO (COLUMNAS NUEVAS) --- */}
+        {/* --- 4. SIMULADOR DE IMPACTO --- */}
         {purchaseCalc.total > 0 && (
             <div className="mt-6 border-t border-gray-100 pt-4 animate-fade-in-up">
                 <h4 className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
                     📊 Impacto en tu Economía
                 </h4>
                 
-                {/* Resumen Cuota */}
                 <div className="flex justify-between items-center bg-blue-50 p-3 rounded-lg border border-blue-100 mb-4">
                     <span className="text-blue-800 text-sm">Vas a pagar por mes:</span>
                     <span className="text-xl font-bold text-blue-900">{formatMoney(purchaseCalc.quota)}</span>
                 </div>
 
-                {/* Tabla de Proyección con DOBLE TOTAL */}
                 <div className="overflow-x-auto">
                     <table className="w-full text-xs">
                         <thead>
