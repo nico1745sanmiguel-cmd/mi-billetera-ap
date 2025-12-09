@@ -2,7 +2,7 @@ import React, { useState, useMemo, useRef } from 'react';
 import { formatMoney } from '../../utils';
 import Toast from '../UI/Toast';
 
-// --- LÓGICA DE LOGOS PNG (Igual que en MyCards) ---
+// --- LÓGICA DE LOGOS PNG ---
 const getBrandLogo = (name) => {
     const n = (name || '').toLowerCase();
     let logoSrc = null;
@@ -80,6 +80,7 @@ export default function NewPurchase({ cards, onSave, transactions }) {
     };
   }, [form.amount, form.interest, form.bonus, form.installments]);
 
+  // --- PROYECCIÓN FUTURA MEJORADA (DESGLOSE CARD vs GLOBAL) ---
   const futureImpact = useMemo(() => {
     if (purchaseCalc.total <= 0) return [];
     const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
@@ -93,24 +94,35 @@ export default function NewPurchase({ cards, onSave, transactions }) {
         const targetDate = new Date(localPurchaseDate.getFullYear(), localPurchaseDate.getMonth() + i, 1);
         const monthLabel = `${months[targetDate.getMonth()]} ${targetDate.getFullYear().toString().substr(2)}`;
         
-        const currentDebt = transactions.reduce((acc, t) => {
+        // Calculamos deuda existente GLOBAL y de la TARJETA ACTUAL para ese mes
+        let existingGlobal = 0;
+        let existingCard = 0;
+
+        transactions.forEach(t => {
             const tDate = new Date(t.date);
             const tLocal = new Date(tDate.valueOf() + tDate.getTimezoneOffset() * 60000);
             const tEnd = new Date(tLocal.getFullYear(), tLocal.getMonth() + Number(t.installments), 1);
+            
+            // Si la compra vieja impacta en este mes target
             if (targetDate >= new Date(tLocal.getFullYear(), tLocal.getMonth(), 1) && targetDate < tEnd) {
-                 return acc + (Number(t.monthlyInstallment) || 0);
+                 const monthlyVal = Number(t.monthlyInstallment) || 0;
+                 existingGlobal += monthlyVal;
+                 
+                 // Si además es de la misma tarjeta que estamos usando ahora
+                 if (t.cardId == form.cardId) {
+                    existingCard += monthlyVal;
+                 }
             }
-            return acc;
-        }, 0);
+        });
 
         projection.push({
             month: monthLabel,
-            current: currentDebt,
-            new: currentDebt + purchaseCalc.quota,
+            newCardTotal: existingCard + purchaseCalc.quota,    // Deuda Vieja Tarjeta + Cuota Nueva
+            newGlobalTotal: existingGlobal + purchaseCalc.quota // Deuda Vieja Global + Cuota Nueva
         });
     }
     return projection;
-  }, [transactions, purchaseCalc, form.installments, form.date]);
+  }, [transactions, purchaseCalc, form.installments, form.date, form.cardId]);
 
 
   const handleSubmit = (e) => {
@@ -138,15 +150,12 @@ export default function NewPurchase({ cards, onSave, transactions }) {
     <div className="bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-gray-200 max-w-3xl mx-auto relative animate-fade-in pb-20">
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
       
-      {/* Título eliminado como pediste */}
-
       <form onSubmit={handleSubmit} className="space-y-6">
         
-        {/* --- 1. SELECCIÓN DE TARJETA (CARRUSEL MODO) --- */}
+        {/* --- 1. SELECCIÓN DE TARJETA --- */}
         <div>
             <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wide">1. Selecciona tu Tarjeta</label>
             
-            {/* Contenedor Scroll Horizontal - AUMENTADO EL PADDING Y (py-8) PARA QUE NO CORTE EL EFECTO ZOOM */}
             <div 
                 ref={cardsContainerRef}
                 className="flex overflow-x-auto gap-4 py-8 snap-x snap-mandatory scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0"
@@ -167,10 +176,7 @@ export default function NewPurchase({ cards, onSave, transactions }) {
                                 background: `linear-gradient(135deg, ${card.color} 0%, ${card.color}DD 100%)`,
                             }}
                         >
-                            {/* Efecto Glossy */}
                             <div className="absolute -top-[50%] -left-[50%] w-[200%] h-[200%] bg-gradient-to-br from-white/20 to-transparent rotate-45 pointer-events-none"></div>
-
-                            {/* Info Tarjeta */}
                             <div className="absolute inset-0 p-5 flex flex-col justify-between text-white z-10">
                                 <div className="flex justify-between items-start">
                                     <span className="font-bold text-sm uppercase opacity-90 drop-shadow-md">{card.bank}</span>
@@ -187,7 +193,6 @@ export default function NewPurchase({ cards, onSave, transactions }) {
                 })}
             </div>
 
-            {/* INFO DE LÍMITES */}
             <div className="mt-2 bg-gray-50 rounded-lg p-4 flex justify-between items-center border border-gray-100 shadow-inner">
                 <div>
                     <span className="block text-[10px] uppercase font-bold text-gray-400">Límite Disponible</span>
@@ -198,26 +203,16 @@ export default function NewPurchase({ cards, onSave, transactions }) {
             </div>
         </div>
 
-        {/* --- 2. DETALLES DE LA COMPRA --- */}
+        {/* --- 2. DETALLES --- */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="md:col-span-2">
                 <label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wide">2. ¿Qué vas a comprar?</label>
-                <input 
-                    required name="description" value={form.description} onChange={handleChange} 
-                    className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-gray-800 placeholder-gray-300" 
-                    placeholder="Descripción del gasto" 
-                />
+                <input required name="description" value={form.description} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-gray-800 placeholder-gray-300" placeholder="Descripción del gasto" />
             </div>
-
             <div>
                 <label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wide">3. Monto Total</label>
-                <input 
-                    required type="text" name="amount" value={form.amount} onChange={handleMoneyChange} 
-                    className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none font-mono text-xl font-bold text-gray-800" 
-                    placeholder="$ 0" autoComplete="off"
-                />
+                <input required type="text" name="amount" value={form.amount} onChange={handleMoneyChange} className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none font-mono text-xl font-bold text-gray-800" placeholder="$ 0" autoComplete="off"/>
             </div>
-
             <div>
                  <label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wide">Fecha</label>
                  <input type="date" name="date" value={form.date} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-xl focus:outline-none text-gray-600 font-medium" />
@@ -245,7 +240,7 @@ export default function NewPurchase({ cards, onSave, transactions }) {
             </div>
         </div>
 
-        {/* --- 4. SIMULADOR DE IMPACTO --- */}
+        {/* --- 4. SIMULADOR DE IMPACTO (COLUMNAS NUEVAS) --- */}
         {purchaseCalc.total > 0 && (
             <div className="mt-6 border-t border-gray-100 pt-4 animate-fade-in-up">
                 <h4 className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
@@ -258,24 +253,25 @@ export default function NewPurchase({ cards, onSave, transactions }) {
                     <span className="text-xl font-bold text-blue-900">{formatMoney(purchaseCalc.quota)}</span>
                 </div>
 
-                {/* Tabla de Proyección */}
+                {/* Tabla de Proyección con DOBLE TOTAL */}
                 <div className="overflow-x-auto">
                     <table className="w-full text-xs">
                         <thead>
-                            <tr className="text-gray-400 border-b border-gray-100">
-                                <th className="text-left py-2">Mes</th>
-                                <th className="text-right py-2">Venías pagando</th>
-                                <th className="text-right py-2">Vas a pagar</th>
+                            <tr className="text-gray-400 border-b border-gray-100 uppercase tracking-wide">
+                                <th className="text-left py-2 font-bold">Mes</th>
+                                <th className="text-right py-2 font-bold">Total {selectedCard?.bank || 'Tarjeta'}</th>
+                                <th className="text-right py-2 font-bold text-gray-800">Total Global</th>
                             </tr>
                         </thead>
                         <tbody>
                             {futureImpact.map((item, idx) => (
                                 <tr key={idx} className="border-b border-gray-50 last:border-0">
-                                    <td className="py-2 font-medium text-gray-600">{item.month}</td>
-                                    <td className="py-2 text-right text-gray-400">{formatMoney(item.current)}</td>
-                                    <td className="py-2 text-right font-bold text-gray-800">
-                                        {formatMoney(item.new)} 
-                                        {/* Dato extra eliminado */}
+                                    <td className="py-2.5 font-medium text-gray-500">{item.month}</td>
+                                    <td className="py-2.5 text-right font-medium text-blue-600">
+                                        {formatMoney(item.newCardTotal)}
+                                    </td>
+                                    <td className="py-2.5 text-right font-bold text-gray-900">
+                                        {formatMoney(item.newGlobalTotal)}
                                     </td>
                                 </tr>
                             ))}
