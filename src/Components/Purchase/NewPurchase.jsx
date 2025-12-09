@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { formatMoney } from '../../utils'; // Importamos la herramienta global
 
 export default function NewPurchase({ cards, onSave, transactions }) {
   const [form, setForm] = useState({
@@ -6,14 +7,13 @@ export default function NewPurchase({ cards, onSave, transactions }) {
     cardId: cards[0]?.id || '',
     amount: '',
     installments: 1,
-    interest: 0, // Porcentaje
-    bonus: 0,    // Monto fijo descuento
+    interest: 0, 
+    bonus: 0,    
     date: new Date().toISOString().split('T')[0]
   });
 
   const selectedCard = cards.find(c => c.id == form.cardId);
 
-  // Cálculos en tiempo real
   const finalAmount = useMemo(() => {
     const base = Number(form.amount) || 0;
     const interestAmt = base * (Number(form.interest) / 100);
@@ -23,24 +23,28 @@ export default function NewPurchase({ cards, onSave, transactions }) {
 
   const monthlyInstallment = finalAmount / (Number(form.installments) || 1);
 
-  // Calcular compromiso actual del mes seleccionado (Feedback inmediato)
   const currentMonthCommitment = useMemo(() => {
-    // Lógica simple: suma cuotas activas este mes para la tarjeta seleccionada
-    // (En una app real, esto requiere lógica de fechas compleja, aquí simplificado para demo visual)
+    if (!form.cardId) return 0;
     return transactions
       .filter(t => t.cardId == form.cardId)
-      .reduce((acc, t) => acc + (t.finalAmount / t.installments), 0);
+      .reduce((acc, t) => acc + (Number(t.monthlyInstallment) || 0), 0);
   }, [transactions, form.cardId]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSave({ ...form, id: Date.now(), finalAmount, monthlyInstallment });
+    onSave({ 
+        ...form, 
+        id: Date.now(), 
+        finalAmount, 
+        monthlyInstallment,
+        installments: Number(form.installments)
+    });
   };
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
   return (
-    <div className="bg-white p-6 rounded-md shadow-sm border border-gray-200 max-w-2xl mx-auto">
+    <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 max-w-2xl mx-auto">
       <h2 className="text-xl font-medium text-gray-900 mb-6 pb-2 border-b border-gray-100">Ingresar Consumo</h2>
       
       <form onSubmit={handleSubmit} className="space-y-5">
@@ -80,30 +84,28 @@ export default function NewPurchase({ cards, onSave, transactions }) {
           </div>
 
           <div>
-             <label className="block text-xs text-gray-500 mb-1">Bonificación / Descuento ($)</label>
+             <label className="block text-xs text-gray-500 mb-1">Bonificación ($)</label>
              <input type="number" name="bonus" value={form.bonus} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded focus:outline-none text-sm" placeholder="0" />
           </div>
         </div>
 
-        {/* --- Sección de Alertas / Feedback --- */}
+        {/* --- Sección de Alertas / Feedback CON FORMATO --- */}
         <div className="bg-blue-50 p-4 rounded border border-blue-100 mt-4">
           <div className="flex justify-between items-center mb-1">
              <span className="text-sm text-blue-800">Valor Cuota Nueva:</span>
-             <span className="font-bold text-blue-900">${monthlyInstallment.toFixed(2)}</span>
+             <span className="font-bold text-blue-900">{formatMoney(monthlyInstallment)}</span>
           </div>
           <div className="flex justify-between items-center mb-1">
              <span className="text-sm text-blue-800">Total Final:</span>
-             <span className="font-bold text-blue-900">${finalAmount.toFixed(2)}</span>
+             <span className="font-bold text-blue-900">{formatMoney(finalAmount)}</span>
           </div>
           <div className="mt-2 pt-2 border-t border-blue-200 text-xs text-blue-600">
-             Actualmente tienes comprometidos <strong>${currentMonthCommitment.toFixed(2)}</strong> mensuales en {selectedCard?.name}.
-             Pasarás a pagar <strong>${(currentMonthCommitment + monthlyInstallment).toFixed(2)}</strong>.
+             Actualmente tienes comprometidos <strong>{formatMoney(currentMonthCommitment)}</strong> mensuales en {selectedCard?.name}.
           </div>
         </div>
 
         <div className="flex justify-end gap-3 pt-2">
-           <button type="button" className="px-4 py-2 text-blue-500 text-sm font-medium hover:bg-blue-50 rounded">Cancelar</button>
-           <button type="submit" className="px-6 py-2 bg-[#3483fa] text-white text-sm font-medium rounded hover:bg-[#2968c8] shadow-sm">Confirmar Compra</button>
+           <button type="submit" className="px-6 py-2 bg-[#3483fa] text-white text-sm font-medium rounded hover:bg-[#2968c8] shadow-sm w-full md:w-auto">Confirmar Compra</button>
         </div>
       </form>
     </div>
