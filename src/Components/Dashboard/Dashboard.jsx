@@ -33,7 +33,7 @@ const CustomTooltip = ({ active, payload }) => {
   return null;
 };
 
-// 2. Contenido visual del Treemap (Texto fino)
+// Componente visual del Treemap (VERSIÓN ULTRA FINA)
 const CustomizedContent = (props) => {
     const { x, y, width, height, index, name, value } = props;
     
@@ -53,15 +53,30 @@ const CustomizedContent = (props) => {
             opacity: 0.9,
           }}
         />
-        {/* Texto solo si cabe */}
+        {/* Solo mostramos texto si el cuadro es grande */}
         {width > 60 && height > 35 && (
             <>
-                {/* Nombre (Texto normal, no negrita) */}
-                <text x={x + width / 2} y={y + height / 2 - 6} textAnchor="middle" fill="#fff" fontSize={11} style={{ pointerEvents: 'none', fontWeight: 400 }}>
-                    {name ? (name.length > 10 ? name.substring(0, 10) + '..' : name) : ''}
+                {/* NOMBRE: Letra fina (300) y sin sombra */}
+                <text 
+                    x={x + width / 2} 
+                    y={y + height / 2 - 6} 
+                    textAnchor="middle" 
+                    fill="#fff" 
+                    fontSize={10} 
+                    style={{ pointerEvents: 'none', fontWeight: 300, textShadow: 'none' }}
+                >
+                    {name ? (name.length > 12 ? name.substring(0, 12) + '..' : name) : ''}
                 </text>
-                {/* Monto */}
-                <text x={x + width / 2} y={y + height / 2 + 10} textAnchor="middle" fill="rgba(255,255,255,0.9)" fontSize={10} style={{ pointerEvents: 'none' }}>
+                
+                {/* MONTO: Letra fina y un poco transparente */}
+                <text 
+                    x={x + width / 2} 
+                    y={y + height / 2 + 8} 
+                    textAnchor="middle" 
+                    fill="rgba(255,255,255,0.9)" 
+                    fontSize={9} 
+                    style={{ pointerEvents: 'none', fontWeight: 300, textShadow: 'none' }}
+                >
                     {formatMoney(value)}
                 </text>
             </>
