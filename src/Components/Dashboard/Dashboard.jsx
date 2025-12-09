@@ -6,15 +6,38 @@ import { db } from '../../firebase';
 import { doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { formatMoney } from '../../utils';
 
-// Colores seguros para el gráfico
+// Colores suaves para el gráfico
 const TREE_COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4'];
 
-// Componente visual del Treemap (VERSIÓN BLINDADA)
+// Helper para fecha DD/MM
+const formatDate = (dateString) => {
+    if (!dateString) return '';
+    const parts = dateString.split('-'); // 2025-12-31
+    return `${parts[2]}/${parts[1]}`;   // 31/12
+};
+
+// 1. Tooltip del Treemap (Ahora muestra cuotas)
+const CustomTooltip = ({ active, payload }) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <div className="bg-white p-3 border border-gray-200 shadow-lg rounded text-xs z-50">
+        <p className="font-bold text-gray-800 text-sm mb-1">{data.name}</p>
+        <p className="text-gray-500 mb-1">Plan: {data.installments} cuotas</p>
+        <p className="text-blue-600 font-bold text-lg">
+          {formatMoney(data.value)}
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
+
+// 2. Contenido visual del Treemap (Texto fino)
 const CustomizedContent = (props) => {
-    // Protección contra valores nulos
     const { x, y, width, height, index, name, value } = props;
     
-    if (!width || !height) return null; // Si no hay dimensiones, no dibuja nada (evita crash)
+    if (!width || !height) return null;
 
     return (
       <g>
@@ -30,12 +53,14 @@ const CustomizedContent = (props) => {
             opacity: 0.9,
           }}
         />
-        {/* Solo mostramos texto si el cuadro es grande */}
+        {/* Texto solo si cabe */}
         {width > 60 && height > 35 && (
             <>
-                <text x={x + width / 2} y={y + height / 2 - 6} textAnchor="middle" fill="#fff" fontSize={11} fontWeight="bold" style={{ pointerEvents: 'none' }}>
+                {/* Nombre (Texto normal, no negrita) */}
+                <text x={x + width / 2} y={y + height / 2 - 6} textAnchor="middle" fill="#fff" fontSize={11} style={{ pointerEvents: 'none', fontWeight: 400 }}>
                     {name ? (name.length > 10 ? name.substring(0, 10) + '..' : name) : ''}
                 </text>
+                {/* Monto */}
                 <text x={x + width / 2} y={y + height / 2 + 10} textAnchor="middle" fill="rgba(255,255,255,0.9)" fontSize={10} style={{ pointerEvents: 'none' }}>
                     {formatMoney(value)}
                 </text>
@@ -47,9 +72,7 @@ const CustomizedContent = (props) => {
 
 export default function Dashboard({ transactions = [], cards = [] }) {
   const [viewMode, setViewMode] = useState('bars'); // 'bars', 'tree', 'list'
-  
-  // --- ESTADO PARA EDICIÓN ---
-  const [editingTx, setEditingTx] = useState(null); // Guarda la compra que estás editando
+  const [editingTx, setEditingTx] = useState(null); 
   const [editForm, setEditForm] = useState({ description: '', amount: '', installments: '' });
 
   // --- LÓGICA DE DATOS ---
@@ -103,12 +126,13 @@ export default function Dashboard({ transactions = [], cards = [] }) {
       .map(t => ({
         name: t.description || 'Sin nombre',
         size: Number(t.finalAmount || t.amount),
+        installments: t.installments // Pasamos cuotas para el tooltip
       }))
       .sort((a, b) => b.size - a.size)
       .slice(0, 15);
   }, [transactions]);
 
-  // --- FUNCIONES DE EDICIÓN ---
+  // --- ACCIONES ---
   const handleEditClick = (tx) => {
     setEditingTx(tx.id);
     setEditForm({
@@ -126,21 +150,21 @@ export default function Dashboard({ transactions = [], cards = [] }) {
         await updateDoc(doc(db, 'transactions', editingTx), {
             description: editForm.description,
             amount: newAmount,
-            finalAmount: newAmount, // Actualizamos ambos por las dudas
+            finalAmount: newAmount, 
             installments: newInstallments,
             monthlyInstallment: newAmount / newInstallments
         });
-        setEditingTx(null); // Cerrar modal
+        setEditingTx(null); 
     } catch (error) {
         console.error("Error al actualizar", error);
-        alert("Error al actualizar");
     }
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm("¿Borrar esta compra permanentemente?")) {
+  const handleDelete = async () => {
+    if (window.confirm("¿Estás seguro de borrar esta compra para siempre?")) {
         try {
-            await deleteDoc(doc(db, 'transactions', id));
+            await deleteDoc(doc(db, 'transactions', editingTx));
+            setEditingTx(null); // Cerrar modal tras borrar
         } catch (error) {
             console.error(error);
         }
@@ -207,7 +231,7 @@ export default function Dashboard({ transactions = [], cards = [] }) {
                 </ResponsiveContainer>
             )}
 
-            {/* VISTA TREEMAP (Con protección) */}
+            {/* VISTA TREEMAP */}
             {viewMode === 'tree' && (
                 treeData.length > 0 ? (
                     <ResponsiveContainer width="100%" height="100%">
@@ -219,87 +243,108 @@ export default function Dashboard({ transactions = [], cards = [] }) {
                             fill="#8884d8"
                             content={<CustomizedContent />}
                         >
-                            <Tooltip contentStyle={{ borderRadius: '4px' }} formatter={(value) => formatMoney(value)} />
+                            <Tooltip content={<CustomTooltip />} />
                         </Treemap>
                     </ResponsiveContainer>
                 ) : (
-                    <div className="flex items-center justify-center h-full text-gray-400 text-sm">No hay datos suficientes para el mapa</div>
+                    <div className="flex items-center justify-center h-full text-gray-400 text-sm">No hay datos suficientes</div>
                 )
             )}
 
-            {/* VISTA LISTA (Con Edición y Columna Cuota) */}
+            {/* VISTA LISTA APILADA (Mobile Friendly) */}
             {viewMode === 'list' && (
-                <div className="h-full overflow-y-auto pr-2 custom-scrollbar">
-                    <table className="w-full text-left border-collapse">
-                        <thead className="sticky top-0 bg-white z-10">
-                            <tr className="text-xs text-gray-400 border-b border-gray-100 uppercase tracking-wider">
-                                <th className="pb-3 font-medium">Fecha</th>
-                                <th className="pb-3 font-medium">Descripción</th>
-                                <th className="pb-3 font-medium">Cuotas</th>
-                                <th className="pb-3 font-medium text-right">Valor Cuota</th>
-                                <th className="pb-3 font-medium text-right">Total</th>
-                                <th className="pb-3 font-medium text-center">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody className="text-sm">
-                            {transactions.map((t) => {
-                                // Cálculo seguro de cuota
-                                const amount = Number(t.finalAmount || t.amount || 0);
-                                const installments = Number(t.installments || 1);
-                                const quota = amount / installments;
+                <div className="h-full overflow-y-auto pr-1 custom-scrollbar space-y-3">
+                    {transactions.map((t) => {
+                        const amount = Number(t.finalAmount || t.amount || 0);
+                        const installments = Number(t.installments || 1);
+                        const quota = amount / installments;
 
-                                return (
-                                <tr key={t.id} className="group hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-0">
-                                    <td className="py-3 text-gray-500 whitespace-nowrap text-xs">{t.date}</td>
-                                    <td className="py-3 font-medium text-gray-800">{t.description}</td>
-                                    <td className="py-3 text-gray-500 text-center">
-                                        <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs font-bold">{installments}</span>
-                                    </td>
-                                    <td className="py-3 text-right text-gray-600">
-                                        {formatMoney(quota)}
-                                    </td>
-                                    <td className="py-3 text-right font-medium text-gray-900">
-                                        {formatMoney(amount)}
-                                    </td>
-                                    <td className="py-3 text-center">
-                                        <div className="flex justify-center gap-2">
-                                            <button onClick={() => handleEditClick(t)} className="text-blue-500 hover:text-blue-700 text-xs font-bold underline">Editar</button>
-                                            <button onClick={() => handleDelete(t.id)} className="text-red-400 hover:text-red-600 text-xs font-bold underline">Borrar</button>
+                        return (
+                            <div key={t.id} className="bg-white border border-gray-100 rounded-lg p-3 shadow-sm hover:shadow-md transition-shadow">
+                                {/* Fila Superior: Título y Fecha */}
+                                <div className="flex justify-between items-start mb-2">
+                                    <h4 className="font-bold text-gray-800 text-sm truncate pr-2">{t.description}</h4>
+                                    <span className="text-xs text-gray-400 font-mono whitespace-nowrap">{formatDate(t.date)}</span>
+                                </div>
+                                
+                                {/* Fila Media: Datos Numéricos */}
+                                <div className="flex justify-between items-end">
+                                    <div className="flex gap-4">
+                                        <div>
+                                            <span className="block text-[10px] text-gray-400 uppercase">Plan</span>
+                                            <span className="text-xs font-bold text-gray-600 bg-gray-100 px-1.5 py-0.5 rounded">{installments}x</span>
                                         </div>
-                                    </td>
-                                </tr>
-                            )})}
-                        </tbody>
-                    </table>
+                                        <div>
+                                            <span className="block text-[10px] text-gray-400 uppercase">Cuota</span>
+                                            <span className="text-xs font-medium text-gray-700">{formatMoney(quota)}</span>
+                                        </div>
+                                    </div>
+                                    
+                                    {/* Total y Botón Editar */}
+                                    <div className="text-right flex items-center gap-3">
+                                        <div>
+                                            <span className="block text-[10px] text-gray-400 uppercase">Total</span>
+                                            <span className="text-sm font-bold text-gray-900">{formatMoney(amount)}</span>
+                                        </div>
+                                        <button 
+                                            onClick={() => handleEditClick(t)} 
+                                            className="p-2 bg-gray-50 hover:bg-blue-50 text-gray-400 hover:text-blue-600 rounded-full transition-colors"
+                                            title="Editar"
+                                        >
+                                            {/* Icono Lápiz SVG Simple */}
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )
+                    })}
                 </div>
             )}
          </div>
       </section>
 
-      {/* MODAL DE EDICIÓN FLOTANTE */}
+      {/* MODAL DE EDICIÓN (Con Borrar adentro) */}
       {editingTx && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
-                <h3 className="text-lg font-bold mb-4">Editar Compra</h3>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm animate-fade-in">
+            <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md">
+                <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-lg font-bold text-gray-800">Editar Detalle</h3>
+                    <button onClick={() => setEditingTx(null)} className="text-gray-400 hover:text-gray-600">✕</button>
+                </div>
+                
                 <div className="space-y-4">
                     <div>
-                        <label className="block text-xs font-bold text-gray-500">Descripción</label>
-                        <input className="w-full border p-2 rounded" value={editForm.description} onChange={e => setEditForm({...editForm, description: e.target.value})} />
+                        <label className="block text-xs font-bold text-gray-500 mb-1">Descripción</label>
+                        <input className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" value={editForm.description} onChange={e => setEditForm({...editForm, description: e.target.value})} />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-xs font-bold text-gray-500">Monto Total</label>
-                            <input type="number" className="w-full border p-2 rounded" value={editForm.amount} onChange={e => setEditForm({...editForm, amount: e.target.value})} />
+                            <label className="block text-xs font-bold text-gray-500 mb-1">Monto Total</label>
+                            <input type="number" className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" value={editForm.amount} onChange={e => setEditForm({...editForm, amount: e.target.value})} />
                         </div>
                         <div>
-                            <label className="block text-xs font-bold text-gray-500">Cuotas</label>
-                            <input type="number" className="w-full border p-2 rounded" value={editForm.installments} onChange={e => setEditForm({...editForm, installments: e.target.value})} />
+                            <label className="block text-xs font-bold text-gray-500 mb-1">Cuotas</label>
+                            <input type="number" className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" value={editForm.installments} onChange={e => setEditForm({...editForm, installments: e.target.value})} />
                         </div>
                     </div>
                 </div>
-                <div className="mt-6 flex justify-end gap-3">
-                    <button onClick={() => setEditingTx(null)} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded text-sm font-bold">Cancelar</button>
-                    <button onClick={handleUpdate} className="px-4 py-2 bg-blue-600 text-white rounded text-sm font-bold hover:bg-blue-700">Guardar Cambios</button>
+
+                <div className="mt-8 flex justify-between items-center pt-4 border-t border-gray-100">
+                    {/* Botón Borrar (Izquierda, Rojo) */}
+                    <button 
+                        onClick={handleDelete} 
+                        className="text-red-500 text-sm font-bold hover:bg-red-50 px-3 py-2 rounded transition-colors flex items-center gap-1"
+                    >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        Eliminar Compra
+                    </button>
+
+                    {/* Botones Acción (Derecha) */}
+                    <div className="flex gap-3">
+                        <button onClick={() => setEditingTx(null)} className="px-4 py-2 text-gray-500 hover:bg-gray-100 rounded-lg text-sm font-bold transition-colors">Cancelar</button>
+                        <button onClick={handleUpdate} className="px-6 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700 shadow-md transition-colors">Guardar</button>
+                    </div>
                 </div>
             </div>
         </div>
