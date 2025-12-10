@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { auth, googleProvider } from '../firebase';
-import { signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
+// CAMBIO AQUÍ: Usamos signInWithRedirect en lugar de Popup
+import { signInWithRedirect, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 
 export default function Login() {
   const [isRegistering, setIsRegistering] = useState(false);
@@ -8,13 +9,15 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
-  // 1. Iniciar con Google (Lo más fácil)
+  // 1. Iniciar con Google (MODO REDIRECCIÓN)
   const handleGoogleLogin = async () => {
     try {
-      await signInWithPopup(auth, googleProvider);
+      setError(''); // Limpiamos errores viejos
+      // Esto te llevará a la página de Google y volverá solo a la App
+      await signInWithRedirect(auth, googleProvider);
     } catch (err) {
-      setError("Error al iniciar con Google");
       console.error(err);
+      setError("Error al iniciar con Google. Intenta de nuevo.");
     }
   };
 
@@ -53,7 +56,7 @@ export default function Login() {
         {/* Botón Google */}
         <button 
           onClick={handleGoogleLogin}
-          className="w-full flex items-center justify-center gap-3 bg-white border border-gray-300 p-3 rounded-xl hover:bg-gray-50 transition-colors text-gray-700 font-medium mb-6"
+          className="w-full flex items-center justify-center gap-3 bg-white border border-gray-300 p-3 rounded-xl hover:bg-gray-50 transition-colors text-gray-700 font-medium mb-6 shadow-sm active:scale-95"
         >
           <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="w-5 h-5" alt="Google" />
           Continuar con Google
