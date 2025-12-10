@@ -9,22 +9,31 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
-  // --- NUEVO: DETECTAR SI VOLVIMOS DE GOOGLE CON ERROR ---
+// ... imports y estados iguales ...
+
   useEffect(() => {
+    // Escuchar resultado de redirección con "Chismoso" activado
+    console.log("Esperando resultado de Google...");
+    
     getRedirectResult(auth)
       .then((result) => {
         if (result) {
-          // Si entra acá, es que el login fue exitoso.
-          // App.jsx se encargará de redirigir al Dashboard automáticamente.
-          console.log("Login exitoso con Google:", result.user);
+          // Si entra acá, ¡FUNCIONÓ!
+          alert(`¡Éxito! Usuario: ${result.user.email}`);
+          // (App.jsx debería redirigir solo después de esto)
+        } else {
+          // Si entra acá, es que volvió pero sin datos (o no hubo intento de login)
+          console.log("No hay resultado de redirección (null).");
         }
       })
       .catch((error) => {
-        // ¡AQUÍ ESTÁ EL ERROR!
-        console.error("Error al volver de Google:", error);
-        setError(`Error de Google: ${error.message}`);
+        // Si entra acá, hubo un error técnico
+        alert(`ERROR CRÍTICO: ${error.code} - ${error.message}`);
+        setError(`Error: ${error.message}`);
       });
   }, []);
+
+  // ... resto del componente ...
   // ------------------------------------------------------
 
   const handleGoogleLogin = async () => {
