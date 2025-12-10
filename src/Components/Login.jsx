@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { auth, googleProvider } from '../firebase';
-// AGREGAMOS getRedirectResult AQUÍ
-import { signInWithRedirect, signInWithEmailAndPassword, createUserWithEmailAndPassword, getRedirectResult } from 'firebase/auth';
+// CAMBIO IMPORTANTE: Usamos signInWithPopup (más estable para debug)
+import { signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 
 export default function Login() {
   const [isRegistering, setIsRegistering] = useState(false);
@@ -9,43 +9,28 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
-// ... imports y estados iguales ...
-
-  useEffect(() => {
-    // Escuchar resultado de redirección con "Chismoso" activado
-    console.log("Esperando resultado de Google...");
-    
-    getRedirectResult(auth)
-      .then((result) => {
-        if (result) {
-          // Si entra acá, ¡FUNCIONÓ!
-          alert(`¡Éxito! Usuario: ${result.user.email}`);
-          // (App.jsx debería redirigir solo después de esto)
-        } else {
-          // Si entra acá, es que volvió pero sin datos (o no hubo intento de login)
-          console.log("No hay resultado de redirección (null).");
-        }
-      })
-      .catch((error) => {
-        // Si entra acá, hubo un error técnico
-        alert(`ERROR CRÍTICO: ${error.code} - ${error.message}`);
-        setError(`Error: ${error.message}`);
-      });
-  }, []);
-
-  // ... resto del componente ...
-  // ------------------------------------------------------
-
+  // 1. INICIAR CON GOOGLE (MODO POPUP)
   const handleGoogleLogin = async () => {
     try {
       setError('');
-      await signInWithRedirect(auth, googleProvider);
+      console.log("Intentando abrir Popup de Google...");
+      // Esto abrirá una ventana flotante (o pestaña nueva en celular)
+      await signInWithPopup(auth, googleProvider);
+      // Si funciona, App.jsx detectará el usuario automáticamente y cambiará de pantalla.
     } catch (err) {
-      console.error(err);
-      setError("No se pudo iniciar la redirección.");
+      console.error("Error Google:", err);
+      // Aquí atrapamos el error exacto en vivo
+      if (err.code === 'auth/popup-closed-by-user') {
+        setError("Cerraste la ventana de Google antes de terminar.");
+      } else if (err.code === 'auth/popup-blocked') {
+        setError("El navegador bloqueó la ventana emergente. Permítela e intenta de nuevo.");
+      } else {
+        setError(`Error Google: ${err.message}`);
+      }
     }
   };
 
+  // 2. Iniciar o Crear con Email
   const handleEmailAuth = async (e) => {
     e.preventDefault();
     setError('');
@@ -60,7 +45,7 @@ export default function Login() {
       if (err.code === 'auth/invalid-credential') setError("Datos incorrectos");
       else if (err.code === 'auth/email-already-in-use') setError("Este email ya está registrado");
       else if (err.code === 'auth/weak-password') setError("La contraseña es muy corta (mín 6)");
-      else setError("Ocurrió un error: " + err.message);
+      else setError("Error: " + err.message);
     }
   };
 
@@ -68,6 +53,7 @@ export default function Login() {
     <div className="min-h-screen flex items-center justify-center bg-[#f3f4f6] p-4">
       <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md animate-fade-in">
         
+        {/* Encabezado */}
         <div className="text-center mb-8">
           <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <span className="text-3xl">💳</span>
@@ -75,6 +61,13 @@ export default function Login() {
           <h1 className="text-2xl font-bold text-gray-800">Mi Billetera</h1>
           <p className="text-gray-500 text-sm mt-1">Tu control financiero personal</p>
         </div>
+
+        {/* --- MOSTRAR ERROR SI EXISTE --- */}
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-xs font-bold text-center break-words">
+            {error}
+          </div>
+        )}
 
         {/* Botón Google */}
         <button 
@@ -100,9 +93,6 @@ export default function Login() {
             <label className="block text-xs font-bold text-gray-500 mb-1">Contraseña</label>
             <input type="password" required value={password} onChange={e => setPassword(e.target.value)} className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" placeholder="••••••••" />
           </div>
-
-          {/* MOSTRAR EL ERROR EN ROJO SI EXISTE */}
-          {error && <p className="text-red-500 text-xs text-center font-bold bg-red-50 p-3 rounded border border-red-200 break-words">{error}</p>}
 
           <button type="submit" className="w-full py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-transform active:scale-95 shadow-lg shadow-blue-200">
             {isRegistering ? 'Crear Cuenta' : 'Iniciar Sesión'}
