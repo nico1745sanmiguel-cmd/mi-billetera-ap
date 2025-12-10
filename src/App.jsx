@@ -6,6 +6,7 @@ import MyCards from './Components/Cards/MyCards';
 import NewPurchase from './Components/Purchase/NewPurchase';
 import InstallPrompt from './Components/UI/InstallPrompt';
 import Login from './Components/Login';
+import SkeletonDashboard from './Components/UI/SkeletonDashboard';
 import Importer from './Components/Importer'; // <--- AQUÍ ESTÁ EL IMPORTADOR
 
 import { db, auth } from './firebase';
@@ -79,7 +80,16 @@ export default function App() {
 
   // --- RENDERIZADO ---
 
-  if (loadingUser) return <div className="min-h-screen flex items-center justify-center bg-gray-100 text-gray-500">Cargando...</div>;
+  // 1. MODO SKELETON (Cargando elegante)
+  if (loadingUser) {
+    return (
+        <div className="min-h-screen bg-[#f3f4f6]">
+            <SkeletonDashboard />
+        </div>
+    );
+  }
+  
+  // 2. Si NO hay usuario -> Mostrar Login
   if (!user) return <Login />;
 
   return (
