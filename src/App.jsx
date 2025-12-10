@@ -7,6 +7,8 @@ import NewPurchase from './Components/Purchase/NewPurchase';
 import InstallPrompt from './Components/UI/InstallPrompt';
 import Login from './Components/Login';
 import Importer from './Components/Importer'; 
+// RECUPERAMOS EL SKELETON
+import SkeletonDashboard from './Components/UI/SkeletonDashboard';
 
 import { db, auth } from './firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
@@ -19,8 +21,6 @@ const EyeClosed = () => <svg className="w-6 h-6 text-blue-600" fill="none" strok
 export default function App() {
   const [user, setUser] = useState(null);
   const [loadingUser, setLoadingUser] = useState(true);
-  
-  // 1. ESTADO DE PRIVACIDAD (False = se ven los números)
   const [privacyMode, setPrivacyMode] = useState(false);
 
   const [view, setView] = useState('dashboard');
@@ -30,7 +30,8 @@ export default function App() {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
-      setLoadingUser(false);
+      // Pequeño truco: esperamos 500ms extra para que se luzca el Skeleton
+      setTimeout(() => setLoadingUser(false), 500);
     });
     return () => unsubscribe();
   }, []);
@@ -69,14 +70,22 @@ export default function App() {
 
   const handleLogout = () => { signOut(auth); };
 
-  if (loadingUser) return <div className="min-h-screen flex items-center justify-center bg-gray-100 text-gray-500">Cargando...</div>;
+  // --- RENDERIZADO CON SKELETON ---
+  if (loadingUser) {
+    return (
+        <div className="min-h-screen bg-[#f3f4f6]">
+            <SkeletonDashboard />
+        </div>
+    );
+  }
+  
   if (!user) return <Login />;
 
   return (
     <div className="min-h-screen font-sans text-gray-800 bg-[#f3f4f6]">
       <InstallPrompt />
 
-      {/* HEADER DESKTOP: Pasamos la función para cambiar privacidad */}
+      {/* HEADER DESKTOP */}
       <div className="hidden md:block relative">
         <Navbar currentView={view} setView={setView} privacyMode={privacyMode} setPrivacyMode={setPrivacyMode} />
         <button onClick={handleLogout} className="absolute top-4 right-4 text-xs text-red-500 hover:underline bg-white px-3 py-1 rounded border border-red-100">
@@ -84,10 +93,9 @@ export default function App() {
         </button>
       </div>
 
-      {/* HEADER MÓVIL: Agregamos el botón del Ojito a la izquierda */}
+      {/* HEADER MÓVIL */}
       <div className="md:hidden bg-white p-4 shadow-sm sticky top-0 z-40 flex justify-between items-center px-4">
          
-         {/* BOTÓN PRIVACIDAD (Izquierda) */}
          <button onClick={() => setPrivacyMode(!privacyMode)} className="p-2 rounded-full hover:bg-gray-100 active:scale-95 transition-all">
             {privacyMode ? <EyeClosed /> : <EyeOpen />}
          </button>
@@ -98,18 +106,17 @@ export default function App() {
             {view === 'cards' && 'Tarjetas'}
          </h1>
 
-         {/* BOTÓN SALIR (Derecha) */}
          <button onClick={handleLogout} className="text-red-500 p-2" title="Salir">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
          </button>
       </div>
       
-      {/* 2. PASAMOS LA PROP 'privacyMode' A TODAS LAS VISTAS */}
       <main className="max-w-5xl mx-auto p-4 mt-2 pb-28 md:pb-10 md:mt-4">
         {view === 'dashboard' && <Dashboard transactions={transactions} cards={cards} privacyMode={privacyMode} />}
         {view === 'purchase' && <NewPurchase cards={cards} onSave={addTransaction} transactions={transactions} privacyMode={privacyMode} />}
         {view === 'cards' && <MyCards cards={cards} privacyMode={privacyMode} />}
 
+        {/* IMPORTADOR OCULTO (Descomentar para usar) */}
         {/* <Importer cards={cards} /> */}
       </main>
 
