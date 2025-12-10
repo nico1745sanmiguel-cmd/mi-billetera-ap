@@ -98,7 +98,7 @@ export default function App() {
         {/* NUEVA VISTA DEL SÚPER */}
         {view === 'super' && <SuperList />}
 
-        {/* <Importer cards={cards} /> */}
+        <Importer cards={cards} />
       </main>
 
       <BottomNav currentView={view} setView={setView} />
