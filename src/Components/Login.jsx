@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { auth, googleProvider } from '../firebase';
-// CAMBIO AQUÍ: Usamos signInWithRedirect en lugar de Popup
-import { signInWithRedirect, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
+// AGREGAMOS getRedirectResult AQUÍ
+import { signInWithRedirect, signInWithEmailAndPassword, createUserWithEmailAndPassword, getRedirectResult } from 'firebase/auth';
 
 export default function Login() {
   const [isRegistering, setIsRegistering] = useState(false);
@@ -9,19 +9,34 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
-  // 1. Iniciar con Google (MODO REDIRECCIÓN)
+  // --- NUEVO: DETECTAR SI VOLVIMOS DE GOOGLE CON ERROR ---
+  useEffect(() => {
+    getRedirectResult(auth)
+      .then((result) => {
+        if (result) {
+          // Si entra acá, es que el login fue exitoso.
+          // App.jsx se encargará de redirigir al Dashboard automáticamente.
+          console.log("Login exitoso con Google:", result.user);
+        }
+      })
+      .catch((error) => {
+        // ¡AQUÍ ESTÁ EL ERROR!
+        console.error("Error al volver de Google:", error);
+        setError(`Error de Google: ${error.message}`);
+      });
+  }, []);
+  // ------------------------------------------------------
+
   const handleGoogleLogin = async () => {
     try {
-      setError(''); // Limpiamos errores viejos
-      // Esto te llevará a la página de Google y volverá solo a la App
+      setError('');
       await signInWithRedirect(auth, googleProvider);
     } catch (err) {
       console.error(err);
-      setError("Error al iniciar con Google. Intenta de nuevo.");
+      setError("No se pudo iniciar la redirección.");
     }
   };
 
-  // 2. Iniciar o Crear con Email
   const handleEmailAuth = async (e) => {
     e.preventDefault();
     setError('');
@@ -36,7 +51,7 @@ export default function Login() {
       if (err.code === 'auth/invalid-credential') setError("Datos incorrectos");
       else if (err.code === 'auth/email-already-in-use') setError("Este email ya está registrado");
       else if (err.code === 'auth/weak-password') setError("La contraseña es muy corta (mín 6)");
-      else setError("Ocurrió un error. Intenta nuevamente.");
+      else setError("Ocurrió un error: " + err.message);
     }
   };
 
@@ -44,7 +59,6 @@ export default function Login() {
     <div className="min-h-screen flex items-center justify-center bg-[#f3f4f6] p-4">
       <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md animate-fade-in">
         
-        {/* Encabezado */}
         <div className="text-center mb-8">
           <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <span className="text-3xl">💳</span>
@@ -71,38 +85,23 @@ export default function Login() {
         <form onSubmit={handleEmailAuth} className="space-y-4">
           <div>
             <label className="block text-xs font-bold text-gray-500 mb-1">Email</label>
-            <input 
-              type="email" required 
-              value={email} onChange={e => setEmail(e.target.value)}
-              className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
-              placeholder="nombre@ejemplo.com"
-            />
+            <input type="email" required value={email} onChange={e => setEmail(e.target.value)} className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" placeholder="nombre@ejemplo.com" />
           </div>
           <div>
             <label className="block text-xs font-bold text-gray-500 mb-1">Contraseña</label>
-            <input 
-              type="password" required 
-              value={password} onChange={e => setPassword(e.target.value)}
-              className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
-              placeholder="••••••••"
-            />
+            <input type="password" required value={password} onChange={e => setPassword(e.target.value)} className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" placeholder="••••••••" />
           </div>
 
-          {error && <p className="text-red-500 text-xs text-center font-bold bg-red-50 p-2 rounded">{error}</p>}
+          {/* MOSTRAR EL ERROR EN ROJO SI EXISTE */}
+          {error && <p className="text-red-500 text-xs text-center font-bold bg-red-50 p-3 rounded border border-red-200 break-words">{error}</p>}
 
-          <button 
-            type="submit" 
-            className="w-full py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-transform active:scale-95 shadow-lg shadow-blue-200"
-          >
+          <button type="submit" className="w-full py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-transform active:scale-95 shadow-lg shadow-blue-200">
             {isRegistering ? 'Crear Cuenta' : 'Iniciar Sesión'}
           </button>
         </form>
 
         <div className="mt-6 text-center">
-          <button 
-            onClick={() => setIsRegistering(!isRegistering)}
-            className="text-sm text-blue-600 font-medium hover:underline"
-          >
+          <button onClick={() => setIsRegistering(!isRegistering)} className="text-sm text-blue-600 font-medium hover:underline">
             {isRegistering ? '¿Ya tienes cuenta? Inicia sesión' : '¿No tienes cuenta? Regístrate gratis'}
           </button>
         </div>
