@@ -111,7 +111,7 @@ export default function App() {
         {view === 'cards' && <MyCards cards={cards} />}
 
         {/* --- AQUÍ ESTÁ EL IMPORTADOR --- */}
-        <Importer cards={cards} />
+        {/*<Importer cards={cards} />*/}
       </main>
 
       <BottomNav currentView={view} setView={setView} />
