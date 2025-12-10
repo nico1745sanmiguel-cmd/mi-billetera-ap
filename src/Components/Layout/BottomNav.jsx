@@ -42,6 +42,17 @@ export default function BottomNav({ currentView, setView }) {
           </svg>
           <span className="text-[10px] font-bold">Tarjetas</span>
         </button>
+        {/* BOTÓN SUPERMERCADO */}
+<button 
+  onClick={() => setView('super')}
+  className={`flex flex-col items-center justify-center w-16 transition-colors duration-200 ${currentView === 'super' ? 'text-purple-600' : 'text-gray-400 hover:text-gray-600'}`}
+>
+  <svg className="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={currentView === 'super' ? 2.5 : 2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3h16.5M4.5 3l.75 12h13.5l.75-12M9.75 3v12m4.5-12v12" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M9 21a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zm9 0a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
+  </svg>
+  <span className="text-[10px] font-bold">Super</span>
+</button>
 
       </div>
     </div>
