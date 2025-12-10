@@ -5,22 +5,22 @@ import Dashboard from './Components/Dashboard/Dashboard';
 import MyCards from './Components/Cards/MyCards';
 import NewPurchase from './Components/Purchase/NewPurchase';
 import InstallPrompt from './Components/UI/InstallPrompt';
-import Login from './Components/Login'; // Importamos el Login
+import Login from './Components/Login';
 
-// Importamos AUTH y el escuchador de cambios
 import { db, auth } from './firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
-import { collection, onSnapshot, addDoc, query, orderBy } from 'firebase/firestore';
+// AGREGAMOS 'where' PARA FILTRAR
+import { collection, onSnapshot, addDoc, query, orderBy, where } from 'firebase/firestore';
 
 export default function App() {
-  const [user, setUser] = useState(null); // Estado del Usuario
-  const [loadingUser, setLoadingUser] = useState(true); // Para no mostrar nada mientras carga
+  const [user, setUser] = useState(null);
+  const [loadingUser, setLoadingUser] = useState(true);
 
   const [view, setView] = useState('dashboard');
   const [cards, setCards] = useState([]);
   const [transactions, setTransactions] = useState([]);
 
-  // --- 1. ESCUCHAR SI HAY USUARIO LOGUEADO ---
+  // 1. ESCUCHAR LOGIN
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
@@ -29,32 +29,51 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
-  // Cargar datos (Solo si hay usuario - por ahora carga todo global)
+  // 2. CARGAR DATOS (SOLO LOS DEL USUARIO)
   useEffect(() => {
-    if (!user) return; // No cargar datos si no hay login
+    if (!user) {
+      setCards([]);
+      setTransactions([]);
+      return; 
+    }
     
-    // Tarjetas
-    const unsubCards = onSnapshot(collection(db, 'cards'), (snapshot) => {
+    // A. TARJETAS: Traer solo donde userId == user.uid
+    const qCards = query(collection(db, 'cards'), where("userId", "==", user.uid));
+    const unsubCards = onSnapshot(qCards, (snapshot) => {
       setCards(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     });
 
-    // Compras
-    const q = query(collection(db, 'transactions'), orderBy('date', 'desc'));
-    const unsubTrans = onSnapshot(q, (snapshot) => {
+    // B. COMPRAS: Traer solo donde userId == user.uid (Y ordenadas por fecha)
+    // Nota: Firebase a veces pide crear un "Índice" para consultas compuestas (where + orderBy).
+    // Si la consola da error, prueba quitando el orderBy temporalmente o sigue el link que te da el error.
+    const qTrans = query(
+      collection(db, 'transactions'), 
+      where("userId", "==", user.uid),
+      orderBy('date', 'desc')
+    );
+    const unsubTrans = onSnapshot(qTrans, (snapshot) => {
       setTransactions(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     });
 
     return () => { unsubCards(); unsubTrans(); };
-  }, [user]); // Se ejecuta cuando cambia el usuario
+  }, [user]);
 
+  // 3. GUARDAR COMPRA (CON FIRMA DE DUEÑO)
   const addTransaction = async (t) => {
     try {
+      if (!user) return;
       const { id, ...dataToSave } = t; 
-      await addDoc(collection(db, 'transactions'), dataToSave);
+      
+      // AGREGAMOS EL ID DEL USUARIO AQUÍ
+      await addDoc(collection(db, 'transactions'), {
+        ...dataToSave,
+        userId: user.uid 
+      });
+      
       setView('dashboard');
     } catch (error) {
-      console.error("Error:", error);
-      alert("Error al guardar.");
+      console.error("Error guardando:", error);
+      alert("Error al guardar la compra.");
     }
   };
 
@@ -62,24 +81,13 @@ export default function App() {
     signOut(auth);
   };
 
-  // --- VISTAS CONDICIONALES ---
+  if (loadingUser) return <div className="min-h-screen flex items-center justify-center bg-gray-100 text-gray-500">Cargando billetera...</div>;
+  if (!user) return <Login />;
 
-  // 1. Cargando...
-  if (loadingUser) {
-    return <div className="min-h-screen flex items-center justify-center bg-gray-100 text-gray-500">Cargando billetera...</div>;
-  }
-
-  // 2. Si NO hay usuario -> Mostrar Login
-  if (!user) {
-    return <Login />;
-  }
-
-  // 3. Si HAY usuario -> Mostrar App
   return (
     <div className="min-h-screen font-sans text-gray-800 bg-[#f3f4f6]">
       <InstallPrompt />
 
-      {/* HEADER DESKTOP (Con botón de salir) */}
       <div className="hidden md:block relative">
         <Navbar currentView={view} setView={setView} />
         <button onClick={handleLogout} className="absolute top-4 right-4 text-xs text-red-500 hover:underline bg-white px-3 py-1 rounded border border-red-100">
@@ -87,9 +95,8 @@ export default function App() {
         </button>
       </div>
 
-      {/* HEADER MÓVIL (Con botón de salir pequeño) */}
       <div className="md:hidden bg-white p-4 shadow-sm sticky top-0 z-40 flex justify-between items-center px-6">
-         <div className="w-6"></div> {/* Espaciador */}
+         <div className="w-6"></div>
          <h1 className="font-bold text-gray-900 text-lg">
             {view === 'dashboard' && 'Resumen'}
             {view === 'purchase' && 'Nueva Compra'}
