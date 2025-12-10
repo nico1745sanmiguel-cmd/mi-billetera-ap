@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from './Components/Layout/Navbar';
 import BottomNav from './Components/Layout/BottomNav'; 
-import Dashboard from './Components/Dashboard/Dashboard';
+import Home from './Components/Dashboard/Home'; // <--- NUEVO HOME
+import Dashboard from './Components/Dashboard/Dashboard'; // (Viejo Dashboard, lo usaremos en 'stats')
 import MyCards from './Components/Cards/MyCards';
 import NewPurchase from './Components/Purchase/NewPurchase';
 import InstallPrompt from './Components/UI/InstallPrompt';
 import Login from './Components/Login';
 import Importer from './Components/Importer'; 
 import SkeletonDashboard from './Components/UI/SkeletonDashboard';
-// NUEVO IMPORT
 import SuperList from './Components/Supermarket/SuperList';
 
 import { db, auth } from './firebase';
@@ -25,8 +25,11 @@ export default function App() {
   const [privacyMode, setPrivacyMode] = useState(false);
 
   const [view, setView] = useState('dashboard');
+  
+  // ESTADOS DE DATOS
   const [cards, setCards] = useState([]);
   const [transactions, setTransactions] = useState([]);
+  const [superItems, setSuperItems] = useState([]); // <--- NUEVO ESTADO SUPER
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -37,15 +40,22 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (!user) { setCards([]); setTransactions([]); return; }
+    if (!user) { setCards([]); setTransactions([]); setSuperItems([]); return; }
     
+    // 1. Tarjetas
     const unsubCards = onSnapshot(query(collection(db, 'cards'), where("userId", "==", user.uid)), (snap) => {
       setCards(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     });
+    // 2. Transacciones
     const unsubTrans = onSnapshot(query(collection(db, 'transactions'), where("userId", "==", user.uid)), (snap) => {
       setTransactions(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     });
-    return () => { unsubCards(); unsubTrans(); };
+    // 3. Supermercado (NUEVO)
+    const unsubSuper = onSnapshot(query(collection(db, 'supermarket_items'), where("userId", "==", user.uid)), (snap) => {
+      setSuperItems(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    });
+
+    return () => { unsubCards(); unsubTrans(); unsubSuper(); };
   }, [user]);
 
   const addTransaction = async (t) => {
@@ -80,10 +90,11 @@ export default function App() {
             {privacyMode ? <EyeClosed /> : <EyeOpen />}
          </button>
          <h1 className="font-bold text-gray-900 text-lg">
-            {view === 'dashboard' && 'Resumen'}
+            {view === 'dashboard' && 'Mi Billetera'} {/* Cambio de Título */}
             {view === 'purchase' && 'Nueva Compra'}
-            {view === 'cards' && 'Tarjetas'}
+            {view === 'cards' && 'Mis Tarjetas'}
             {view === 'super' && 'Lista Super'}
+            {view === 'stats' && 'Análisis'}
          </h1>
          <button onClick={handleLogout} className="text-red-500 p-2" title="Salir">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
@@ -91,14 +102,26 @@ export default function App() {
       </div>
       
       <main className="max-w-5xl mx-auto p-4 mt-2 pb-28 md:pb-10 md:mt-4">
-        {view === 'dashboard' && <Dashboard transactions={transactions} cards={cards} privacyMode={privacyMode} />}
+        
+        {/* VIEW: HOME (NUEVO) */}
+        {view === 'dashboard' && (
+            <Home 
+                transactions={transactions} 
+                cards={cards} 
+                supermarketItems={superItems} 
+                privacyMode={privacyMode} 
+                setView={setView} 
+            />
+        )}
+
+        {/* VIEW: STATS (El Viejo Dashboard ahora es Estadísticas) */}
+        {view === 'stats' && <Dashboard transactions={transactions} cards={cards} privacyMode={privacyMode} />}
+
         {view === 'purchase' && <NewPurchase cards={cards} onSave={addTransaction} transactions={transactions} privacyMode={privacyMode} />}
         {view === 'cards' && <MyCards cards={cards} privacyMode={privacyMode} />}
-        
-        {/* NUEVA VISTA DEL SÚPER */}
         {view === 'super' && <SuperList />}
-
-        {/*<Importer cards={cards} />*/}
+        
+        {/* <Importer cards={cards} /> */}
       </main>
 
       <BottomNav currentView={view} setView={setView} />
