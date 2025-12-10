@@ -6,11 +6,11 @@ import MyCards from './Components/Cards/MyCards';
 import NewPurchase from './Components/Purchase/NewPurchase';
 import InstallPrompt from './Components/UI/InstallPrompt';
 import Login from './Components/Login';
+import Importer from './Components/Importer'; // <--- AQUÍ ESTÁ EL IMPORTADOR
 
 import { db, auth } from './firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
-// AGREGAMOS 'where' PARA FILTRAR
-import { collection, onSnapshot, addDoc, query, orderBy, where } from 'firebase/firestore';
+import { collection, onSnapshot, addDoc, query, where } from 'firebase/firestore';
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -37,18 +37,16 @@ export default function App() {
       return; 
     }
     
-    // A. TARJETAS: Traer solo donde userId == user.uid
+    // A. TARJETAS
     const qCards = query(collection(db, 'cards'), where("userId", "==", user.uid));
     const unsubCards = onSnapshot(qCards, (snapshot) => {
       setCards(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     });
 
-    // B. COMPRAS: Traer solo donde userId == user.uid (Y ordenadas por fecha)
-    // Nota: Firebase a veces pide crear un "Índice" para consultas compuestas (where + orderBy).
-    // Si la consola da error, prueba quitando el orderBy temporalmente o sigue el link que te da el error.
+    // B. COMPRAS (Sin orderBy para evitar pantalla blanca por índices)
     const qTrans = query(
       collection(db, 'transactions'), 
-      where("userId", "==", user.uid),
+      where("userId", "==", user.uid)
     );
     const unsubTrans = onSnapshot(qTrans, (snapshot) => {
       setTransactions(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
@@ -57,13 +55,12 @@ export default function App() {
     return () => { unsubCards(); unsubTrans(); };
   }, [user]);
 
-  // 3. GUARDAR COMPRA (CON FIRMA DE DUEÑO)
+  // 3. GUARDAR COMPRA
   const addTransaction = async (t) => {
     try {
       if (!user) return;
       const { id, ...dataToSave } = t; 
       
-      // AGREGAMOS EL ID DEL USUARIO AQUÍ
       await addDoc(collection(db, 'transactions'), {
         ...dataToSave,
         userId: user.uid 
@@ -80,7 +77,9 @@ export default function App() {
     signOut(auth);
   };
 
-  if (loadingUser) return <div className="min-h-screen flex items-center justify-center bg-gray-100 text-gray-500">Cargando billetera...</div>;
+  // --- RENDERIZADO ---
+
+  if (loadingUser) return <div className="min-h-screen flex items-center justify-center bg-gray-100 text-gray-500">Cargando...</div>;
   if (!user) return <Login />;
 
   return (
@@ -110,6 +109,8 @@ export default function App() {
         {view === 'dashboard' && <Dashboard transactions={transactions} cards={cards} />}
         {view === 'purchase' && <NewPurchase cards={cards} onSave={addTransaction} transactions={transactions} />}
         {view === 'cards' && <MyCards cards={cards} />}
+
+        {/* --- AQUÍ ESTÁ EL IMPORTADOR --- */}
         <Importer cards={cards} />
       </main>
 
