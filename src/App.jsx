@@ -111,6 +111,7 @@ export default function App() {
         {view === 'dashboard' && <Dashboard transactions={transactions} cards={cards} />}
         {view === 'purchase' && <NewPurchase cards={cards} onSave={addTransaction} transactions={transactions} />}
         {view === 'cards' && <MyCards cards={cards} />}
+        <Importer cards={cards} />
       </main>
 
       <BottomNav currentView={view} setView={setView} />
