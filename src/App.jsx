@@ -49,7 +49,6 @@ export default function App() {
     const qTrans = query(
       collection(db, 'transactions'), 
       where("userId", "==", user.uid),
-      orderBy('date', 'desc')
     );
     const unsubTrans = onSnapshot(qTrans, (snapshot) => {
       setTransactions(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
