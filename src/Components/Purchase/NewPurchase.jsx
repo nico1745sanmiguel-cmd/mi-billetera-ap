@@ -48,45 +48,36 @@ export default function NewPurchase({ cards, onSave, transactions }) {
   // --- FUNCIÓN PARA CENTRAR TARJETA AL CLICK ---
   const handleCardSelect = (cardId, index) => {
     setForm({ ...form, cardId });
-    
-    // Magia para centrar el elemento seleccionado
     if (cardsContainerRef.current) {
         const container = cardsContainerRef.current;
         const cardElement = container.children[index];
-        
-        // Calculamos la posición para que quede al centro
         const scrollLeft = cardElement.offsetLeft - (container.clientWidth / 2) + (cardElement.clientWidth / 2);
-        
-        container.scrollTo({
-            left: scrollLeft,
-            behavior: 'smooth'
-        });
+        container.scrollTo({ left: scrollLeft, behavior: 'smooth' });
     }
   };
 
   // --- CÁLCULOS ---
   const selectedCard = cards.find(c => c.id == form.cardId);
 
-  // 1. CÁLCULO DE LÍMITES (DOBLE VISIÓN)
-  const cardStatus = useMemo(() => {
+  // 1. HELPER: Calcular disponibles para CUALQUIER tarjeta (no solo la seleccionada)
+  const getCardAvailability = (card) => {
+      const usedLimit = transactions
+        .filter(t => t.cardId == card.id)
+        .reduce((acc, t) => acc + Number(t.finalAmount || t.amount), 0);
+      
+      return {
+          availableInstallments: Number(card.limit) - usedLimit,
+          availableOneShot: (Number(card.limitOneShot) || Number(card.limit)) - usedLimit
+      };
+  };
+
+  // 2. Límite de la tarjeta SELECCIONADA (Para validaciones y el tablero de abajo)
+  const selectedStatus = useMemo(() => {
     if (!selectedCard) return { availableOneShot: 0, availableInstallments: 0 };
-    
-    // Deuda Total Acumulada en esta tarjeta
-    const usedLimit = transactions
-      .filter(t => t.cardId == form.cardId)
-      .reduce((acc, t) => acc + Number(t.finalAmount || t.amount), 0);
-
-    // Límite 1 Pago (Si no existe, usa el general)
-    const limitOS = Number(selectedCard.limitOneShot) || Number(selectedCard.limit);
-    // Límite Cuotas
-    const limitIns = Number(selectedCard.limit);
-
-    return {
-        availableOneShot: limitOS - usedLimit,
-        availableInstallments: limitIns - usedLimit
-    };
+    return getCardAvailability(selectedCard);
   }, [transactions, form.cardId, selectedCard]);
 
+  // 3. Cálculo de la compra actual
   const purchaseCalc = useMemo(() => {
     const base = parseInputValue(form.amount);
     const bonus = parseInputValue(form.bonus);
@@ -99,7 +90,7 @@ export default function NewPurchase({ cards, onSave, transactions }) {
     };
   }, [form.amount, form.interest, form.bonus, form.installments]);
 
-  // 2. PROYECCIÓN FUTURA
+  // 4. Proyección Futura
   const futureImpact = useMemo(() => {
     if (purchaseCalc.total <= 0) return [];
     const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
@@ -120,7 +111,6 @@ export default function NewPurchase({ cards, onSave, transactions }) {
             const tDate = new Date(t.date);
             const tLocal = new Date(tDate.valueOf() + tDate.getTimezoneOffset() * 60000);
             const tEnd = new Date(tLocal.getFullYear(), tLocal.getMonth() + Number(t.installments), 1);
-            
             if (targetDate >= new Date(tLocal.getFullYear(), tLocal.getMonth(), 1) && targetDate < tEnd) {
                  const monthlyVal = Number(t.monthlyInstallment) || 0;
                  existingGlobal += monthlyVal;
@@ -145,8 +135,8 @@ export default function NewPurchase({ cards, onSave, transactions }) {
         return;
     }
     
-    // Validación según tipo de compra
-    const limitToCheck = Number(form.installments) === 1 ? cardStatus.availableOneShot : cardStatus.availableInstallments;
+    // Validación de límite
+    const limitToCheck = Number(form.installments) === 1 ? selectedStatus.availableOneShot : selectedStatus.availableInstallments;
     
     if (purchaseCalc.total > limitToCheck) {
         if(!window.confirm("⚠️ ¡ALERTA DE LÍMITE! \nEstás superando el disponible.\n¿Guardar igual?")) return;
@@ -177,7 +167,7 @@ export default function NewPurchase({ cards, onSave, transactions }) {
         <div>
             <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wide">1. Selecciona tu Tarjeta</label>
             
-            {/* CARRUSEL CON SCROLL MEJORADO Y CLICK-TO-CENTER */}
+            {/* CARRUSEL DE TARJETAS */}
             <div 
                 ref={cardsContainerRef}
                 className="flex overflow-x-auto overflow-y-hidden gap-4 py-6 snap-x snap-mandatory scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0 touch-pan-x"
@@ -185,6 +175,9 @@ export default function NewPurchase({ cards, onSave, transactions }) {
             >
                 {cards.map((card, index) => {
                     const isSelected = form.cardId == card.id;
+                    // CALCULAMOS EL DISPONIBLE PARA CADA TARJETA INDIVIDUALMENTE
+                    const { availableInstallments, availableOneShot } = getCardAvailability(card);
+
                     return (
                         <div 
                             key={card.id}
@@ -200,14 +193,30 @@ export default function NewPurchase({ cards, onSave, transactions }) {
                         >
                             <div className="absolute -top-[50%] -left-[50%] w-[200%] h-[200%] bg-gradient-to-br from-white/20 to-transparent rotate-45 pointer-events-none"></div>
                             <div className="absolute inset-0 p-5 flex flex-col justify-between text-white z-10">
+                                
+                                {/* Header: Banco y Logo */}
                                 <div className="flex justify-between items-start">
                                     <span className="font-bold text-sm uppercase opacity-90 drop-shadow-md">{card.bank}</span>
                                     {getBrandLogo(card.name)}
                                 </div>
-                                <div>
-                                    <p className="text-xs opacity-70 uppercase tracking-widest drop-shadow-sm">Total 1 Pago</p>
-                                    <p className="font-mono text-lg font-bold truncate drop-shadow-md">{formatMoney(card.limitOneShot || card.limit)}</p>
-                                    <p className="font-medium text-sm mt-1 truncate opacity-90">{card.name}</p>
+
+                                {/* Body: Datos "Actualizados" con nueva Jerarquía */}
+                                <div className="space-y-2">
+                                    {/* 1. DISPONIBLE CUOTAS (Grande y Arriba) */}
+                                    <div>
+                                        <p className="text-[10px] opacity-70 uppercase tracking-widest drop-shadow-sm">Disp. Cuotas</p>
+                                        <p className="font-mono text-xl font-bold truncate drop-shadow-md text-shadow-sm">
+                                            {formatMoney(availableInstallments)}
+                                        </p>
+                                    </div>
+
+                                    {/* 2. DISPONIBLE 1 PAGO (Más chico y Abajo - Reemplaza al Nombre) */}
+                                    <div>
+                                        <p className="text-[9px] opacity-70 uppercase tracking-widest drop-shadow-sm">Disp. 1 Pago</p>
+                                        <p className="font-mono text-sm font-medium truncate drop-shadow-md opacity-90">
+                                            {formatMoney(availableOneShot)}
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -215,21 +224,19 @@ export default function NewPurchase({ cards, onSave, transactions }) {
                 })}
             </div>
 
-            {/* TABLERO DE LÍMITES DOBLE (Siempre visible) */}
+            {/* TABLERO DE LÍMITES DOBLE (Resumen bajo el carrusel) */}
             <div className="mt-4 grid grid-cols-2 gap-3">
-                {/* Caja 1: Disponible en 1 Pago */}
                 <div className={`p-3 rounded-xl border flex flex-col justify-center items-center text-center transition-colors ${Number(form.installments) === 1 ? 'bg-blue-50 border-blue-200 ring-1 ring-blue-300' : 'bg-gray-50 border-gray-100 opacity-60'}`}>
                     <span className="text-[9px] uppercase font-bold text-gray-500 mb-1">Disponible 1 Pago</span>
-                    <span className={`text-sm md:text-base font-mono font-bold ${cardStatus.availableOneShot < 0 ? 'text-red-500' : 'text-gray-800'}`}>
-                        {formatMoney(cardStatus.availableOneShot)}
+                    <span className={`text-sm md:text-base font-mono font-bold ${selectedStatus.availableOneShot < 0 ? 'text-red-500' : 'text-gray-800'}`}>
+                        {formatMoney(selectedStatus.availableOneShot)}
                     </span>
                 </div>
 
-                {/* Caja 2: Disponible en Cuotas */}
                 <div className={`p-3 rounded-xl border flex flex-col justify-center items-center text-center transition-colors ${Number(form.installments) > 1 ? 'bg-blue-50 border-blue-200 ring-1 ring-blue-300' : 'bg-gray-50 border-gray-100 opacity-60'}`}>
                     <span className="text-[9px] uppercase font-bold text-gray-500 mb-1">Disponible Cuotas</span>
-                    <span className={`text-sm md:text-base font-mono font-bold ${cardStatus.availableInstallments < 0 ? 'text-red-500' : 'text-gray-800'}`}>
-                        {formatMoney(cardStatus.availableInstallments)}
+                    <span className={`text-sm md:text-base font-mono font-bold ${selectedStatus.availableInstallments < 0 ? 'text-red-500' : 'text-gray-800'}`}>
+                        {formatMoney(selectedStatus.availableInstallments)}
                     </span>
                 </div>
             </div>
