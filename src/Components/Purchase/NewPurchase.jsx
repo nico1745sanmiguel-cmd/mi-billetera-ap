@@ -14,7 +14,7 @@ const getBrandLogo = (name) => {
     return <span className="font-bold text-white text-[10px] tracking-widest uppercase opacity-80">TARJETA</span>;
 };
 
-export default function NewPurchase({ cards, onSave, transactions }) {
+export default function NewPurchase({ cards, onSave, transactions, privacyMode }) {
   const [toast, setToast] = useState(null);
   const cardsContainerRef = useRef(null);
 
@@ -45,6 +45,9 @@ export default function NewPurchase({ cards, onSave, transactions }) {
     setForm({ ...form, [e.target.name]: formatInputValue(rawValue) });
   };
 
+  // Helper para ocultar dinero si hay privacidad
+  const showMoney = (amount) => privacyMode ? '****' : formatMoney(amount);
+
   // --- FUNCIÓN PARA CENTRAR TARJETA AL CLICK ---
   const handleCardSelect = (cardId, index) => {
     setForm({ ...form, cardId });
@@ -59,7 +62,7 @@ export default function NewPurchase({ cards, onSave, transactions }) {
   // --- CÁLCULOS ---
   const selectedCard = cards.find(c => c.id == form.cardId);
 
-  // 1. HELPER: Calcular disponibles para CUALQUIER tarjeta (no solo la seleccionada)
+  // 1. HELPER: Calcular disponibles para CUALQUIER tarjeta
   const getCardAvailability = (card) => {
       const usedLimit = transactions
         .filter(t => t.cardId == card.id)
@@ -71,7 +74,7 @@ export default function NewPurchase({ cards, onSave, transactions }) {
       };
   };
 
-  // 2. Límite de la tarjeta SELECCIONADA (Para validaciones y el tablero de abajo)
+  // 2. Límite de la tarjeta SELECCIONADA (Para validaciones internas)
   const selectedStatus = useMemo(() => {
     if (!selectedCard) return { availableOneShot: 0, availableInstallments: 0 };
     return getCardAvailability(selectedCard);
@@ -111,6 +114,7 @@ export default function NewPurchase({ cards, onSave, transactions }) {
             const tDate = new Date(t.date);
             const tLocal = new Date(tDate.valueOf() + tDate.getTimezoneOffset() * 60000);
             const tEnd = new Date(tLocal.getFullYear(), tLocal.getMonth() + Number(t.installments), 1);
+            
             if (targetDate >= new Date(tLocal.getFullYear(), tLocal.getMonth(), 1) && targetDate < tEnd) {
                  const monthlyVal = Number(t.monthlyInstallment) || 0;
                  existingGlobal += monthlyVal;
@@ -175,7 +179,6 @@ export default function NewPurchase({ cards, onSave, transactions }) {
             >
                 {cards.map((card, index) => {
                     const isSelected = form.cardId == card.id;
-                    // CALCULAMOS EL DISPONIBLE PARA CADA TARJETA INDIVIDUALMENTE
                     const { availableInstallments, availableOneShot } = getCardAvailability(card);
 
                     return (
@@ -194,27 +197,25 @@ export default function NewPurchase({ cards, onSave, transactions }) {
                             <div className="absolute -top-[50%] -left-[50%] w-[200%] h-[200%] bg-gradient-to-br from-white/20 to-transparent rotate-45 pointer-events-none"></div>
                             <div className="absolute inset-0 p-5 flex flex-col justify-between text-white z-10">
                                 
-                                {/* Header: Banco y Logo */}
                                 <div className="flex justify-between items-start">
                                     <span className="font-bold text-sm uppercase opacity-90 drop-shadow-md">{card.bank}</span>
                                     {getBrandLogo(card.name)}
                                 </div>
 
-                                {/* Body: Datos "Actualizados" con nueva Jerarquía */}
                                 <div className="space-y-2">
-                                    {/* 1. DISPONIBLE CUOTAS (Grande y Arriba) */}
+                                    {/* 1. DISPONIBLE CUOTAS (Grande) */}
                                     <div>
                                         <p className="text-[10px] opacity-70 uppercase tracking-widest drop-shadow-sm">Disp. Cuotas</p>
                                         <p className="font-mono text-xl font-bold truncate drop-shadow-md text-shadow-sm">
-                                            {formatMoney(availableInstallments)}
+                                            {showMoney(availableInstallments)}
                                         </p>
                                     </div>
 
-                                    {/* 2. DISPONIBLE 1 PAGO (Más chico y Abajo - Reemplaza al Nombre) */}
+                                    {/* 2. DISPONIBLE 1 PAGO (Chico) */}
                                     <div>
                                         <p className="text-[9px] opacity-70 uppercase tracking-widest drop-shadow-sm">Disp. 1 Pago</p>
                                         <p className="font-mono text-sm font-medium truncate drop-shadow-md opacity-90">
-                                            {formatMoney(availableOneShot)}
+                                            {showMoney(availableOneShot)}
                                         </p>
                                     </div>
                                 </div>
@@ -223,23 +224,7 @@ export default function NewPurchase({ cards, onSave, transactions }) {
                     );
                 })}
             </div>
-
-            {/* TABLERO DE LÍMITES DOBLE (Resumen bajo el carrusel) */}
-            <div className="mt-4 grid grid-cols-2 gap-3">
-                <div className={`p-3 rounded-xl border flex flex-col justify-center items-center text-center transition-colors ${Number(form.installments) === 1 ? 'bg-blue-50 border-blue-200 ring-1 ring-blue-300' : 'bg-gray-50 border-gray-100 opacity-60'}`}>
-                    <span className="text-[9px] uppercase font-bold text-gray-500 mb-1">Disponible 1 Pago</span>
-                    <span className={`text-sm md:text-base font-mono font-bold ${selectedStatus.availableOneShot < 0 ? 'text-red-500' : 'text-gray-800'}`}>
-                        {formatMoney(selectedStatus.availableOneShot)}
-                    </span>
-                </div>
-
-                <div className={`p-3 rounded-xl border flex flex-col justify-center items-center text-center transition-colors ${Number(form.installments) > 1 ? 'bg-blue-50 border-blue-200 ring-1 ring-blue-300' : 'bg-gray-50 border-gray-100 opacity-60'}`}>
-                    <span className="text-[9px] uppercase font-bold text-gray-500 mb-1">Disponible Cuotas</span>
-                    <span className={`text-sm md:text-base font-mono font-bold ${selectedStatus.availableInstallments < 0 ? 'text-red-500' : 'text-gray-800'}`}>
-                        {formatMoney(selectedStatus.availableInstallments)}
-                    </span>
-                </div>
-            </div>
+            {/* AQUÍ ELIMINAMOS LAS CAJAS REDUNDANTES */}
         </div>
 
         {/* --- 2. DETALLES --- */}
@@ -279,7 +264,7 @@ export default function NewPurchase({ cards, onSave, transactions }) {
                 <h4 className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">📊 Impacto en tu Economía</h4>
                 <div className="flex justify-between items-center bg-blue-50 p-3 rounded-lg border border-blue-100 mb-4">
                     <span className="text-blue-800 text-sm">Vas a pagar por mes:</span>
-                    <span className="text-xl font-bold text-blue-900">{formatMoney(purchaseCalc.quota)}</span>
+                    <span className="text-xl font-bold text-blue-900">{showMoney(purchaseCalc.quota)}</span>
                 </div>
                 <div className="overflow-x-auto">
                     <table className="w-full text-xs">
@@ -294,8 +279,8 @@ export default function NewPurchase({ cards, onSave, transactions }) {
                             {futureImpact.map((item, idx) => (
                                 <tr key={idx} className="border-b border-gray-50 last:border-0">
                                     <td className="py-2.5 font-medium text-gray-500">{item.month}</td>
-                                    <td className="py-2.5 text-right font-medium text-blue-600">{formatMoney(item.newCardTotal)}</td>
-                                    <td className="py-2.5 text-right font-bold text-gray-900">{formatMoney(item.newGlobalTotal)}</td>
+                                    <td className="py-2.5 text-right font-medium text-blue-600">{showMoney(item.newCardTotal)}</td>
+                                    <td className="py-2.5 text-right font-bold text-gray-900">{showMoney(item.newGlobalTotal)}</td>
                                 </tr>
                             ))}
                         </tbody>
