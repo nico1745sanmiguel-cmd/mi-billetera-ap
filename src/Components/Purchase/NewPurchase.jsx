@@ -45,35 +45,48 @@ export default function NewPurchase({ cards, onSave, transactions }) {
     setForm({ ...form, [e.target.name]: formatInputValue(rawValue) });
   };
 
-  // --- CÁLCULOS INTELIGENTES ---
+  // --- FUNCIÓN PARA CENTRAR TARJETA AL CLICK ---
+  const handleCardSelect = (cardId, index) => {
+    setForm({ ...form, cardId });
+    
+    // Magia para centrar el elemento seleccionado
+    if (cardsContainerRef.current) {
+        const container = cardsContainerRef.current;
+        const cardElement = container.children[index];
+        
+        // Calculamos la posición para que quede al centro
+        const scrollLeft = cardElement.offsetLeft - (container.clientWidth / 2) + (cardElement.clientWidth / 2);
+        
+        container.scrollTo({
+            left: scrollLeft,
+            behavior: 'smooth'
+        });
+    }
+  };
+
+  // --- CÁLCULOS ---
   const selectedCard = cards.find(c => c.id == form.cardId);
 
-  // 1. CÁLCULO DE LÍMITE DISPONIBLE (DINÁMICO)
+  // 1. CÁLCULO DE LÍMITES (DOBLE VISIÓN)
   const cardStatus = useMemo(() => {
-    if (!selectedCard) return { limit: 0, available: 0, type: 'General' };
+    if (!selectedCard) return { availableOneShot: 0, availableInstallments: 0 };
     
-    // Detectamos qué límite usar según las cuotas elegidas
-    const isOneShot = Number(form.installments) === 1;
-    
-    // Si es 1 cuota, usamos limitOneShot (o limit normal si no existe el otro)
-    // Si son cuotas, usamos limit (el de financiación)
-    const activeLimit = isOneShot 
-        ? (Number(selectedCard.limitOneShot) || Number(selectedCard.limit)) 
-        : Number(selectedCard.limit);
-
-    // Calculamos cuánto ya te comiste de ese límite
+    // Deuda Total Acumulada en esta tarjeta
     const usedLimit = transactions
       .filter(t => t.cardId == form.cardId)
       .reduce((acc, t) => acc + Number(t.finalAmount || t.amount), 0);
 
-    return {
-        limit: activeLimit,
-        available: activeLimit - usedLimit,
-        type: isOneShot ? '1 Pago' : 'Cuotas' // Para mostrar en pantalla
-    };
-  }, [transactions, form.cardId, selectedCard, form.installments]); // <--- Ahora depende de installments
+    // Límite 1 Pago (Si no existe, usa el general)
+    const limitOS = Number(selectedCard.limitOneShot) || Number(selectedCard.limit);
+    // Límite Cuotas
+    const limitIns = Number(selectedCard.limit);
 
-  // 2. Cálculo de la compra actual
+    return {
+        availableOneShot: limitOS - usedLimit,
+        availableInstallments: limitIns - usedLimit
+    };
+  }, [transactions, form.cardId, selectedCard]);
+
   const purchaseCalc = useMemo(() => {
     const base = parseInputValue(form.amount);
     const bonus = parseInputValue(form.bonus);
@@ -86,7 +99,7 @@ export default function NewPurchase({ cards, onSave, transactions }) {
     };
   }, [form.amount, form.interest, form.bonus, form.installments]);
 
-  // 3. Proyección Futura
+  // 2. PROYECCIÓN FUTURA
   const futureImpact = useMemo(() => {
     if (purchaseCalc.total <= 0) return [];
     const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
@@ -131,9 +144,12 @@ export default function NewPurchase({ cards, onSave, transactions }) {
         setToast({ message: 'Ingresa un monto válido', type: 'error' });
         return;
     }
-    // Validación de límite (Opcional: solo advertencia o bloqueo)
-    if (purchaseCalc.total > cardStatus.available) {
-        if(!window.confirm("⚠️ ¡CUIDADO! \nEstás superando tu límite disponible.\n¿Quieres guardar igual?")) return;
+    
+    // Validación según tipo de compra
+    const limitToCheck = Number(form.installments) === 1 ? cardStatus.availableOneShot : cardStatus.availableInstallments;
+    
+    if (purchaseCalc.total > limitToCheck) {
+        if(!window.confirm("⚠️ ¡ALERTA DE LÍMITE! \nEstás superando el disponible.\n¿Guardar igual?")) return;
     }
 
     onSave({ 
@@ -160,25 +176,36 @@ export default function NewPurchase({ cards, onSave, transactions }) {
         {/* --- 1. SELECCIÓN DE TARJETA --- */}
         <div>
             <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wide">1. Selecciona tu Tarjeta</label>
+            
+            {/* CARRUSEL CON SCROLL MEJORADO Y CLICK-TO-CENTER */}
             <div 
                 ref={cardsContainerRef}
-                className="flex overflow-x-auto gap-4 py-8 snap-x snap-mandatory scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0"
+                className="flex overflow-x-auto overflow-y-hidden gap-4 py-6 snap-x snap-mandatory scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0 touch-pan-x"
                 style={{ scrollBehavior: 'smooth' }}
             >
-                {cards.map(card => {
+                {cards.map((card, index) => {
                     const isSelected = form.cardId == card.id;
                     return (
                         <div 
                             key={card.id}
-                            onClick={() => setForm({...form, cardId: card.id})}
-                            className={`relative flex-shrink-0 w-[85vw] max-w-[300px] h-44 rounded-2xl cursor-pointer transition-all duration-300 snap-center ${isSelected ? 'ring-4 ring-blue-400 scale-105 shadow-2xl z-10' : 'opacity-80 hover:opacity-100 scale-95'}`}
-                            style={{ background: `linear-gradient(135deg, ${card.color} 0%, ${card.color}DD 100%)` }}
+                            onClick={() => handleCardSelect(card.id, index)}
+                            className={`
+                                relative flex-shrink-0 
+                                w-[85vw] max-w-[300px] h-44 rounded-2xl cursor-pointer transition-all duration-300 snap-center
+                                ${isSelected ? 'ring-4 ring-blue-400 scale-105 shadow-xl z-10' : 'opacity-60 scale-95 grayscale-[0.5]'}
+                            `}
+                            style={{ 
+                                background: `linear-gradient(135deg, ${card.color} 0%, ${card.color}DD 100%)`,
+                            }}
                         >
                             <div className="absolute -top-[50%] -left-[50%] w-[200%] h-[200%] bg-gradient-to-br from-white/20 to-transparent rotate-45 pointer-events-none"></div>
                             <div className="absolute inset-0 p-5 flex flex-col justify-between text-white z-10">
-                                <div className="flex justify-between items-start"><span className="font-bold text-sm uppercase opacity-90 drop-shadow-md">{card.bank}</span>{getBrandLogo(card.name)}</div>
+                                <div className="flex justify-between items-start">
+                                    <span className="font-bold text-sm uppercase opacity-90 drop-shadow-md">{card.bank}</span>
+                                    {getBrandLogo(card.name)}
+                                </div>
                                 <div>
-                                    <p className="text-xs opacity-70 uppercase tracking-widest drop-shadow-sm">Límite {card.limitOneShot ? 'Total' : ''}</p>
+                                    <p className="text-xs opacity-70 uppercase tracking-widest drop-shadow-sm">Total 1 Pago</p>
                                     <p className="font-mono text-lg font-bold truncate drop-shadow-md">{formatMoney(card.limitOneShot || card.limit)}</p>
                                     <p className="font-medium text-sm mt-1 truncate opacity-90">{card.name}</p>
                                 </div>
@@ -188,20 +215,21 @@ export default function NewPurchase({ cards, onSave, transactions }) {
                 })}
             </div>
 
-            {/* INFO DE LÍMITES DINÁMICA */}
-            <div className={`mt-2 rounded-lg p-4 flex justify-between items-center border shadow-inner transition-colors duration-300 ${cardStatus.available < 0 ? 'bg-red-50 border-red-100' : 'bg-gray-50 border-gray-100'}`}>
-                <div>
-                    <span className="block text-[10px] uppercase font-bold text-gray-400">
-                        Disponible ({cardStatus.type})
-                    </span>
-                    <span className={`text-xl font-mono font-bold ${cardStatus.available < 0 ? 'text-red-500' : 'text-gray-800'}`}>
-                        {formatMoney(cardStatus.available)}
+            {/* TABLERO DE LÍMITES DOBLE (Siempre visible) */}
+            <div className="mt-4 grid grid-cols-2 gap-3">
+                {/* Caja 1: Disponible en 1 Pago */}
+                <div className={`p-3 rounded-xl border flex flex-col justify-center items-center text-center transition-colors ${Number(form.installments) === 1 ? 'bg-blue-50 border-blue-200 ring-1 ring-blue-300' : 'bg-gray-50 border-gray-100 opacity-60'}`}>
+                    <span className="text-[9px] uppercase font-bold text-gray-500 mb-1">Disponible 1 Pago</span>
+                    <span className={`text-sm md:text-base font-mono font-bold ${cardStatus.availableOneShot < 0 ? 'text-red-500' : 'text-gray-800'}`}>
+                        {formatMoney(cardStatus.availableOneShot)}
                     </span>
                 </div>
-                {/* Visualizador de qué límite se está usando */}
-                <div className="text-right">
-                    <span className="text-[10px] bg-white border border-gray-200 px-2 py-1 rounded text-gray-500 font-bold uppercase">
-                        {form.installments > 1 ? 'Financiación' : 'Contado'}
+
+                {/* Caja 2: Disponible en Cuotas */}
+                <div className={`p-3 rounded-xl border flex flex-col justify-center items-center text-center transition-colors ${Number(form.installments) > 1 ? 'bg-blue-50 border-blue-200 ring-1 ring-blue-300' : 'bg-gray-50 border-gray-100 opacity-60'}`}>
+                    <span className="text-[9px] uppercase font-bold text-gray-500 mb-1">Disponible Cuotas</span>
+                    <span className={`text-sm md:text-base font-mono font-bold ${cardStatus.availableInstallments < 0 ? 'text-red-500' : 'text-gray-800'}`}>
+                        {formatMoney(cardStatus.availableInstallments)}
                     </span>
                 </div>
             </div>
@@ -209,9 +237,18 @@ export default function NewPurchase({ cards, onSave, transactions }) {
 
         {/* --- 2. DETALLES --- */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="md:col-span-2"><label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wide">2. ¿Qué vas a comprar?</label><input required name="description" value={form.description} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-gray-800 placeholder-gray-300" placeholder="Descripción del gasto" /></div>
-            <div><label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wide">3. Monto Total</label><input required type="text" name="amount" value={form.amount} onChange={handleMoneyChange} inputMode="numeric" className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none font-mono text-xl font-bold text-gray-800" placeholder="$ 0" autoComplete="off"/></div>
-            <div><label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wide">Fecha</label><input type="date" name="date" value={form.date} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-xl focus:outline-none text-gray-600 font-medium" /></div>
+            <div className="md:col-span-2">
+                <label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wide">2. ¿Qué vas a comprar?</label>
+                <input required name="description" value={form.description} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-gray-800 placeholder-gray-300" placeholder="Descripción del gasto" />
+            </div>
+            <div>
+                <label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wide">3. Monto Total</label>
+                <input required type="text" name="amount" value={form.amount} onChange={handleMoneyChange} inputMode="numeric" className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none font-mono text-xl font-bold text-gray-800" placeholder="$ 0" autoComplete="off"/>
+            </div>
+            <div>
+                 <label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wide">Fecha</label>
+                 <input type="date" name="date" value={form.date} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-xl focus:outline-none text-gray-600 font-medium" />
+            </div>
         </div>
 
         {/* --- 3. FINANCIACIÓN --- */}
