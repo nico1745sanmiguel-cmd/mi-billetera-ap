@@ -33,7 +33,6 @@ export default function Importer({ cards }) {
         setStatus('Error al borrar.');
     }
   };
-  // -----------------------------------------
 
   const handleImport = async () => {
     if (!auth.currentUser) {
@@ -46,51 +45,70 @@ export default function Importer({ cards }) {
       setStatus('Procesando...');
       let data;
       try { data = JSON.parse(jsonInput); } 
-      catch (e) { setStatus("Error: JSON inválido."); return; }
+      catch (e) { setStatus("Error: El texto no es un JSON válido."); return; }
 
       let count = 0;
 
       for (const item of data) {
+        // MODO TARJETAS
         if (item.type === 'card') {
            await setDoc(doc(db, "cards", item.customId), {
-              name: item.name, bank: item.bank, limit: Number(item.limit),
-              closeDay: Number(item.closeDay), dueDay: Number(item.dueDay), color: item.color,
+              name: item.name, 
+              bank: item.bank, 
+              // AHORA GUARDAMOS LOS DOS LÍMITES
+              limit: Number(item.limit),               // Límite para Cuotas
+              limitOneShot: Number(item.limitOneShot), // Límite para 1 Pago (Nuevo)
+              closeDay: Number(item.closeDay), 
+              dueDay: Number(item.dueDay), 
+              color: item.color,
               userId: userId 
            });
            count++;
-        } else {
+        } 
+        // MODO COMPRAS
+        else {
             if (!cards || cards.length === 0) {
                 setStatus("Error: Carga primero las Tarjetas.");
                 return;
             }
-            const card = cards.find(c => c.name.toLowerCase().includes((item.cardName || '').toLowerCase())) || cards[0];
+            // Buscamos tarjeta por coincidencia de nombre
+            const card = cards.find(c => 
+                c.name.toLowerCase().includes((item.cardName || '').toLowerCase())
+            ) || cards[0];
+
             if (card) {
                 const amount = Number(item.amount || item.finalAmount);
                 const installments = Number(item.installments || 1);
+                
                 await addDoc(collection(db, 'transactions'), {
-                    description: item.description, amount: amount, finalAmount: amount,
-                    installments: installments, monthlyInstallment: amount / installments,
-                    date: item.date, cardId: card.id, userId: userId, currency: 'ARS'
+                    description: item.description,
+                    amount: amount,
+                    finalAmount: amount,
+                    installments: installments,
+                    monthlyInstallment: amount / installments,
+                    date: item.date,
+                    cardId: card.id, 
+                    userId: userId, 
+                    currency: 'ARS'
                 });
                 count++;
             }
         }
       }
-      setStatus(`¡Listo! ${count} elementos importados.`);
+      setStatus(`¡Listo! ${count} elementos importados correctamente.`);
       setJsonInput(''); 
     } catch (error) {
       console.error(error);
-      setStatus('Error desconocido.');
+      setStatus('Error desconocido: Revisa la consola.');
     }
   };
 
   return (
-    <div className="p-6 bg-gray-800 text-white rounded-xl mt-8 border-2 border-dashed border-gray-600 mb-20">
+    <div className="p-6 bg-gray-800 text-white rounded-xl mt-8 border-2 border-dashed border-gray-600 mb-24">
       <div className="flex justify-between items-center mb-4">
-          <h3 className="font-bold text-lg">📥 Importador / Reset</h3>
-          {/* BOTÓN ROJO DE RESET */}
+          <h3 className="font-bold text-lg">📥 Importador de Datos</h3>
           <button onClick={handleReset} className="text-xs bg-red-900/50 text-red-300 px-3 py-1 rounded hover:bg-red-800 border border-red-800 transition-colors">
-            🗑️ Borrar Todo
+            🗑️ Resetear Cuenta
           </button>
       </div>
       
