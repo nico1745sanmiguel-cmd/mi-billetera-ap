@@ -137,8 +137,14 @@ export default function App() {
             />
         )}
 
-        {/* GESTIÓN DE SERVICIOS */}
-        {view === 'services_manager' && <ServicesManager />}
+        {/* GESTIÓN DE SERVICIOS (Ahora recibe datos) */}
+{view === 'services_manager' && (
+    <ServicesManager 
+        services={services} 
+        cards={cards} 
+        transactions={transactions} 
+    />
+)}
 
         {/* OTRAS VISTAS */}
         {view === 'stats' && <Dashboard transactions={transactions} cards={cards} privacyMode={privacyMode} />}
