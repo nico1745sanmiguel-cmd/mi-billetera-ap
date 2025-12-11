@@ -7,10 +7,11 @@ import MyCards from './Components/Cards/MyCards';
 import NewPurchase from './Components/Purchase/NewPurchase';
 import InstallPrompt from './Components/UI/InstallPrompt';
 import Login from './Components/Login';
+import Importer from './Components/Importer'; 
 import SkeletonDashboard from './Components/UI/SkeletonDashboard';
 import SuperList from './Components/Supermarket/SuperList';
 import ServicesManager from './Components/Services/ServicesManager';
-import Savings from './Components/Savings/Savings'; // <--- 1. IMPORTAR SAVINGS
+import Savings from './Components/Savings/Savings';
 
 import { db, auth } from './firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
@@ -23,37 +24,56 @@ const EyeClosed = () => <svg className="w-6 h-6 text-blue-600" fill="none" strok
 export default function App() {
   const [user, setUser] = useState(null);
   const [loadingUser, setLoadingUser] = useState(true);
+  const [showReload, setShowReload] = useState(false); // Seguridad por si se cuelga
   const [privacyMode, setPrivacyMode] = useState(false);
   const [view, setView] = useState('dashboard');
   
-  // ESTADOS
-  const [cards, setCards] = useState([]);
-  const [transactions, setTransactions] = useState([]);
-  const [superItems, setSuperItems] = useState([]);
-  const [services, setServices] = useState([]);
-  const [savingsList, setSavingsList] = useState([]); // <--- 2. NUEVO ESTADO
+  // --- OPTIMIZACIÓN 1: INICIALIZACIÓN LAZY (Carga Instantánea) ---
+  // En lugar de arrancar vacíos ([]), intentamos leer del celular primero.
+  
+  const [cards, setCards] = useState(() => JSON.parse(localStorage.getItem('cache_cards')) || []);
+  const [transactions, setTransactions] = useState(() => JSON.parse(localStorage.getItem('cache_transactions')) || []);
+  const [superItems, setSuperItems] = useState(() => JSON.parse(localStorage.getItem('cache_superItems')) || []);
+  const [services, setServices] = useState(() => JSON.parse(localStorage.getItem('cache_services')) || []);
+  const [savingsList, setSavingsList] = useState(() => JSON.parse(localStorage.getItem('cache_savings')) || []);
 
+  // 1. DETECTAR USUARIO Y TIMEOUT DE SEGURIDAD
   useEffect(() => {
+    // Si en 8 segundos no cargó, mostramos botón de pánico
+    const safetyTimer = setTimeout(() => {
+        if (loadingUser) setShowReload(true);
+    }, 8000);
+
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
-      setTimeout(() => setLoadingUser(false), 500);
+      // Si hay cache visual, quitamos el loading rápido, sino esperamos un poco
+      const hasCache = cards.length > 0 || transactions.length > 0;
+      setTimeout(() => setLoadingUser(false), hasCache ? 0 : 500); 
     });
-    return () => unsubscribe();
-  }, []);
+    
+    return () => { unsubscribe(); clearTimeout(safetyTimer); };
+  }, []); // Solo al montar
 
+  // 2. CARGAR DATOS REALES Y ACTUALIZAR CACHÉ
   useEffect(() => {
-    if (!user) { setCards([]); setTransactions([]); setSuperItems([]); setServices([]); setSavingsList([]); return; }
+    if (!user) return;
     
-    // Listeners existentes...
-    const unsubCards = onSnapshot(query(collection(db, 'cards'), where("userId", "==", user.uid)), (snap) => setCards(snap.docs.map(doc => ({ id: doc.id, ...doc.data() }))));
-    const unsubTrans = onSnapshot(query(collection(db, 'transactions'), where("userId", "==", user.uid)), (snap) => setTransactions(snap.docs.map(doc => ({ id: doc.id, ...doc.data() }))));
-    const unsubSuper = onSnapshot(query(collection(db, 'supermarket_items'), where("userId", "==", user.uid)), (snap) => setSuperItems(snap.docs.map(doc => ({ id: doc.id, ...doc.data() }))));
-    const unsubServices = onSnapshot(query(collection(db, 'services'), where("userId", "==", user.uid)), (snap) => setServices(snap.docs.map(doc => ({ id: doc.id, ...doc.data() }))));
-    
-    // 3. NUEVO LISTENER AHORROS
-    const unsubSavings = onSnapshot(query(collection(db, 'savings_movements'), where("userId", "==", user.uid)), (snap) => {
-      setSavingsList(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    });
+    // Función Helper para actualizar estado y guardar en local
+    const syncData = (queryRef, setState, cacheKey) => {
+        return onSnapshot(queryRef, (snap) => {
+            const data = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            setState(data);
+            localStorage.setItem(cacheKey, JSON.stringify(data)); // <--- GUARDAMOS EN CELULAR
+        }, (error) => {
+            console.log("Modo Offline o Error:", error); // Falla silenciosa (usa el caché)
+        });
+    };
+
+    const unsubCards = syncData(query(collection(db, 'cards'), where("userId", "==", user.uid)), setCards, 'cache_cards');
+    const unsubTrans = syncData(query(collection(db, 'transactions'), where("userId", "==", user.uid)), setTransactions, 'cache_transactions');
+    const unsubSuper = syncData(query(collection(db, 'supermarket_items'), where("userId", "==", user.uid)), setSuperItems, 'cache_superItems');
+    const unsubServices = syncData(query(collection(db, 'services'), where("userId", "==", user.uid)), setServices, 'cache_services');
+    const unsubSavings = syncData(query(collection(db, 'savings_movements'), where("userId", "==", user.uid)), setSavingsList, 'cache_savings');
 
     return () => { unsubCards(); unsubTrans(); unsubSuper(); unsubServices(); unsubSavings(); };
   }, [user]);
@@ -64,12 +84,34 @@ export default function App() {
       const { id, ...dataToSave } = t; 
       await addDoc(collection(db, 'transactions'), { ...dataToSave, userId: user.uid });
       setView('dashboard');
-    } catch (error) { console.error(error); alert("Error al guardar."); }
+    } catch (error) { alert("Error al guardar. Revisa tu conexión."); }
   };
 
-  const handleLogout = () => { signOut(auth); };
+  const handleLogout = () => { 
+      if(window.confirm("¿Cerrar sesión? Se borrarán los datos del dispositivo.")) {
+        signOut(auth); 
+        localStorage.clear(); // Limpiamos caché por seguridad al salir
+        window.location.reload();
+      }
+  };
 
-  if (loadingUser) return <div className="min-h-screen bg-[#f3f4f6]"><SkeletonDashboard /></div>;
+  const handleReload = () => window.location.reload();
+
+  // --- RENDERIZADO DE EMERGENCIA ---
+  if (loadingUser) {
+      if (showReload) {
+          return (
+              <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-6 text-center">
+                  <p className="text-gray-500 mb-4">La conexión está lenta...</p>
+                  <button onClick={handleReload} className="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg">
+                      Recargar App ↻
+                  </button>
+              </div>
+          );
+      }
+      return <div className="min-h-screen bg-[#f3f4f6]"><SkeletonDashboard /></div>;
+  }
+
   if (!user) return <Login />;
 
   return (
@@ -78,7 +120,7 @@ export default function App() {
 
       <div className="hidden md:block relative">
         <Navbar currentView={view} setView={setView} privacyMode={privacyMode} setPrivacyMode={setPrivacyMode} />
-        <button onClick={handleLogout} className="absolute top-4 right-4 text-xs text-red-500 hover:underline bg-white px-3 py-1 rounded border border-red-100">Cerrar Sesión ({user.email})</button>
+        <button onClick={handleLogout} className="absolute top-4 right-4 text-xs text-red-500 hover:underline bg-white px-3 py-1 rounded border border-red-100">Cerrar Sesión</button>
       </div>
 
       <div className="md:hidden bg-white p-4 shadow-sm sticky top-0 z-40 flex justify-between items-center px-4">
@@ -98,29 +140,13 @@ export default function App() {
       </div>
       
       <main className="max-w-5xl mx-auto p-4 mt-2 pb-28 md:pb-10 md:mt-4">
-        
-        {/* 4. PASAR DATOS A HOME */}
-        {view === 'dashboard' && (
-            <Home 
-                transactions={transactions} 
-                cards={cards} 
-                supermarketItems={superItems} 
-                services={services} 
-                savingsList={savingsList} // <-- Pasamos ahorros al Home
-                privacyMode={privacyMode} 
-                setView={setView} 
-            />
-        )}
-
-        {/* 5. NUEVA RUTA */}
+        {view === 'dashboard' && <Home transactions={transactions} cards={cards} supermarketItems={superItems} services={services} savingsList={savingsList} privacyMode={privacyMode} setView={setView} />}
         {view === 'savings' && <Savings savingsList={savingsList} />}
-
         {view === 'services_manager' && <ServicesManager services={services} cards={cards} transactions={transactions} />}
         {view === 'stats' && <Dashboard transactions={transactions} cards={cards} privacyMode={privacyMode} />}
         {view === 'purchase' && <NewPurchase cards={cards} onSave={addTransaction} transactions={transactions} privacyMode={privacyMode} />}
         {view === 'cards' && <MyCards cards={cards} privacyMode={privacyMode} />}
         {view === 'super' && <SuperList />}
-        
       </main>
 
       <BottomNav currentView={view} setView={setView} />
