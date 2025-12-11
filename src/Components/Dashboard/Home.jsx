@@ -1,13 +1,10 @@
 import React, { useMemo } from 'react';
 import { formatMoney } from '../../utils';
 import FinancialTarget from './FinancialTarget'; 
-import { db } from '../../firebase';
-import { doc, updateDoc } from 'firebase/firestore';
 
-// RECIBIMOS savingsList AQUI
 export default function Home({ transactions, cards, supermarketItems = [], services = [], savingsList = [], privacyMode, setView }) {
   
-  // ... (Cálculos de Tarjetas y Super IGUAL QUE ANTES) ...
+  // 1. CÁLCULOS (Igual que antes)
   const cardsWithDebt = useMemo(() => {
       return cards.map(card => {
           const debt = transactions.filter(t => t.cardId === card.id).reduce((acc, t) => acc + (Number(t.finalAmount) || Number(t.amount) || 0), 0);
@@ -39,7 +36,7 @@ export default function Home({ transactions, cards, supermarketItems = [], servi
   const cardsPaid = cardsWithDebt.filter(c => c.isPaid).reduce((acc, c) => acc + c.currentDebt, 0);
   const granTotalPagado = superData.inCart + servicesPaid + cardsPaid;
 
-  // --- CÁLCULO DE AHORROS REALES (NUEVO) ---
+  // Cálculo Ahorros (Total Histórico)
   const savingsTotal = useMemo(() => {
       return savingsList.reduce((acc, item) => {
           const val = item.type === 'deposit' ? item.amount : -item.amount;
@@ -51,38 +48,53 @@ export default function Home({ transactions, cards, supermarketItems = [], servi
 
   const showMoney = (amount) => privacyMode ? '****' : formatMoney(amount);
 
-  const togglePaid = async (item) => {
-      if (item.type === 'card_item') await updateDoc(doc(db, 'cards', item.id), { isPaid: !item.isPaid });
-      else await updateDoc(doc(db, 'services', item.id), { isPaid: !item.isPaid });
-  };
-
   return (
     <div className="space-y-6 animate-fade-in pb-24">
-      <div className="pt-4 px-2 flex justify-between items-end">
-        <div><h1 className="text-2xl font-bold text-gray-800">Hola, Nico 👋</h1><p className="text-sm text-gray-500">Tu radar financiero</p></div>
+      
+      <div className="pt-4 px-2">
+        <h1 className="text-2xl font-bold text-gray-800">Hola, Nico 👋</h1>
+        <p className="text-sm text-gray-500">Tu radar financiero</p>
       </div>
 
       <FinancialTarget totalNeed={granTotalNecesario} totalPaid={granTotalPagado} privacyMode={privacyMode} />
 
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      {/* 2. AGENDA DE VENCIMIENTOS (SOLO LECTURA + LINK TOTAL) */}
+      <div 
+        onClick={() => setView('services_manager')} // <--- TODO EL BLOQUE REDIRECCIONA
+        className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden cursor-pointer hover:border-blue-300 transition-colors group"
+      >
           <div className="px-5 py-4 border-b border-gray-50 flex justify-between items-center bg-gray-50/50">
               <h3 className="font-bold text-gray-800">Próximos Pagos</h3>
-              <button onClick={() => setView('services_manager')} className="text-xs font-bold text-blue-600 hover:text-blue-700 bg-blue-50 px-3 py-1 rounded-full">Ver Agenda ({agenda.length})</button>
+              {/* Icono de flecha indicando que se puede entrar */}
+              <span className="text-gray-400 group-hover:text-blue-500 transition-colors">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+              </span>
           </div>
+          
           <div className="divide-y divide-gray-50">
               {upcomingAgenda.map((item) => (
-                  <div key={item.id} onClick={() => togglePaid(item)} className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors cursor-pointer">
+                  <div key={item.id} className="flex items-center justify-between p-4 opacity-90">
                       <div className="flex items-center gap-4">
+                          {/* Semáforo (Solo Visual) */}
                           <div className={`w-2.5 h-2.5 rounded-full ${item.type === 'card_item' ? 'bg-blue-500' : (item.day <= new Date().getDate() ? 'bg-red-500 animate-pulse' : 'bg-yellow-400')}`}></div>
                           <div>
                               <p className="font-bold text-gray-800 text-sm">{item.name}</p>
-                              <p className="text-xs text-gray-400 font-medium flex items-center gap-1">{item.type === 'card_item' && <span className="text-[9px] bg-blue-100 text-blue-600 px-1 rounded">TARJETA</span>} Vence día {item.day}</p>
+                              <p className="text-xs text-gray-400 font-medium flex items-center gap-1">
+                                  {item.type === 'card_item' && <span className="text-[9px] bg-blue-100 text-blue-600 px-1 rounded">TARJETA</span>}
+                                  Vence día {item.day}
+                              </p>
                           </div>
                       </div>
                       <p className="font-mono font-bold text-gray-700">{showMoney(item.amount)}</p>
                   </div>
               ))}
-              {upcomingAgenda.length === 0 && <div className="p-6 text-center text-gray-400 text-xs flex flex-col items-center gap-2"><span className="text-2xl">🎉</span>¡Estás al día con todo!</div>}
+              
+              {upcomingAgenda.length === 0 && (
+                  <div className="p-6 text-center text-gray-400 text-xs flex flex-col items-center gap-2">
+                      <span className="text-2xl">🎉</span>
+                      Todo al día. Toca para ver historial.
+                  </div>
+              )}
           </div>
       </div>
 
@@ -98,7 +110,6 @@ export default function Home({ transactions, cards, supermarketItems = [], servi
               </div>
           </div>
 
-          {/* DOCK AHORRO (REAL) */}
           <div onClick={() => setView('savings')} className="bg-green-600 p-4 rounded-2xl shadow-lg shadow-green-200 flex flex-col justify-between h-32 cursor-pointer relative overflow-hidden group">
               <div className="absolute top-0 right-0 w-20 h-20 bg-white opacity-10 rounded-full -mr-5 -mt-5 transition-transform group-hover:scale-110"></div>
               <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-white mb-2 shadow-sm border border-green-400">
@@ -106,7 +117,6 @@ export default function Home({ transactions, cards, supermarketItems = [], servi
               </div>
               <div>
                   <p className="text-[10px] uppercase font-bold text-green-100">Fondo Ahorro</p>
-                  {/* AQUÍ MOSTRAMOS LOS DATOS REALES */}
                   <p className="font-bold text-white text-lg leading-tight tracking-wide">{showMoney(savingsTotal.ars)}</p>
                   <p className="text-[10px] text-green-100 font-medium flex items-center gap-1">
                       {savingsTotal.usd > 0 ? `+ ${savingsTotal.usd} USD` : 'Sin USD'}
