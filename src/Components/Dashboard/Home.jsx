@@ -1,10 +1,12 @@
 import React, { useMemo } from 'react';
 import { formatMoney } from '../../utils';
-import FinancialTarget from './FinancialTarget'; // <--- IMPORTAMOS EL NUEVO COMPONENTE
+import FinancialTarget from './FinancialTarget'; 
+import { db } from '../../firebase'; // Importamos DB para actualizar pagos
+import { doc, updateDoc } from 'firebase/firestore';
 
-export default function Home({ transactions, cards, supermarketItems = [], privacyMode, setView }) {
+export default function Home({ transactions, cards, supermarketItems = [], services = [], privacyMode, setView }) {
   
-  // 1. CÁLCULOS
+  // 1. CÁLCULO TARJETAS (Deuda Real)
   const totalDeudaTarjetas = useMemo(() => {
     return transactions.reduce((acc, t) => acc + (Number(t.finalAmount) || Number(t.amount) || 0), 0);
   }, [transactions]);
@@ -12,112 +14,139 @@ export default function Home({ transactions, cards, supermarketItems = [], priva
   const totalLimiteGlobal = useMemo(() => {
     return cards.reduce((acc, c) => acc + (Number(c.limit) || 0), 0);
   }, [cards]);
-
+  
   const porcentajeUso = totalLimiteGlobal > 0 ? (totalDeudaTarjetas / totalLimiteGlobal) * 100 : 0;
 
-  // Súper: Total Estimado (Meta) vs Total Tildado (Pagado/En Carrito)
+  // 2. CÁLCULO SUPERMERCADO
   const superData = useMemo(() => {
       const total = supermarketItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
       const inCart = supermarketItems.filter(i => i.checked).reduce((acc, item) => acc + (item.price * item.quantity), 0);
       return { total, inCart };
   }, [supermarketItems]);
 
-  // 2. DATOS DE SERVICIOS (SIMULADOS POR AHORA)
-  // Aquí simulamos que algunos ya los pagaste (status: 'ok')
-  const serviciosMock = [
-      { id: 1, name: 'Naturgy', amount: 25040, day: 10, status: 'pending' }, 
-      { id: 2, name: 'Visa Santa Cruz', amount: 474900, day: 16, status: 'warning' }, // Simulando que vence pronto
-      { id: 3, name: 'Seguro Auto', amount: 115939, day: 20, status: 'ok' }, // Simulando PAGADO
-  ];
+  // 3. FUSIÓN INTELIGENTE: SERVICIOS + TARJETAS (AGENDA)
+  const agenda = useMemo(() => {
+      // a) Convertimos los servicios reales de Firestore
+      const realServices = services.map(s => ({
+          ...s,
+          type: 'service'
+      }));
 
-  // 3. CÁLCULO DE LA META MENSUAL (TOTAL NECESARIO)
-  // Fórmula: Total Tarjetas + Total Super + Total Servicios
-  const totalServicesNeed = serviciosMock.reduce((acc, s) => acc + s.amount, 0);
-  
-  const granTotalNecesario = totalDeudaTarjetas + superData.total + totalServicesNeed;
+      // b) Creamos el "Servicio Virtual" de las Tarjetas
+      // Solo si hay deuda, para no ensuciar
+      if (totalDeudaTarjetas > 0) {
+          // Buscamos la fecha de vencimiento más cercana de tus tarjetas para ser precisos
+          // (Si no hay, ponemos día 10 por defecto)
+          const nextVto = cards.length > 0 ? Math.min(...cards.map(c => c.dueDay)) : 10;
+          
+          realServices.push({
+              id: 'virtual-cards',
+              name: 'Tarjetas de Crédito',
+              amount: totalDeudaTarjetas,
+              day: nextVto,
+              isPaid: false, // La tarjeta la marcamos como pagada manualmente o asumimos pendiente
+              type: 'card_summary',
+              status: 'warning' // Siempre alerta
+          });
+      }
 
-  // 4. CÁLCULO DE LO YA PAGADO (PROGRESO)
-  // Asumimos: Tarjetas (0 pagado por ahora), Super (lo que está en carrito), Servicios (status 'ok')
-  const totalServicesPaid = serviciosMock.filter(s => s.status === 'ok').reduce((acc, s) => acc + s.amount, 0);
-  
-  const granTotalPagado = superData.inCart + totalServicesPaid; 
-  // Nota: Las tarjetas las contamos como "Pendiente" hasta que pagues el resumen, por eso no suman al 'Pagado' aquí.
+      // c) Ordenamos todo por fecha de vencimiento
+      return realServices.sort((a, b) => a.day - b.day);
+
+  }, [services, totalDeudaTarjetas, cards]);
+
+
+  // 4. CÁLCULOS FINALES PARA EL ANILLO (META)
+  // Necesitamos el TOTAL A PAGAR (Cards + Super + Servicios)
+  const servicesTotal = services.reduce((acc, s) => acc + s.amount, 0);
+  const granTotalNecesario = totalDeudaTarjetas + superData.total + servicesTotal;
+
+  // Necesitamos el TOTAL YA PAGADO
+  // (Super en Carrito + Servicios marcados como isPaid)
+  const servicesPaid = services.filter(s => s.isPaid).reduce((acc, s) => acc + s.amount, 0);
+  const granTotalPagado = superData.inCart + servicesPaid; 
+  // Nota: Las tarjetas no las sumamos a "Pagado" hasta que las pagues por homebanking, por ahora quedan en "Falta".
 
   // Helper privacidad
   const showMoney = (amount) => privacyMode ? '****' : formatMoney(amount);
 
+  // ACCIÓN: MARCAR SERVICIO COMO PAGADO
+  const togglePaid = async (service) => {
+      if (service.type === 'card_summary') {
+          // Si tocan la tarjeta, los llevamos al detalle
+          setView('cards');
+          return;
+      }
+      // Si es un servicio normal, actualizamos en Firebase
+      await updateDoc(doc(db, 'services', service.id), { isPaid: !service.isPaid });
+  };
+
   return (
     <div className="space-y-6 animate-fade-in pb-24">
       
-      {/* 1. TÍTULO SIMPLE */}
-      <div className="pt-4 px-2">
-        <h1 className="text-2xl font-bold text-gray-800">Hola, Nico 👋</h1>
-        <p className="text-sm text-gray-500">Este es tu mapa de gastos del mes.</p>
+      {/* HEADER SALUDO */}
+      <div className="pt-4 px-2 flex justify-between items-end">
+        <div>
+            <h1 className="text-2xl font-bold text-gray-800">Hola, Nico 👋</h1>
+            <p className="text-sm text-gray-500">Objetivo del mes</p>
+        </div>
+        <button onClick={() => setView('services_manager')} className="text-xs font-bold text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition-colors">
+            ⚙️ Gestionar Fijos
+        </button>
       </div>
 
-      {/* 2. EL NUEVO DOCK DE OBJETIVO (CIRCULAR) */}
+      {/* 1. RADAR DE OBJETIVO (CIRCULAR) */}
       <FinancialTarget 
         totalNeed={granTotalNecesario} 
         totalPaid={granTotalPagado} 
         privacyMode={privacyMode} 
       />
 
-      {/* 3. AGENDA DE VENCIMIENTOS */}
+      {/* 2. AGENDA UNIFICADA (SERVICIOS + TARJETAS) */}
       <div className="bg-white rounded-2xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07)] border border-gray-100 overflow-hidden">
-          <div className="px-5 py-4 border-b border-gray-50 flex justify-between items-center bg-gray-50/50">
+          <div className="px-5 py-4 border-b border-gray-50 bg-gray-50/50">
               <h3 className="font-bold text-gray-800">Próximos Vencimientos</h3>
-              <button className="text-xs font-bold text-blue-600 hover:text-blue-700">Ver Agenda</button>
           </div>
           <div className="divide-y divide-gray-50">
-              {serviciosMock.map((item) => (
-                  <div key={item.id} className={`flex items-center justify-between p-4 hover:bg-gray-50 transition-colors cursor-pointer ${item.status === 'ok' ? 'opacity-50 grayscale' : ''}`}>
+              {agenda.map((item) => (
+                  <div 
+                    key={item.id} 
+                    onClick={() => togglePaid(item)}
+                    className={`flex items-center justify-between p-4 hover:bg-gray-50 transition-colors cursor-pointer ${item.isPaid ? 'opacity-40 grayscale bg-gray-50' : ''}`}
+                  >
                       <div className="flex items-center gap-4">
-                          {/* Semáforo */}
-                          <div className={`w-2.5 h-2.5 rounded-full ${item.status === 'pending' ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]' : item.status === 'warning' ? 'bg-yellow-400' : 'bg-green-500'}`}></div>
+                          {/* CHECKBOX / SEMÁFORO */}
+                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${item.isPaid ? 'bg-green-500 border-green-500' : 'border-gray-300'}`}>
+                                {item.isPaid && <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={4}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
+                                {!item.isPaid && item.type === 'card_summary' && <div className="w-2 h-2 rounded-full bg-blue-500"></div>}
+                          </div>
+                          
                           <div>
-                              <p className={`font-bold text-sm ${item.status === 'ok' ? 'line-through text-gray-400' : 'text-gray-800'}`}>{item.name}</p>
+                              <p className={`font-bold text-sm ${item.isPaid ? 'line-through text-gray-400' : 'text-gray-800'}`}>{item.name}</p>
                               <p className="text-xs text-gray-400 font-medium">
-                                  {item.status === 'ok' ? 'Pagado' : `Vence el día ${item.day}`}
+                                  {item.isPaid ? 'Pagado' : `Vence el día ${item.day}`}
                               </p>
                           </div>
                       </div>
-                      <p className="font-mono font-bold text-gray-700">{showMoney(item.amount)}</p>
+                      
+                      <div className="text-right">
+                         <p className="font-mono font-bold text-gray-700">{showMoney(item.amount)}</p>
+                         {item.type === 'card_summary' && <p className="text-[9px] text-blue-500 font-bold uppercase">Ver detalle</p>}
+                      </div>
                   </div>
               ))}
+              {agenda.length === 0 && (
+                  <div className="p-6 text-center text-gray-400 text-sm">
+                      No tienes vencimientos pendientes.
+                  </div>
+              )}
           </div>
       </div>
 
-      {/* 4. WIDGET TARJETAS (BARRA DE PROGRESO - LINEAL) */}
-      {/* Mantenemos este diferente para que no compita visualmente con el de arriba */}
-      <div onClick={() => setView('cards')} className="bg-[#0f172a] rounded-2xl p-5 shadow-lg relative overflow-hidden cursor-pointer group transition-transform active:scale-[0.98]">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500 rounded-full blur-[60px] opacity-20 group-hover:opacity-30 transition-opacity"></div>
-          
-          <div className="relative z-10">
-              <div className="flex justify-between items-start mb-6">
-                  <div>
-                      <h3 className="text-white font-bold text-lg">Tarjetas de Crédito</h3>
-                      <p className="text-blue-200 text-xs">Deuda acumulada total</p>
-                  </div>
-                  <div className="bg-white/10 p-2 rounded-lg text-white">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
-                  </div>
-              </div>
-
-              <div className="flex justify-between items-end mb-2">
-                 <span className="text-3xl font-mono font-bold text-white tracking-tight">{showMoney(totalDeudaTarjetas)}</span>
-                 <span className="text-xs text-blue-300 mb-1 font-bold">{porcentajeUso.toFixed(0)}% del límite</span>
-              </div>
-
-              <div className="w-full h-2 bg-blue-900/50 rounded-full overflow-hidden">
-                  <div className="h-full bg-blue-400 rounded-full transition-all duration-1000" style={{ width: `${Math.min(porcentajeUso, 100)}%` }}></div>
-              </div>
-          </div>
-      </div>
-
-      {/* 5. SUPERMERCADO */}
-      <div onClick={() => setView('super')} className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between cursor-pointer hover:border-purple-200 transition-colors">
+      {/* 3. SUPERMERCADO */}
+      <div onClick={() => setView('super')} className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between cursor-pointer hover:border-purple-200 transition-colors group">
           <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center text-purple-600">
+              <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 group-hover:scale-110 transition-transform">
                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
               </div>
               <div>
