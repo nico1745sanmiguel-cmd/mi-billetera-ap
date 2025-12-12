@@ -3,113 +3,149 @@ import { formatMoney } from '../../utils';
 import { db } from '../../firebase';
 import { doc, deleteDoc } from 'firebase/firestore';
 
-export default function Dashboard({ transactions = [], cards = [], privacyMode }) {
+export default function Dashboard({ transactions = [], cards = [], privacyMode, currentDate }) {
   
   const [selectedCard, setSelectedCard] = useState('all');
   const [viewType, setViewType] = useState('list'); // 'list', 'blocks', 'projection'
-  const [analysisMode, setAnalysisMode] = useState('monthly'); // 'monthly' (Cuota) vs 'total' (Deuda)
+  const [analysisMode, setAnalysisMode] = useState('monthly'); // 'monthly' (Cuota) vs 'total' (Deuda Total)
 
-  // --- HELPER: Obtener el valor según el modo ---
+  // --- 0. FILTRO DE TIEMPO (CEREBRO) ---
+  // Filtramos las compras que tienen una "vida" activa en el mes que elegiste arriba
+  const activeTransactions = useMemo(() => {
+      const targetDate = currentDate || new Date();
+      const targetMonthVal = targetDate.getFullYear() * 12 + targetDate.getMonth();
+
+      return transactions.filter(t => {
+          const purchaseDate = new Date(t.date);
+          // Ajuste horario para evitar errores de día
+          purchaseDate.setHours(12,0,0,0);
+
+          const startMonthVal = purchaseDate.getFullYear() * 12 + purchaseDate.getMonth();
+          const endMonthVal = startMonthVal + (t.installments || 1); 
+          
+          // ¿El mes seleccionado cae dentro del rango de pago?
+          return targetMonthVal >= startMonthVal && targetMonthVal < endMonthVal;
+      });
+  }, [transactions, currentDate]);
+
+
+  // --- HELPER: Obtener valor (Cuota vs Total) ---
   const getValue = (t) => {
-      // Si estamos en modo "Mensual", devolvemos la cuota (o el total si es 1 pago)
-      // Si estamos en modo "Total", devolvemos el monto final deuda
       if (analysisMode === 'monthly') {
           return t.installments > 1 ? t.monthlyInstallment : t.amount;
       }
       return t.finalAmount || t.amount;
   };
 
-  // --- 1. CÁLCULOS FILTRADOS ---
-  
-  // Agrupar gastos por Tarjeta (Respetando el modo)
+  // --- HELPER: Info de Cuota (ej: "3/12") ---
+  const getInstallmentInfo = (t) => {
+      if (t.installments <= 1) return null;
+      const purchaseDate = new Date(t.date);
+      const targetDate = currentDate || new Date();
+      
+      const diffMonths = (targetDate.getFullYear() - purchaseDate.getFullYear()) * 12 + (targetDate.getMonth() - purchaseDate.getMonth());
+      const currentInst = diffMonths + 1;
+      
+      if (currentInst > t.installments) return null;
+      return `${currentInst}/${t.installments}`;
+  };
+
+  // --- 1. RANKING POR TARJETA (FILTRADO) ---
   const spendingByCard = useMemo(() => {
       return cards.map(card => {
-          const total = transactions
+          const total = activeTransactions
             .filter(t => t.cardId === card.id)
             .reduce((acc, t) => acc + getValue(t), 0);
           return { ...card, total };
       }).filter(c => c.total > 0).sort((a, b) => b.total - a.total);
-  }, [cards, transactions, analysisMode]);
+  }, [cards, activeTransactions, analysisMode]);
 
   const maxCardSpend = spendingByCard.length > 0 ? spendingByCard[0].total : 1;
 
-  // Lista Filtrada y Ordenada
+  // --- 2. LISTA DETALLADA ---
   const filteredTransactions = useMemo(() => {
       let list = selectedCard === 'all' 
-        ? transactions 
-        : transactions.filter(t => t.cardId === selectedCard);
+        ? activeTransactions 
+        : activeTransactions.filter(t => t.cardId === selectedCard);
       
-      // Ordenar por el valor del modo actual (ej: las cuotas más altas primero)
+      // Ordenamos por el monto que estás viendo (Cuota o Total)
       return list.sort((a, b) => getValue(b) - getValue(a));
-  }, [transactions, selectedCard, analysisMode]);
+  }, [activeTransactions, selectedCard, analysisMode]);
 
-  // Total del Header (La cifra gigante)
   const headerTotal = filteredTransactions.reduce((acc, t) => acc + getValue(t), 0);
 
-  // --- 2. CÁLCULO DE PROYECCIÓN (Siempre mira a futuro) ---
+  // --- 3. PROYECCIÓN FUTURA (A 12 Meses desde la fecha seleccionada) ---
   const projectionData = useMemo(() => {
       const months = [];
-      const today = new Date();
+      const baseDate = currentDate || new Date();
+      
       for (let i = 0; i < 12; i++) {
-          const futureDate = new Date(today.getFullYear(), today.getMonth() + i, 1);
+          const futureDate = new Date(baseDate.getFullYear(), baseDate.getMonth() + i, 1);
           let monthlyTotal = 0;
-          filteredTransactions.forEach(t => {
+          
+          // Usamos 'transactions' (todas) para proyectar el futuro, no solo las activas de hoy
+          transactions.forEach(t => {
+              const purchaseDate = new Date(t.date);
+              purchaseDate.setHours(12,0,0,0);
+              
               if (t.installments > 1) {
-                  const purchaseDate = new Date(t.date);
-                  const endInstallmentsDate = new Date(purchaseDate);
-                  endInstallmentsDate.setMonth(endInstallmentsDate.getMonth() + t.installments);
-                  if (futureDate >= purchaseDate && futureDate < endInstallmentsDate) {
+                  const startM = purchaseDate.getFullYear() * 12 + purchaseDate.getMonth();
+                  const endM = startM + t.installments;
+                  const currentM = futureDate.getFullYear() * 12 + futureDate.getMonth();
+
+                  if (currentM >= startM && currentM < endM) {
                       monthlyTotal += t.monthlyInstallment;
                   }
-              } else if (i === 0) monthlyTotal += t.amount;
+              } else if (i === 0) { 
+                  // Si es 1 pago, solo suma si coincide EXACTO con el mes base
+                  const startM = purchaseDate.getFullYear() * 12 + purchaseDate.getMonth();
+                  const currentM = futureDate.getFullYear() * 12 + futureDate.getMonth();
+                  if (currentM === startM) monthlyTotal += t.amount;
+              }
           });
-          if (monthlyTotal > 0) months.push({ date: futureDate, label: futureDate.toLocaleString('es-AR', { month: 'long', year: '2-digit' }), amount: monthlyTotal });
+
+          if (monthlyTotal > 0) {
+              months.push({
+                  date: futureDate,
+                  label: futureDate.toLocaleString('es-AR', { month: 'long', year: '2-digit' }),
+                  amount: monthlyTotal
+              });
+          }
       }
       return months;
-  }, [filteredTransactions]);
+  }, [transactions, currentDate]);
 
-  // Helpers
+  // Helpers visuales
   const showMoney = (amount) => privacyMode ? '****' : formatMoney(amount);
-  const handleDelete = async (id) => { if(window.confirm("¿Eliminar este consumo?")) await deleteDoc(doc(db, 'transactions', id)); };
+  const handleDelete = async (id) => { if(window.confirm("¿Eliminar consumo?")) await deleteDoc(doc(db, 'transactions', id)); };
   const getCardName = (id) => cards.find(c => c.id === id)?.name || 'Tarjeta';
 
   return (
     <div className="space-y-6 animate-fade-in pb-32">
       
-      {/* 1. HEADER: DATOS CON SWITCH */}
+      {/* 1. HEADER DASHBOARD */}
       <div className="bg-[#0f172a] p-6 rounded-2xl text-white shadow-lg relative overflow-hidden transition-all duration-500">
           <div className="absolute -right-6 -top-6 w-32 h-32 bg-indigo-500 rounded-full blur-[60px] opacity-30"></div>
           
-          {/* SWITCH DE MODO (ARRIBA A LA DERECHA) */}
           <div className="absolute top-4 right-4 flex bg-black/20 rounded-lg p-1 backdrop-blur-md z-20">
-              <button 
-                onClick={() => setAnalysisMode('monthly')}
-                className={`text-[10px] font-bold px-3 py-1.5 rounded-md transition-all ${analysisMode === 'monthly' ? 'bg-white text-indigo-900 shadow' : 'text-gray-400 hover:text-white'}`}
-              >
-                  📅 Mes
-              </button>
-              <button 
-                onClick={() => setAnalysisMode('total')}
-                className={`text-[10px] font-bold px-3 py-1.5 rounded-md transition-all ${analysisMode === 'total' ? 'bg-white text-indigo-900 shadow' : 'text-gray-400 hover:text-white'}`}
-              >
-                  💰 Total
-              </button>
+              <button onClick={() => setAnalysisMode('monthly')} className={`text-[10px] font-bold px-3 py-1.5 rounded-md transition-all ${analysisMode === 'monthly' ? 'bg-white text-indigo-900 shadow' : 'text-gray-400 hover:text-white'}`}>📅 Mes</button>
+              <button onClick={() => setAnalysisMode('total')} className={`text-[10px] font-bold px-3 py-1.5 rounded-md transition-all ${analysisMode === 'total' ? 'bg-white text-indigo-900 shadow' : 'text-gray-400 hover:text-white'}`}>💰 Total</button>
           </div>
 
           <div className="relative z-10 mt-2">
               <h2 className="text-indigo-200 text-xs font-bold uppercase tracking-widest mb-1">
-                  {analysisMode === 'monthly' ? 'A pagar este mes' : 'Deuda Total Acumulada'}
+                  {analysisMode === 'monthly' ? 'A pagar este periodo' : 'Deuda Total Activa'}
               </h2>
               <h1 className="text-4xl font-bold tracking-tighter text-white mb-2">
                   {showMoney(headerTotal)}
               </h1>
               <p className="text-[10px] text-gray-400">
-                  {filteredTransactions.length} ítems en {selectedCard === 'all' ? 'todas las tarjetas' : getCardName(selectedCard)}
+                  {filteredTransactions.length} cuotas activas en {selectedCard === 'all' ? 'total' : getCardName(selectedCard)}
               </p>
           </div>
       </div>
 
-      {/* 2. RANKING DE TARJETAS (SE ADAPTA AL MODO) */}
+      {/* 2. RANKING DE TARJETAS */}
       <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
           <div className="flex justify-between items-center mb-4">
               <h3 className="font-bold text-gray-800 text-sm">
@@ -129,10 +165,11 @@ export default function Dashboard({ transactions = [], cards = [], privacyMode }
                       </div>
                   </div>
               ))}
+              {spendingByCard.length === 0 && <p className="text-xs text-gray-400 text-center">Nada que pagar en este mes 🎉</p>}
           </div>
       </div>
 
-      {/* 3. ZONA DE DETALLE (TABS) */}
+      {/* 3. TABS DE DETALLE */}
       <div>
           <div className="flex bg-gray-200 p-1 rounded-xl mb-4">
               <button onClick={() => setViewType('list')} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${viewType === 'list' ? 'bg-white shadow text-indigo-600' : 'text-gray-500'}`}>📄 Lista</button>
@@ -140,52 +177,41 @@ export default function Dashboard({ transactions = [], cards = [], privacyMode }
               <button onClick={() => setViewType('projection')} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${viewType === 'projection' ? 'bg-white shadow text-indigo-600' : 'text-gray-500'}`}>🔮 Futuro</button>
           </div>
 
-          {/* VISTA A: LISTA (AHORA MUESTRA CUOTA PRIMERO) */}
+          {/* VISTA A: LISTA */}
           {viewType === 'list' && (
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden divide-y divide-gray-50">
                   {filteredTransactions.map((item) => {
-                      const primaryValue = getValue(item); // Cuota o Total según switch
-                      const secondaryValue = analysisMode === 'monthly' 
-                          ? (item.finalAmount || item.amount) // Si veo cuota, muestro total abajo
-                          : (item.installments > 1 ? item.monthlyInstallment : null); // Si veo total, muestro cuota abajo
+                      const primaryVal = getValue(item);
+                      const secondaryVal = analysisMode === 'monthly' ? (item.finalAmount || item.amount) : (item.installments > 1 ? item.monthlyInstallment : null);
+                      const infoCuota = getInstallmentInfo(item);
 
                       return (
                           <div key={item.id} className="p-4 flex justify-between items-start group hover:bg-gray-50">
-                              <div className="flex-1">
+                              <div className="flex-1 pr-2">
                                   <p className="text-sm font-bold text-gray-800 line-clamp-1">{item.description}</p>
-                                  <div className="flex items-center gap-2 mt-1">
+                                  <div className="flex items-center gap-2 mt-1 flex-wrap">
                                       <span className="text-[9px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded uppercase font-bold">{getCardName(item.cardId)}</span>
-                                      {item.installments > 1 && <span className="text-[9px] text-indigo-500 font-bold">{item.installments} cuotas</span>}
+                                      {infoCuota && <span className="text-[9px] bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded font-bold border border-indigo-100">Cuota {infoCuota}</span>}
                                   </div>
                               </div>
-                              <div className="text-right">
-                                  {/* MONTO PRINCIPAL (GRANDE) */}
-                                  <p className="font-mono font-bold text-gray-900 text-sm">
-                                      {showMoney(primaryValue)}
-                                  </p>
-                                  {/* MONTO SECUNDARIO (CHICO) */}
-                                  {secondaryValue && (
-                                      <p className="text-[10px] text-gray-400">
-                                          {analysisMode === 'monthly' ? 'Total: ' : 'Cuota: '} 
-                                          {showMoney(secondaryValue)}
-                                      </p>
-                                  )}
-                                  <button onClick={() => handleDelete(item.id)} className="text-[10px] text-red-300 hover:text-red-500 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">Eliminar</button>
+                              <div className="text-right whitespace-nowrap">
+                                  <p className="font-mono font-bold text-gray-900 text-sm">{showMoney(primaryVal)}</p>
+                                  {secondaryVal && <p className="text-[10px] text-gray-400">{analysisMode === 'monthly' ? 'Total: ' : 'Cuota: '}{showMoney(secondaryVal)}</p>}
+                                  <button onClick={() => handleDelete(item.id)} className="text-[10px] text-red-300 hover:text-red-500 mt-1 opacity-0 group-hover:opacity-100 transition-opacity block w-full text-right">Eliminar</button>
                               </div>
                           </div>
                       );
                   })}
-                  {filteredTransactions.length === 0 && <p className="text-center text-gray-400 p-8 text-sm">Sin datos.</p>}
+                  {filteredTransactions.length === 0 && <p className="text-center text-gray-400 p-8 text-sm">Sin datos para este mes.</p>}
               </div>
           )}
 
-          {/* VISTA B: BLOQUES (TREEMAP AJUSTADO AL MODO) */}
+          {/* VISTA B: BLOQUES (Treemap) */}
           {viewType === 'blocks' && (
               <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-wrap gap-1 min-h-[300px] content-start">
                   {filteredTransactions.map((item, index) => {
                       const val = getValue(item);
                       const percent = (val / headerTotal) * 100;
-                      
                       const widthClass = percent > 40 ? 'w-full' : percent > 20 ? 'w-[49%]' : 'w-[32%]';
                       const heightClass = percent > 20 ? 'h-24' : 'h-16';
                       const colorClass = index < 3 ? 'bg-indigo-600 text-white' : index < 6 ? 'bg-indigo-400 text-white' : 'bg-indigo-100 text-indigo-800';
@@ -194,13 +220,12 @@ export default function Dashboard({ transactions = [], cards = [], privacyMode }
                           <div key={item.id} className={`${widthClass} ${heightClass} flex-grow rounded-lg ${colorClass} p-2 flex flex-col justify-between relative overflow-hidden transition-transform hover:scale-[1.02] shadow-sm`}>
                               <span className="text-[10px] font-bold truncate z-10">{item.description}</span>
                               <span className="text-xs font-mono font-bold z-10">{showMoney(val)}</span>
-                              {analysisMode === 'monthly' && item.installments > 1 && (
-                                  <span className="absolute top-1 right-1 text-[8px] opacity-70 border border-white/30 px-1 rounded">cuota</span>
-                              )}
+                              {analysisMode === 'monthly' && item.installments > 1 && <span className="absolute top-1 right-1 text-[8px] opacity-70 border border-white/30 px-1 rounded">{getInstallmentInfo(item)}</span>}
                               <div className="absolute bottom-0 left-0 h-1 bg-black/10" style={{ width: `${percent}%` }}></div>
                           </div>
                       )
                   })}
+                  {filteredTransactions.length === 0 && <p className="w-full text-center text-gray-400 p-8 text-sm">Sin datos.</p>}
               </div>
           )}
 

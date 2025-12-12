@@ -23,15 +23,13 @@ export default function App() {
   const [privacyMode, setPrivacyMode] = useState(false);
   const [view, setView] = useState('dashboard');
   
-  // --- NUEVO ESTADO GLOBAL DE FECHA ---
+  // --- ESTADO GLOBAL DE FECHA ---
   const [currentDate, setCurrentDate] = useState(new Date());
 
-  // Función para formatear fecha "Diciembre 2025" (Sin "de")
+  // Función para formatear fecha "Diciembre 2025"
   const getFormattedDate = (date) => {
       const options = { month: 'long', year: 'numeric' };
-      // "diciembre de 2025" -> "diciembre 2025"
       let text = date.toLocaleDateString('es-AR', options).replace(' de ', ' ');
-      // Capitalizar primera letra: "Diciembre 2025"
       return text.charAt(0).toUpperCase() + text.slice(1);
   };
 
@@ -41,13 +39,14 @@ export default function App() {
       setCurrentDate(newDate);
   };
 
-  // --- OPTIMIZACIÓN: INICIALIZACIÓN LAZY ---
+  // --- DATOS (Con Caché Local) ---
   const [cards, setCards] = useState(() => JSON.parse(localStorage.getItem('cache_cards')) || []);
   const [transactions, setTransactions] = useState(() => JSON.parse(localStorage.getItem('cache_transactions')) || []);
   const [superItems, setSuperItems] = useState(() => JSON.parse(localStorage.getItem('cache_superItems')) || []);
   const [services, setServices] = useState(() => JSON.parse(localStorage.getItem('cache_services')) || []);
   const [savingsList, setSavingsList] = useState(() => JSON.parse(localStorage.getItem('cache_savings')) || []);
 
+  // 1. Auth & Timeout
   useEffect(() => {
     const safetyTimer = setTimeout(() => { if (loadingUser) setShowReload(true); }, 8000);
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -58,6 +57,7 @@ export default function App() {
     return () => { unsubscribe(); clearTimeout(safetyTimer); };
   }, []);
 
+  // 2. Listeners Firebase
   useEffect(() => {
     if (!user) return;
     const syncData = (queryRef, setState, cacheKey) => {
@@ -101,56 +101,49 @@ export default function App() {
     <div className="min-h-screen font-sans text-gray-800 bg-[#f3f4f6]">
       <InstallPrompt />
 
-      {/* HEADER DESKTOP (Sin cambios mayores, solo ocultamos logout si quieres) */}
       <div className="hidden md:block relative">
         <Navbar currentView={view} setView={setView} privacyMode={privacyMode} setPrivacyMode={setPrivacyMode} />
       </div>
 
-      {/* --- HEADER MÓVIL RENOVADO --- */}
+      {/* HEADER MÓVIL CON FECHA */}
       <div className="md:hidden bg-white p-3 shadow-sm sticky top-0 z-40 px-4">
-         <div className="flex items-center justify-between">
-             
-             {/* FECHA CENTRADA Y NAVEGABLE */}
+         <div className="flex items-center justify-center">
              <div className="flex items-center justify-between w-full bg-gray-50 rounded-xl p-1">
                  <button onClick={() => changeMonth(-1)} className="p-2 rounded-lg text-gray-400 hover:bg-gray-200 active:scale-95 transition-all">
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" /></svg>
                  </button>
-                 
-                 <span className="font-bold text-gray-800 text-lg capitalize">
-                    {getFormattedDate(currentDate)}
-                 </span>
-                 
+                 <span className="font-bold text-gray-800 text-lg capitalize">{getFormattedDate(currentDate)}</span>
                  <button onClick={() => changeMonth(1)} className="p-2 rounded-lg text-gray-400 hover:bg-gray-200 active:scale-95 transition-all">
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" /></svg>
                  </button>
              </div>
-
-             {/* OCULTAMOS LOS BOTONES VIEJOS TEMPORALMENTE
-             <button onClick={() => setPrivacyMode(!privacyMode)} ... > ... </button>
-             <button onClick={handleLogout} ... > ... </button>
-             */}
          </div>
       </div>
       
       <main className="max-w-5xl mx-auto p-4 mt-2 pb-28 md:pb-10 md:mt-4">
         
         {view === 'dashboard' && <Home transactions={transactions} cards={cards} supermarketItems={superItems} services={services} savingsList={savingsList} privacyMode={privacyMode} setView={setView} />}
+        
         {view === 'savings' && <Savings savingsList={savingsList} />}
         
-        {/* LE PASAMOS LA FECHA AL SERVICES MANAGER */}
         {view === 'services_manager' && (
-            <ServicesManager 
-                services={services} 
-                cards={cards} 
-                transactions={transactions}
-                currentDate={currentDate} // <--- DATO CLAVE
-            />
+            <ServicesManager services={services} cards={cards} transactions={transactions} currentDate={currentDate} />
         )}
         
-        {view === 'stats' && <Dashboard transactions={transactions} cards={cards} privacyMode={privacyMode} />}
+        {/* AHORA LE PASAMOS LA FECHA AL DASHBOARD TAMBIÉN */}
+        {view === 'stats' && (
+            <Dashboard 
+                transactions={transactions} 
+                cards={cards} 
+                privacyMode={privacyMode} 
+                currentDate={currentDate} 
+            />
+        )}
+
         {view === 'purchase' && <NewPurchase cards={cards} onSave={addTransaction} transactions={transactions} privacyMode={privacyMode} />}
         {view === 'cards' && <MyCards cards={cards} privacyMode={privacyMode} />}
         {view === 'super' && <SuperList />}
+        
       </main>
 
       <BottomNav currentView={view} setView={setView} />
