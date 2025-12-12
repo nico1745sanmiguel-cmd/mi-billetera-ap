@@ -8,9 +8,19 @@ export default function ServicesManager({ services = [], cards = [], transaction
   const [editingService, setEditingService] = useState(null);
   const [form, setForm] = useState({ name: '', amount: '', day: '', frequency: 'Mensual' });
 
+  // Clave del mes que estamos mirando en pantalla (Ej: "2025-12")
   const currentMonthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
   
-  // --- LÓGICA DE DATOS ---
+  // Mapa de intervalos para la matemática
+  const frequencyMap = {
+      'Mensual': 1,
+      'Bimestral': 2,
+      'Trimestral': 3,
+      'Semestral': 6,
+      'Anual': 12
+  };
+
+  // --- 1. LÓGICA DE TARJETAS (Siempre visibles si tienen deuda) ---
   const cardServices = useMemo(() => {
       return cards.map(c => {
           const debt = transactions
@@ -24,47 +34,58 @@ export default function ServicesManager({ services = [], cards = [], transaction
       }).filter(Boolean);
   }, [cards, transactions, currentMonthKey]);
 
+  // --- 2. LÓGICA DE SERVICIOS (CON FILTRO DE FRECUENCIA 🧠) ---
   const allItems = useMemo(() => {
-      const regularServices = services.map(s => ({
+      // Filtramos los servicios para ver cuáles tocan este mes
+      const activeServices = services.filter(s => {
+          // Si es Mensual, pasa siempre.
+          if (!s.frequency || s.frequency === 'Mensual') return true;
+
+          // Si no tiene fecha de inicio (datos viejos), asumimos que se muestra siempre para no romper nada.
+          if (!s.firstDueMonth) return true;
+
+          // MATEMÁTICA DE FECHAS
+          const interval = frequencyMap[s.frequency] || 1;
+          
+          // Fecha de inicio del servicio (cuando se creó)
+          const [startYear, startMonth] = s.firstDueMonth.split('-').map(Number);
+          // Fecha actual del calendario (la que estamos mirando)
+          const currentYear = currentDate.getFullYear();
+          const currentMonth = currentDate.getMonth() + 1; // 1-12
+
+          // Calcular diferencia en meses absolutos
+          const diffMonths = ((currentYear - startYear) * 12) + (currentMonth - startMonth);
+
+          // Reglas:
+          // 1. Si la diferencia es negativa, es un servicio futuro -> NO MOSTRAR.
+          if (diffMonths < 0) return false;
+          // 2. Si la división por el intervalo es exacta (resto 0), toca pagar -> MOSTRAR.
+          return diffMonths % interval === 0;
+      });
+
+      // Mapeamos para agregar el estado de pago del mes actual
+      const regularServices = activeServices.map(s => ({
           ...s,
           type: 'service',
           isPaid: s.paidPeriods?.includes(currentMonthKey)
       }));
+
       return [...regularServices, ...cardServices].sort((a, b) => a.day - b.day);
-  }, [services, cardServices, currentMonthKey]);
+  }, [services, cardServices, currentMonthKey, currentDate]); // Dependencias clave
 
-  // --- CÁLCULO GRÁFICO (MODO PROGRESO/LLENADO) ---
+  // --- 3. GRÁFICO ---
   const weeklyData = useMemo(() => {
-      // Estructura: { total: 0, paid: 0 } por semana
-      const weeks = [
-          { total: 0, paid: 0 }, 
-          { total: 0, paid: 0 }, 
-          { total: 0, paid: 0 }, 
-          { total: 0, paid: 0 }
-      ]; 
-
+      const weeks = [{t:0,p:0},{t:0,p:0},{t:0,p:0},{t:0,p:0}];
       allItems.forEach(item => {
           const weekIndex = Math.min(Math.floor((item.day - 1) / 7), 3);
-          
-          // Sumamos al TOTAL siempre (sea pagado o no) para tener la referencia de altura
-          weeks[weekIndex].total += item.amount;
-          
-          // Si está pagado, sumamos al PROGRESO
-          if (item.isPaid) {
-              weeks[weekIndex].paid += item.amount;
-          }
+          weeks[weekIndex].t += item.amount;
+          if (item.isPaid) weeks[weekIndex].p += item.amount;
       });
-
-      // Buscamos la semana más cara para escalar todas las barras proporcionalmente
-      const maxTotal = Math.max(...weeks.map(w => w.total), 1);
-      
+      const maxVal = Math.max(...weeks.map(w => w.t), 1);
       return weeks.map(w => ({ 
-          totalValue: w.total,
-          paidValue: w.paid,
-          // Altura total de la barra (Gris)
-          heightTotal: (w.total / maxTotal) * 100, 
-          // Altura de la barra pintada (Verde) relativa a la barra gris
-          percentFilled: w.total > 0 ? (w.paid / w.total) * 100 : 0
+          total: w.t, paid: w.p, 
+          heightTotal: (w.t / maxVal) * 100, 
+          percentFilled: w.t > 0 ? (w.p / w.t) * 100 : 0 
       }));
   }, [allItems]);
 
@@ -83,17 +104,34 @@ export default function ServicesManager({ services = [], cards = [], transaction
   const handleSave = async (e) => {
       e.preventDefault();
       if (!form.name || !form.amount || !auth.currentUser) return;
-      const data = { name: form.name, amount: Number(form.amount), day: Number(form.day) || 10, frequency: form.frequency, userId: auth.currentUser.uid };
+      
+      const data = { 
+          name: form.name, 
+          amount: Number(form.amount), 
+          day: Number(form.day) || 10, 
+          frequency: form.frequency, 
+          userId: auth.currentUser.uid 
+      };
+
       try {
-          if (editingService) await updateDoc(doc(db, 'services', editingService.id), data);
-          else await addDoc(collection(db, 'services'), { ...data, paidPeriods: [] });
+          if (editingService) {
+              await updateDoc(doc(db, 'services', editingService.id), data);
+          } else {
+              // AL CREAR: Guardamos el mes actual como "Mes de Inicio" (firstDueMonth)
+              // Esto es vital para calcular las frecuencias futuras
+              await addDoc(collection(db, 'services'), { 
+                  ...data, 
+                  paidPeriods: [],
+                  firstDueMonth: currentMonthKey // <--- LA CLAVE MÁGICA
+              });
+          }
           setIsModalOpen(false);
       } catch (error) { alert("Error al guardar"); }
   };
 
   const handleDelete = async () => {
       if (!editingService) return;
-      if(window.confirm("¿Eliminar?")) { await deleteDoc(doc(db, 'services', editingService.id)); setIsModalOpen(false); }
+      if(window.confirm("¿Eliminar para siempre?")) { await deleteDoc(doc(db, 'services', editingService.id)); setIsModalOpen(false); }
   };
 
   const togglePaid = async (item) => {
@@ -102,15 +140,12 @@ export default function ServicesManager({ services = [], cards = [], transaction
       else await updateDoc(ref, { paidPeriods: arrayUnion(currentMonthKey) });
   };
 
-  const handleAmountChange = (e) => {
-      const val = e.target.value.replace(/\D/g, '');
-      setForm({ ...form, amount: val });
-  };
+  const handleAmountChange = (e) => { setForm({ ...form, amount: e.target.value.replace(/\D/g, '') }); };
 
   return (
     <div className="space-y-6 animate-fade-in pb-24">
       
-      {/* 1. GRÁFICO DE PROGRESO (MOTIVACIONAL) */}
+      {/* GRÁFICO */}
       <div className="bg-[#0f172a] p-5 rounded-2xl text-white shadow-lg border border-gray-800">
           <div className="flex justify-between items-center mb-8">
               <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">Tu Progreso Semanal</p>
@@ -119,66 +154,37 @@ export default function ServicesManager({ services = [], cards = [], transaction
                   <span className="flex items-center gap-1"><div className="w-2 h-2 bg-green-400 rounded-full"></div> Pagado</span>
               </div>
           </div>
-          
           <div className="flex items-end justify-between h-40 gap-4 px-2">
               {weeklyData.map((week, idx) => (
                   <div key={idx} className="flex-1 flex flex-col items-center gap-2 group relative h-full justify-end">
-                      
-                      {/* Tooltip Dinámico */}
-                      <div className={`absolute -top-8 text-[10px] font-bold bg-white text-gray-900 px-2 py-1 rounded shadow-lg transition-opacity ${week.totalValue > 0 ? 'opacity-0 group-hover:opacity-100' : 'opacity-0'} whitespace-nowrap z-10`}>
-                          {formatMoney(week.paidValue)} / {formatMoney(week.totalValue)}
+                      <div className={`absolute -top-8 text-[10px] font-bold bg-white text-gray-900 px-2 py-1 rounded shadow-lg transition-opacity ${week.total > 0 ? 'opacity-0 group-hover:opacity-100' : 'opacity-0'} whitespace-nowrap z-10`}>{formatMoney(week.paid)} / {formatMoney(week.total)}</div>
+                      {week.percentFilled >= 100 && week.total > 0 && <div className="absolute -top-6 animate-bounce text-xs">⭐</div>}
+                      <div className="w-full bg-gray-700/50 rounded-t-lg relative flex items-end overflow-hidden" style={{ height: `${week.heightTotal}%` }}>
+                          <div className={`w-full transition-all duration-700 ease-out ${week.percentFilled >= 100 ? 'bg-green-400 shadow-[0_0_15px_rgba(74,222,128,0.5)]' : 'bg-green-500/80'}`} style={{ height: `${week.percentFilled}%` }}></div>
                       </div>
-
-                      {/* Icono de EXITO al 100% */}
-                      {week.percentFilled >= 100 && week.totalValue > 0 && (
-                          <div className="absolute -top-6 animate-bounce text-xs">⭐</div>
-                      )}
-                      
-                      {/* BARRA CONTENEDORA (GRIS - EL TOTAL) */}
-                      <div 
-                        className="w-full bg-gray-700/50 rounded-t-lg relative flex items-end overflow-hidden"
-                        style={{ height: `${week.heightTotal}%` }}
-                      >
-                          {/* BARRA DE LLENADO (VERDE - LO PAGADO) */}
-                          <div 
-                            className={`w-full transition-all duration-700 ease-out ${week.percentFilled >= 100 ? 'bg-green-400 shadow-[0_0_15px_rgba(74,222,128,0.5)]' : 'bg-green-500/80'}`}
-                            style={{ height: `${week.percentFilled}%` }}
-                          ></div>
-                      </div>
-                      
-                      <span className={`text-[10px] font-bold uppercase tracking-wider ${week.percentFilled >= 100 && week.totalValue > 0 ? 'text-green-400' : 'text-gray-500'}`}>
-                          Sem {idx + 1}
-                      </span>
+                      <span className={`text-[10px] font-bold uppercase tracking-wider ${week.percentFilled >= 100 && week.total > 0 ? 'text-green-400' : 'text-gray-500'}`}>Sem {idx + 1}</span>
                   </div>
               ))}
           </div>
       </div>
 
-      {/* 2. LISTA DE SERVICIOS */}
+      {/* LISTA */}
       <div className="space-y-3">
           <div className="flex justify-between items-center px-2">
               <h3 className="font-bold text-gray-800">Vencimientos</h3>
-              <button onClick={() => openModal()} className="text-xs bg-gray-900 text-white px-4 py-2 rounded-lg font-bold shadow-md hover:bg-black flex items-center gap-1">
-                  <span>+</span> Nuevo
-              </button>
+              <button onClick={() => openModal()} className="text-xs bg-gray-900 text-white px-4 py-2 rounded-lg font-bold shadow-md hover:bg-black flex items-center gap-1"><span>+</span> Nuevo</button>
           </div>
 
           {allItems.map((item) => (
               <div key={item.id} className={`bg-white p-4 rounded-xl border transition-all duration-300 ${item.isPaid ? 'border-green-200 bg-green-50/20' : 'border-gray-100 hover:border-blue-300 shadow-sm'}`}>
                   <div className="flex justify-between items-center">
                       <div className="flex items-center gap-3">
-                          <div className={`w-10 h-10 rounded-lg flex flex-col items-center justify-center text-xs font-bold transition-colors ${item.isPaid ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
-                              <span>{item.day}</span>
-                          </div>
+                          <div className={`w-10 h-10 rounded-lg flex flex-col items-center justify-center text-xs font-bold transition-colors ${item.isPaid ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}><span>{item.day}</span></div>
                           <div>
                               <div className="flex items-center gap-2">
                                 <p className={`font-bold text-sm transition-all ${item.isPaid ? 'text-green-800' : 'text-gray-800'}`}>{item.name}</p>
                                 {item.type === 'card' && <span className="text-[9px] bg-blue-100 text-blue-700 px-1.5 rounded font-bold">TARJETA</span>}
-                                {item.type === 'service' && (
-                                    <button onClick={(e) => { e.stopPropagation(); openModal(item); }} className="text-gray-300 hover:text-blue-500 p-1 rounded-full hover:bg-blue-50 transition-colors">
-                                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
-                                    </button>
-                                )}
+                                {item.type === 'service' && <button onClick={(e) => { e.stopPropagation(); openModal(item); }} className="text-gray-300 hover:text-blue-500 p-1 rounded-full hover:bg-blue-50 transition-colors"><svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg></button>}
                               </div>
                               <p className="text-xs text-gray-400">{item.frequency} • {item.isPaid ? 'Pagado ✅' : 'Pendiente'}</p>
                           </div>
@@ -192,10 +198,10 @@ export default function ServicesManager({ services = [], cards = [], transaction
                   </div>
               </div>
           ))}
-          {allItems.length === 0 && <div className="text-center p-8 text-gray-400 text-sm">No hay vencimientos para este mes.</div>}
+          {allItems.length === 0 && <div className="text-center p-8 text-gray-400 text-sm">No hay vencimientos este mes.</div>}
       </div>
 
-      {/* 3. MODAL (Bottom Sheet) */}
+      {/* MODAL */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-end sm:items-center justify-center animate-fade-in">
             <div className="bg-white w-full max-w-sm rounded-t-3xl sm:rounded-2xl p-6 shadow-2xl animate-slide-up max-h-[85vh] overflow-y-auto">
@@ -209,9 +215,14 @@ export default function ServicesManager({ services = [], cards = [], transaction
                         <div><label className="block text-xs font-bold text-gray-400 uppercase mb-1">Monto ($)</label><input type="tel" className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl outline-none font-bold text-gray-800 text-center focus:bg-white focus:border-blue-500" placeholder="0" value={new Intl.NumberFormat('es-AR').format(form.amount)} onChange={handleAmountChange} /></div>
                         <div><label className="block text-xs font-bold text-gray-400 uppercase mb-1">Día Venc.</label><input type="number" max="31" className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl outline-none font-bold text-gray-800 text-center focus:bg-white focus:border-blue-500" placeholder="10" value={form.day} onChange={e => setForm({...form, day: e.target.value})} /></div>
                     </div>
-                    <div><label className="block text-xs font-bold text-gray-400 uppercase mb-1">Frecuencia</label><select value={form.frequency} onChange={e => setForm({...form, frequency: e.target.value})} className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl outline-none font-bold text-gray-600 text-sm appearance-none"><option>Mensual</option><option>Bimestral</option><option>Trimestral</option><option>Semestral</option><option>Anual</option></select></div>
+                    <div>
+                        <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Frecuencia</label>
+                        <select value={form.frequency} onChange={e => setForm({...form, frequency: e.target.value})} className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl outline-none font-bold text-gray-600 text-sm appearance-none">
+                            <option>Mensual</option><option>Bimestral</option><option>Trimestral</option><option>Semestral</option><option>Anual</option>
+                        </select>
+                    </div>
                     <div className="pt-4 flex gap-3">
-                        {editingService && <button type="button" onClick={handleDelete} className="p-4 bg-red-50 text-red-500 rounded-xl hover:bg-red-100 transition-colors" title="Eliminar"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>}
+                        {editingService && <button type="button" onClick={handleDelete} className="p-4 bg-red-50 text-red-500 rounded-xl hover:bg-red-100 transition-colors"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>}
                         <button type="submit" className="flex-1 bg-gray-900 text-white font-bold rounded-xl py-4 shadow-lg hover:bg-black transition-transform active:scale-95 text-lg">{editingService ? 'Actualizar' : 'Guardar'}</button>
                     </div>
                 </form>
