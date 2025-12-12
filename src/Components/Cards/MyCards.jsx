@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { db, auth } from '../../firebase';
-import { doc, deleteDoc, updateDoc, setDoc } from 'firebase/firestore';
+import { doc, deleteDoc, updateDoc, setDoc, addDoc, collection } from 'firebase/firestore'; // <--- Agregamos addDoc y collection
 import { formatMoney } from '../../utils';
 
 const PRESET_COLORS = ['#1a1a1a', '#005f73', '#0a9396', '#ae2012', '#6a4c93', '#ca6702', '#2d3277', '#e63946', '#457b9d', '#ff006e'];
@@ -23,7 +23,6 @@ const getBrandLogo = (name) => {
     return <span className="font-bold text-white text-[10px] tracking-widest uppercase opacity-80">TARJETA</span>;
 };
 
-// RECIBIMOS LA PROP privacyMode
 export default function MyCards({ cards, privacyMode }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editingId, setEditingId] = useState(null); 
@@ -32,6 +31,24 @@ export default function MyCards({ cards, privacyMode }) {
 
   // Helper para ocultar dinero
   const showMoney = (amount) => privacyMode ? '****' : formatMoney(amount);
+
+  // --- LÓGICA SALTAR NIVEL (NO USO TARJETAS) ---
+  const handleSkipCards = async () => {
+    if(window.confirm("¿Confirmás que no usas tarjetas de crédito? Se habilitará el siguiente nivel.")) {
+        // Creamos una tarjeta "dummy" para engañar al sistema de niveles
+        await addDoc(collection(db, 'cards'), { 
+            name: 'Solo Efectivo/Débito', 
+            bank: 'Sistema', 
+            color: '#10b981', 
+            limit: 0, 
+            limitOneShot: 0,
+            closeDay: 1, 
+            dueDay: 1, 
+            userId: auth.currentUser.uid,
+            isSkipped: true // Flag por si queremos ocultarla luego
+        });
+    }
+  };
 
   const openForm = (card = null) => {
     if (card) { setForm({ ...card, limitOneShot: card.limitOneShot || card.limit }); setEditingId(card.id); } 
@@ -72,12 +89,12 @@ export default function MyCards({ cards, privacyMode }) {
           </div>
           <div><label className="block text-xs font-bold text-gray-700 mb-2">Color</label><div className="flex flex-wrap gap-3">{PRESET_COLORS.map((color) => (<button key={color} type="button" onClick={() => setForm({...form, color: color})} className={`w-8 h-8 rounded-full shadow-sm transition-transform hover:scale-110 ${form.color === color ? 'ring-2 ring-offset-2 ring-blue-600 scale-110' : ''}`} style={{ backgroundColor: color }} />))}</div></div>
           <div className="grid grid-cols-2 gap-4 bg-gray-50 p-3 rounded-lg border border-gray-100">
-             <div><label className="block text-xs font-bold text-gray-700 mb-1">Límite 1 Pago ($)</label><input required type="number" value={form.limitOneShot} onChange={e => setForm({...form, limitOneShot: e.target.value})} className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Contado" /></div>
-             <div><label className="block text-xs font-bold text-gray-700 mb-1">Límite Cuotas ($)</label><input required type="number" value={form.limit} onChange={e => setForm({...form, limit: e.target.value})} className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Financiación" /></div>
+              <div><label className="block text-xs font-bold text-gray-700 mb-1">Límite 1 Pago ($)</label><input required type="number" value={form.limitOneShot} onChange={e => setForm({...form, limitOneShot: e.target.value})} className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Contado" /></div>
+              <div><label className="block text-xs font-bold text-gray-700 mb-1">Límite Cuotas ($)</label><input required type="number" value={form.limit} onChange={e => setForm({...form, limit: e.target.value})} className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Financiación" /></div>
           </div>
           <div className="grid grid-cols-2 gap-4">
-             <div><label className="block text-xs font-bold text-gray-700 mb-1">Día Cierre</label><input required type="number" min="1" max="31" value={form.closeDay} onChange={e => setForm({...form, closeDay: e.target.value})} className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 outline-none" /></div>
-             <div><label className="block text-xs font-bold text-gray-700 mb-1">Día Vencimiento</label><input required type="number" min="1" max="31" value={form.dueDay} onChange={e => setForm({...form, dueDay: e.target.value})} className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 outline-none" /></div>
+              <div><label className="block text-xs font-bold text-gray-700 mb-1">Día Cierre</label><input required type="number" min="1" max="31" value={form.closeDay} onChange={e => setForm({...form, closeDay: e.target.value})} className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 outline-none" /></div>
+              <div><label className="block text-xs font-bold text-gray-700 mb-1">Día Vencimiento</label><input required type="number" min="1" max="31" value={form.dueDay} onChange={e => setForm({...form, dueDay: e.target.value})} className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 outline-none" /></div>
           </div>
           <div className="flex justify-end gap-3 mt-6 pt-4 border-t">
             <button type="button" onClick={() => setIsEditing(false)} className="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded">Cancelar</button>
@@ -94,6 +111,7 @@ export default function MyCards({ cards, privacyMode }) {
         <h2 className="text-xl font-medium text-gray-900">Mis Tarjetas</h2>
         <button onClick={() => openForm()} className="bg-[#3483fa] text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-[#2968c8] shadow-sm transition-colors">+ Agregar Tarjeta</button>
       </div>
+      
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {cards.map((card) => (
           <div key={card.id} className="group relative w-full aspect-[1.58/1] rounded-xl shadow-lg text-white overflow-hidden transition-all duration-300 hover:shadow-2xl hover:-translate-y-1" style={{ background: `linear-gradient(135deg, ${card.color} 0%, ${card.color}DD 100%)` }}>
@@ -105,12 +123,10 @@ export default function MyCards({ cards, privacyMode }) {
                     <div className="grid grid-cols-2 gap-4 items-end">
                         <div>
                             <p className="text-[9px] opacity-80 uppercase tracking-widest drop-shadow-sm">Lim. Cuotas</p>
-                            {/* MÁSCARA */}
                             <p className="font-mono text-lg tracking-wide font-bold text-shadow-sm">{showMoney(card.limit)}</p>
                         </div>
                         <div className="text-right">
                              <p className="text-[9px] opacity-80 uppercase drop-shadow-sm">Lim. 1 Pago</p>
-                             {/* MÁSCARA */}
                              <p className="font-mono text-sm font-bold opacity-90">{showMoney(card.limitOneShot || card.limit)}</p>
                         </div>
                     </div>
@@ -123,6 +139,20 @@ export default function MyCards({ cards, privacyMode }) {
           </div>
         ))}
       </div>
+
+      {/* BOTÓN SALTAR NIVEL (Solo visible si no hay tarjetas cargadas) */}
+      {cards.length === 0 && (
+          <div className="mt-12 text-center pb-8 animate-fade-in">
+              <p className="text-sm text-gray-400 mb-2">¿No usas tarjetas de crédito?</p>
+              <button 
+                onClick={handleSkipCards} 
+                className="text-xs font-bold text-gray-500 bg-gray-100 px-4 py-2 rounded-full hover:bg-gray-200 transition-colors"
+              >
+                  Saltar este paso y desbloquear Ahorros ⏩
+              </button>
+          </div>
+      )}
+
     </div>
   );
 }

@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import confetti from 'canvas-confetti'; // <--- IMPORTAMOS LA FIESTA
 import Navbar from './Components/Layout/Navbar';
 import BottomNav from './Components/Layout/BottomNav'; 
 import Home from './Components/Dashboard/Home';
@@ -23,10 +24,9 @@ export default function App() {
   const [privacyMode, setPrivacyMode] = useState(false);
   const [view, setView] = useState('dashboard');
   
-  // --- ESTADO GLOBAL DE FECHA ---
+  // FECHA GLOBAL
   const [currentDate, setCurrentDate] = useState(new Date());
 
-  // Función para formatear fecha "Diciembre 2025"
   const getFormattedDate = (date) => {
       const options = { month: 'long', year: 'numeric' };
       let text = date.toLocaleDateString('es-AR', options).replace(' de ', ' ');
@@ -39,14 +39,64 @@ export default function App() {
       setCurrentDate(newDate);
   };
 
-  // --- DATOS (Con Caché Local) ---
+  // DATOS
   const [cards, setCards] = useState(() => JSON.parse(localStorage.getItem('cache_cards')) || []);
   const [transactions, setTransactions] = useState(() => JSON.parse(localStorage.getItem('cache_transactions')) || []);
   const [superItems, setSuperItems] = useState(() => JSON.parse(localStorage.getItem('cache_superItems')) || []);
   const [services, setServices] = useState(() => JSON.parse(localStorage.getItem('cache_services')) || []);
   const [savingsList, setSavingsList] = useState(() => JSON.parse(localStorage.getItem('cache_savings')) || []);
 
-  // 1. Auth & Timeout
+  // --- LÓGICA DE NIVELES (GAMIFICACIÓN) ---
+  const [userLevel, setUserLevel] = useState(1);
+  const prevLevelRef = useRef(1); // Para recordar el nivel anterior y detectar cambios
+
+  useEffect(() => {
+      let level = 1;
+      
+      // REGLA NIVEL 2: Tener al menos 1 Servicio cargado
+      if (services.length > 0) level = 2;
+      
+      // REGLA NIVEL 3: Tener al menos 3 items en el Super (Y haber pasado el anterior)
+      if (level >= 2 && superItems.length >= 3) level = 3;
+      
+      // REGLA NIVEL 4: Tener al menos 1 Tarjeta cargada (Y haber pasado el anterior)
+      // (Nota: Si no usa tarjetas, después implementaremos un botón "Saltar" que agregue una tarjeta dummy o flag)
+      if (level >= 3 && cards.length > 0) level = 4;
+
+      // DETECTAR "LEVEL UP" Y LANZAR CONFETTI 🎉
+      if (level > prevLevelRef.current) {
+          triggerConfetti();
+          // Opcional: Sonido de éxito aquí
+      }
+      
+      prevLevelRef.current = level;
+      setUserLevel(level);
+
+  }, [services, superItems, cards]);
+
+  const triggerConfetti = () => {
+      const duration = 3 * 1000;
+      const animationEnd = Date.now() + duration;
+      const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 9999 };
+
+      const randomInRange = (min, max) => Math.random() * (max - min) + min;
+
+      const interval = setInterval(function() {
+        const timeLeft = animationEnd - Date.now();
+
+        if (timeLeft <= 0) {
+          return clearInterval(interval);
+        }
+
+        const particleCount = 50 * (timeLeft / duration);
+        // Tira papeles desde dos puntos del centro
+        confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
+        confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
+      }, 250);
+  };
+
+
+  // ... (RESTO DE USE EFFECTS DE AUTH Y FIRESTORE IGUAL QUE ANTES) ...
   useEffect(() => {
     const safetyTimer = setTimeout(() => { if (loadingUser) setShowReload(true); }, 8000);
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -57,7 +107,6 @@ export default function App() {
     return () => { unsubscribe(); clearTimeout(safetyTimer); };
   }, []);
 
-  // 2. Listeners Firebase
   useEffect(() => {
     if (!user) return;
     const syncData = (queryRef, setState, cacheKey) => {
@@ -86,9 +135,7 @@ export default function App() {
     } catch (error) { alert("Error al guardar."); }
   };
 
-  const handleLogout = () => { 
-      if(window.confirm("¿Cerrar sesión?")) { signOut(auth); localStorage.clear(); window.location.reload(); }
-  };
+  const handleLogout = () => { if(window.confirm("¿Cerrar sesión?")) { signOut(auth); localStorage.clear(); window.location.reload(); } };
   const handleReload = () => window.location.reload();
 
   if (loadingUser) {
@@ -105,7 +152,6 @@ export default function App() {
         <Navbar currentView={view} setView={setView} privacyMode={privacyMode} setPrivacyMode={setPrivacyMode} />
       </div>
 
-      {/* HEADER MÓVIL CON FECHA */}
       <div className="md:hidden bg-white p-3 shadow-sm sticky top-0 z-40 px-4">
          <div className="flex items-center justify-center">
              <div className="flex items-center justify-between w-full bg-gray-50 rounded-xl p-1">
@@ -122,31 +168,26 @@ export default function App() {
       
       <main className="max-w-5xl mx-auto p-4 mt-2 pb-28 md:pb-10 md:mt-4">
         
-        {view === 'dashboard' && <Home transactions={transactions} cards={cards} supermarketItems={superItems} services={services} savingsList={savingsList} privacyMode={privacyMode} setView={setView} />}
-        
-        {view === 'savings' && <Savings savingsList={savingsList} />}
-        
-        {view === 'services_manager' && (
-            <ServicesManager services={services} cards={cards} transactions={transactions} currentDate={currentDate} />
-        )}
-        
-        {/* AHORA LE PASAMOS LA FECHA AL DASHBOARD TAMBIÉN */}
-        {view === 'stats' && (
-            <Dashboard 
-                transactions={transactions} 
-                cards={cards} 
-                privacyMode={privacyMode} 
-                currentDate={currentDate} 
+        {/* PASAMOS userLevel AL HOME */}
+        {view === 'dashboard' && (
+            <Home 
+                transactions={transactions} cards={cards} supermarketItems={superItems} services={services} savingsList={savingsList} 
+                privacyMode={privacyMode} setView={setView} 
+                userLevel={userLevel} // <--- DATO VITAL PARA EL CANDADO
             />
         )}
-
+        
+        {view === 'savings' && <Savings savingsList={savingsList} />}
+        {view === 'services_manager' && <ServicesManager services={services} cards={cards} transactions={transactions} currentDate={currentDate} />}
+        {view === 'stats' && <Dashboard transactions={transactions} cards={cards} privacyMode={privacyMode} currentDate={currentDate} />}
         {view === 'purchase' && <NewPurchase cards={cards} onSave={addTransaction} transactions={transactions} privacyMode={privacyMode} />}
         {view === 'cards' && <MyCards cards={cards} privacyMode={privacyMode} />}
         {view === 'super' && <SuperList />}
         
       </main>
 
-      <BottomNav currentView={view} setView={setView} />
+      {/* PASAMOS userLevel AL BOTTOM NAV */}
+      <BottomNav currentView={view} setView={setView} userLevel={userLevel} />
     </div>
   );
 }
