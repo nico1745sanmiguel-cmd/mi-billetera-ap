@@ -1,78 +1,78 @@
 import React, { useState, useEffect } from 'react';
-import Navbar from './Components/Layout/Navbar';
-import BottomNav from './Components/Layout/BottomNav'; 
+import Navbar from './Components/Layout/Navbar'; // Se mantiene para Desktop si lo usas
 import Home from './Components/Dashboard/Home';
-import Dashboard from './Components/Dashboard/Dashboard'; // Ahora es "Análisis"
+import Dashboard from './Components/Dashboard/Dashboard';
 import MyCards from './Components/Cards/MyCards';
 import NewPurchase from './Components/Purchase/NewPurchase';
 import InstallPrompt from './Components/UI/InstallPrompt';
 import Login from './Components/Login';
-import Importer from './Components/Importer'; 
 import SkeletonDashboard from './Components/UI/SkeletonDashboard';
 import SuperList from './Components/Supermarket/SuperList';
-import ServicesManager from './Components/Services/ServicesManager'; // <--- NUEVO IMPORT
+import ServicesManager from './Components/Services/ServicesManager';
+import Savings from './Components/Savings/Savings';
 
 import { db, auth } from './firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { collection, onSnapshot, addDoc, query, where } from 'firebase/firestore';
 
-// --- ICONOS DE PRIVACIDAD ---
-const EyeOpen = () => <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>;
-const EyeClosed = () => <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg>;
-
 export default function App() {
   const [user, setUser] = useState(null);
   const [loadingUser, setLoadingUser] = useState(true);
+  const [showReload, setShowReload] = useState(false);
   const [privacyMode, setPrivacyMode] = useState(false);
-
-  const [view, setView] = useState('dashboard');
+  const [view, setView] = useState('dashboard'); // 'dashboard' es el HOME
   
-  // --- ESTADOS DE DATOS ---
-  const [cards, setCards] = useState([]);
-  const [transactions, setTransactions] = useState([]);
-  const [superItems, setSuperItems] = useState([]);
-  const [services, setServices] = useState([]); // <--- NUEVO ESTADO SERVICIOS
+  // --- FECHA GLOBAL (Comanda Dashboard y Servicios) ---
+  const [currentDate, setCurrentDate] = useState(new Date());
 
-  // 1. DETECTAR USUARIO
+  const getFormattedDate = (date) => {
+      const options = { month: 'long', year: 'numeric' };
+      let text = date.toLocaleDateString('es-AR', options).replace(' de ', ' ');
+      return text.charAt(0).toUpperCase() + text.slice(1);
+  };
+
+  const changeMonth = (offset) => {
+      const newDate = new Date(currentDate);
+      newDate.setMonth(newDate.getMonth() + offset);
+      setCurrentDate(newDate);
+  };
+
+  // --- DATOS ---
+  const [cards, setCards] = useState(() => JSON.parse(localStorage.getItem('cache_cards')) || []);
+  const [transactions, setTransactions] = useState(() => JSON.parse(localStorage.getItem('cache_transactions')) || []);
+  const [superItems, setSuperItems] = useState(() => JSON.parse(localStorage.getItem('cache_superItems')) || []);
+  const [services, setServices] = useState(() => JSON.parse(localStorage.getItem('cache_services')) || []);
+  const [savingsList, setSavingsList] = useState(() => JSON.parse(localStorage.getItem('cache_savings')) || []);
+
+  // 1. Auth & Timeout
   useEffect(() => {
+    const safetyTimer = setTimeout(() => { if (loadingUser) setShowReload(true); }, 8000);
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
-      setTimeout(() => setLoadingUser(false), 500); // Pequeño delay para ver el Skeleton
+      const hasCache = cards.length > 0 || transactions.length > 0;
+      setTimeout(() => setLoadingUser(false), hasCache ? 0 : 500); 
     });
-    return () => unsubscribe();
+    return () => { unsubscribe(); clearTimeout(safetyTimer); };
   }, []);
 
-  // 2. CARGAR DATOS EN TIEMPO REAL
+  // 2. Firebase Sync
   useEffect(() => {
-    if (!user) { 
-        setCards([]); 
-        setTransactions([]); 
-        setSuperItems([]); 
-        setServices([]); 
-        return; 
-    }
-    
-    // Tarjetas
-    const unsubCards = onSnapshot(query(collection(db, 'cards'), where("userId", "==", user.uid)), (snap) => {
-      setCards(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    });
-    
-    // Compras (Transacciones)
-    const unsubTrans = onSnapshot(query(collection(db, 'transactions'), where("userId", "==", user.uid)), (snap) => {
-      setTransactions(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    });
-    
-    // Supermercado
-    const unsubSuper = onSnapshot(query(collection(db, 'supermarket_items'), where("userId", "==", user.uid)), (snap) => {
-      setSuperItems(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    });
+    if (!user) return;
+    const syncData = (queryRef, setState, cacheKey) => {
+        return onSnapshot(queryRef, (snap) => {
+            const data = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            setState(data);
+            localStorage.setItem(cacheKey, JSON.stringify(data));
+        }, (error) => console.log("Offline:", error));
+    };
 
-    // Servicios (NUEVO)
-    const unsubServices = onSnapshot(query(collection(db, 'services'), where("userId", "==", user.uid)), (snap) => {
-      setServices(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    });
+    const unsubCards = syncData(query(collection(db, 'cards'), where("userId", "==", user.uid)), setCards, 'cache_cards');
+    const unsubTrans = syncData(query(collection(db, 'transactions'), where("userId", "==", user.uid)), setTransactions, 'cache_transactions');
+    const unsubSuper = syncData(query(collection(db, 'supermarket_items'), where("userId", "==", user.uid)), setSuperItems, 'cache_superItems');
+    const unsubServices = syncData(query(collection(db, 'services'), where("userId", "==", user.uid)), setServices, 'cache_services');
+    const unsubSavings = syncData(query(collection(db, 'savings_movements'), where("userId", "==", user.uid)), setSavingsList, 'cache_savings');
 
-    return () => { unsubCards(); unsubTrans(); unsubSuper(); unsubServices(); };
+    return () => { unsubCards(); unsubTrans(); unsubSuper(); unsubServices(); unsubSavings(); };
   }, [user]);
 
   const addTransaction = async (t) => {
@@ -80,83 +80,98 @@ export default function App() {
       if (!user) return;
       const { id, ...dataToSave } = t; 
       await addDoc(collection(db, 'transactions'), { ...dataToSave, userId: user.uid });
-      setView('dashboard');
-    } catch (error) { console.error(error); alert("Error al guardar."); }
+      setView('dashboard'); // Volver al Home al guardar
+    } catch (error) { alert("Error al guardar."); }
   };
 
-  const handleLogout = () => { signOut(auth); };
+  // Función de logout que pasaremos al Home
+  const handleLogout = () => { 
+      if(window.confirm("¿Cerrar sesión?")) { 
+          signOut(auth); 
+          localStorage.clear(); 
+          window.location.reload(); 
+      } 
+  };
+  
+  const handleReload = () => window.location.reload();
 
-  // --- RENDERIZADO ---
-
-  if (loadingUser) return <div className="min-h-screen bg-[#f3f4f6]"><SkeletonDashboard /></div>;
+  if (loadingUser) {
+      if (showReload) return <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center"><p className="mb-4">Conexión lenta...</p><button onClick={handleReload} className="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold">Recargar</button></div>;
+      return <div className="min-h-screen bg-[#f3f4f6]"><SkeletonDashboard /></div>;
+  }
   if (!user) return <Login />;
 
   return (
     <div className="min-h-screen font-sans text-gray-800 bg-[#f3f4f6]">
       <InstallPrompt />
 
-      {/* HEADER DESKTOP */}
+      {/* NAVBAR DESKTOP (Opcional, se mantiene oculta en móvil) */}
       <div className="hidden md:block relative">
         <Navbar currentView={view} setView={setView} privacyMode={privacyMode} setPrivacyMode={setPrivacyMode} />
-        <button onClick={handleLogout} className="absolute top-4 right-4 text-xs text-red-500 hover:underline bg-white px-3 py-1 rounded border border-red-100">
-            Cerrar Sesión ({user.email})
-        </button>
       </div>
 
-      {/* HEADER MÓVIL */}
-      <div className="md:hidden bg-white p-4 shadow-sm sticky top-0 z-40 flex justify-between items-center px-4">
-         <button onClick={() => setPrivacyMode(!privacyMode)} className="p-2 rounded-full hover:bg-gray-100 active:scale-95 transition-all">
-            {privacyMode ? <EyeClosed /> : <EyeOpen />}
-         </button>
+      {/* --- NUEVA BARRA SUPERIOR MÓVIL (Tu pedido) --- */}
+      <div className="md:hidden bg-white px-4 py-3 shadow-sm sticky top-0 z-40 flex items-center justify-between gap-3">
          
-         <h1 className="font-bold text-gray-900 text-lg">
-            {view === 'dashboard' && 'Mi Billetera'}
-            {view === 'purchase' && 'Nueva Compra'}
-            {view === 'cards' && 'Mis Tarjetas'}
-            {view === 'super' && 'Lista Super'}
-            {view === 'stats' && 'Análisis'}
-            {view === 'services_manager' && 'Gastos Fijos'}
-         </h1>
-
-         <button onClick={handleLogout} className="text-red-500 p-2" title="Salir">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+         {/* 1. IZQUIERDA: BOTÓN HOME (Volver) */}
+         <button 
+            onClick={() => setView('dashboard')} 
+            className={`p-2 rounded-xl transition-all active:scale-95 ${view === 'dashboard' ? 'bg-blue-50 text-blue-600' : 'bg-gray-100 text-gray-500'}`}
+         >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
          </button>
+
+         {/* 2. CENTRO: SELECTOR DE FECHA */}
+         <div className="flex-1 flex items-center justify-between bg-gray-50 rounded-xl p-1 max-w-[200px]">
+             <button onClick={() => changeMonth(-1)} className="p-2 rounded-lg text-gray-400 hover:bg-gray-200 active:scale-95">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" /></svg>
+             </button>
+             <span className="font-bold text-gray-800 text-sm capitalize">{getFormattedDate(currentDate)}</span>
+             <button onClick={() => changeMonth(1)} className="p-2 rounded-lg text-gray-400 hover:bg-gray-200 active:scale-95">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" /></svg>
+             </button>
+         </div>
+
+         {/* 3. DERECHA: PRIVACIDAD (Ojito) */}
+         <button 
+            onClick={() => setPrivacyMode(!privacyMode)} 
+            className={`p-2 rounded-xl transition-all active:scale-95 ${privacyMode ? 'bg-indigo-50 text-indigo-600' : 'bg-gray-100 text-gray-400'}`}
+         >
+            {privacyMode ? (
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg>
+            ) : (
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+            )}
+         </button>
+
       </div>
       
-      <main className="max-w-5xl mx-auto p-4 mt-2 pb-28 md:pb-10 md:mt-4">
+      <main className="max-w-5xl mx-auto p-4 mt-2 pb-10">
         
-        {/* VISTA PRINCIPAL (HOME 2.0) */}
+        {/* EL HOME RECIBE handleLogout */}
         {view === 'dashboard' && (
             <Home 
                 transactions={transactions} 
                 cards={cards} 
                 supermarketItems={superItems} 
                 services={services} 
+                savingsList={savingsList} 
                 privacyMode={privacyMode} 
-                setView={setView} 
+                setView={setView}
+                onLogout={handleLogout} // <--- Pasamos la función de logout
             />
         )}
-
-        {/* GESTIÓN DE SERVICIOS (Ahora recibe datos) */}
-{view === 'services_manager' && (
-    <ServicesManager 
-        services={services} 
-        cards={cards} 
-        transactions={transactions} 
-    />
-)}
-
-        {/* OTRAS VISTAS */}
-        {view === 'stats' && <Dashboard transactions={transactions} cards={cards} privacyMode={privacyMode} />}
+        
+        {view === 'savings' && <Savings savingsList={savingsList} />}
+        {view === 'services_manager' && <ServicesManager services={services} cards={cards} transactions={transactions} currentDate={currentDate} />}
+        {view === 'stats' && <Dashboard transactions={transactions} cards={cards} privacyMode={privacyMode} currentDate={currentDate} />}
         {view === 'purchase' && <NewPurchase cards={cards} onSave={addTransaction} transactions={transactions} privacyMode={privacyMode} />}
         {view === 'cards' && <MyCards cards={cards} privacyMode={privacyMode} />}
         {view === 'super' && <SuperList />}
         
-        {/* IMPORTADOR (Oculto) */}
-        {/* <Importer cards={cards} /> */}
       </main>
 
-      <BottomNav currentView={view} setView={setView} />
+      {/* SIN BOTTOM NAV - PANTALLA LIMPIA */}
     </div>
   );
 }
