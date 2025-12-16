@@ -153,7 +153,8 @@ export default function App() {
                     privacyMode={privacyMode} 
                     setView={setView}
                     onLogout={handleLogout}
-                    currentDate={currentDate} // <--- CLAVE PARA QUE EL HOME SE ACTUALICE
+                    currentDate={currentDate}
+                    user={user} // <--- CAMBIO CLAVE AQUÍ
                 />
             )}
             
@@ -161,10 +162,10 @@ export default function App() {
             
             {view === 'stats' && <Dashboard transactions={transactions} cards={cards} services={services} privacyMode={privacyMode} currentDate={currentDate} />}
             
-            {view === 'purchase' && <NewPurchase cards={cards} onSave={addTransaction} transactions={transactions} privacyMode={privacyMode} />}
+            {view === 'purchase' && <NewPurchase cards={cards} onSave={addTransaction} transactions={transactions} privacyMode={privacyMode} currentDate={currentDate} />}
+            
             {view === 'cards' && <MyCards cards={cards} privacyMode={privacyMode} />}
             
-            {/* CORRECCIÓN FINAL: Pasamos los datos correctamente */}
             {view === 'super' && <SuperList items={superItems} currentDate={currentDate} />}
         
         </Suspense>
