@@ -1,6 +1,7 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import { formatMoney } from '../../utils';
-import FinancialTarget from './FinancialTarget'; 
+import FinancialTarget from './FinancialTarget';
+import { useDragReorder } from '../../hooks/useDragReorder'; 
 
 // Colores de urgencia
 const URGENCY_COLORS = {
@@ -10,6 +11,47 @@ const URGENCY_COLORS = {
 };
 
 export default function Home({ transactions, cards, supermarketItems = [], services = [], privacyMode, setView, onLogout }) {
+  
+  // --- DRAG & DROP SETUP ---
+  const widgets = [
+    { id: 'target', name: 'Target' },
+    { id: 'cards', name: 'Cards' },
+    { id: 'agenda', name: 'Agenda' },
+    { id: 'super_actions', name: 'Super & Actions' }
+  ];
+
+  const { orderedItems: orderedWidgets, draggingId, dragOffset, handlers } = useDragReorder(widgets, 'homeWidgetOrder');
+
+  // Event listeners globales para mouse
+  useEffect(() => {
+    if (draggingId) {
+      window.addEventListener('mousemove', handlers.onMouseMove);
+      window.addEventListener('mouseup', handlers.onMouseUp);
+      return () => {
+        window.removeEventListener('mousemove', handlers.onMouseMove);
+        window.removeEventListener('mouseup', handlers.onMouseUp);
+      };
+    }
+  }, [draggingId, handlers]);
+
+  // Función para obtener las propiedades de un widget arrastrando
+  const getDragProps = (widgetId) => ({
+    onTouchStart: (e) => handlers.onTouchStart(e, widgetId),
+    onTouchMove: (e) => handlers.onTouchMove(e, widgetId),
+    onTouchEnd: (e) => handlers.onTouchEnd(e, widgetId),
+    onMouseDown: (e) => handlers.onMouseDown(e, widgetId),
+  });
+
+  // Función para obtener estilos del widget arrastrando
+  const getDragStyle = (widgetId) => {
+    if (draggingId !== widgetId) return {};
+    return {
+      opacity: 0.8,
+      transform: `translate(${dragOffset.x}px, ${dragOffset.y}px)`,
+      transition: 'none',
+      zIndex: 1000,
+    };
+  };
   
   // --- 1. CÁLCULOS ---
   
@@ -103,16 +145,23 @@ export default function Home({ transactions, cards, supermarketItems = [], servi
           </div>
       )}
 
-      {/* 3. RESUMEN GLOBAL (RADAR) */}
-      {/* Si hay privacidad, ocultamos/blureamos el gráfico complejo */}
-      <div className={`transition-all duration-300 ${privacyMode ? 'opacity-50 blur-sm pointer-events-none select-none' : 'opacity-100'}`}>
+      {/* 3. RESUMEN GLOBAL (RADAR) - Draggable */}
+      <div 
+        {...getDragProps('target')}
+        style={getDragStyle('target')}
+        className={`transition-all duration-300 cursor-grab ${draggingId === 'target' ? 'cursor-grabbing' : ''} ${privacyMode ? 'opacity-50 blur-sm pointer-events-none select-none' : 'opacity-100'}`}
+      >
           <FinancialTarget totalNeed={totalNeed} totalPaid={totalPaid} privacyMode={privacyMode} />
           {privacyMode && <div className="absolute inset-0 flex items-center justify-center font-bold text-gray-500 z-10">Vista Privada</div>}
       </div>
 
 
-      {/* 4. CAROUSEL DE TARJETAS (Horizontal Scroll) - Reemplaza al Stack */}
-      <div>
+      {/* 4. CAROUSEL DE TARJETAS (Horizontal Scroll) - Draggable */}
+      <div 
+        {...getDragProps('cards')}
+        style={getDragStyle('cards')}
+        className={`transition-all duration-300 cursor-grab ${draggingId === 'cards' ? 'cursor-grabbing' : ''}`}
+      >
           <div className="flex justify-between items-center px-2 mb-3">
               <h3 className="font-bold text-gray-800 text-sm">Tus Tarjetas</h3>
               <button onClick={() => setView('cards')} className="text-xs font-bold text-blue-600 hover:text-blue-800">Ver todas</button>
@@ -148,8 +197,12 @@ export default function Home({ transactions, cards, supermarketItems = [], servi
               <div onClick={() => setView('cards')} className="mx-2 h-32 border-2 border-dashed border-gray-300 rounded-2xl flex flex-col items-center justify-center text-gray-400 gap-2 cursor-pointer hover:bg-gray-50">
                   <span className="text-2xl">+</span>
                   <span className="text-xs font-bold">Agregar Tarjeta</span>
-              </div>
-          )}
+              </div>- Draggable */}
+      <div 
+        {...getDragProps('agenda')}
+        style={getDragStyle('agenda')}
+        className={`bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mx-1 transition-all duration-300 cursor-grab ${draggingId === 'agenda' ? 'cursor-grabbing' : ''}`}
+      
       </div>
 
       {/* 5. PRÓXIMOS VENCIMIENTOS (Lista Simple y Limpia) */}
@@ -174,8 +227,12 @@ export default function Home({ transactions, cards, supermarketItems = [], servi
                       <p className="font-mono font-bold text-gray-800">{showMoney(item.amount)}</p>
                   </div>
               ))}
-              {agenda.length === 0 && (
-                  <div className="p-6 text-center text-gray-400">
+              {agenda.length === 0 && (- Draggable */}
+      <div 
+        {...getDragProps('super_actions')}
+        style={getDragStyle('super_actions')}
+        className={`grid grid-cols-2 gap-3 mx-1 transition-all duration-300 cursor-grab ${draggingId === 'super_actions' ? 'cursor-grabbing' : ''}`}
+      text-gray-400">
                       <p className="text-xs">🎉 Todo al día por hoy</p>
                   </div>
               )}
