@@ -1,7 +1,7 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import { formatMoney } from '../../utils';
 import FinancialTarget from './FinancialTarget'; 
-import { useDragReorder } from '../../hooks/useDragReorder'; // Asegúrate que la ruta sea correcta
+import { useDragReorder } from '../../hooks/useDragReorder';
 
 // Colores de urgencia
 const URGENCY_COLORS = {
@@ -12,9 +12,31 @@ const URGENCY_COLORS = {
 
 export default function Home({ transactions, cards, supermarketItems = [], services = [], privacyMode, setView, onLogout }) {
   
-  // --- 1. CONFIGURACIÓN DRAG & DROP ---
-  // Definimos el orden inicial por IDs
-  const { order, getDragProps, draggingItem } = useDragReorder(['target', 'cards', 'agenda', 'super_actions']);
+  // --- 1. CONFIGURACIÓN DRAG & DROP CON MEMORIA 🧠 ---
+  const DEFAULT_ORDER = ['target', 'cards', 'agenda', 'super_actions'];
+
+  // Función para obtener el orden inicial (Memoria o Default)
+  const getInitialOrder = () => {
+      const saved = localStorage.getItem('widget_order');
+      if (saved) {
+          try {
+              const parsed = JSON.parse(saved);
+              // Pequeña validación: si agregamos/quitamos widgets en el futuro, reseteamos para evitar errores
+              if (parsed.length === DEFAULT_ORDER.length) return parsed;
+          } catch (e) {
+              console.error("Error leyendo orden guardado", e);
+          }
+      }
+      return DEFAULT_ORDER;
+  };
+
+  const { order, getDragProps, draggingItem } = useDragReorder(getInitialOrder());
+
+  // Efecto: Cada vez que el usuario mueve algo, lo guardamos
+  useEffect(() => {
+      localStorage.setItem('widget_order', JSON.stringify(order));
+  }, [order]);
+
 
   // --- 2. CÁLCULOS (Lógica de Negocio) ---
   const cardsWithDebt = useMemo(() => {
@@ -53,7 +75,7 @@ export default function Home({ transactions, cards, supermarketItems = [], servi
   }, [agenda]);
 
 
-  // --- 3. DICCIONARIO DE WIDGETS (Aquí definimos cómo se ve cada uno) ---
+  // --- 3. DICCIONARIO DE WIDGETS ---
   const WIDGETS = {
     // A. RADAR FINANCIERO
     target: (
@@ -112,7 +134,7 @@ export default function Home({ transactions, cards, supermarketItems = [], servi
       </div>
     ),
 
-    // D. ACCIONES (SUPER + GASTO)
+    // D. ACCIONES
     super_actions: (
       <div className="grid grid-cols-2 gap-3 mx-1">
           <div onClick={() => setView('super')} className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm cursor-pointer hover:border-purple-200 transition-colors group">
@@ -137,14 +159,14 @@ export default function Home({ transactions, cards, supermarketItems = [], servi
         <button onClick={onLogout} className="bg-gray-50 text-gray-400 p-2 rounded-full hover:bg-red-50 hover:text-red-500 transition-colors"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg></button>
       </div>
 
-      {/* ALERTA CRÍTICA (Fija, no se arrastra) */}
+      {/* ALERTA CRÍTICA */}
       {criticalAlert.active && (
           <div className="bg-red-50 border border-red-100 p-4 rounded-xl flex items-center justify-between mx-1 animate-pulse">
               <div className="flex items-center gap-3"><div className="bg-red-100 p-2 rounded-full text-red-600"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg></div><div><p className="text-sm font-bold text-red-800">{criticalAlert.msg}</p><p className="text-xs text-red-600 font-medium cursor-pointer underline" onClick={() => setView('services_manager')}>Ir a pagar ahora</p></div></div><p className="font-bold text-red-800">{showMoney(criticalAlert.amount)}</p>
           </div>
       )}
 
-      {/* RENDERIZADO DE WIDGETS ORDENABLES */}
+      {/* WIDGETS ORDENABLES */}
       <div className="space-y-6">
         {order.map((key) => (
             <div 
@@ -152,14 +174,14 @@ export default function Home({ transactions, cards, supermarketItems = [], servi
                 {...getDragProps(key)}
                 className={`transition-all duration-300 ${draggingItem === key ? 'opacity-50 scale-95 cursor-grabbing' : 'cursor-grab'}`}
             >
-                {/* Ícono de arrastre sutil para indicar que se puede mover */}
+                {/* Ícono de arrastre sutil */}
                 <div className="flex justify-center -mb-2 opacity-0 hover:opacity-100 transition-opacity"><div className="w-10 h-1 bg-gray-200 rounded-full"></div></div>
                 {WIDGETS[key]}
             </div>
         ))}
       </div>
 
-      {/* BOTÓN SECUNDARIO (Fijo al final) */}
+      {/* BOTÓN SECUNDARIO (Fijo) */}
       <button onClick={() => setView('stats')} className="w-full py-3 bg-white border border-gray-200 text-gray-500 font-bold rounded-xl shadow-sm hover:bg-gray-50 text-sm flex items-center justify-center gap-2 mx-1">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
           Ver Análisis Completo
