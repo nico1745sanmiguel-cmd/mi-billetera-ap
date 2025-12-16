@@ -5,27 +5,37 @@ import { formatMoney } from '../../utils';
 
 export default function SuperList({ items = [], currentDate }) {
   const [newItem, setNewItem] = useState('');
-  const [price, setPrice] = useState('');
+  // Usamos strings para los inputs locales para facilitar el manejo de "vacío"
+  const [priceInput, setPriceInput] = useState(''); 
   const [quantity, setQuantity] = useState(1);
 
-  // 1. CLAVE DEL MES (Máquina del Tiempo ⏳)
+  // 1. CLAVE DEL MES
   const currentMonthKey = useMemo(() => {
       if (!currentDate) return '';
       return `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
   }, [currentDate]);
 
-  // 2. LISTA DEL MES ACTUAL
+  // 2. LISTA FILTRADA Y ORDENADA (A-Z y Check al fondo) 📉
   const monthlyList = useMemo(() => {
-      return items.filter(item => {
+      const list = items.filter(item => {
           if (item.month) return item.month === currentMonthKey;
-          // Compatibilidad con items viejos
           const realNow = new Date();
           const realKey = `${realNow.getFullYear()}-${String(realNow.getMonth() + 1).padStart(2, '0')}`;
           return currentMonthKey === realKey;
       });
+
+      // ORDENAMIENTO: 
+      // 1. Checked (false arriba, true abajo)
+      // 2. Alfabético (A-Z)
+      return list.sort((a, b) => {
+          if (a.checked === b.checked) {
+              return a.name.localeCompare(b.name);
+          }
+          return a.checked ? 1 : -1;
+      });
   }, [items, currentMonthKey]);
 
-  // 3. CÁLCULOS TOTALES
+  // 3. CÁLCULOS
   const totals = useMemo(() => {
       const estimated = monthlyList.reduce((acc, i) => acc + (i.price * i.quantity), 0);
       const real = monthlyList.filter(i => i.checked).reduce((acc, i) => acc + (i.price * i.quantity), 0);
@@ -34,35 +44,47 @@ export default function SuperList({ items = [], currentDate }) {
       return { estimated, real, count, checkedCount };
   }, [monthlyList]);
 
-  // 4. LÓGICA DE HISTORIAL (Comparación de Precios) 📉
+  // 4. HISTORIAL
   const getPriceHistory = (itemName, currentPrice) => {
-      // Buscamos items con el mismo nombre, que estén comprados (checked), pero que NO sean de este mes
       const history = items
           .filter(i => 
               i.name.trim().toLowerCase() === itemName.trim().toLowerCase() && 
               i.checked && 
               i.month !== currentMonthKey
           )
-          // Ordenamos del más reciente al más viejo
           .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
 
-      if (history.length === 0) return null; // No hay historial
-
+      if (history.length === 0) return null;
       const lastPrice = history[0].price;
       const diff = currentPrice - lastPrice;
-
       return { lastPrice, diff };
   };
 
   // --- HANDLERS ---
+  
+  // Formatea el valor visualmente para el input ($ 1.000)
+  const formatInputCurrency = (val) => {
+      if (!val) return '';
+      // Convertir a número y luego a formato moneda sin decimales
+      return '$ ' + Number(val).toLocaleString('es-AR');
+  };
+
+  // Parsea lo que escribe el usuario para guardar el número limpio
+  const parseCurrencyInput = (val) => {
+      // Quitar todo lo que no sea número
+      return val.replace(/\D/g, '');
+  };
+
   const handleAdd = async (e) => {
       e.preventDefault();
       if (!newItem || !auth.currentUser) return;
+      // Parseamos el input local de precio antes de guardar
+      const finalPrice = priceInput ? Number(parseCurrencyInput(priceInput)) : 0;
 
       try {
           await addDoc(collection(db, 'supermarket_items'), {
               name: newItem,
-              price: Number(price) || 0,
+              price: finalPrice,
               quantity: Number(quantity) || 1,
               checked: false,
               userId: auth.currentUser.uid,
@@ -70,11 +92,9 @@ export default function SuperList({ items = [], currentDate }) {
               createdAt: new Date().toISOString()
           });
           setNewItem('');
-          setPrice('');
+          setPriceInput('');
           setQuantity(1);
-      } catch (error) {
-          console.error("Error adding item:", error);
-      }
+      } catch (error) { console.error(error); }
   };
 
   const handleToggle = async (item) => {
@@ -83,19 +103,26 @@ export default function SuperList({ items = [], currentDate }) {
   };
 
   const handleDelete = async (id) => {
-      if(window.confirm("¿Borrar item?")) {
-        await deleteDoc(doc(db, 'supermarket_items', id));
-      }
+      if(window.confirm("¿Borrar item?")) await deleteDoc(doc(db, 'supermarket_items', id));
   };
 
-  // Edición directa de campos
-  const handleUpdate = async (item, field, value) => {
+  // Actualizar precio en tiempo real con formato
+  const handleUpdatePrice = async (item, rawValue) => {
+      const numericValue = parseCurrencyInput(rawValue);
       const itemRef = doc(db, 'supermarket_items', item.id);
-      await updateDoc(itemRef, { [field]: Number(value) });
+      await updateDoc(itemRef, { price: Number(numericValue) });
   };
+
+  // Actualizar cantidad (Stepper)
+  const handleUpdateQuantity = async (item, delta) => {
+      const newQty = Math.max(1, item.quantity + delta);
+      const itemRef = doc(db, 'supermarket_items', item.id);
+      await updateDoc(itemRef, { quantity: newQty });
+  };
+
 
   return (
-    <div className="animate-fade-in pb-24 space-y-4">
+    <div className="animate-fade-in pb-28 space-y-4">
       
       {/* HEADER */}
       <div className="flex justify-between items-end px-2">
@@ -120,13 +147,13 @@ export default function SuperList({ items = [], currentDate }) {
       {/* LISTA DE ITEMS */}
       <div className="space-y-3">
           {monthlyList.map((item) => {
-              // Calcular historial para este item
               const history = getPriceHistory(item.name, item.price);
+              const subtotal = item.price * item.quantity;
               
               return (
-                <div key={item.id} className={`flex flex-col p-3 rounded-xl border transition-all ${item.checked ? 'bg-purple-50 border-purple-100 opacity-80' : 'bg-white border-gray-100 shadow-sm'}`}>
+                <div key={item.id} className={`flex flex-col p-3 rounded-xl border transition-all duration-500 ${item.checked ? 'bg-purple-50 border-purple-100 opacity-60 order-last' : 'bg-white border-gray-100 shadow-sm'}`}>
                     
-                    {/* FILA SUPERIOR: Check + Nombre + Info Histórica */}
+                    {/* FILA SUPERIOR: Check + Nombre + Subtotal */}
                     <div className="flex items-center gap-3 mb-3">
                         <div 
                             onClick={() => handleToggle(item)}
@@ -136,17 +163,17 @@ export default function SuperList({ items = [], currentDate }) {
                         </div>
                         
                         <div className="flex-1 min-w-0">
-                            <p className={`font-bold text-sm text-gray-800 truncate ${item.checked ? 'line-through decoration-purple-400' : ''}`}>{item.name}</p>
+                            <div className="flex justify-between items-start">
+                                <p className={`font-bold text-sm text-gray-800 truncate ${item.checked ? 'line-through decoration-purple-400' : ''}`}>{item.name}</p>
+                                {/* SUBTOTAL */}
+                                {subtotal > 0 && <span className="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded font-mono font-bold">Sub: {formatMoney(subtotal)}</span>}
+                            </div>
                             
-                            {/* COMPARACIÓN HISTÓRICA */}
+                            {/* HISTORIAL */}
                             {history && item.price > 0 && (
                                 <p className="text-[10px] flex items-center gap-1">
                                     <span className="text-gray-400">Antes: {formatMoney(history.lastPrice)}</span>
-                                    {history.diff !== 0 && (
-                                        <span className={`font-bold ${history.diff > 0 ? 'text-red-500' : 'text-green-500'}`}>
-                                            ({history.diff > 0 ? '+' : ''}{formatMoney(history.diff)})
-                                        </span>
-                                    )}
+                                    {history.diff !== 0 && <span className={`font-bold ${history.diff > 0 ? 'text-red-500' : 'text-green-500'}`}>({history.diff > 0 ? '+' : ''}{formatMoney(history.diff)})</span>}
                                 </p>
                             )}
                         </div>
@@ -156,28 +183,24 @@ export default function SuperList({ items = [], currentDate }) {
                         </button>
                     </div>
 
-                    {/* FILA INFERIOR: Edición de Cantidad y Precio */}
-                    <div className="flex gap-2 pl-9">
-                        {/* INPUT CANTIDAD */}
-                        <div className="flex-1 bg-gray-50 rounded-lg flex items-center px-2 border border-gray-200 focus-within:border-purple-300 focus-within:bg-white transition-colors">
-                            <span className="text-[10px] text-gray-400 font-bold mr-1">Cant.</span>
-                            <input 
-                                type="number" 
-                                className="w-full bg-transparent outline-none text-sm font-bold text-gray-700 text-center py-2"
-                                value={item.quantity}
-                                onChange={(e) => handleUpdate(item, 'quantity', e.target.value)}
-                            />
+                    {/* FILA INFERIOR: Stepper Cantidad y Precio Formateado */}
+                    <div className="flex gap-3 pl-9">
+                        
+                        {/* STEPPER CANTIDAD */}
+                        <div className="flex items-center bg-gray-50 rounded-lg border border-gray-200 h-10">
+                            <button onClick={() => handleUpdateQuantity(item, -1)} className="w-8 h-full flex items-center justify-center text-gray-500 hover:bg-gray-200 active:bg-gray-300 rounded-l-lg transition-colors text-lg font-bold">-</button>
+                            <span className="w-8 text-center text-sm font-bold text-gray-700">{item.quantity}</span>
+                            <button onClick={() => handleUpdateQuantity(item, 1)} className="w-8 h-full flex items-center justify-center text-gray-500 hover:bg-gray-200 active:bg-gray-300 rounded-r-lg transition-colors text-lg font-bold">+</button>
                         </div>
 
-                        {/* INPUT PRECIO */}
-                        <div className="flex-[1.5] bg-gray-50 rounded-lg flex items-center px-2 border border-gray-200 focus-within:border-purple-300 focus-within:bg-white transition-colors">
-                            <span className="text-[10px] text-gray-400 font-bold mr-1">$</span>
+                        {/* INPUT PRECIO FORMATEADO */}
+                        <div className="flex-1 bg-gray-50 rounded-lg flex items-center px-3 border border-gray-200 focus-within:border-purple-300 focus-within:bg-white transition-colors h-10">
                             <input 
-                                type="number" 
-                                className={`w-full bg-transparent outline-none text-sm font-bold text-right py-2 ${item.checked ? 'text-purple-700' : 'text-gray-800'}`}
-                                value={item.price}
-                                onChange={(e) => handleUpdate(item, 'price', e.target.value)}
-                                placeholder="0"
+                                type="tel" 
+                                className={`w-full bg-transparent outline-none text-sm font-bold text-right ${item.checked ? 'text-purple-700' : 'text-gray-800'}`}
+                                value={item.price ? formatInputCurrency(item.price) : ''}
+                                onChange={(e) => handleUpdatePrice(item, e.target.value)}
+                                placeholder="$ 0"
                             />
                         </div>
                     </div>
@@ -198,11 +221,23 @@ export default function SuperList({ items = [], currentDate }) {
       {/* INPUT ADD FLOTANTE */}
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100 md:relative md:border-0 md:bg-transparent md:p-0 z-20">
           <form onSubmit={handleAdd} className="flex gap-2 max-w-5xl mx-auto">
-              <div className="flex-1 bg-gray-100 rounded-xl flex items-center px-4 border border-transparent focus-within:border-purple-500 focus-within:bg-white transition-all">
+              {/* Input Nombre */}
+              <div className="flex-[2] bg-gray-100 rounded-xl flex items-center px-4 border border-transparent focus-within:border-purple-500 focus-within:bg-white transition-all">
                   <input type="text" className="w-full bg-transparent outline-none text-sm font-bold text-gray-800 py-3" placeholder="¿Qué falta?" value={newItem} onChange={(e) => setNewItem(e.target.value)} />
               </div>
-              <input type="number" className="w-16 bg-gray-100 rounded-xl px-1 text-center font-bold text-gray-800 outline-none focus:bg-white focus:border focus:border-purple-500 text-sm" placeholder="Cant." value={quantity} onChange={(e) => setQuantity(e.target.value)} />
-              <button type="submit" disabled={!newItem} className="bg-purple-600 text-white w-12 h-12 rounded-xl flex items-center justify-center shadow-lg shadow-purple-200 active:scale-95 disabled:opacity-50 transition-all">
+              
+              {/* Input Precio Nuevo (Formateado) */}
+              <div className="flex-1 bg-gray-100 rounded-xl px-2 flex items-center border border-transparent focus-within:border-purple-500 focus-within:bg-white transition-all">
+                   <input 
+                      type="tel" 
+                      className="w-full bg-transparent outline-none text-center font-bold text-gray-800 text-sm" 
+                      placeholder="$ Est." 
+                      value={priceInput ? formatInputCurrency(parseCurrencyInput(priceInput)) : ''} 
+                      onChange={(e) => setPriceInput(e.target.value)} 
+                    />
+              </div>
+
+              <button type="submit" disabled={!newItem} className="bg-purple-600 text-white w-12 h-12 rounded-xl flex items-center justify-center shadow-lg shadow-purple-200 active:scale-95 disabled:opacity-50 transition-all flex-shrink-0">
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
               </button>
           </form>
