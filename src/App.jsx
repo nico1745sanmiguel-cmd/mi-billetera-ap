@@ -5,13 +5,13 @@ import Login from './Components/Login';
 import InstallPrompt from './Components/UI/InstallPrompt';
 import SkeletonDashboard from './Components/UI/SkeletonDashboard';
 
-// --- LAZY IMPORTS ---
+// --- LAZY IMPORTS (Optimizados) ---
 const Dashboard = lazy(() => import('./Components/Dashboard/Dashboard'));
 const MyCards = lazy(() => import('./Components/Cards/MyCards'));
 const NewPurchase = lazy(() => import('./Components/Purchase/NewPurchase'));
 const SuperList = lazy(() => import('./Components/Supermarket/SuperList'));
 const ServicesManager = lazy(() => import('./Components/Services/ServicesManager'));
-const Savings = lazy(() => import('./Components/Savings/Savings')); 
+// ELIMINADO: const Savings... (Esto causaba el error)
 
 import { db, auth } from './firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
@@ -43,19 +43,15 @@ export default function App() {
   const [transactions, setTransactions] = useState(() => JSON.parse(localStorage.getItem('cache_transactions')) || []);
   const [superItems, setSuperItems] = useState(() => JSON.parse(localStorage.getItem('cache_superItems')) || []);
   const [services, setServices] = useState(() => JSON.parse(localStorage.getItem('cache_services')) || []);
-  const [savingsList, setSavingsList] = useState(() => JSON.parse(localStorage.getItem('cache_savings')) || []);
+  // ELIMINADO: savingsList
 
   // --- MANEJO DEL BOTÓN ATRÁS (HISTORIAL) ---
   useEffect(() => {
-    // 1. Si cambiamos a una vista que NO es el home, empujamos un estado al historial
     if (view !== 'dashboard') {
         window.history.pushState({ page: view }, "", "");
     }
 
-    // 2. Escuchamos cuando el usuario aprieta "Atrás" en el celular/navegador
     const handleBackButton = (event) => {
-        // Al apretar atrás, el navegador saca el estado que empujamos arriba.
-        // Nosotros forzamos la vista al dashboard.
         setView('dashboard');
     };
 
@@ -63,7 +59,7 @@ export default function App() {
     return () => window.removeEventListener('popstate', handleBackButton);
   }, [view]);
 
-  // 1. Auth & Timeout
+  // 1. Auth
   useEffect(() => {
     const safetyTimer = setTimeout(() => { if (loadingUser) setShowReload(true); }, 8000);
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -89,9 +85,8 @@ export default function App() {
     const unsubTrans = syncData(query(collection(db, 'transactions'), where("userId", "==", user.uid)), setTransactions, 'cache_transactions');
     const unsubSuper = syncData(query(collection(db, 'supermarket_items'), where("userId", "==", user.uid)), setSuperItems, 'cache_superItems');
     const unsubServices = syncData(query(collection(db, 'services'), where("userId", "==", user.uid)), setServices, 'cache_services');
-    const unsubSavings = syncData(query(collection(db, 'savings_movements'), where("userId", "==", user.uid)), setSavingsList, 'cache_savings');
-
-    return () => { unsubCards(); unsubTrans(); unsubSuper(); unsubServices(); unsubSavings(); };
+    
+    return () => { unsubCards(); unsubTrans(); unsubSuper(); unsubServices(); };
   }, [user]);
 
   const addTransaction = async (t) => {
@@ -157,14 +152,14 @@ export default function App() {
                     cards={cards} 
                     supermarketItems={superItems} 
                     services={services} 
-                    savingsList={savingsList} 
+                    // Eliminado: savingsList
                     privacyMode={privacyMode} 
                     setView={setView}
                     onLogout={handleLogout}
                 />
             )}
             
-            {view === 'savings' && <Savings savingsList={savingsList} />}
+            {/* ELIMINADO: view === 'savings' */}
             {view === 'services_manager' && <ServicesManager services={services} cards={cards} transactions={transactions} currentDate={currentDate} />}
             
             {view === 'stats' && <Dashboard transactions={transactions} cards={cards} services={services} privacyMode={privacyMode} currentDate={currentDate} />}
