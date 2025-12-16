@@ -1,18 +1,17 @@
-import React, { useState, useEffect, Suspense, lazy } from 'react'; // <--- Importamos Suspense y lazy
+import React, { useState, useEffect, Suspense, lazy } from 'react'; 
 import Navbar from './Components/Layout/Navbar';
-import Home from './Components/Dashboard/Home'; // HOME SE QUEDA NORMAL (Carga rápida)
-import Login from './Components/Login';         // LOGIN SE QUEDA NORMAL
+import Home from './Components/Dashboard/Home'; 
+import Login from './Components/Login';         
 import InstallPrompt from './Components/UI/InstallPrompt';
 import SkeletonDashboard from './Components/UI/SkeletonDashboard';
 
-// --- LAZY IMPORTS (Carga diferida) ---
-// Estos componentes solo se descargan cuando se necesitan
+// --- LAZY IMPORTS ---
 const Dashboard = lazy(() => import('./Components/Dashboard/Dashboard'));
 const MyCards = lazy(() => import('./Components/Cards/MyCards'));
 const NewPurchase = lazy(() => import('./Components/Purchase/NewPurchase'));
 const SuperList = lazy(() => import('./Components/Supermarket/SuperList'));
 const ServicesManager = lazy(() => import('./Components/Services/ServicesManager'));
-const Savings = lazy(() => import('./Components/Savings/Savings')); // Si decidimos volver a usarlo
+const Savings = lazy(() => import('./Components/Savings/Savings')); 
 
 import { db, auth } from './firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
@@ -46,6 +45,25 @@ export default function App() {
   const [services, setServices] = useState(() => JSON.parse(localStorage.getItem('cache_services')) || []);
   const [savingsList, setSavingsList] = useState(() => JSON.parse(localStorage.getItem('cache_savings')) || []);
 
+  // --- MANEJO DEL BOTÓN ATRÁS (HISTORIAL) ---
+  useEffect(() => {
+    // 1. Si cambiamos a una vista que NO es el home, empujamos un estado al historial
+    if (view !== 'dashboard') {
+        window.history.pushState({ page: view }, "", "");
+    }
+
+    // 2. Escuchamos cuando el usuario aprieta "Atrás" en el celular/navegador
+    const handleBackButton = (event) => {
+        // Al apretar atrás, el navegador saca el estado que empujamos arriba.
+        // Nosotros forzamos la vista al dashboard.
+        setView('dashboard');
+    };
+
+    window.addEventListener('popstate', handleBackButton);
+    return () => window.removeEventListener('popstate', handleBackButton);
+  }, [view]);
+
+  // 1. Auth & Timeout
   useEffect(() => {
     const safetyTimer = setTimeout(() => { if (loadingUser) setShowReload(true); }, 8000);
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -56,6 +74,7 @@ export default function App() {
     return () => { unsubscribe(); clearTimeout(safetyTimer); };
   }, []);
 
+  // 2. Firebase Sync
   useEffect(() => {
     if (!user) return;
     const syncData = (queryRef, setState, cacheKey) => {
@@ -94,7 +113,6 @@ export default function App() {
   
   const handleReload = () => window.location.reload();
 
-  // --- LOADER SIMPLE PARA COMPONENTES LAZY ---
   const LazyLoader = () => (
     <div className="flex justify-center items-center h-40 animate-pulse">
         <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
@@ -131,7 +149,6 @@ export default function App() {
       
       <main className="max-w-5xl mx-auto p-4 mt-2 pb-10">
         
-        {/* SUSPENSE ENVUELVE A LAS VISTAS LAZY */}
         <Suspense fallback={<LazyLoader />}>
             
             {view === 'dashboard' && (
