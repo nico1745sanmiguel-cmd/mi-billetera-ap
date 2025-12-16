@@ -1,150 +1,52 @@
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef } from 'react';
 
-/**
- * Hook para reordenar elementos con drag & drop
- * Soporta touch (long press) y mouse
- * Guarda el orden en localStorage
- */
-export const useDragReorder = (items, storageKey = 'widgetOrder') => {
-  const [orderedItems, setOrderedItems] = useState(items);
-  const [draggingId, setDraggingId] = useState(null);
-  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
-  
-  const longPressTimer = useRef(null);
-  const dragStartPos = useRef({ x: 0, y: 0 });
-  const elementRef = useRef({});
+export function useDragReorder(initialOrder) {
+  const [order, setOrder] = useState(initialOrder);
+  const [draggingItem, setDraggingItem] = useState(null);
+  const dragItemNode = useRef();
 
-  // Restaurar orden guardado al cargar
-  useEffect(() => {
-    // Solo en cliente, no en servidor
-    if (typeof window === 'undefined') return;
-
-    const saved = localStorage.getItem(storageKey);
-    if (saved) {
-      try {
-        const order = JSON.parse(saved);
-        const reordered = order
-          .map(id => items.find(item => item.id === id))
-          .filter(Boolean);
-        setOrderedItems(reordered);
-      } catch (e) {
-        console.warn('No se pudo restaurar orden de widgets');
-      }
-    } else {
-      setOrderedItems(items);
-    }
-  }, [items, storageKey]);
-
-  // Guardar orden en localStorage
-  const saveOrder = useCallback((newItems) => {
-    // Solo en cliente, no en servidor
-    if (typeof window === 'undefined') return;
-    
-    const ids = newItems.map(item => item.id);
-    localStorage.setItem(storageKey, JSON.stringify(ids));
-  }, [storageKey]);
-
-  // Detector de long press (para mobile)
-  const handleTouchStart = useCallback((e, itemId) => {
-    dragStartPos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-    
-    longPressTimer.current = setTimeout(() => {
-      setDraggingId(itemId);
-    }, 500); // 500ms long press
-  }, []);
-
-  const handleTouchMove = useCallback((e, itemId) => {
-    if (draggingId !== itemId) return;
-
-    const deltaX = e.touches[0].clientX - dragStartPos.current.x;
-    const deltaY = e.touches[0].clientY - dragStartPos.current.y;
-
-    setDragOffset({ x: deltaX, y: deltaY });
-  }, [draggingId]);
-
-  const handleTouchEnd = useCallback((e, itemId) => {
-    clearTimeout(longPressTimer.current);
-    
-    if (draggingId !== itemId) return;
-
-    // Detectar elemento debajo del cursor
-    const touchPoint = e.changedTouches?.[0];
-    if (touchPoint) {
-      const elementBelow = document.elementFromPoint(touchPoint.clientX, touchPoint.clientY);
-      const targetId = elementBelow?.closest('[data-drag-id]')?.getAttribute('data-drag-id');
-      
-      if (targetId && targetId !== draggingId) {
-        reorderItems(draggingId, targetId);
-      }
-    }
-
-    setDraggingId(null);
-    setDragOffset({ x: 0, y: 0 });
-  }, [draggingId, reorderItems]);
-
-  // Handlers para mouse (desktop)
-  const handleMouseDown = useCallback((e, itemId) => {
-    dragStartPos.current = { x: e.clientX, y: e.clientY };
-    
-    longPressTimer.current = setTimeout(() => {
-      setDraggingId(itemId);
-    }, 500);
-  }, []);
-
-  const handleMouseMove = useCallback((e) => {
-    if (!draggingId) return;
-
-    const deltaX = e.clientX - dragStartPos.current.x;
-    const deltaY = e.clientY - dragStartPos.current.y;
-
-    setDragOffset({ x: deltaX, y: deltaY });
-  }, [draggingId]);
-
-  const handleMouseUp = useCallback((e) => {
-    clearTimeout(longPressTimer.current);
-    
-    if (draggingId) {
-      // Detectar elemento debajo del cursor
-      const elementBelow = document.elementFromPoint(e.clientX, e.clientY);
-      const targetId = elementBelow?.closest('[data-drag-id]')?.getAttribute('data-drag-id');
-      
-      if (targetId && targetId !== draggingId) {
-        reorderItems(draggingId, targetId);
-      }
-    }
-
-    setDraggingId(null);
-    setDragOffset({ x: 0, y: 0 });
-  }, [draggingId, reorderItems]);
-
-  // Reordenar elementos
-  const reorderItems = useCallback((fromId, toId) => {
-    if (fromId === toId) return;
-
-    const fromIndex = orderedItems.findIndex(item => item.id === fromId);
-    const toIndex = orderedItems.findIndex(item => item.id === toId);
-
-    if (fromIndex === -1 || toIndex === -1) return;
-
-    const newItems = [...orderedItems];
-    [newItems[fromIndex], newItems[toIndex]] = [newItems[toIndex], newItems[fromIndex]];
-    
-    setOrderedItems(newItems);
-    saveOrder(newItems);
-  }, [orderedItems, saveOrder]);
-
-  return {
-    orderedItems,
-    draggingId,
-    dragOffset,
-    handlers: {
-      onTouchStart: handleTouchStart,
-      onTouchMove: handleTouchMove,
-      onTouchEnd: handleTouchEnd,
-      onMouseDown: handleMouseDown,
-      onMouseMove: handleMouseMove,
-      onMouseUp: handleMouseUp,
-    },
-    reorderItems,
+  const handleDragStart = (e, item) => {
+    dragItemNode.current = e.target;
+    dragItemNode.current.addEventListener('dragend', handleDragEnd);
+    setDraggingItem(item);
+    // Un pequeño timeout para que el elemento no desaparezca visualmente al instante
+    setTimeout(() => {
+        if(dragItemNode.current) dragItemNode.current.classList.add('opacity-50', 'scale-95');
+    }, 0);
   };
-};
+
+  const handleDragEnter = (e, targetItem) => {
+    // Si entramos a otro item diferente al que arrastramos, intercambiamos lugar
+    if (draggingItem !== null && draggingItem !== targetItem) {
+      const oldIdx = order.indexOf(draggingItem);
+      const newIdx = order.indexOf(targetItem);
+      
+      // Creamos el nuevo orden
+      const newOrder = [...order];
+      newOrder.splice(oldIdx, 1);
+      newOrder.splice(newIdx, 0, draggingItem);
+      
+      setOrder(newOrder);
+    }
+  };
+
+  const handleDragEnd = () => {
+    setDraggingItem(null);
+    if(dragItemNode.current) {
+        dragItemNode.current.classList.remove('opacity-50', 'scale-95');
+        dragItemNode.current.removeEventListener('dragend', handleDragEnd);
+    }
+    dragItemNode.current = null;
+  };
+
+  // Props listas para pegar en el componente
+  const getDragProps = (id) => ({
+    draggable: true,
+    onDragStart: (e) => handleDragStart(e, id),
+    onDragEnter: (e) => handleDragEnter(e, id),
+    // Prevenir el comportamiento default en móviles para permitir scroll si no se arrastra
+    onTouchEnd: handleDragEnd
+  });
+
+  return { order, getDragProps, draggingItem };
+}
