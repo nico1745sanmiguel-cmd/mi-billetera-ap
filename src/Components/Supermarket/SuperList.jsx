@@ -1,200 +1,184 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { db, auth } from '../../firebase';
-import { collection, addDoc, query, where, onSnapshot, deleteDoc, doc, updateDoc } from 'firebase/firestore';
+import { collection, addDoc, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { formatMoney } from '../../utils';
 
-// --- SUB-COMPONENTE: TARJETA DE PRODUCTO ---
-const SuperItem = ({ item, onUpdate, onToggle, onDelete, isNew }) => {
-    const [localPrice, setLocalPrice] = useState('');
-    const [localQty, setLocalQty] = useState('');
+export default function SuperList({ items = [], currentDate }) {
+  const [newItem, setNewItem] = useState('');
+  const [price, setPrice] = useState('');
+  const [quantity, setQuantity] = useState(1);
 
-    useEffect(() => {
-        setLocalPrice(item.price === 0 ? '' : new Intl.NumberFormat('es-AR').format(item.price));
-        setLocalQty(item.quantity.toString());
-    }, [item.price, item.quantity]);
+  // 1. CLAVE DEL MES (Para filtrar la lista)
+  const currentMonthKey = useMemo(() => {
+      if (!currentDate) return '';
+      return `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
+  }, [currentDate]);
 
-    // --- MANEJO DE CANTIDAD CON BOTONES (STEPPER) ---
-    const changeQty = (amount) => {
-        const current = parseInt(localQty) || 0;
-        const newVal = Math.max(1, current + amount); // Mínimo 1
-        setLocalQty(newVal.toString());
-        onUpdate(item.id, item.price, newVal); // Guardar directo
-    };
+  // 2. FILTRAR ÍTEMS DEL MES
+  const monthlyList = useMemo(() => {
+      return items.filter(item => {
+          // Si el item tiene mes asignado, debe coincidir.
+          // Si es un item viejo (sin mes), lo mostramos solo en el mes actual real o decidimos migrarlo.
+          // Para que quede limpio "Opción 2", filtramos estricto por key.
+          if (item.month) return item.month === currentMonthKey;
+          
+          // Compatibilidad: Si no tiene mes (creado antes de hoy), lo mostramos solo si estamos en el mes actual real
+          const realNow = new Date();
+          const realKey = `${realNow.getFullYear()}-${String(realNow.getMonth() + 1).padStart(2, '0')}`;
+          return currentMonthKey === realKey;
+      });
+  }, [items, currentMonthKey]);
 
-    // --- MANEJO DE PRECIO ---
-    const handlePriceChange = (e) => {
-        const raw = e.target.value.replace(/\D/g, '');
-        if (!raw) { setLocalPrice(''); return; }
-        setLocalPrice(new Intl.NumberFormat('es-AR').format(parseInt(raw)));
-    };
+  // 3. CÁLCULOS
+  const totals = useMemo(() => {
+      const estimated = monthlyList.reduce((acc, i) => acc + (i.price * i.quantity), 0);
+      const real = monthlyList.filter(i => i.checked).reduce((acc, i) => acc + (i.price * i.quantity), 0);
+      const count = monthlyList.length;
+      const checkedCount = monthlyList.filter(i => i.checked).length;
+      return { estimated, real, count, checkedCount };
+  }, [monthlyList]);
 
-    // Al salir del input de precio, guardamos
-    const savePrice = () => {
-        const numPrice = parseInt(localPrice.replace(/\./g, '')) || 0;
-        if (numPrice !== item.price) onUpdate(item.id, numPrice, item.quantity);
-    };
-
-    // Guardar cantidad manual (si escribieron un número grande)
-    const saveQtyManual = () => {
-        const numQty = parseInt(localQty) || 1;
-        if (numQty !== item.quantity) onUpdate(item.id, item.price, numQty);
-    };
-
-    const subtotal = (parseInt(localPrice.replace(/\./g, '')) || 0) * (parseInt(localQty) || 0);
-    const variation = item.lastPrice > 0 ? (( (parseInt(localPrice.replace(/\./g, '')) || 0) - item.lastPrice) / item.lastPrice) * 100 : 0;
-
-    return (
-        <div 
-            id={`item-${item.id}`}
-            className={`relative flex flex-col p-4 rounded-xl border transition-all duration-500 ${isNew ? 'ring-2 ring-purple-400 bg-purple-50' : (item.checked ? 'bg-gray-50 border-gray-100 opacity-60' : 'bg-white border-gray-200 shadow-sm')}`}
-        >
-            {/* ENCABEZADO */}
-            <div className="flex justify-between items-start mb-3">
-                <div className="flex items-center gap-3 overflow-hidden pr-2">
-                    <div onClick={() => onToggle(item)} className={`w-6 h-6 flex-shrink-0 rounded-full border-2 flex items-center justify-center cursor-pointer transition-colors ${item.checked ? 'bg-green-500 border-green-500' : 'border-gray-300'}`}>
-                        {item.checked && <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
-                    </div>
-                    <h3 className={`font-bold text-gray-800 text-lg leading-tight ${item.checked ? 'line-through text-gray-400' : ''}`}>{item.name}</h3>
-                </div>
-                <div className="text-right flex-shrink-0">
-                    <p className="text-[10px] text-gray-400 uppercase font-bold">Subtotal</p>
-                    <p className={`font-mono font-bold text-lg ${item.checked ? 'text-gray-400' : 'text-purple-700'}`}>{formatMoney(subtotal)}</p>
-                </div>
-            </div>
-
-            {/* CONTROLES */}
-            <div className={`grid grid-cols-12 gap-3 items-center ${item.checked ? 'pointer-events-none grayscale' : ''}`}>
-                
-                {/* CANTIDAD (STEPPER) */}
-                <div className="col-span-5 flex flex-col">
-                    <label className="text-[9px] font-bold text-gray-400 uppercase mb-1">Cant.</label>
-                    <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden h-10">
-                        {/* Botón MENOS */}
-                        <button 
-                            onClick={() => changeQty(-1)}
-                            className="w-8 h-full bg-gray-50 text-purple-600 font-bold active:bg-purple-100 border-r border-gray-200 flex items-center justify-center text-lg"
-                        >-</button>
-                        
-                        {/* Input Manual */}
-                        <input 
-                            type="tel" inputMode="numeric"
-                            className="w-full h-full text-center font-bold text-gray-700 focus:bg-white outline-none min-w-0"
-                            value={localQty}
-                            onChange={(e) => setLocalQty(e.target.value.replace(/\D/g, ''))}
-                            onBlur={saveQtyManual}
-                        />
-
-                        {/* Botón MÁS */}
-                        <button 
-                            onClick={() => changeQty(1)}
-                            className="w-8 h-full bg-gray-50 text-purple-600 font-bold active:bg-purple-100 border-l border-gray-200 flex items-center justify-center text-lg"
-                        >+</button>
-                    </div>
-                </div>
-
-                {/* PRECIO UNITARIO */}
-                <div className="col-span-4 relative">
-                    <label className="block text-[9px] font-bold text-gray-400 uppercase mb-1">Precio</label>
-                    <div className="relative h-10">
-                        <span className="absolute left-2 top-2 text-gray-400 text-xs">$</span>
-                        <input 
-                            type="tel" inputMode="numeric"
-                            className="w-full h-full bg-gray-50 border border-gray-200 rounded-lg pl-5 pr-1 font-bold text-gray-700 focus:bg-white focus:ring-2 focus:ring-purple-500 outline-none text-sm"
-                            value={localPrice}
-                            onChange={handlePriceChange}
-                            onBlur={savePrice}
-                            placeholder="0"
-                        />
-                    </div>
-                </div>
-
-                {/* VARIACIÓN */}
-                <div className="col-span-3 flex flex-col items-end justify-center h-full pt-4">
-                    {variation !== 0 && Math.abs(variation) > 1 ? (
-                        <div className={`text-[10px] font-bold px-1.5 py-1 rounded flex items-center gap-1 ${variation > 0 ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'}`}>
-                            <span>{variation > 0 ? '🔺' : '🔻'}</span>
-                            <span>{Math.abs(variation).toFixed(0)}%</span>
-                        </div>
-                    ) : (
-                        !item.lastPrice && <span className="text-[9px] text-gray-300 text-right leading-tight">Sin Historial</span>
-                    )}
-                </div>
-            </div>
-            
-            {/* BORRAR */}
-            <button onClick={() => onDelete(item.id)} className="absolute bottom-2 right-2 p-2 text-gray-300 hover:text-red-400">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-            </button>
-        </div>
-    );
-};
-
-export default function SuperList() {
-  const [items, setItems] = useState([]);
-  const [newItemName, setNewItemName] = useState('');
-  const [justAddedId, setJustAddedId] = useState(null);
-
-  const totalEstimado = items.reduce((acc, i) => acc + (i.price * i.quantity), 0);
-  const totalCarrito = items.filter(i => i.checked).reduce((acc, i) => acc + (i.price * i.quantity), 0);
-
-  useEffect(() => {
-    if (!auth.currentUser) return;
-    const q = query(collection(db, 'supermarket_items'), where("userId", "==", auth.currentUser.uid));
-    const unsubscribe = onSnapshot(q, (snap) => setItems(snap.docs.map(doc => ({ id: doc.id, ...doc.data() }))));
-    return () => unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    if (justAddedId && items.find(i => i.id === justAddedId)) {
-        document.getElementById(`item-${justAddedId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        setTimeout(() => setJustAddedId(null), 2000);
-    }
-  }, [items, justAddedId]);
-
-  const sortedItems = useMemo(() => {
-    return [...items].sort((a, b) => (a.checked === b.checked ? a.name.localeCompare(b.name) : a.checked ? 1 : -1));
-  }, [items]);
-
+  // --- HANDLERS ---
   const handleAdd = async (e) => {
-    e.preventDefault();
-    if (!newItemName.trim() || !auth.currentUser) return;
-    const docRef = await addDoc(collection(db, 'supermarket_items'), {
-        name: newItemName, price: 0, lastPrice: 0, quantity: 1, checked: false, userId: auth.currentUser.uid
-    });
-    setJustAddedId(docRef.id);
-    setNewItemName('');
+      e.preventDefault();
+      if (!newItem || !auth.currentUser) return;
+
+      try {
+          await addDoc(collection(db, 'supermarket_items'), {
+              name: newItem,
+              price: Number(price) || 0,
+              quantity: Number(quantity) || 1,
+              checked: false,
+              userId: auth.currentUser.uid,
+              month: currentMonthKey, // GUARDAMOS LA FECHA
+              createdAt: new Date().toISOString()
+          });
+          setNewItem('');
+          setPrice('');
+          setQuantity(1);
+      } catch (error) {
+          console.error("Error adding item:", error);
+      }
   };
 
-  const updateItem = async (id, price, quantity) => await updateDoc(doc(db, 'supermarket_items', id), { price, quantity });
-  const toggleCheck = async (item) => await updateDoc(doc(db, 'supermarket_items', item.id), { checked: !item.checked });
-  const handleDelete = async (id) => { if(window.confirm("¿Borrar?")) await deleteDoc(doc(db, 'supermarket_items', id)); };
-  
-  const closeMonth = async () => {
-      if(!window.confirm("¿Cerrar mes?")) return;
-      await Promise.all(items.map(i => updateDoc(doc(db, 'supermarket_items', i.id), { lastPrice: i.price, checked: false })));
+  const handleToggle = async (item) => {
+      const itemRef = doc(db, 'supermarket_items', item.id);
+      await updateDoc(itemRef, { checked: !item.checked });
+  };
+
+  const handleDelete = async (id) => {
+      await deleteDoc(doc(db, 'supermarket_items', id));
+  };
+
+  const handleUpdatePrice = async (item, newPrice) => {
+      const itemRef = doc(db, 'supermarket_items', item.id);
+      await updateDoc(itemRef, { price: Number(newPrice) });
   };
 
   return (
-    <div className="space-y-4 animate-fade-in pb-32">
-      <div className="sticky top-20 z-30 bg-purple-600 text-white p-4 rounded-xl shadow-lg flex justify-between items-center ring-2 ring-purple-100">
-          <div><p className="text-xs font-medium opacity-80 uppercase">En Carrito</p><h2 className="text-3xl font-bold font-mono">{formatMoney(totalCarrito)}</h2></div>
+    <div className="animate-fade-in pb-24 space-y-4">
+      
+      {/* HEADER */}
+      <div className="flex justify-between items-end px-2">
+          <div>
+            <h2 className="text-xl font-bold text-gray-800">Supermercado</h2>
+            <p className="text-xs text-purple-600 font-bold uppercase">Lista de {currentDate.toLocaleString('es-AR', {month: 'long'})}</p>
+          </div>
           <div className="text-right">
-             <p className="text-[10px] opacity-70">Total Lista</p><p className="text-sm font-medium">{formatMoney(totalEstimado)}</p>
-             <div className="w-24 h-1.5 bg-purple-900 rounded-full mt-1 ml-auto overflow-hidden"><div className="bg-white h-full transition-all" style={{ width: `${totalEstimado > 0 ? (totalCarrito/totalEstimado)*100 : 0}%` }}></div></div>
+              <p className="text-[10px] text-gray-400 uppercase font-bold">En Carrito</p>
+              <p className="text-xl font-bold text-gray-800">{formatMoney(totals.real)}</p>
           </div>
       </div>
 
-      <form onSubmit={handleAdd} className="flex gap-2">
-          <input value={newItemName} onChange={e => setNewItemName(e.target.value)} className="flex-grow p-3 rounded-xl border border-gray-200 shadow-sm focus:ring-2 focus:ring-purple-500 outline-none" placeholder="📝 Agregar producto..." />
-          <button type="submit" className="bg-purple-100 text-purple-700 p-3 rounded-xl font-bold shadow-sm hover:bg-purple-200">+</button>
-      </form>
-
-      <div className="space-y-3">
-        {sortedItems.map(item => <SuperItem key={item.id} item={item} onUpdate={updateItem} onToggle={toggleCheck} onDelete={handleDelete} isNew={justAddedId === item.id} />)}
-        {items.length === 0 && <p className="text-center text-gray-400 py-10">Lista vacía</p>}
+      {/* BARRA DE PROGRESO */}
+      <div className="bg-white p-1 rounded-full shadow-sm border border-gray-100 flex items-center gap-2">
+          <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden relative">
+               <div 
+                  className="h-full bg-purple-500 transition-all duration-500" 
+                  style={{ width: `${totals.estimated > 0 ? (totals.real / totals.estimated) * 100 : 0}%` }}
+               ></div>
+          </div>
+          <span className="text-[10px] font-bold text-gray-400 min-w-[60px] text-right">
+              {totals.checkedCount}/{totals.count} ítems
+          </span>
       </div>
 
-      <div className="pt-8 text-center"><button onClick={closeMonth} className="text-xs font-bold text-purple-600 bg-purple-50 px-4 py-2 rounded-full hover:bg-purple-100 transition-colors">🔄 Cerrar Mes</button></div>
+      {/* LISTA */}
+      <div className="space-y-2">
+          {monthlyList.map((item) => (
+              <div 
+                  key={item.id} 
+                  className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${item.checked ? 'bg-purple-50 border-purple-100 opacity-60' : 'bg-white border-gray-100 shadow-sm'}`}
+              >
+                  {/* CHECKBOX */}
+                  <div 
+                      onClick={() => handleToggle(item)}
+                      className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center cursor-pointer transition-colors ${item.checked ? 'bg-purple-500 border-purple-500' : 'border-gray-300 bg-white'}`}
+                  >
+                      {item.checked && <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                  </div>
+
+                  {/* INFO */}
+                  <div className="flex-1">
+                      <p className={`font-bold text-sm text-gray-800 ${item.checked ? 'line-through decoration-purple-400' : ''}`}>{item.name}</p>
+                      <div className="flex items-center gap-2 text-xs text-gray-400">
+                          <span>{item.quantity} un.</span>
+                          {item.price > 0 && <span>x {formatMoney(item.price)}</span>}
+                      </div>
+                  </div>
+
+                  {/* PRECIO EDITABLE */}
+                  <div className="flex flex-col items-end gap-1">
+                      <input 
+                          type="number" 
+                          className={`w-20 text-right font-mono font-bold text-sm bg-transparent outline-none border-b border-transparent focus:border-purple-300 focus:bg-purple-50 rounded px-1 ${item.checked ? 'text-purple-700' : 'text-gray-800'}`}
+                          value={item.price}
+                          onChange={(e) => handleUpdatePrice(item, e.target.value)}
+                          placeholder="$0"
+                      />
+                      <button onClick={() => handleDelete(item.id)} className="text-[10px] text-red-300 hover:text-red-500">Eliminar</button>
+                  </div>
+              </div>
+          ))}
+
+          {monthlyList.length === 0 && (
+              <div className="text-center py-10 opacity-50">
+                  <span className="text-4xl">🛒</span>
+                  <p className="text-sm font-bold text-gray-400 mt-2">Lista vacía</p>
+                  <p className="text-xs text-gray-400">Agrega cosas para {currentDate.toLocaleString('es-AR', {month: 'long'})}</p>
+              </div>
+          )}
+      </div>
+
+      {/* INPUT FLOTANTE (Fixed Bottom) */}
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100 md:relative md:border-0 md:bg-transparent md:p-0 z-20">
+          <form onSubmit={handleAdd} className="flex gap-2 max-w-5xl mx-auto">
+              <div className="flex-1 bg-gray-100 rounded-xl flex items-center px-4 border border-transparent focus-within:border-purple-500 focus-within:bg-white transition-all">
+                  <input 
+                      type="text" 
+                      className="w-full bg-transparent outline-none text-sm font-bold text-gray-800 py-3" 
+                      placeholder="¿Qué falta comprar?" 
+                      value={newItem}
+                      onChange={(e) => setNewItem(e.target.value)}
+                  />
+              </div>
+              <input 
+                  type="number" 
+                  className="w-20 bg-gray-100 rounded-xl px-2 text-center font-bold text-gray-800 outline-none focus:bg-white focus:border focus:border-purple-500 text-sm" 
+                  placeholder="$ Est." 
+                  value={price}
+                  onChange={(e) => setPrice(e.target.value)}
+              />
+              <button 
+                  type="submit" 
+                  disabled={!newItem}
+                  className="bg-purple-600 text-white w-12 h-12 rounded-xl flex items-center justify-center shadow-lg shadow-purple-200 active:scale-95 disabled:opacity-50 disabled:active:scale-100 transition-all"
+              >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+              </button>
+          </form>
+      </div>
+
     </div>
   );
 }

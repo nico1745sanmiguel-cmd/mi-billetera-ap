@@ -166,7 +166,7 @@ export default function App() {
             
             {view === 'purchase' && <NewPurchase cards={cards} onSave={addTransaction} transactions={transactions} privacyMode={privacyMode} />}
             {view === 'cards' && <MyCards cards={cards} privacyMode={privacyMode} />}
-            {view === 'super' && <SuperList />}
+            {view === 'super' && <SuperList items={superItems} currentDate={currentDate} />}
         
         </Suspense>
 
