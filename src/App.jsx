@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import Navbar from './Components/Layout/Navbar'; // Se mantiene para Desktop si lo usas
+import Navbar from './Components/Layout/Navbar';
 import Home from './Components/Dashboard/Home';
 import Dashboard from './Components/Dashboard/Dashboard';
 import MyCards from './Components/Cards/MyCards';
@@ -9,7 +9,6 @@ import Login from './Components/Login';
 import SkeletonDashboard from './Components/UI/SkeletonDashboard';
 import SuperList from './Components/Supermarket/SuperList';
 import ServicesManager from './Components/Services/ServicesManager';
-import Savings from './Components/Savings/Savings';
 
 import { db, auth } from './firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
@@ -20,9 +19,8 @@ export default function App() {
   const [loadingUser, setLoadingUser] = useState(true);
   const [showReload, setShowReload] = useState(false);
   const [privacyMode, setPrivacyMode] = useState(false);
-  const [view, setView] = useState('dashboard'); // 'dashboard' es el HOME
+  const [view, setView] = useState('dashboard');
   
-  // --- FECHA GLOBAL (Comanda Dashboard y Servicios) ---
   const [currentDate, setCurrentDate] = useState(new Date());
 
   const getFormattedDate = (date) => {
@@ -37,14 +35,12 @@ export default function App() {
       setCurrentDate(newDate);
   };
 
-  // --- DATOS ---
+  // DATOS (Ya no está savingsList)
   const [cards, setCards] = useState(() => JSON.parse(localStorage.getItem('cache_cards')) || []);
   const [transactions, setTransactions] = useState(() => JSON.parse(localStorage.getItem('cache_transactions')) || []);
   const [superItems, setSuperItems] = useState(() => JSON.parse(localStorage.getItem('cache_superItems')) || []);
   const [services, setServices] = useState(() => JSON.parse(localStorage.getItem('cache_services')) || []);
-  const [savingsList, setSavingsList] = useState(() => JSON.parse(localStorage.getItem('cache_savings')) || []);
 
-  // 1. Auth & Timeout
   useEffect(() => {
     const safetyTimer = setTimeout(() => { if (loadingUser) setShowReload(true); }, 8000);
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -55,7 +51,6 @@ export default function App() {
     return () => { unsubscribe(); clearTimeout(safetyTimer); };
   }, []);
 
-  // 2. Firebase Sync
   useEffect(() => {
     if (!user) return;
     const syncData = (queryRef, setState, cacheKey) => {
@@ -70,9 +65,9 @@ export default function App() {
     const unsubTrans = syncData(query(collection(db, 'transactions'), where("userId", "==", user.uid)), setTransactions, 'cache_transactions');
     const unsubSuper = syncData(query(collection(db, 'supermarket_items'), where("userId", "==", user.uid)), setSuperItems, 'cache_superItems');
     const unsubServices = syncData(query(collection(db, 'services'), where("userId", "==", user.uid)), setServices, 'cache_services');
-    const unsubSavings = syncData(query(collection(db, 'savings_movements'), where("userId", "==", user.uid)), setSavingsList, 'cache_savings');
+    // Eliminamos la conexión a savings_movements
 
-    return () => { unsubCards(); unsubTrans(); unsubSuper(); unsubServices(); unsubSavings(); };
+    return () => { unsubCards(); unsubTrans(); unsubSuper(); unsubServices(); };
   }, [user]);
 
   const addTransaction = async (t) => {
@@ -80,11 +75,10 @@ export default function App() {
       if (!user) return;
       const { id, ...dataToSave } = t; 
       await addDoc(collection(db, 'transactions'), { ...dataToSave, userId: user.uid });
-      setView('dashboard'); // Volver al Home al guardar
+      setView('dashboard');
     } catch (error) { alert("Error al guardar."); }
   };
 
-  // Función de logout que pasaremos al Home
   const handleLogout = () => { 
       if(window.confirm("¿Cerrar sesión?")) { 
           signOut(auth); 
@@ -105,64 +99,40 @@ export default function App() {
     <div className="min-h-screen font-sans text-gray-800 bg-[#f3f4f6]">
       <InstallPrompt />
 
-      {/* NAVBAR DESKTOP (Opcional, se mantiene oculta en móvil) */}
       <div className="hidden md:block relative">
         <Navbar currentView={view} setView={setView} privacyMode={privacyMode} setPrivacyMode={setPrivacyMode} />
       </div>
 
-      {/* --- NUEVA BARRA SUPERIOR MÓVIL (Tu pedido) --- */}
       <div className="md:hidden bg-white px-4 py-3 shadow-sm sticky top-0 z-40 flex items-center justify-between gap-3">
-         
-         {/* 1. IZQUIERDA: BOTÓN HOME (Volver) */}
-         <button 
-            onClick={() => setView('dashboard')} 
-            className={`p-2 rounded-xl transition-all active:scale-95 ${view === 'dashboard' ? 'bg-blue-50 text-blue-600' : 'bg-gray-100 text-gray-500'}`}
-         >
+         <button onClick={() => setView('dashboard')} className={`p-2 rounded-xl transition-all active:scale-95 ${view === 'dashboard' ? 'bg-blue-50 text-blue-600' : 'bg-gray-100 text-gray-500'}`}>
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
          </button>
-
-         {/* 2. CENTRO: SELECTOR DE FECHA */}
          <div className="flex-1 flex items-center justify-between bg-gray-50 rounded-xl p-1 max-w-[200px]">
-             <button onClick={() => changeMonth(-1)} className="p-2 rounded-lg text-gray-400 hover:bg-gray-200 active:scale-95">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" /></svg>
-             </button>
+             <button onClick={() => changeMonth(-1)} className="p-2 rounded-lg text-gray-400 hover:bg-gray-200 active:scale-95"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" /></svg></button>
              <span className="font-bold text-gray-800 text-sm capitalize">{getFormattedDate(currentDate)}</span>
-             <button onClick={() => changeMonth(1)} className="p-2 rounded-lg text-gray-400 hover:bg-gray-200 active:scale-95">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" /></svg>
-             </button>
+             <button onClick={() => changeMonth(1)} className="p-2 rounded-lg text-gray-400 hover:bg-gray-200 active:scale-95"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" /></svg></button>
          </div>
-
-         {/* 3. DERECHA: PRIVACIDAD (Ojito) */}
-         <button 
-            onClick={() => setPrivacyMode(!privacyMode)} 
-            className={`p-2 rounded-xl transition-all active:scale-95 ${privacyMode ? 'bg-indigo-50 text-indigo-600' : 'bg-gray-100 text-gray-400'}`}
-         >
-            {privacyMode ? (
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg>
-            ) : (
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-            )}
+         <button onClick={() => setPrivacyMode(!privacyMode)} className={`p-2 rounded-xl transition-all active:scale-95 ${privacyMode ? 'bg-indigo-50 text-indigo-600' : 'bg-gray-100 text-gray-400'}`}>
+            {privacyMode ? (<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg>) : (<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>)}
          </button>
-
       </div>
       
       <main className="max-w-5xl mx-auto p-4 mt-2 pb-10">
         
-        {/* EL HOME RECIBE handleLogout */}
         {view === 'dashboard' && (
             <Home 
                 transactions={transactions} 
                 cards={cards} 
                 supermarketItems={superItems} 
                 services={services} 
-                savingsList={savingsList} 
+                // Ya no pasamos savingsList
                 privacyMode={privacyMode} 
                 setView={setView}
-                onLogout={handleLogout} // <--- Pasamos la función de logout
+                onLogout={handleLogout}
             />
         )}
         
-        {view === 'savings' && <Savings savingsList={savingsList} />}
+        {/* Eliminada la vista view === 'savings' */}
         {view === 'services_manager' && <ServicesManager services={services} cards={cards} transactions={transactions} currentDate={currentDate} />}
         {view === 'stats' && <Dashboard transactions={transactions} cards={cards} privacyMode={privacyMode} currentDate={currentDate} />}
         {view === 'purchase' && <NewPurchase cards={cards} onSave={addTransaction} transactions={transactions} privacyMode={privacyMode} />}
@@ -170,8 +140,6 @@ export default function App() {
         {view === 'super' && <SuperList />}
         
       </main>
-
-      {/* SIN BOTTOM NAV - PANTALLA LIMPIA */}
     </div>
   );
 }
