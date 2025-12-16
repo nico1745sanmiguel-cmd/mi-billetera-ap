@@ -197,15 +197,11 @@ export default function Home({ transactions, cards, supermarketItems = [], servi
               <div onClick={() => setView('cards')} className="mx-2 h-32 border-2 border-dashed border-gray-300 rounded-2xl flex flex-col items-center justify-center text-gray-400 gap-2 cursor-pointer hover:bg-gray-50">
                   <span className="text-2xl">+</span>
                   <span className="text-xs font-bold">Agregar Tarjeta</span>
-              </div>- Draggable */}
-      <div 
-        {...getDragProps('agenda')}
-        style={getDragStyle('agenda')}
-        className={`bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mx-1 transition-all duration-300 cursor-grab ${draggingId === 'agenda' ? 'cursor-grabbing' : ''}`}
-      
+              </div>
+          )}
       </div>
 
-      {/* 5. PRÓXIMOS VENCIMIENTOS (Lista Simple y Limpia) */}
+      {/* 5. PRÓXIMOS VENCIMIENTOS (Lista Simple y Limpia) - Draggable */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mx-1">
           <div className="px-5 py-4 border-b border-gray-50 flex justify-between items-center bg-gray-50/50 cursor-pointer" onClick={() => setView('services_manager')}>
               <h3 className="font-bold text-gray-800 text-sm">Agenda de Pagos</h3>
@@ -227,20 +223,20 @@ export default function Home({ transactions, cards, supermarketItems = [], servi
                       <p className="font-mono font-bold text-gray-800">{showMoney(item.amount)}</p>
                   </div>
               ))}
-              {agenda.length === 0 && (- Draggable */}
-      <div 
-        {...getDragProps('super_actions')}
-        style={getDragStyle('super_actions')}
-        className={`grid grid-cols-2 gap-3 mx-1 transition-all duration-300 cursor-grab ${draggingId === 'super_actions' ? 'cursor-grabbing' : ''}`}
-      text-gray-400">
+              {agenda.length === 0 && (
+                  <div className="p-6 text-center text-gray-400">
                       <p className="text-xs">🎉 Todo al día por hoy</p>
                   </div>
               )}
           </div>
       </div>
 
-      {/* 6. SUPERMERCADO Y ACCIONES RÁPIDAS (Grid) */}
-      <div className="grid grid-cols-2 gap-3 mx-1">
+      {/* 6. SUPERMERCADO Y ACCIONES RÁPIDAS (Grid) - Draggable */}
+      <div 
+        {...getDragProps('super_actions')}
+        style={getDragStyle('super_actions')}
+        className={`grid grid-cols-2 gap-3 mx-1 transition-all duration-300 cursor-grab ${draggingId === 'super_actions' ? 'cursor-grabbing' : ''}`}
+      >
           
           {/* Supermercado (Mini Card) */}
           <div onClick={() => setView('super')} className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm cursor-pointer hover:border-purple-200 transition-colors group">
