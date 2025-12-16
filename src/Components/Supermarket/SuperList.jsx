@@ -6,11 +6,11 @@ import { formatMoney } from '../../utils';
 export default function SuperList({ items = [], currentDate }) {
   const [newItem, setNewItem] = useState('');
   
-  // ESTADO PARA ENFOCAR EL NUEVO ÍTEM
+  // ESTADO PARA ENFOCAR EL NUEVO ÍTEM AUTOMÁTICAMENTE
   const [lastAddedId, setLastAddedId] = useState(null);
   const itemsRefs = useRef({}); 
 
-  // 1. CLAVE DEL MES
+  // 1. CLAVE DEL MES (MÁQUINA DEL TIEMPO ⏳)
   const currentMonthKey = useMemo(() => {
       if (!currentDate) return '';
       return `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
@@ -20,6 +20,7 @@ export default function SuperList({ items = [], currentDate }) {
   const monthlyList = useMemo(() => {
       const list = items.filter(item => {
           if (item.month) return item.month === currentMonthKey;
+          // Compatibilidad con items viejos (si no tienen mes, asumen el actual real)
           const realNow = new Date();
           const realKey = `${realNow.getFullYear()}-${String(realNow.getMonth() + 1).padStart(2, '0')}`;
           return currentMonthKey === realKey;
@@ -41,7 +42,7 @@ export default function SuperList({ items = [], currentDate }) {
         // Enfocar el input de precio del nuevo item
         const priceInputEl = itemsRefs.current[lastAddedId].querySelector('input[type="tel"]');
         if (priceInputEl) {
-            setTimeout(() => priceInputEl.focus(), 300); // Un poco mas de delay para dar tiempo al scroll
+            setTimeout(() => priceInputEl.focus(), 300); 
         }
         setLastAddedId(null);
     }
@@ -56,7 +57,7 @@ export default function SuperList({ items = [], currentDate }) {
       return { estimated, real, count, checkedCount };
   }, [monthlyList]);
 
-  // 5. HISTORIAL
+  // 5. HISTORIAL DE PRECIOS 📉
   const getPriceHistory = (itemName, currentPrice) => {
       const history = items
           .filter(i => i.name.trim().toLowerCase() === itemName.trim().toLowerCase() && i.checked && i.month !== currentMonthKey)
@@ -88,7 +89,7 @@ export default function SuperList({ items = [], currentDate }) {
               createdAt: new Date().toISOString()
           });
           
-          setLastAddedId(docRef.id);
+          setLastAddedId(docRef.id); // Guardamos ID para el auto-focus
           setNewItem('');
       } catch (error) { console.error(error); }
   };
@@ -125,12 +126,17 @@ export default function SuperList({ items = [], currentDate }) {
                 <p className="text-xs text-purple-600 font-bold uppercase">Lista de {currentDate.toLocaleString('es-AR', {month: 'long'})}</p>
               </div>
               <div className="text-right">
-                  <p className="text-[10px] text-gray-400 uppercase font-bold">En Carrito</p>
-                  <p className="text-2xl font-bold text-gray-800">{formatMoney(totals.real)}</p>
+                  {/* Lógica Visual: Si hay algo checkeado es "En Carrito", si no es "Presupuesto" */}
+                  <p className="text-[10px] text-gray-400 uppercase font-bold">
+                      {totals.checkedCount > 0 ? 'En Carrito' : 'Presupuesto'}
+                  </p>
+                  <p className={`text-2xl font-bold ${totals.checkedCount > 0 ? 'text-gray-900' : 'text-gray-400'}`}>
+                      {formatMoney(totals.checkedCount > 0 ? totals.real : totals.estimated)}
+                  </p>
               </div>
           </div>
 
-          {/* BARRA DE PROGRESO COMPACTA */}
+          {/* BARRA DE PROGRESO */}
           <div className="bg-white p-1 rounded-full shadow-inner border border-gray-100 flex items-center gap-2">
               <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden relative">
                    <div className="h-full bg-purple-500 transition-all duration-500" style={{ width: `${totals.estimated > 0 ? (totals.real / totals.estimated) * 100 : 0}%` }}></div>
@@ -161,12 +167,25 @@ export default function SuperList({ items = [], currentDate }) {
                                 <p className={`font-bold text-sm text-gray-800 truncate ${item.checked ? 'line-through decoration-purple-400' : ''}`}>{item.name}</p>
                                 {subtotal > 0 && <span className="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded font-mono font-bold">Sub: {formatMoney(subtotal)}</span>}
                             </div>
-                            {history && item.price > 0 && <p className="text-[10px] flex items-center gap-1"><span className="text-gray-400">Antes: {formatMoney(history.lastPrice)}</span>{history.diff !== 0 && <span className={`font-bold ${history.diff > 0 ? 'text-red-500' : 'text-green-500'}`}>({history.diff > 0 ? '+' : ''}{formatMoney(history.diff)})</span>}</p>}
+                            
+                            {/* Comparación de Historial */}
+                            {history && item.price > 0 && (
+                                <p className="text-[10px] flex items-center gap-1">
+                                    <span className="text-gray-400">Antes: {formatMoney(history.lastPrice)}</span>
+                                    {history.diff !== 0 && (
+                                        <span className={`font-bold ${history.diff > 0 ? 'text-red-500' : 'text-green-500'}`}>
+                                            ({history.diff > 0 ? '+' : ''}{formatMoney(history.diff)})
+                                        </span>
+                                    )}
+                                </p>
+                            )}
                         </div>
-                        <button onClick={() => handleDelete(item.id)} className="text-gray-300 hover:text-red-500 p-1"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
+                        <button onClick={() => handleDelete(item.id)} className="text-gray-300 hover:text-red-500 p-1">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                        </button>
                     </div>
 
-                    {/* FILA 2: Controles */}
+                    {/* FILA 2: Controles de Cantidad y Precio */}
                     <div className="flex gap-3 pl-9">
                         <div className="flex items-center bg-gray-50 rounded-lg border border-gray-200 h-10">
                             <button onClick={() => handleUpdateQuantity(item, -1)} className="w-8 h-full flex items-center justify-center text-gray-500 hover:bg-gray-200 active:bg-gray-300 rounded-l-lg transition-colors text-lg font-bold">-</button>
@@ -186,7 +205,14 @@ export default function SuperList({ items = [], currentDate }) {
                 </div>
               );
           })}
-          {monthlyList.length === 0 && <div className="text-center py-10 opacity-50"><span className="text-4xl">🛒</span><p className="text-sm font-bold text-gray-400 mt-2">Lista vacía</p></div>}
+          
+          {monthlyList.length === 0 && (
+              <div className="text-center py-10 opacity-50">
+                  <span className="text-4xl">🛒</span>
+                  <p className="text-sm font-bold text-gray-400 mt-2">Lista vacía</p>
+                  <p className="text-xs text-gray-400">Agrega cosas para {currentDate.toLocaleString('es-AR', {month: 'long'})}</p>
+              </div>
+          )}
       </div>
 
       {/* INPUT ADD FLOTANTE (Simplificado) */}
