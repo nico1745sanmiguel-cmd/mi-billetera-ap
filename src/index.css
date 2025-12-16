@@ -3,3 +3,24 @@
 @tailwind utilities;
 
 body { background-color: #f3f4f6; }
+
+
+/* BLOQUEO DE SELECCIÓN DE TEXTO (Efecto App Nativa) */
+body {
+  -webkit-touch-callout: none; /* Bloquea el menú al mantener presionado (iOS/Android) */
+  -webkit-user-select: none;   /* Chrome/Safari/Opera */
+  -khtml-user-select: none;    /* Konqueror */
+  -moz-user-select: none;      /* Firefox */
+  -ms-user-select: none;       /* Internet Explorer/Edge */
+  user-select: none;           /* Estándar */
+  
+  /* Quita el color azul al tocar un botón en Android */
+  -webkit-tap-highlight-color: transparent; 
+}
+
+/* IMPORTANTE: Permitir escribir en los inputs */
+input, textarea {
+  -webkit-user-select: text !important;
+  user-select: text !important;
+  -webkit-touch-callout: default !important;
+}
