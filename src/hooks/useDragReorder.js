@@ -16,6 +16,9 @@ export const useDragReorder = (items, storageKey = 'widgetOrder') => {
 
   // Restaurar orden guardado al cargar
   useEffect(() => {
+    // Solo en cliente, no en servidor
+    if (typeof window === 'undefined') return;
+
     const saved = localStorage.getItem(storageKey);
     if (saved) {
       try {
@@ -34,6 +37,9 @@ export const useDragReorder = (items, storageKey = 'widgetOrder') => {
 
   // Guardar orden en localStorage
   const saveOrder = useCallback((newItems) => {
+    // Solo en cliente, no en servidor
+    if (typeof window === 'undefined') return;
+    
     const ids = newItems.map(item => item.id);
     localStorage.setItem(storageKey, JSON.stringify(ids));
   }, [storageKey]);
