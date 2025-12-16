@@ -1,6 +1,7 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect, useState } from 'react';
 import { formatMoney } from '../../utils';
-import FinancialTarget from './FinancialTarget'; 
+import FinancialTarget from './FinancialTarget';
+import { useDragReorder } from '../../hooks/useDragReorder'; 
 
 // Colores de urgencia
 const URGENCY_COLORS = {
@@ -10,6 +11,44 @@ const URGENCY_COLORS = {
 };
 
 export default function Home({ transactions, cards, supermarketItems = [], services = [], privacyMode, setView, onLogout }) {
+  
+  // --- DRAG & DROP SIMPLE ---
+  const widgets = [
+    { id: 'target' },
+    { id: 'cards' },
+    { id: 'agenda' },
+    { id: 'super_actions' }
+  ];
+
+  const { orderedItems: orderedWidgets, draggingId, dragOffset, handlers } = useDragReorder(widgets, 'homeWidgetOrder');
+
+  useEffect(() => {
+    if (draggingId) {
+      window.addEventListener('mousemove', handlers.onMouseMove);
+      window.addEventListener('mouseup', handlers.onMouseUp);
+      return () => {
+        window.removeEventListener('mousemove', handlers.onMouseMove);
+        window.removeEventListener('mouseup', handlers.onMouseUp);
+      };
+    }
+  }, [draggingId, handlers]);
+
+  const getDragProps = (widgetId) => ({
+    onTouchStart: (e) => handlers.onTouchStart(e, widgetId),
+    onTouchMove: (e) => handlers.onTouchMove(e, widgetId),
+    onTouchEnd: (e) => handlers.onTouchEnd(e, widgetId),
+    onMouseDown: (e) => handlers.onMouseDown(e, widgetId),
+  });
+
+  const getDragStyle = (widgetId) => {
+    if (draggingId !== widgetId) return {};
+    return {
+      opacity: 0.8,
+      transform: `translate(${dragOffset.x}px, ${dragOffset.y}px)`,
+      transition: 'none',
+      zIndex: 1000,
+    };
+  };
   
   // --- 1. CÁLCULOS ---
   
@@ -105,14 +144,24 @@ export default function Home({ transactions, cards, supermarketItems = [], servi
 
       {/* 3. RESUMEN GLOBAL (RADAR) */}
       {/* Si hay privacidad, ocultamos/blureamos el gráfico complejo */}
-      <div className={`transition-all duration-300 ${privacyMode ? 'opacity-50 blur-sm pointer-events-none select-none' : 'opacity-100'}`}>
+      <div 
+        data-drag-id="target"
+        {...getDragProps('target')}
+        style={{ ...getDragStyle('target'), touchAction: 'none' }}
+        className={`transition-all duration-300 cursor-grab select-none ${draggingId === 'target' ? 'cursor-grabbing' : ''} ${privacyMode ? 'opacity-50 blur-sm pointer-events-none' : 'opacity-100'}`}
+      >
           <FinancialTarget totalNeed={totalNeed} totalPaid={totalPaid} privacyMode={privacyMode} />
           {privacyMode && <div className="absolute inset-0 flex items-center justify-center font-bold text-gray-500 z-10">Vista Privada</div>}
       </div>
 
 
-      {/* 4. CAROUSEL DE TARJETAS (Horizontal Scroll) - Reemplaza al Stack */}
-      <div>
+      {/* 4. CAROUSEL DE TARJETAS (Horizontal Scroll) */}
+      <div 
+        data-drag-id="cards"
+        {...getDragProps('cards')}
+        style={{ ...getDragStyle('cards'), touchAction: 'none' }}
+        className={`transition-all duration-300 cursor-grab select-none ${draggingId === 'cards' ? 'cursor-grabbing' : ''}`}
+      >
           <div className="flex justify-between items-center px-2 mb-3">
               <h3 className="font-bold text-gray-800 text-sm">Tus Tarjetas</h3>
               <button onClick={() => setView('cards')} className="text-xs font-bold text-blue-600 hover:text-blue-800">Ver todas</button>
@@ -153,7 +202,12 @@ export default function Home({ transactions, cards, supermarketItems = [], servi
       </div>
 
       {/* 5. PRÓXIMOS VENCIMIENTOS (Lista Simple y Limpia) */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mx-1">
+      <div 
+        data-drag-id="agenda"
+        {...getDragProps('agenda')}
+        style={{ ...getDragStyle('agenda'), touchAction: 'none' }}
+        className={`bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mx-1 transition-all duration-300 cursor-grab select-none ${draggingId === 'agenda' ? 'cursor-grabbing' : ''}`}
+      >
           <div className="px-5 py-4 border-b border-gray-50 flex justify-between items-center bg-gray-50/50 cursor-pointer" onClick={() => setView('services_manager')}>
               <h3 className="font-bold text-gray-800 text-sm">Agenda de Pagos</h3>
               <span className="text-xs font-bold text-gray-400">Ver todo →</span>
@@ -183,7 +237,12 @@ export default function Home({ transactions, cards, supermarketItems = [], servi
       </div>
 
       {/* 6. SUPERMERCADO Y ACCIONES RÁPIDAS (Grid) */}
-      <div className="grid grid-cols-2 gap-3 mx-1">
+      <div 
+        data-drag-id="super_actions"
+        {...getDragProps('super_actions')}
+        style={{ ...getDragStyle('super_actions'), touchAction: 'none' }}
+        className={`grid grid-cols-2 gap-3 mx-1 transition-all duration-300 cursor-grab select-none ${draggingId === 'super_actions' ? 'cursor-grabbing' : ''}`}
+      >
           
           {/* Supermercado (Mini Card) */}
           <div onClick={() => setView('super')} className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm cursor-pointer hover:border-purple-200 transition-colors group">
