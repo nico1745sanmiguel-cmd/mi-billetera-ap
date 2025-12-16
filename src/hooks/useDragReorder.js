@@ -67,9 +67,20 @@ export const useDragReorder = (items, storageKey = 'widgetOrder') => {
     
     if (draggingId !== itemId) return;
 
+    // Detectar elemento debajo del cursor
+    const touchPoint = e.changedTouches?.[0];
+    if (touchPoint) {
+      const elementBelow = document.elementFromPoint(touchPoint.clientX, touchPoint.clientY);
+      const targetId = elementBelow?.closest('[data-drag-id]')?.getAttribute('data-drag-id');
+      
+      if (targetId && targetId !== draggingId) {
+        reorderItems(draggingId, targetId);
+      }
+    }
+
     setDraggingId(null);
     setDragOffset({ x: 0, y: 0 });
-  }, [draggingId]);
+  }, [draggingId, reorderItems]);
 
   // Handlers para mouse (desktop)
   const handleMouseDown = useCallback((e, itemId) => {
@@ -89,11 +100,22 @@ export const useDragReorder = (items, storageKey = 'widgetOrder') => {
     setDragOffset({ x: deltaX, y: deltaY });
   }, [draggingId]);
 
-  const handleMouseUp = useCallback(() => {
+  const handleMouseUp = useCallback((e) => {
     clearTimeout(longPressTimer.current);
+    
+    if (draggingId) {
+      // Detectar elemento debajo del cursor
+      const elementBelow = document.elementFromPoint(e.clientX, e.clientY);
+      const targetId = elementBelow?.closest('[data-drag-id]')?.getAttribute('data-drag-id');
+      
+      if (targetId && targetId !== draggingId) {
+        reorderItems(draggingId, targetId);
+      }
+    }
+
     setDraggingId(null);
     setDragOffset({ x: 0, y: 0 });
-  }, []);
+  }, [draggingId, reorderItems]);
 
   // Reordenar elementos
   const reorderItems = useCallback((fromId, toId) => {
