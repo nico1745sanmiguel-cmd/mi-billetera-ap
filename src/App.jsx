@@ -11,7 +11,6 @@ const MyCards = lazy(() => import('./Components/Cards/MyCards'));
 const NewPurchase = lazy(() => import('./Components/Purchase/NewPurchase'));
 const SuperList = lazy(() => import('./Components/Supermarket/SuperList'));
 const ServicesManager = lazy(() => import('./Components/Services/ServicesManager'));
-// ELIMINADO: const Savings... (Esto causaba el error)
 
 import { db, auth } from './firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
@@ -24,6 +23,7 @@ export default function App() {
   const [privacyMode, setPrivacyMode] = useState(false);
   const [view, setView] = useState('dashboard');
   
+  // FECHA GLOBAL (La Máquina del Tiempo ⏳)
   const [currentDate, setCurrentDate] = useState(new Date());
 
   const getFormattedDate = (date) => {
@@ -43,18 +43,15 @@ export default function App() {
   const [transactions, setTransactions] = useState(() => JSON.parse(localStorage.getItem('cache_transactions')) || []);
   const [superItems, setSuperItems] = useState(() => JSON.parse(localStorage.getItem('cache_superItems')) || []);
   const [services, setServices] = useState(() => JSON.parse(localStorage.getItem('cache_services')) || []);
-  // ELIMINADO: savingsList
 
   // --- MANEJO DEL BOTÓN ATRÁS (HISTORIAL) ---
   useEffect(() => {
     if (view !== 'dashboard') {
         window.history.pushState({ page: view }, "", "");
     }
-
     const handleBackButton = (event) => {
         setView('dashboard');
     };
-
     window.addEventListener('popstate', handleBackButton);
     return () => window.removeEventListener('popstate', handleBackButton);
   }, [view]);
@@ -128,6 +125,7 @@ export default function App() {
         <Navbar currentView={view} setView={setView} privacyMode={privacyMode} setPrivacyMode={setPrivacyMode} />
       </div>
 
+      {/* HEADER MÓVIL */}
       <div className="md:hidden bg-white px-4 py-3 shadow-sm sticky top-0 z-40 flex items-center justify-between gap-3">
          <button onClick={() => setView('dashboard')} className={`p-2 rounded-xl transition-all active:scale-95 ${view === 'dashboard' ? 'bg-blue-50 text-blue-600' : 'bg-gray-100 text-gray-500'}`}>
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
@@ -152,20 +150,21 @@ export default function App() {
                     cards={cards} 
                     supermarketItems={superItems} 
                     services={services} 
-                    // Eliminado: savingsList
                     privacyMode={privacyMode} 
                     setView={setView}
                     onLogout={handleLogout}
+                    currentDate={currentDate} // <--- CLAVE PARA QUE EL HOME SE ACTUALICE
                 />
             )}
             
-            {/* ELIMINADO: view === 'savings' */}
             {view === 'services_manager' && <ServicesManager services={services} cards={cards} transactions={transactions} currentDate={currentDate} />}
             
             {view === 'stats' && <Dashboard transactions={transactions} cards={cards} services={services} privacyMode={privacyMode} currentDate={currentDate} />}
             
             {view === 'purchase' && <NewPurchase cards={cards} onSave={addTransaction} transactions={transactions} privacyMode={privacyMode} />}
             {view === 'cards' && <MyCards cards={cards} privacyMode={privacyMode} />}
+            
+            {/* CORRECCIÓN FINAL: Pasamos los datos correctamente */}
             {view === 'super' && <SuperList items={superItems} currentDate={currentDate} />}
         
         </Suspense>
