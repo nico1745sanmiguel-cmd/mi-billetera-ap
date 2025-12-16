@@ -3,133 +3,89 @@ import { formatMoney } from '../../utils';
 import FinancialTarget from './FinancialTarget'; 
 import { useDragReorder } from '../../hooks/useDragReorder';
 
-// Colores de urgencia
-const URGENCY_COLORS = {
-    HIGH: 'bg-red-50 text-red-700 border-red-100', 
-    MED: 'bg-orange-50 text-orange-700 border-orange-100', 
-    LOW: 'bg-white text-gray-600 border-gray-100'
-};
+const URGENCY_COLORS = { HIGH: 'bg-red-50 text-red-700 border-red-100', MED: 'bg-orange-50 text-orange-700 border-orange-100', LOW: 'bg-white text-gray-600 border-gray-100' };
 
 export default function Home({ transactions, cards, supermarketItems = [], services = [], privacyMode, setView, onLogout, currentDate }) {
   
-  // Clave del mes seleccionado (Ej: "2025-02")
   const targetMonthKey = useMemo(() => {
       if (!currentDate) return '';
       return `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
   }, [currentDate]);
 
-  // --- 1. CONFIGURACIÓN DRAG & DROP ---
   const DEFAULT_ORDER = ['target', 'cards', 'agenda', 'super_actions'];
   const getInitialOrder = () => {
       const saved = localStorage.getItem('widget_order');
-      if (saved) {
-          try {
-              const parsed = JSON.parse(saved);
-              if (parsed.length === DEFAULT_ORDER.length) return parsed;
-          } catch (e) { console.error("Error leyendo orden", e); }
-      }
+      if (saved) { try { const parsed = JSON.parse(saved); if (parsed.length === DEFAULT_ORDER.length) return parsed; } catch (e) {} }
       return DEFAULT_ORDER;
   };
   const { order, getDragProps, draggingItem } = useDragReorder(getInitialOrder());
   useEffect(() => { localStorage.setItem('widget_order', JSON.stringify(order)); }, [order]);
 
 
-  // --- 2. CÁLCULOS (LA MÁQUINA DEL TIEMPO ⏳) ---
-
-  // A. Tarjetas: Calcular deuda EXACTA del mes seleccionado
+  // 1. CÁLCULO DE TARJETAS (Con Ajuste Manual y Fecha Vencimiento)
   const cardsWithDebt = useMemo(() => {
       const targetMonthVal = currentDate.getFullYear() * 12 + currentDate.getMonth();
 
       return cards.map(card => {
-          const debt = transactions
-            .filter(t => t.cardId === card.id && t.type !== 'cash') // Solo crédito
-            .reduce((acc, t) => {
-                const tDate = new Date(t.date);
-                // Ajustamos zona horaria para evitar errores de día
-                const tLocal = new Date(tDate.valueOf() + tDate.getTimezoneOffset() * 60000);
-                
-                const startMonthVal = tLocal.getFullYear() * 12 + tLocal.getMonth();
-                const endMonthVal = startMonthVal + (t.installments || 1);
+          // A. Ver si hay ajuste manual para este mes
+          const manualAmount = card.adjustments?.[targetMonthKey];
 
-                // Si el mes seleccionado está DENTRO del rango de cuotas de esta compra
-                if (targetMonthVal >= startMonthVal && targetMonthVal < endMonthVal) {
-                    return acc + Number(t.monthlyInstallment);
-                }
-                return acc;
-            }, 0);
+          // B. Si no, calcular suma
+          let debt = 0;
+          if (manualAmount !== undefined) {
+              debt = manualAmount;
+          } else {
+              debt = transactions
+                .filter(t => t.cardId === card.id && t.type !== 'cash')
+                .reduce((acc, t) => {
+                    const tDate = new Date(t.date);
+                    const tLocal = new Date(tDate.valueOf() + tDate.getTimezoneOffset() * 60000);
+                    const startMonthVal = tLocal.getFullYear() * 12 + tLocal.getMonth();
+                    const endMonthVal = startMonthVal + (t.installments || 1);
+                    if (targetMonthVal >= startMonthVal && targetMonthVal < endMonthVal) return acc + Number(t.monthlyInstallment);
+                    return acc;
+                }, 0);
+          }
           
           return { ...card, currentDebt: debt };
       });
-  }, [cards, transactions, currentDate]);
+  }, [cards, transactions, currentDate, targetMonthKey]);
 
-  // B. Supermercado: Solo ítems de ESTE mes (Opción 2)
+  // 2. SUPERMERCADO
   const superData = useMemo(() => {
-      // Filtramos por la key del mes (si el item no tiene mes, asumimos que es del mes actual real o lo ignoramos)
-      // Nota: Al crear ítems nuevos, les pondremos esta key.
       const monthlyItems = supermarketItems.filter(item => item.month === targetMonthKey);
-
       const totalBudget = monthlyItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
       const realSpent = monthlyItems.filter(i => i.checked).reduce((acc, item) => acc + (item.price * item.quantity), 0);
       const percent = totalBudget > 0 ? (realSpent / totalBudget) * 100 : 0;
       return { totalBudget, realSpent, percent };
   }, [supermarketItems, targetMonthKey]);
 
-  // C. Agenda: Servicios que tocan ESTE mes
+  // 3. AGENDA (Con fecha correcta y ajustes)
   const agenda = useMemo(() => {
-      // 1. Servicios Recurrentes
-      const realServices = services.filter(s => {
-           // Lógica de frecuencia simple (asumimos mensual por defecto para visualizar)
-           // Para mayor precisión usaríamos la misma lógica que ServicesManager, 
-           // pero para el Home, mostrar todos los activos es buena UX.
-           return true; 
-      }).map(s => ({ 
-          id: s.id, 
-          name: s.name, 
-          amount: s.amount, 
-          day: s.day, 
-          isPaid: s.paidPeriods?.includes(targetMonthKey) || false, // ¿Pagado en ESTE mes?
-          type: 'service' 
-      }));
-
-      // 2. Tarjetas con Deuda
+      const realServices = services.filter(s => true).map(s => ({ id: s.id, name: s.name, amount: s.amount, day: s.day, isPaid: s.paidPeriods?.includes(targetMonthKey) || false, type: 'service' }));
       const cardServices = cardsWithDebt.filter(c => c.currentDebt > 0).map(c => ({
           id: c.id, 
           name: c.name, 
           amount: c.currentDebt, 
-          day: c.dueDay, 
-          isPaid: c.paidPeriods?.includes(targetMonthKey) || false, // ¿Pagada la tarjeta ESTE mes?
+          day: c.dueDay || 10, // <--- CORRECCIÓN AQUÍ TAMBIÉN
+          isPaid: c.paidPeriods?.includes(targetMonthKey) || false, 
           type: 'card_item', 
           bank: c.bank
       }));
 
-      return [...realServices, ...cardServices]
-        .sort((a, b) => a.day - b.day)
-        .filter(item => !item.isPaid) // Solo mostramos lo pendiente
-        .slice(0, 3);
+      return [...realServices, ...cardServices].sort((a, b) => a.day - b.day).filter(item => !item.isPaid).slice(0, 3);
   }, [services, cardsWithDebt, targetMonthKey]);
 
-  // Totales Generales (Para el Radar)
   const totalNeed = services.reduce((acc,s) => acc + s.amount, 0) + cardsWithDebt.reduce((acc,c) => acc + c.currentDebt, 0) + superData.totalBudget;
   const totalPaid = services.filter(s=>s.paidPeriods?.includes(targetMonthKey)).reduce((acc,s)=>acc+s.amount,0) + cardsWithDebt.filter(c=>c.paidPeriods?.includes(targetMonthKey)).reduce((acc,c)=>acc+c.currentDebt,0) + superData.realSpent;
-
-
   const showMoney = (amount) => privacyMode ? '****' : formatMoney(amount);
 
-  // Alerta Crítica (Basada en fecha seleccionada)
   const criticalAlert = useMemo(() => {
-      const selectedDay = currentDate.getDate(); // Ojo: Aquí compara con el día numérico seleccionado, pero la urgencia real suele ser respecto a "HOY".
-      // Para la UX, si estoy mirando Febrero, quiero ver qué vence a principios de Febrero.
-      
-      // Si estamos mirando un mes futuro, mostramos lo que vence los primeros días
       const firstItem = agenda[0];
-      if (firstItem && firstItem.day <= 5) { // Si hay algo que vence antes del día 5
-           return { active: true, msg: `Vencimiento próx: ${firstItem.name} (Día ${firstItem.day})`, amount: firstItem.amount };
-      }
+      if (firstItem && firstItem.day <= 5) return { active: true, msg: `Vencimiento próx: ${firstItem.name} (Día ${firstItem.day})`, amount: firstItem.amount };
       return { active: false };
-  }, [agenda, currentDate]);
+  }, [agenda]);
 
-
-  // --- 3. DICCIONARIO DE WIDGETS ---
   const WIDGETS = {
     target: (
       <div className={`transition-all duration-300 ${privacyMode ? 'opacity-50 blur-sm pointer-events-none select-none' : 'opacity-100'}`}>
@@ -150,7 +106,7 @@ export default function Home({ transactions, cards, supermarketItems = [], servi
                           <div className="absolute top-0 right-0 w-24 h-24 bg-white opacity-10 rounded-full -mr-10 -mt-10"></div>
                           <div className="flex justify-between items-start mb-6"><span className="font-bold text-sm tracking-wider uppercase opacity-90">{card.bank}</span><span className="text-[10px] font-mono opacity-70">**** {card.name.slice(-4)}</span></div>
                           <div><p className="text-[10px] opacity-70 uppercase mb-1">Cuota {currentDate.toLocaleString('es-AR', {month:'long'})}</p><p className="font-mono text-2xl font-bold tracking-tight">{showMoney(cardsWithDebt.find(c=>c.id === card.id)?.currentDebt || 0)}</p></div>
-                          <div className="absolute bottom-4 right-4 text-[10px] font-medium bg-black/20 px-2 py-1 rounded">Cierra día {card.closeDay}</div>
+                          <div className="absolute bottom-4 right-4 text-[10px] font-medium bg-black/20 px-2 py-1 rounded">Vence día {card.dueDay}</div>
                       </div>
                   ))}
               </div>
