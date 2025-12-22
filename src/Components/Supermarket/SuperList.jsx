@@ -163,24 +163,53 @@ export default function SuperList({ items = [], currentDate }) {
         if (window.confirm("¿Borrar item?")) await deleteDoc(doc(db, 'supermarket_items', id));
     };
 
+    // --- HANDLERS PRECIO Y CONFIRMACIÓN ---
+    // Ref para guardar el estado original antes de editar (para Undo y lógica de cambios)
+    const editingItemRef = useRef(null);
+
+    const handlePriceFocus = (item) => {
+        editingItemRef.current = {
+            id: item.id,
+            initialPrice: item.price,
+            initialChecked: item.checked
+        };
+    };
+
     const handleUpdatePrice = async (item, rawValue) => {
         const numericValue = parseCurrencyInput(rawValue);
         const itemRef = doc(db, 'supermarket_items', item.id);
 
-        const oldPrice = item.price;
-        const wasChecked = item.checked;
+        // Solo actualizamos el precio en tiempo real, SIN cambiar el check
+        await updateDoc(itemRef, { price: Number(numericValue) });
+    };
 
-        const updates = { price: Number(numericValue) };
-        // Auto-check: Si cambio precio y no está checkeado, lo checkeo automágicamente
-        if (!item.checked && Number(numericValue) > 0) {
-            updates.checked = true;
+    const handlePriceBlur = async (item) => {
+        // Al salir del input (Blur o Enter), verificamos si hay que marcarlo como comprado
+        // La regla es: Si tiene precio > 0 y NO estaba checkeado, lo marcamos.
+
+        if (!editingItemRef.current || editingItemRef.current.id !== item.id) return;
+
+        const { initialPrice, initialChecked } = editingItemRef.current;
+        const currentPrice = item.price; // El precio ya está actualizado en DB por el onChange
+        const itemRef = doc(db, 'supermarket_items', item.id);
+
+        // CASO 1: Auto-Check (Estaba sin check y ahora tiene precio)
+        if (!item.checked && currentPrice > 0) {
+            await updateDoc(itemRef, { checked: true });
+
+            showToast("Marcado como comprado", async () => {
+                // Undo: volver a precio original y des-checkear
+                await updateDoc(itemRef, { price: initialPrice, checked: initialChecked });
+            });
+        }
+        // CASO 2: Solo cambió el precio (Ya estaba checkeado o sigue en 0)
+        else if (currentPrice !== initialPrice) {
+            showToast("Precio actualizado", async () => {
+                await updateDoc(itemRef, { price: initialPrice });
+            });
         }
 
-        await updateDoc(itemRef, updates);
-
-        showToast("Precio actualizado", async () => {
-            await updateDoc(itemRef, { price: oldPrice, checked: wasChecked });
-        });
+        editingItemRef.current = null; // Limpiar ref
     };
 
     const handleUpdateQuantity = async (item, delta) => {
@@ -298,6 +327,9 @@ export default function SuperList({ items = [], currentDate }) {
                                             className={`w-full bg-transparent outline-none text-sm font-bold text-right ${item.checked ? 'text-purple-700' : 'text-gray-800'}`}
                                             value={item.price ? formatInputCurrency(item.price) : ''}
                                             onChange={(e) => handleUpdatePrice(item, e.target.value)}
+                                            onFocus={() => handlePriceFocus(item)}
+                                            onBlur={() => handlePriceBlur(item)}
+                                            onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
                                             placeholder="$ 0"
                                         />
                                     </div>
