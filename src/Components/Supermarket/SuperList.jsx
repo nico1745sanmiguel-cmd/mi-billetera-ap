@@ -330,6 +330,7 @@ export default function SuperList({ items = [], currentDate }) {
                                             onFocus={() => handlePriceFocus(item)}
                                             onBlur={() => handlePriceBlur(item)}
                                             onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
+                                            enterKeyHint="done"
                                             placeholder="$ 0"
                                         />
                                     </div>
