@@ -8,173 +8,68 @@ export default function SuperList({ items = [], currentDate }) {
 
     // ESTADO PARA ENFOCAR EL NUEVO ÍTEM AUTOMÁTICAMENTE
     const [lastAddedId, setLastAddedId] = useState(null);
-    const itemsRefs = useRef({});
+    // ESTADO SCROLLBAR 📜
+    const [isScrolling, setIsScrolling] = useState(false);
+    const [activeLetter, setActiveLetter] = useState(null);
+    const scrollTimeout = useRef(null);
 
-    // TOAST STATE 🍞
-    const [toast, setToast] = useState(null);
-    const toastTimerRef = useRef(null);
-
-    const showToast = (message, undoAction) => {
-        if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
-        setToast({ message, undoAction });
-        toastTimerRef.current = setTimeout(() => setToast(null), 3000);
-    };
-
-    const handleUndo = async () => {
-        if (toast?.undoAction) {
-            await toast.undoAction();
-            setToast(null);
-        }
-    };
-
-    // 1. CLAVE DEL MES (MÁQUINA DEL TIEMPO ⏳)
-    const currentMonthKey = useMemo(() => {
-        if (!currentDate) return '';
-        return `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
-    }, [currentDate]);
-
-    // 2. LISTA FILTRADA Y ORDENADA
-    const monthlyList = useMemo(() => {
-        const list = items.filter(item => {
-            if (item.month) return item.month === currentMonthKey;
-            // Compatibilidad con items viejos (si no tienen mes, asumen el actual real)
-            const realNow = new Date();
-            const realKey = `${realNow.getFullYear()}-${String(realNow.getMonth() + 1).padStart(2, '0')}`;
-            return currentMonthKey === realKey;
-        });
-
-        // Orden: 1. Pendientes A-Z, 2. Comprados (Check) al fondo
-        return list.sort((a, b) => {
-            if (a.checked === b.checked) return a.name.localeCompare(b.name);
-            return a.checked ? 1 : -1;
-        });
-    }, [items, currentMonthKey]);
-
-    // 3. AUTO-SCROLL Y FOCO AL AGREGAR 🎯
+    // Detectar scroll global para mostrar la barra
     useEffect(() => {
-        if (lastAddedId && itemsRefs.current[lastAddedId]) {
-            // Scrollear hasta el elemento
-            itemsRefs.current[lastAddedId].scrollIntoView({ behavior: 'smooth', block: 'center' });
+        const handleScroll = () => {
+            setIsScrolling(true);
+            if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
+            scrollTimeout.current = setTimeout(() => setIsScrolling(false), 2000);
+        };
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
 
-            // Enfocar el input de precio del nuevo item
-            const priceInputEl = itemsRefs.current[lastAddedId].querySelector('input[type="tel"]');
-            if (priceInputEl) {
-                setTimeout(() => priceInputEl.focus(), 300);
+    const handleTouchMove = (e) => {
+        // Lógica para detectar qué letra está bajo el dedo
+        const touch = e.touches[0];
+        const element = document.elementFromPoint(touch.clientX, touch.clientY);
+        if (element && element.dataset.letter) {
+            e.preventDefault(); // Evitar scroll de pantalla
+            const letter = element.dataset.letter;
+            setActiveLetter(letter);
+
+            // Scrollear a la sección
+            const target = monthlyList.find(i => i.name.toUpperCase().startsWith(letter) && !i.checked);
+            if (target && itemsRefs.current[target.id]) {
+                itemsRefs.current[target.id].scrollIntoView({ behavior: 'auto', block: 'center' }); // Auto es más fluido para scrubbing
             }
-            setLastAddedId(null);
         }
-    }, [monthlyList, lastAddedId]);
-
-    // 4. CÁLCULOS
-    const totals = useMemo(() => {
-        const estimated = monthlyList.reduce((acc, i) => acc + (i.price * i.quantity), 0);
-        const real = monthlyList.filter(i => i.checked).reduce((acc, i) => acc + (i.price * i.quantity), 0);
-        const count = monthlyList.length;
-        const checkedCount = monthlyList.filter(i => i.checked).length;
-        return { estimated, real, count, checkedCount };
-    }, [monthlyList]);
-
-    // 5. HISTORIAL DE PRECIOS 📉
-    const getPriceHistory = (itemName, currentPrice) => {
-        const history = items
-            .filter(i => i.name.trim().toLowerCase() === itemName.trim().toLowerCase() && i.checked && i.month !== currentMonthKey)
-            .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
-
-        if (history.length === 0) return null;
-        const lastPrice = history[0].price;
-        const diff = currentPrice - lastPrice;
-        return { lastPrice, diff };
     };
 
-    // FORMATOS
-    const formatInputCurrency = (val) => val ? '$ ' + Number(val).toLocaleString('es-AR') : '';
-    const parseCurrencyInput = (val) => val.replace(/\D/g, '');
-
-    // --- HANDLERS ---
-    const handleAdd = async (e) => {
-        e.preventDefault();
-        if (!newItem || !auth.currentUser) return;
-
-        try {
-            const docRef = await addDoc(collection(db, 'supermarket_items'), {
-                name: newItem,
-                price: 0, // Precio por defecto 0
-                quantity: 1, // Cantidad por defecto 1
-                checked: false,
-                userId: auth.currentUser.uid,
-                month: currentMonthKey,
-                createdAt: new Date().toISOString()
-            });
-
-            setLastAddedId(docRef.id); // Guardamos ID para el auto-focus
-            setNewItem('');
-
-            showToast(`Agregado: ${newItem}`, async () => {
-                await deleteDoc(docRef);
-            });
-        } catch (error) { console.error(error); }
+    const handleTouchEnd = () => {
+        setActiveLetter(null);
+        if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
+        scrollTimeout.current = setTimeout(() => setIsScrolling(false), 2000);
     };
 
-    const handleToggle = async (item) => {
-        const itemRef = doc(db, 'supermarket_items', item.id);
-        await updateDoc(itemRef, { checked: !item.checked });
-    };
-
-    const handleDelete = async (id) => {
-        if (window.confirm("¿Borrar item?")) await deleteDoc(doc(db, 'supermarket_items', id));
-    };
-
-    const handleUpdatePrice = async (item, rawValue) => {
-        const numericValue = parseCurrencyInput(rawValue);
-        const itemRef = doc(db, 'supermarket_items', item.id);
-
-        const oldPrice = item.price;
-        const wasChecked = item.checked;
-
-        const updates = { price: Number(numericValue) };
-        // Auto-check: Si cambio precio y no está checkeado, lo checkeo automágicamente
-        if (!item.checked && Number(numericValue) > 0) {
-            updates.checked = true;
-        }
-
-        await updateDoc(itemRef, updates);
-
-        showToast("Precio actualizado", async () => {
-            await updateDoc(itemRef, { price: oldPrice, checked: wasChecked });
-        });
-    };
-
-    const handleUpdateQuantity = async (item, delta) => {
-        const oldQty = item.quantity;
-        const newQty = Math.max(1, item.quantity + delta);
-        if (oldQty === newQty) return;
-
-        const itemRef = doc(db, 'supermarket_items', item.id);
-        await updateDoc(itemRef, { quantity: newQty });
-
-        showToast("Cantidad modificada", async () => {
-            await updateDoc(itemRef, { quantity: oldQty });
-        });
-    };
 
     return (
         <div className="animate-fade-in pb-32">
 
+            {/* 1. TOAST GLOBAL (Portal-like, arriba de todo) */}
+            <div className={`fixed top-4 left-0 right-0 flex justify-center transition-all duration-300 z-[100] pointer-events-none ${toast ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'}`}>
+                <div className="bg-gray-900 shadow-2xl backdrop-blur-md text-white px-6 py-3 rounded-full flex items-center gap-3 text-sm font-bold pointer-events-auto border border-gray-700/50">
+                    <span>{toast?.message}</span>
+                    {toast?.undoAction && (
+                        <button onClick={handleUndo} className="text-yellow-400 hover:text-yellow-300 uppercase tracking-wider ml-2 text-xs">
+                            Deshacer
+                        </button>
+                    )}
+                </div>
+            </div>
+
+            {/* 2. LUPA DE LETRA GIGANTE (iOS Style) */}
+            <div className={`fixed right-12 top-1/2 -translate-y-1/2 w-16 h-16 bg-gray-200/90 backdrop-blur text-gray-800 rounded-full flex items-center justify-center text-3xl font-bold shadow-xl z-50 transition-all duration-200 pointer-events-none ${activeLetter ? 'opacity-100 scale-100 translate-x-0' : 'opacity-0 scale-50 translate-x-4'}`}>
+                {activeLetter}
+            </div>
+
             {/* HEADER STICKY (Siempre visible arriba) */}
             <div className="sticky top-0 z-30 bg-[#f3f4f6]/95 backdrop-blur-sm pt-2 pb-3 mb-2 transition-all shadow-sm -mx-4 px-6 border-b border-gray-200/50">
-
-                {/* TOAST DE NOTIFICACIÓN 🍞 */}
-                <div className={`fixed top-4 left-0 right-0 flex justify-center transition-all duration-300 z-50 pointer-events-none ${toast ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'}`}>
-                    <div className="bg-gray-900/90 backdrop-blur text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 text-sm font-bold pointer-events-auto">
-                        <span>{toast?.message}</span>
-                        {toast?.undoAction && (
-                            <button onClick={handleUndo} className="text-yellow-400 hover:text-yellow-300 uppercase tracking-wider ml-2">
-                                Deshacer
-                            </button>
-                        )}
-                    </div>
-                </div>
-
                 <div className="flex justify-between items-end mb-2">
                     <div>
                         <h2 className="text-xl font-bold text-gray-800">Supermercado</h2>
@@ -211,7 +106,6 @@ export default function SuperList({ items = [], currentDate }) {
                             <div
                                 key={item.id}
                                 ref={el => itemsRefs.current[item.id] = el}
-                                data-letter={item.name[0].toUpperCase()}
                                 className={`flex flex-col p-3 rounded-xl border transition-all duration-500 ${item.checked ? 'bg-purple-50 border-purple-100 opacity-60 order-last' : 'bg-white border-gray-100 shadow-sm'}`}
                             >
                                 {/* FILA 1: Check, Nombre, Subtotal */}
@@ -272,24 +166,22 @@ export default function SuperList({ items = [], currentDate }) {
                     )}
                 </div>
 
-                {/* BARRA LATERAL ALFABÉTICA (Derecha) */}
-                <div className="w-8 flex flex-col items-center justify-center fixed right-1 top-32 bottom-24 z-20 pointer-events-none">
-                    <div className="pointer-events-auto bg-white/90 backdrop-blur-md rounded-full py-2 shadow-lg border border-gray-200 flex flex-col gap-1 max-h-full overflow-y-auto w-8 scrollbar-hide">
+                {/* BARRA LATERAL ALFABÉTICA DINÁMICA (TOUCH) */}
+                <div
+                    className={`w-8 flex flex-col items-center justify-center fixed right-0 top-32 bottom-24 z-40 transition-all duration-300 ${isScrolling || activeLetter ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-10 pointer-events-none'}`}
+                    onTouchStart={() => setIsScrolling(true)}
+                    onTouchMove={handleTouchMove}
+                    onTouchEnd={handleTouchEnd}
+                >
+                    <div className="bg-white/50 backdrop-blur-sm rounded-l-xl py-2 shadow-sm border-y border-l border-gray-100 flex flex-col gap-0.5 max-h-full overflow-hidden w-6">
                         {[...new Set(monthlyList.filter(i => !i.checked).map(i => i.name[0].toUpperCase()))].sort().map(letter => (
-                            <a
+                            <div
                                 key={letter}
-                                href="#"
-                                onClick={(e) => {
-                                    e.preventDefault();
-                                    const target = monthlyList.find(i => i.name.toUpperCase().startsWith(letter) && !i.checked);
-                                    if (target && itemsRefs.current[target.id]) {
-                                        itemsRefs.current[target.id].scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                    }
-                                }}
-                                className="text-[10px] font-black text-gray-400 hover:text-purple-600 hover:scale-150 transition-all text-center h-5 flex items-center justify-center shrink-0 w-full select-none"
+                                data-letter={letter}
+                                className="text-[9px] font-bold text-gray-500 text-center h-[18px] flex items-center justify-center shrink-0 w-full select-none"
                             >
                                 {letter}
-                            </a>
+                            </div>
                         ))}
                     </div>
                 </div>
