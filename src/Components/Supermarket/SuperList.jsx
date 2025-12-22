@@ -12,6 +12,24 @@ export default function SuperList({ items = [], currentDate }) {
     const [isScrolling, setIsScrolling] = useState(false);
     const [activeLetter, setActiveLetter] = useState(null);
     const scrollTimeout = useRef(null);
+    const itemsRefs = useRef({});
+
+    // TOAST STATE 🍞
+    const [toast, setToast] = useState(null);
+    const toastTimerRef = useRef(null);
+
+    const showToast = (message, undoAction) => {
+        if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+        setToast({ message, undoAction });
+        toastTimerRef.current = setTimeout(() => setToast(null), 3000);
+    };
+
+    const handleUndo = async () => {
+        if (toast?.undoAction) {
+            await toast.undoAction();
+            setToast(null);
+        }
+    };
 
     // Detectar scroll global para mostrar la barra
     useEffect(() => {
@@ -45,6 +63,137 @@ export default function SuperList({ items = [], currentDate }) {
         setActiveLetter(null);
         if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
         scrollTimeout.current = setTimeout(() => setIsScrolling(false), 2000);
+    };
+
+    // 1. CLAVE DEL MES (MÁQUINA DEL TIEMPO ⏳)
+    const currentMonthKey = useMemo(() => {
+        if (!currentDate) return '';
+        return `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
+    }, [currentDate]);
+
+    // 2. LISTA FILTRADA Y ORDENADA
+    const monthlyList = useMemo(() => {
+        const list = items.filter(item => {
+            if (item.month) return item.month === currentMonthKey;
+            // Compatibilidad con items viejos (si no tienen mes, asumen el actual real)
+            const realNow = new Date();
+            const realKey = `${realNow.getFullYear()}-${String(realNow.getMonth() + 1).padStart(2, '0')}`;
+            return currentMonthKey === realKey;
+        });
+
+        // Orden: 1. Pendientes A-Z, 2. Comprados (Check) al fondo
+        return list.sort((a, b) => {
+            if (a.checked === b.checked) return (a.name || '').localeCompare(b.name || '');
+            return a.checked ? 1 : -1;
+        });
+    }, [items, currentMonthKey]);
+
+    // 3. AUTO-SCROLL Y FOCO AL AGREGAR 🎯
+    useEffect(() => {
+        if (lastAddedId && itemsRefs.current[lastAddedId]) {
+            // Scrollear hasta el elemento
+            itemsRefs.current[lastAddedId].scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+            // Enfocar el input de precio del nuevo item
+            const priceInputEl = itemsRefs.current[lastAddedId].querySelector('input[type="tel"]');
+            if (priceInputEl) {
+                setTimeout(() => priceInputEl.focus(), 300);
+            }
+            setLastAddedId(null);
+        }
+    }, [monthlyList, lastAddedId]);
+
+    // 4. CÁLCULOS
+    const totals = useMemo(() => {
+        const estimated = monthlyList.reduce((acc, i) => acc + (i.price * i.quantity), 0);
+        const real = monthlyList.filter(i => i.checked).reduce((acc, i) => acc + (i.price * i.quantity), 0);
+        const count = monthlyList.length;
+        const checkedCount = monthlyList.filter(i => i.checked).length;
+        return { estimated, real, count, checkedCount };
+    }, [monthlyList]);
+
+    // 5. HISTORIAL DE PRECIOS 📉
+    const getPriceHistory = (itemName, currentPrice) => {
+        if (!itemName) return null;
+        const history = items
+            .filter(i => i.name && i.name.trim().toLowerCase() === itemName.trim().toLowerCase() && i.checked && i.month !== currentMonthKey)
+            .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+
+        if (history.length === 0) return null;
+        const lastPrice = history[0].price;
+        const diff = currentPrice - lastPrice;
+        return { lastPrice, diff };
+    };
+
+    // FORMATOS
+    const formatInputCurrency = (val) => val ? '$ ' + Number(val).toLocaleString('es-AR') : '';
+    const parseCurrencyInput = (val) => val.replace(/\D/g, '');
+
+    // --- HANDLERS ---
+    const handleAdd = async (e) => {
+        e.preventDefault();
+        if (!newItem || !auth.currentUser) return;
+
+        try {
+            const docRef = await addDoc(collection(db, 'supermarket_items'), {
+                name: newItem,
+                price: 0, // Precio por defecto 0
+                quantity: 1, // Cantidad por defecto 1
+                checked: false,
+                userId: auth.currentUser.uid,
+                month: currentMonthKey,
+                createdAt: new Date().toISOString()
+            });
+
+            setLastAddedId(docRef.id); // Guardamos ID para el auto-focus
+            setNewItem('');
+
+            showToast(`Agregado: ${newItem}`, async () => {
+                await deleteDoc(docRef);
+            });
+        } catch (error) { console.error(error); }
+    };
+
+    const handleToggle = async (item) => {
+        const itemRef = doc(db, 'supermarket_items', item.id);
+        await updateDoc(itemRef, { checked: !item.checked });
+    };
+
+    const handleDelete = async (id) => {
+        if (window.confirm("¿Borrar item?")) await deleteDoc(doc(db, 'supermarket_items', id));
+    };
+
+    const handleUpdatePrice = async (item, rawValue) => {
+        const numericValue = parseCurrencyInput(rawValue);
+        const itemRef = doc(db, 'supermarket_items', item.id);
+
+        const oldPrice = item.price;
+        const wasChecked = item.checked;
+
+        const updates = { price: Number(numericValue) };
+        // Auto-check: Si cambio precio y no está checkeado, lo checkeo automágicamente
+        if (!item.checked && Number(numericValue) > 0) {
+            updates.checked = true;
+        }
+
+        await updateDoc(itemRef, updates);
+
+        showToast("Precio actualizado", async () => {
+            await updateDoc(itemRef, { price: oldPrice, checked: wasChecked });
+        });
+    };
+
+    const handleUpdateQuantity = async (item, delta) => {
+        const oldQty = item.quantity;
+        const newQty = Math.max(1, item.quantity + delta);
+        if (oldQty === newQty) return;
+
+        const itemRef = doc(db, 'supermarket_items', item.id);
+        await updateDoc(itemRef, { quantity: newQty });
+
+        showToast("Cantidad modificada", async () => {
+            await updateDoc(itemRef, { quantity: oldQty });
+        });
     };
 
 
