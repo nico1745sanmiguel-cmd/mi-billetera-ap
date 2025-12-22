@@ -4,7 +4,7 @@ import FinancialTarget from './FinancialTarget';
 import CardDetailModal from '../Cards/CardDetailModal';
 import { useDragReorder } from '../../hooks/useDragReorder';
 
-export default function Home({ transactions, cards, supermarketItems = [], services = [], privacyMode, setView, onLogout, currentDate, user }) {
+export default function Home({ transactions, cards, supermarketItems = [], services = [], privacyMode, setView, onLogout, currentDate, user, onToggleTheme }) {
 
     const [selectedCardForModal, setSelectedCardForModal] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -288,6 +288,15 @@ export default function Home({ transactions, cards, supermarketItems = [], servi
                     <span className="font-bold text-lg tracking-wide">Ver Análisis Completo</span>
                     <span className="text-[10px] opacity-80 uppercase tracking-widest font-medium">Estadísticas & Proyecciones</span>
                 </div>
+            </button>
+
+            {/* TOGGLE TEMA (FULL WIDTH) */}
+            <button
+                onClick={onToggleTheme}
+                className="w-full py-4 mt-6 rounded-full border border-gray-100 text-gray-400 text-xs font-bold uppercase tracking-widest hover:bg-gray-50 hover:text-gray-600 transition-all flex items-center justify-center gap-2"
+            >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+                Cambiar a Modo Noche
             </button>
 
             {/* --- MODAL PARA TARJETAS --- */}
