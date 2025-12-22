@@ -34,7 +34,7 @@ export default function SuperList({ items = [], currentDate }) {
             setActiveLetter(letter);
 
             // Scrollear a la sección
-            const target = monthlyList.find(i => i.name.toUpperCase().startsWith(letter) && !i.checked);
+            const target = monthlyList.find(i => i.name && i.name.toUpperCase().startsWith(letter) && !i.checked);
             if (target && itemsRefs.current[target.id]) {
                 itemsRefs.current[target.id].scrollIntoView({ behavior: 'auto', block: 'center' }); // Auto es más fluido para scrubbing
             }
@@ -174,7 +174,7 @@ export default function SuperList({ items = [], currentDate }) {
                     onTouchEnd={handleTouchEnd}
                 >
                     <div className="bg-white/50 backdrop-blur-sm rounded-l-xl py-2 shadow-sm border-y border-l border-gray-100 flex flex-col gap-0.5 max-h-full overflow-hidden w-6">
-                        {[...new Set(monthlyList.filter(i => !i.checked).map(i => i.name[0].toUpperCase()))].sort().map(letter => (
+                        {[...new Set(monthlyList.filter(i => !i.checked && i.name).map(i => (i.name[0] || '?').toUpperCase()))].sort().map(letter => (
                             <div
                                 key={letter}
                                 data-letter={letter}
