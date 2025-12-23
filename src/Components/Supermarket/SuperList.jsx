@@ -361,7 +361,6 @@ export default function SuperList({ items = [], currentDate, isGlass, householdI
                     className={`w-8 flex flex-col items-center justify-center fixed right-0 top-32 bottom-24 z-40 transition-all duration-300 ${isScrolling || activeLetter ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-10 pointer-events-none'}`}
                     onTouchStart={() => setIsScrolling(true)}
                     onTouchMove={handleTouchMove}
-                    onTouchMove={handleTouchMove}
                     onTouchEnd={handleTouchEnd}
                 >
                     <div className={`backdrop-blur-sm rounded-l-xl py-2 shadow-sm border-y border-l flex flex-col gap-0.5 max-h-full overflow-hidden w-6 ${isGlass ? 'bg-white/10 border-white/10' : 'bg-white/50 border-gray-100'}`}>

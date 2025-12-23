@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { formatMoney } from '../../utils';
 import { db } from '../../firebase';
 import { doc, deleteDoc } from 'firebase/firestore';
-import { useHouseholdMembers } from '../../hooks/useHouseholdMembers'; // [HOUSEHOLD]
+
 
 const CAT_LABELS = {
     'supermarket': 'Supermercado',
@@ -17,8 +17,7 @@ const CAT_LABELS = {
 };
 
 export default function Dashboard({ transactions = [], cards = [], services = [], privacyMode, currentDate, isGlass, householdId }) {
-    // [HOUSEHOLD] Fetch Members
-    const { membersMap } = useHouseholdMembers(householdId);
+
 
     const [viewMode, setViewMode] = useState('general'); // 'general' | 'cards_detail'
 
@@ -211,21 +210,10 @@ export default function Dashboard({ transactions = [], cards = [], services = []
     }, [transactions, currentDate]);
 
     const showMoney = (amount) => privacyMode ? '****' : formatMoney(amount);
-    const showMoney = (amount) => privacyMode ? '****' : formatMoney(amount);
     const getCardName = (id) => cards.find(c => c.id === id)?.name || 'Tarjeta';
     const handleDelete = async (id) => { if (window.confirm("¿Eliminar consumo?")) await deleteDoc(doc(db, 'transactions', id)); };
 
-    // [HOUSEHOLD] Helper for Avatar
-    const getAvatar = (uid) => {
-        if (!uid || !membersMap[uid]) return null;
-        const profile = membersMap[uid];
-        if (profile.photoURL) return <img src={profile.photoURL} alt="User" className="w-5 h-5 rounded-full border border-white/30" />;
-        return (
-            <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-bold border border-white/10 flex-shrink-0 ${isGlass ? 'bg-indigo-500/50 text-white' : 'bg-indigo-100 text-indigo-600'}`}>
-                {profile.displayName ? profile.displayName.charAt(0).toUpperCase() : '?'}
-            </div>
-        );
-    };
+
 
 
     // =================================================================
@@ -338,8 +326,7 @@ export default function Dashboard({ transactions = [], cards = [], services = []
                                 <div className="flex-1 pr-2">
                                     <div className="flex justify-between items-start">
                                         <p className={`text-sm font-bold line-clamp-1 ${isGlass ? 'text-white' : 'text-gray-800'}`}>{item.description}</p>
-                                        {/* [HOUSEHOLD] Avatar */}
-                                        {item.ownerId && getAvatar(item.ownerId)}
+
                                     </div>
                                     <div className="flex items-center gap-2 mt-1 flex-wrap"><span className="text-[9px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded uppercase font-bold">{getCardName(item.cardId)}</span>{item.installments > 1 && <span className="text-[9px] bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded font-bold border border-indigo-100">{item.installments} pagos</span>}</div>
                                 </div>
