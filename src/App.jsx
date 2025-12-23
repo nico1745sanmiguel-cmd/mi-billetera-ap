@@ -11,14 +11,22 @@ const NewPurchase = lazy(() => import('./Components/Purchase/NewPurchase'));
 const SuperList = lazy(() => import('./Components/Supermarket/SuperList'));
 const ServicesManager = lazy(() => import('./Components/Services/ServicesManager'));
 // [SAFE MODE] Componente Aislado
+// [SAFE MODE] Componente Aislado
 const HomeGlass = lazy(() => import('./Components/Dashboard/HomeGlass'));
+const HouseholdManager = lazy(() => import('./Components/Household/HouseholdManager'));
 
 import { db, auth } from './firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
-import { collection, onSnapshot, addDoc, query, where } from 'firebase/firestore';
+import { collection, onSnapshot, addDoc, query, where, doc, setDoc } from 'firebase/firestore';
+
+import { checkAndMigrateToHousehold } from './utils/householdMigration';
+
+// [KILL SWITCH] Apagar esto si falla la beta.
+const ENABLE_HOUSEHOLD = true;
 
 export default function App() {
   const [user, setUser] = useState(null);
+  const [userData, setUserData] = useState(null); // Datos extendidos del usuario (householdId, etc)
   const [loadingUser, setLoadingUser] = useState(true);
   const [showReload, setShowReload] = useState(false);
   const [privacyMode, setPrivacyMode] = useState(false);
@@ -56,6 +64,20 @@ export default function App() {
   const [superItems, setSuperItems] = useState(() => JSON.parse(localStorage.getItem('cache_superItems')) || []);
   const [services, setServices] = useState(() => JSON.parse(localStorage.getItem('cache_services')) || []);
 
+  // --- FILTRADO DE PRIVACIDAD (HOUSEHOLD) ---
+  const getFilteredData = (dataList) => {
+    if (!ENABLE_HOUSEHOLD || !userData?.householdId) return dataList;
+    return dataList.filter(item => {
+      if (!item.ownerId) return true;
+      return item.isShared === true || item.ownerId === user?.uid;
+    });
+  };
+
+  const visibleCards = getFilteredData(cards);
+  const visibleTransactions = getFilteredData(transactions);
+  const visibleSuperItems = getFilteredData(superItems);
+  const visibleServices = getFilteredData(services);
+
   // --- MANEJO DEL BOTÓN ATRÁS (HISTORIAL NATIVO) ---
   useEffect(() => {
     if (view !== 'dashboard') {
@@ -68,11 +90,24 @@ export default function App() {
     return () => window.removeEventListener('popstate', handleBackButton);
   }, [view]);
 
-  // 1. Auth Listener
+  // 1. Auth Listener & Migration
   useEffect(() => {
     const safetyTimer = setTimeout(() => { if (loadingUser) setShowReload(true); }, 8000);
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
+
+      let currentHouseholdId = null;
+
+      if (currentUser) {
+
+
+        if (ENABLE_HOUSEHOLD) {
+          // Intentar migrar o obtener ID de hogar
+          currentHouseholdId = await checkAndMigrateToHousehold(currentUser);
+          setUserData({ householdId: currentHouseholdId });
+        }
+      }
+
       const hasCache = cards.length > 0 || transactions.length > 0;
       setTimeout(() => setLoadingUser(false), hasCache ? 0 : 500);
     });
@@ -82,6 +117,14 @@ export default function App() {
   // 2. Firebase Sync (Sincronización en tiempo real)
   useEffect(() => {
     if (!user) return;
+
+    // Si Household está activo y tenemos ID, usamos el ID del hogar. Si no, seguimos como antes (userId).
+    const useHouseholdQuery = ENABLE_HOUSEHOLD && userData?.householdId;
+    const queryField = useHouseholdQuery ? "householdId" : "userId";
+    const queryValue = useHouseholdQuery ? userData.householdId : user.uid;
+
+    console.log(`Syncing data using: ${queryField} = ${queryValue}`);
+
     const syncData = (queryRef, setState, cacheKey) => {
       return onSnapshot(queryRef, (snap) => {
         const data = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -90,19 +133,30 @@ export default function App() {
       }, (error) => console.log("Offline:", error));
     };
 
-    const unsubCards = syncData(query(collection(db, 'cards'), where("userId", "==", user.uid)), setCards, 'cache_cards');
-    const unsubTrans = syncData(query(collection(db, 'transactions'), where("userId", "==", user.uid)), setTransactions, 'cache_transactions');
-    const unsubSuper = syncData(query(collection(db, 'supermarket_items'), where("userId", "==", user.uid)), setSuperItems, 'cache_superItems');
-    const unsubServices = syncData(query(collection(db, 'services'), where("userId", "==", user.uid)), setServices, 'cache_services');
+    const unsubCards = syncData(query(collection(db, 'cards'), where(queryField, "==", queryValue)), setCards, 'cache_cards');
+    const unsubTrans = syncData(query(collection(db, 'transactions'), where(queryField, "==", queryValue)), setTransactions, 'cache_transactions');
+    const unsubSuper = syncData(query(collection(db, 'supermarket_items'), where(queryField, "==", queryValue)), setSuperItems, 'cache_superItems');
+    const unsubServices = syncData(query(collection(db, 'services'), where(queryField, "==", queryValue)), setServices, 'cache_services');
 
     return () => { unsubCards(); unsubTrans(); unsubSuper(); unsubServices(); };
-  }, [user]);
+  }, [user, userData]); // Re-run when userData (householdId) is ready
 
   const addTransaction = async (t) => {
     try {
       if (!user) return;
       const { id, ...dataToSave } = t;
-      await addDoc(collection(db, 'transactions'), { ...dataToSave, userId: user.uid });
+
+      const payload = { ...dataToSave, userId: user.uid };
+
+      // Inject Household Info
+      if (ENABLE_HOUSEHOLD && userData?.householdId) {
+        payload.householdId = userData.householdId;
+        payload.ownerId = user.uid;
+        // La privacidad se manejará desde el formulario, pero por defecto:
+        if (payload.isShared === undefined) payload.isShared = true;
+      }
+
+      await addDoc(collection(db, 'transactions'), payload);
       setView('dashboard');
     } catch (error) { alert("Error al guardar."); }
   };
@@ -170,29 +224,32 @@ export default function App() {
             {view === 'dashboard' && (
               isGlass ? (
                 <HomeGlass
-                  transactions={transactions}
-                  cards={cards}
-                  supermarketItems={superItems}
-                  services={services}
+                  transactions={visibleTransactions}
+                  cards={visibleCards}
+                  supermarketItems={visibleSuperItems}
+                  services={visibleServices}
                   currentDate={currentDate}
                   user={user}
                   privacyMode={privacyMode}
                   onToggleTheme={() => setIsGlass(false)}
                   setView={setView}
+                  onLogout={handleLogout}
+                  householdId={userData?.householdId}
                 />
 
               ) : (
                 <Home
-                  transactions={transactions}
-                  cards={cards}
-                  supermarketItems={superItems}
-                  services={services}
+                  transactions={visibleTransactions}
+                  cards={visibleCards}
+                  supermarketItems={visibleSuperItems}
+                  services={visibleServices}
                   privacyMode={privacyMode}
                   setView={setView}
                   onLogout={handleLogout}
                   currentDate={currentDate}
                   user={user}
                   onToggleTheme={() => setIsGlass(true)}
+                  householdId={userData?.householdId}
                 />
               )
             )}
@@ -200,20 +257,29 @@ export default function App() {
             {/* AQUÍ PASAMOS EL PRIVACY MODE AL GESTOR DE SERVICIOS */}
             {view === 'services_manager' && (
               <ServicesManager
-                services={services}
-                cards={cards}
-                transactions={transactions}
+                services={visibleServices}
+                cards={visibleCards}
+                transactions={visibleTransactions}
                 currentDate={currentDate}
                 privacyMode={privacyMode}
                 isGlass={isGlass}
               />
             )}
 
-            {view === 'stats' && <Dashboard transactions={transactions} cards={cards} services={services} privacyMode={privacyMode} currentDate={currentDate} isGlass={isGlass} />}
+            {/* HOUSEHOLD MANAGER */}
+            {view === 'household' && (
+              <HouseholdManager
+                user={user}
+                householdId={userData?.householdId}
+                onBack={() => setView('dashboard')}
+              />
+            )}
 
-            {view === 'purchase' && <NewPurchase cards={cards} onSave={addTransaction} transactions={transactions} privacyMode={privacyMode} currentDate={currentDate} isGlass={isGlass} />}
+            {view === 'stats' && <Dashboard transactions={visibleTransactions} cards={visibleCards} services={visibleServices} privacyMode={privacyMode} currentDate={currentDate} isGlass={isGlass} />}
 
-            {view === 'super' && <SuperList items={superItems} currentDate={currentDate} isGlass={isGlass} />}
+            {view === 'purchase' && <NewPurchase cards={visibleCards} onSave={addTransaction} transactions={visibleTransactions} privacyMode={privacyMode} currentDate={currentDate} isGlass={isGlass} />}
+
+            {view === 'super' && <SuperList items={visibleSuperItems} currentDate={currentDate} isGlass={isGlass} />}
 
           </Suspense>
 

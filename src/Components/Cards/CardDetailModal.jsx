@@ -4,17 +4,22 @@ import { doc, deleteDoc, updateDoc, setDoc } from 'firebase/firestore';
 
 const PRESET_COLORS = ['#1a1a1a', '#005f73', '#0a9396', '#ae2012', '#6a4c93', '#ca6702', '#2d3277', '#e63946', '#457b9d', '#ff006e'];
 
-export default function CardDetailModal({ isOpen, onClose, card, privacyMode, isGlass }) {
-  const [form, setForm] = useState({ name: '', bank: '', limit: '', limitOneShot: '', closeDay: '', dueDay: '', color: PRESET_COLORS[0] });
+export default function CardDetailModal({ isOpen, onClose, card, privacyMode, isGlass, householdId }) {
+  const [form, setForm] = useState({ name: '', bank: '', limit: '', limitOneShot: '', closeDay: '', dueDay: '', color: PRESET_COLORS[0], isShared: true });
   const [isAnimating, setIsAnimating] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
       setIsAnimating(true);
       if (card) {
-        setForm({ ...card, limitOneShot: card.limitOneShot || card.limit });
+        setForm({
+          ...card,
+          limitOneShot: card.limitOneShot || card.limit,
+          // Si la tarjeta ya tiene isShared, usarlo. Si no, default true si hay household.
+          isShared: card.isShared !== undefined ? card.isShared : true
+        });
       } else {
-        setForm({ name: '', bank: '', limit: '', limitOneShot: '', closeDay: '', dueDay: '', color: PRESET_COLORS[0] });
+        setForm({ name: '', bank: '', limit: '', limitOneShot: '', closeDay: '', dueDay: '', color: PRESET_COLORS[0], isShared: true });
       }
     } else {
       const timer = setTimeout(() => setIsAnimating(false), 300);
@@ -34,7 +39,13 @@ export default function CardDetailModal({ isOpen, onClose, card, privacyMode, is
       closeDay: Number(form.closeDay),
       dueDay: Number(form.dueDay),
       color: form.color,
-      userId: auth.currentUser.uid
+      userId: auth.currentUser.uid,
+      // Household Data
+      ...(householdId && {
+        householdId: householdId,
+        ownerId: auth.currentUser.uid,
+        isShared: form.isShared
+      })
     };
 
     try {
@@ -88,7 +99,32 @@ export default function CardDetailModal({ isOpen, onClose, card, privacyMode, is
               <p className="text-[10px] opacity-80 uppercase tracking-widest mb-0.5">Límite</p>
               <p className="font-mono text-xl font-bold tracking-tight drop-shadow-md">{form.limit ? `$ ${Number(form.limit).toLocaleString('es-AR')}` : '$ 0'}</p>
             </div>
+
+            {/* Indicador de Compartido en Preview */}
+            {householdId && (
+              <div className="absolute bottom-2 left-2 flex items-center gap-1 bg-black/20 px-2 py-0.5 rounded-md">
+                <span className={`w-2 h-2 rounded-full ${form.isShared ? 'bg-green-400 shadow-[0_0_5px_rgba(74,222,128,0.8)]' : 'bg-red-400'}`}></span>
+                <span className="text-[8px] uppercase tracking-wide opacity-80">{form.isShared ? 'Compartida' : 'Privada'}</span>
+              </div>
+            )}
           </div>
+
+          {/* TOGGLE: PREGUNTAR SI COMPARTIR (SOLO SI HAY HOGAR) */}
+          {householdId && (
+            <div className={`p-4 rounded-xl flex items-center justify-between transition-colors ${isGlass ? 'bg-white/5 border border-white/10' : 'bg-gray-50 border border-gray-100'}`}>
+              <div>
+                <p className={`text-sm font-bold ${isGlass ? 'text-white' : 'text-gray-800'}`}>Compartir en Hogar</p>
+                <p className={`text-xs ${isGlass ? 'text-white/50' : 'text-gray-500'}`}>Visible para tu pareja</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setForm(f => ({ ...f, isShared: !f.isShared }))}
+                className={`w-12 h-7 rounded-full transition-colors relative ${form.isShared ? 'bg-blue-600' : 'bg-gray-600'}`}
+              >
+                <div className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full transition-transform ${form.isShared ? 'translate-x-5' : 'translate-x-0'}`}></div>
+              </button>
+            </div>
+          )}
 
           <div>
             <label className={`block text-xs font-bold mb-1 ml-1 ${isGlass ? 'text-white/70' : 'text-gray-700'}`}>Nombre (ej. Visa Oro)</label>
@@ -116,7 +152,7 @@ export default function CardDetailModal({ isOpen, onClose, card, privacyMode, is
             </div>
             <div>
               <label className={`block text-xs font-bold mb-1 ml-1 ${isGlass ? 'text-white/70' : 'text-gray-700'}`}>Vencimiento (Día)</label>
-              <input required type="number" min="1" max="31" value={form.dueDay} onChange={e => setForm({ ...form, dueDay: e.target.value })} className={`w-full p-3 rounded-xl outline-none font-medium text-center transition-colors ${isGlass ? 'bg-white/5 border border-white/10 text-white focus:bg-white/10' : 'bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-500'}`} />
+              <input required type="number" min="1" max="31" value={form.dueDay} onChange={e => setForm({ ...form, dueDay: e.target.value })} className={`w-full p-3 rounded-xl outline-none font-medium text-center transition-colors ${isGlass ? 'bg-white/5 border border-white/10 text-white focus:bg-white/10' : 'bg-gray-200 border border-gray-200 focus:ring-2 focus:ring-blue-500'}`} />
             </div>
           </div>
 

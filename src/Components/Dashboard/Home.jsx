@@ -4,7 +4,7 @@ import FinancialTarget from './FinancialTarget';
 import CardDetailModal from '../Cards/CardDetailModal';
 import { useDragReorder } from '../../hooks/useDragReorder';
 
-export default function Home({ transactions, cards, supermarketItems = [], services = [], privacyMode, setView, onLogout, currentDate, user, onToggleTheme }) {
+export default function Home({ transactions, cards, supermarketItems = [], services = [], privacyMode, setView, onLogout, currentDate, user, onToggleTheme, householdId }) {
 
     const [selectedCardForModal, setSelectedCardForModal] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -150,7 +150,7 @@ export default function Home({ transactions, cards, supermarketItems = [], servi
                     {cards.map((card) => {
                         const logo = getCardLogo(card.name);
                         return (
-                            <div key={card.id} onClick={() => openCardModal(card)} className="cursor-pointer flex-shrink-0 w-[85%] max-w-[280px] h-48 rounded-2xl shadow-lg p-5 text-white relative overflow-hidden snap-center transition-transform active:scale-95 group" style={{ background: `linear-gradient(135deg, ${card.color || '#1f2937'} 0%, ${card.color || '#111827'}DD 100%)` }}>
+                            <div key={card.id} onClick={() => openCardModal(card)} className="cursor-pointer flex-shrink-0 w-[85%] max-w-[280px] h-48 rounded-[30px] shadow-lg p-5 text-white relative overflow-hidden snap-center transition-transform active:scale-95 group" style={{ background: `linear-gradient(135deg, ${card.color || '#1f2937'} 0%, ${card.color || '#111827'}DD 100%)` }}>
 
                                 {/* Background Glow */}
                                 <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full -mr-10 -mt-10 blur-xl"></div>
@@ -183,14 +183,16 @@ export default function Home({ transactions, cards, supermarketItems = [], servi
                                         <p className="text-[9px] opacity-70 uppercase mb-0.5 font-medium tracking-wide">A pagar este mes</p>
                                         <p className="font-mono text-2xl font-bold tracking-tight text-shadow-sm">{showMoney(cardsWithDebt.find(c => c.id === card.id)?.currentDebt || 0)}</p>
                                     </div>
-                                    <span className="text-[8px] bg-white/10 px-2 py-1 rounded-full group-hover:bg-white/20 transition-colors">Editar</span>
+                                    <button className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-white/70 hover:text-white transition-colors backdrop-blur-md opacity-0 group-hover:opacity-100" onClick={(e) => { e.stopPropagation(); openCardModal(card); }}>
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                                    </button>
                                 </div>
                             </div>
                         );
                     })}
 
                     {/* Add New Card Placeholder */}
-                    <div onClick={() => openCardModal(null)} className="flex-shrink-0 w-[85%] max-w-[280px] h-48 rounded-2xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center gap-3 cursor-pointer hover:bg-white hover:border-gray-400 active:scale-95 transition-all snap-center group">
+                    <div onClick={() => openCardModal(null)} className="flex-shrink-0 w-[85%] max-w-[280px] h-48 rounded-[30px] border-2 border-dashed border-gray-300 flex flex-col items-center justify-center gap-3 cursor-pointer hover:bg-white hover:border-gray-400 active:scale-95 transition-all snap-center group">
                         <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 group-hover:bg-gray-200 group-hover:text-gray-600 transition-colors">
                             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
                         </div>
@@ -201,7 +203,7 @@ export default function Home({ transactions, cards, supermarketItems = [], servi
         ),
 
         agenda: (
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mx-1">
+            <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden mx-1">
                 <div className="px-5 py-4 border-b border-gray-50 flex justify-between items-center bg-gray-50/50 cursor-pointer" onClick={() => setView('services_manager')}>
                     <h3 className="font-bold text-gray-800 text-sm">📅 Agenda {currentDate.toLocaleString('es-AR', { month: 'long' })}</h3>
                     <span className="text-xs font-bold text-gray-400">Ver todo →</span>
@@ -223,7 +225,7 @@ export default function Home({ transactions, cards, supermarketItems = [], servi
 
         super_actions: (
             <div className="grid grid-cols-2 gap-3 mx-1">
-                <div onClick={() => setView('super')} className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm cursor-pointer hover:border-purple-200 transition-colors group flex flex-col justify-between h-32">
+                <div onClick={() => setView('super')} className="bg-white p-4 rounded-[24px] border border-gray-100 shadow-sm cursor-pointer hover:border-purple-200 transition-colors group flex flex-col justify-between h-32">
                     <div className="flex justify-between items-start">
                         <div className="bg-purple-50 text-purple-600 p-2.5 rounded-xl">
                             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
@@ -236,7 +238,7 @@ export default function Home({ transactions, cards, supermarketItems = [], servi
                     </div>
                 </div>
 
-                <div onClick={() => setView('purchase')} className="bg-gray-900 p-4 rounded-2xl shadow-lg cursor-pointer active:scale-95 transition-all flex flex-col justify-between group h-32">
+                <div onClick={() => setView('purchase')} className="bg-gray-900 p-4 rounded-[24px] shadow-lg cursor-pointer active:scale-95 transition-all flex flex-col justify-between group h-32">
                     <div className="bg-gray-700 w-fit p-2.5 rounded-xl text-white group-hover:bg-gray-600 transition-colors">
                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
                     </div>
@@ -259,9 +261,14 @@ export default function Home({ transactions, cards, supermarketItems = [], servi
                         Hola, {user?.displayName?.split(' ')[0] || 'Nico'} 👋
                     </h1>
                 </div>
-                <button onClick={onLogout} className="bg-gray-50 text-gray-400 p-2 rounded-full hover:bg-red-50 hover:text-red-500 transition-colors">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
-                </button>
+                <div className="flex items-center gap-2">
+                    <button onClick={() => setView('household')} className="bg-blue-50 text-blue-500 p-2 rounded-full hover:bg-blue-100 transition-colors">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
+                    </button>
+                    <button onClick={onLogout} className="bg-gray-50 text-gray-400 p-2 rounded-full hover:bg-red-50 hover:text-red-500 transition-colors">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                    </button>
+                </div>
             </div>
 
             {criticalAlert.active && (
@@ -279,13 +286,15 @@ export default function Home({ transactions, cards, supermarketItems = [], servi
                 ))}
             </div>
 
-            <button onClick={() => setView('stats')} className="w-full h-24 mx-1 rounded-2xl relative overflow-hidden group shadow-lg shadow-indigo-200 active:scale-95 transition-all">
+            <button onClick={() => setView('stats')} className="w-full h-20 mx-1 rounded-2xl relative overflow-hidden group shadow-lg shadow-indigo-200 active:scale-95 transition-all">
                 <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 bg-[length:200%_auto] animate-gradient-x opacity-90 group-hover:opacity-100 transition-opacity"></div>
                 <div className="relative z-10 flex flex-col items-center justify-center h-full text-white gap-1">
-                    <div className="bg-white/20 p-2 rounded-full mb-1 backdrop-blur-sm">
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+                    <div className="flex items-center gap-2">
+                        <div className="bg-white/20 p-1.5 rounded-full backdrop-blur-sm">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+                        </div>
+                        <span className="font-bold text-base tracking-wide">Ver Análisis Completo</span>
                     </div>
-                    <span className="font-bold text-lg tracking-wide">Ver Análisis Completo</span>
                     <span className="text-[10px] opacity-80 uppercase tracking-widest font-medium">Estadísticas & Proyecciones</span>
                 </div>
             </button>
@@ -305,6 +314,7 @@ export default function Home({ transactions, cards, supermarketItems = [], servi
                 onClose={() => setIsModalOpen(false)}
                 card={selectedCardForModal}
                 privacyMode={privacyMode}
+                householdId={householdId}
             />
 
         </div>

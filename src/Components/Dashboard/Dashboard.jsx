@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { formatMoney } from '../../utils';
 import { db } from '../../firebase';
 import { doc, deleteDoc } from 'firebase/firestore';
+import { useHouseholdMembers } from '../../hooks/useHouseholdMembers'; // [HOUSEHOLD]
 
 const CAT_LABELS = {
     'supermarket': 'Supermercado',
@@ -15,7 +16,9 @@ const CAT_LABELS = {
     'varios': 'Varios'
 };
 
-export default function Dashboard({ transactions = [], cards = [], services = [], privacyMode, currentDate, isGlass }) {
+export default function Dashboard({ transactions = [], cards = [], services = [], privacyMode, currentDate, isGlass, householdId }) {
+    // [HOUSEHOLD] Fetch Members
+    const { membersMap } = useHouseholdMembers(householdId);
 
     const [viewMode, setViewMode] = useState('general'); // 'general' | 'cards_detail'
 
@@ -208,8 +211,21 @@ export default function Dashboard({ transactions = [], cards = [], services = []
     }, [transactions, currentDate]);
 
     const showMoney = (amount) => privacyMode ? '****' : formatMoney(amount);
+    const showMoney = (amount) => privacyMode ? '****' : formatMoney(amount);
     const getCardName = (id) => cards.find(c => c.id === id)?.name || 'Tarjeta';
     const handleDelete = async (id) => { if (window.confirm("¿Eliminar consumo?")) await deleteDoc(doc(db, 'transactions', id)); };
+
+    // [HOUSEHOLD] Helper for Avatar
+    const getAvatar = (uid) => {
+        if (!uid || !membersMap[uid]) return null;
+        const profile = membersMap[uid];
+        if (profile.photoURL) return <img src={profile.photoURL} alt="User" className="w-5 h-5 rounded-full border border-white/30" />;
+        return (
+            <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-bold border border-white/10 flex-shrink-0 ${isGlass ? 'bg-indigo-500/50 text-white' : 'bg-indigo-100 text-indigo-600'}`}>
+                {profile.displayName ? profile.displayName.charAt(0).toUpperCase() : '?'}
+            </div>
+        );
+    };
 
 
     // =================================================================
@@ -222,12 +238,12 @@ export default function Dashboard({ transactions = [], cards = [], services = []
 
                 {/* 1. MOCHILA FUTURA VS GASTO HOY */}
                 <div className="grid grid-cols-2 gap-4">
-                    <div className={`p-4 rounded-2xl border shadow-sm ${isGlass ? 'bg-white/5 border-white/10 text-white' : 'bg-white border-green-100 text-gray-800'}`}>
+                    <div className={`p-4 rounded-[30px] border shadow-sm ${isGlass ? 'bg-white/5 border-white/10 text-white' : 'bg-white border-green-100 text-gray-800'}`}>
                         <p className={`text-[10px] uppercase font-bold mb-1 ${isGlass ? 'text-white/50' : 'text-gray-400'}`}>Gasto Contado ({currentDate.toLocaleString('es-AR', { month: 'short' })})</p>
                         <p className="text-2xl font-bold">{showMoney(cashSpent)}</p>
                         <p className="text-[10px] text-green-500 font-medium">Salida de caja real</p>
                     </div>
-                    <div className={`p-4 rounded-2xl shadow-lg relative overflow-hidden ${isGlass ? 'bg-gradient-to-br from-indigo-900/80 to-purple-900/80 border border-white/10 text-white' : 'bg-indigo-900 text-white'}`}>
+                    <div className={`p-4 rounded-[30px] shadow-lg relative overflow-hidden ${isGlass ? 'bg-gradient-to-br from-indigo-900/80 to-purple-900/80 border border-white/10 text-white' : 'bg-indigo-900 text-white'}`}>
                         <div className="absolute top-0 right-0 w-16 h-16 bg-white opacity-5 rounded-full -mr-5 -mt-5"></div>
                         <p className="text-[10px] uppercase font-bold text-indigo-200 mb-1">Mochila Futura (Próx Mes)</p>
                         <p className="text-2xl font-bold">{showMoney(futureBackpack)}</p>
@@ -236,7 +252,7 @@ export default function Dashboard({ transactions = [], cards = [], services = []
                 </div>
 
                 {/* 2. MAREA SEMANAL */}
-                <div className={`p-5 rounded-2xl shadow-sm border ${isGlass ? 'bg-white/5 border-white/10 text-white' : 'bg-white border-gray-100 text-gray-800'}`}>
+                <div className={`p-5 rounded-[30px] shadow-sm border ${isGlass ? 'bg-white/5 border-white/10 text-white' : 'bg-white border-gray-100 text-gray-800'}`}>
                     <h3 className={`text-sm font-bold mb-4 flex items-center gap-2 ${isGlass ? 'text-white' : 'text-gray-800'}`}>🌊 Marea Semanal <span className={`text-[10px] font-normal ${isGlass ? 'text-white/40' : 'text-gray-400'}`}>(Vencimientos)</span></h3>
                     <div className="flex items-end justify-between h-32 gap-4 px-2">
                         {weeklyTide.map((week, idx) => (
@@ -252,7 +268,7 @@ export default function Dashboard({ transactions = [], cards = [], services = []
                 </div>
 
                 {/* 3. BARRAS APILADAS */}
-                <div className={`p-5 rounded-2xl shadow-sm border ${isGlass ? 'bg-white/5 border-white/10 text-white' : 'bg-white border-gray-100 text-gray-800'}`}>
+                <div className={`p-5 rounded-[30px] shadow-sm border ${isGlass ? 'bg-white/5 border-white/10 text-white' : 'bg-white border-gray-100 text-gray-800'}`}>
                     <h3 className={`text-sm font-bold mb-4 ${isGlass ? 'text-white' : 'text-gray-800'}`}>Estructura de Gasto</h3>
                     <div className="space-y-4">
                         {stackedData.map((cat, idx) => (
@@ -268,7 +284,7 @@ export default function Dashboard({ transactions = [], cards = [], services = []
                     </div>
                 </div>
 
-                <button onClick={() => setViewMode('cards_detail')} className={`w-full py-3 border font-bold rounded-xl shadow-sm transition-colors flex items-center justify-center gap-2 ${isGlass ? 'bg-white/10 border-white/20 text-white hover:bg-white/20' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
+                <button onClick={() => setViewMode('cards_detail')} className={`w-full py-3 border font-bold rounded-2xl shadow-sm transition-colors flex items-center justify-center gap-2 ${isGlass ? 'bg-white/10 border-white/20 text-white hover:bg-white/20' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
                     Analizar Tarjetas en Detalle
                 </button>
             </div>
@@ -281,7 +297,7 @@ export default function Dashboard({ transactions = [], cards = [], services = []
             <button onClick={() => setViewMode('general')} className={`flex items-center gap-1 text-xs font-bold mb-2 ${isGlass ? 'text-white/50 hover:text-white' : 'text-gray-500 hover:text-gray-800'}`}>← Volver al Resumen Operativo</button>
 
             {/* HEADER TARJETA */}
-            <div className={`p-6 rounded-2xl text-white shadow-lg relative overflow-hidden transition-all duration-500 ${isGlass ? 'bg-white/5 border border-white/10 backdrop-blur-xl' : 'bg-[#0f172a]'}`}>
+            <div className={`p-6 rounded-[30px] text-white shadow-lg relative overflow-hidden transition-all duration-500 ${isGlass ? 'bg-white/5 border border-white/10 backdrop-blur-xl' : 'bg-[#0f172a]'}`}>
                 <div className="absolute -right-6 -top-6 w-32 h-32 bg-indigo-500 rounded-full blur-[60px] opacity-30"></div>
                 <div className="absolute top-4 right-4 flex bg-black/20 rounded-lg p-1 backdrop-blur-md z-20">
                     <button onClick={() => setAnalysisMode('monthly')} className={`text-[10px] font-bold px-3 py-1.5 rounded-md transition-all ${analysisMode === 'monthly' ? 'bg-white text-indigo-900 shadow' : 'text-gray-400 hover:text-white'}`}>Cuota Mes</button>
@@ -295,7 +311,7 @@ export default function Dashboard({ transactions = [], cards = [], services = []
             </div>
 
             {/* RANKING */}
-            <div className={`p-5 rounded-2xl shadow-sm border ${isGlass ? 'bg-white/5 border-white/10 text-white' : 'bg-white border-gray-100'}`}>
+            <div className={`p-5 rounded-[30px] shadow-sm border ${isGlass ? 'bg-white/5 border-white/10 text-white' : 'bg-white border-gray-100'}`}>
                 <div className="flex justify-between items-center mb-4"><h3 className={`font-bold text-sm ${isGlass ? 'text-white' : 'text-gray-800'}`}>Ranking de Deuda</h3>{selectedCard !== 'all' && <button onClick={() => setSelectedCard('all')} className="text-[10px] bg-gray-100 px-2 py-1 rounded text-gray-500 font-bold hover:bg-gray-200">Ver Todas</button>}</div>
                 <div className="space-y-3">
                     {spendingByCard.map((card) => (
@@ -309,18 +325,22 @@ export default function Dashboard({ transactions = [], cards = [], services = []
 
             {/* VISTAS DETALLE */}
             <div>
-                <div className={`flex p-1 rounded-xl mb-4 ${isGlass ? 'bg-white/10' : 'bg-gray-200'}`}>
-                    <button onClick={() => setDetailViewType('list')} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${detailViewType === 'list' ? 'bg-white shadow text-indigo-600' : 'text-gray-500'}`}>📄 Lista</button>
-                    <button onClick={() => setDetailViewType('blocks')} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${detailViewType === 'blocks' ? 'bg-white shadow text-indigo-600' : 'text-gray-500'}`}>🧱 Bloques</button>
-                    <button onClick={() => setDetailViewType('projection')} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${detailViewType === 'projection' ? 'bg-white shadow text-indigo-600' : 'text-gray-500'}`}>🔮 Futuro</button>
+                <div className={`flex p-1 rounded-2xl mb-4 ${isGlass ? 'bg-white/10' : 'bg-gray-200'}`}>
+                    <button onClick={() => setDetailViewType('list')} className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all ${detailViewType === 'list' ? 'bg-white shadow text-indigo-600' : 'text-gray-500'}`}>📄 Lista</button>
+                    <button onClick={() => setDetailViewType('blocks')} className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all ${detailViewType === 'blocks' ? 'bg-white shadow text-indigo-600' : 'text-gray-500'}`}>🧱 Bloques</button>
+                    <button onClick={() => setDetailViewType('projection')} className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all ${detailViewType === 'projection' ? 'bg-white shadow text-indigo-600' : 'text-gray-500'}`}>🔮 Futuro</button>
                 </div>
 
                 {detailViewType === 'list' && (
-                    <div className={`rounded-2xl shadow-sm border overflow-hidden divide-y ${isGlass ? 'bg-white/5 border-white/10 divide-white/10' : 'bg-white border-gray-100 divide-gray-50'}`}>
+                    <div className={`rounded-[30px] shadow-sm border overflow-hidden divide-y ${isGlass ? 'bg-white/5 border-white/10 divide-white/10' : 'bg-white border-gray-100 divide-gray-50'}`}>
                         {filteredDetailList.map((item) => (
                             <div key={item.id} className={`p-4 flex justify-between items-start group ${isGlass ? 'hover:bg-white/10' : 'hover:bg-gray-50'}`}>
                                 <div className="flex-1 pr-2">
-                                    <p className={`text-sm font-bold line-clamp-1 ${isGlass ? 'text-white' : 'text-gray-800'}`}>{item.description}</p>
+                                    <div className="flex justify-between items-start">
+                                        <p className={`text-sm font-bold line-clamp-1 ${isGlass ? 'text-white' : 'text-gray-800'}`}>{item.description}</p>
+                                        {/* [HOUSEHOLD] Avatar */}
+                                        {item.ownerId && getAvatar(item.ownerId)}
+                                    </div>
                                     <div className="flex items-center gap-2 mt-1 flex-wrap"><span className="text-[9px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded uppercase font-bold">{getCardName(item.cardId)}</span>{item.installments > 1 && <span className="text-[9px] bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded font-bold border border-indigo-100">{item.installments} pagos</span>}</div>
                                 </div>
                                 <div className="text-right whitespace-nowrap"><p className={`font-mono font-bold text-sm ${isGlass ? 'text-emerald-300' : 'text-gray-900'}`}>{showMoney(analysisMode === 'monthly' ? item.monthlyInstallment : (item.finalAmount || item.amount))}</p><button onClick={() => handleDelete(item.id)} className="text-[10px] text-red-300 hover:text-red-500 mt-1 opacity-0 group-hover:opacity-100 transition-opacity block w-full text-right">Eliminar</button></div>
@@ -331,7 +351,7 @@ export default function Dashboard({ transactions = [], cards = [], services = []
                 )}
 
                 {detailViewType === 'blocks' && (
-                    <div className={`p-4 rounded-2xl shadow-sm border flex flex-wrap gap-1 min-h-[300px] content-start ${isGlass ? 'bg-white/5 border-white/10' : 'bg-white border-gray-100'}`}>
+                    <div className={`p-4 rounded-[30px] shadow-sm border flex flex-wrap gap-1 min-h-[300px] content-start ${isGlass ? 'bg-white/5 border-white/10' : 'bg-white border-gray-100'}`}>
                         {filteredDetailList.map((item, index) => {
                             const val = analysisMode === 'monthly' ? item.monthlyInstallment : (item.finalAmount || item.amount);
                             const percent = (val / detailHeaderTotal) * 100;
@@ -342,7 +362,7 @@ export default function Dashboard({ transactions = [], cards = [], services = []
                 )}
 
                 {detailViewType === 'projection' && (
-                    <div className={`p-6 rounded-2xl shadow-sm border relative ${isGlass ? 'bg-white/5 border-white/10' : 'bg-white border-gray-100'}`}><div className={`absolute left-8 top-6 bottom-6 w-0.5 ${isGlass ? 'bg-white/10' : 'bg-gray-100'}`}></div><div className="space-y-6 relative">{projectionData.map((month, index) => (<div key={index} className="flex items-center gap-6 relative group"><div className={`absolute left-[7px] w-3 h-3 bg-indigo-300 rounded-full z-10`}></div><div className={`pl-8 flex-1 flex justify-between items-center p-3 rounded-xl transition-colors ${isGlass ? 'hover:bg-white/10' : 'hover:bg-gray-50'}`}><div><p className={`font-bold capitalize text-sm ${isGlass ? 'text-white' : 'text-gray-800'}`}>{month.label}</p></div><p className={`font-mono font-bold ${isGlass ? 'text-white/70' : 'text-gray-600'}`}>{showMoney(month.amount)}</p></div></div>))}</div></div>
+                    <div className={`p-6 rounded-[30px] shadow-sm border relative ${isGlass ? 'bg-white/5 border-white/10' : 'bg-white border-gray-100'}`}><div className={`absolute left-8 top-6 bottom-6 w-0.5 ${isGlass ? 'bg-white/10' : 'bg-gray-100'}`}></div><div className="space-y-6 relative">{projectionData.map((month, index) => (<div key={index} className="flex items-center gap-6 relative group"><div className={`absolute left-[7px] w-3 h-3 bg-indigo-300 rounded-full z-10`}></div><div className={`pl-8 flex-1 flex justify-between items-center p-3 rounded-2xl transition-colors ${isGlass ? 'hover:bg-white/10' : 'hover:bg-gray-50'}`}><div><p className={`font-bold capitalize text-sm ${isGlass ? 'text-white' : 'text-gray-800'}`}>{month.label}</p></div><p className={`font-mono font-bold ${isGlass ? 'text-white/70' : 'text-gray-600'}`}>{showMoney(month.amount)}</p></div></div>))}</div></div>
                 )}
             </div>
         </div>

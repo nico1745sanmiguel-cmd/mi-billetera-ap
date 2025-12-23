@@ -3,7 +3,7 @@ import { db, auth } from '../../firebase';
 import { collection, addDoc, deleteDoc, doc, updateDoc, setDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { formatMoney } from '../../utils';
 
-export default function ServicesManager({ services = [], cards = [], transactions = [], currentDate, privacyMode, isGlass }) {
+export default function ServicesManager({ services = [], cards = [], transactions = [], currentDate, privacyMode, isGlass, householdId }) {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingService, setEditingService] = useState(null);
 
@@ -157,7 +157,13 @@ export default function ServicesManager({ services = [], cards = [], transaction
                     amount: Number(form.amount),
                     day: Number(form.day) || 10,
                     frequency: form.frequency,
-                    userId: auth.currentUser.uid
+                    userId: auth.currentUser.uid,
+                    // Household Data
+                    ...(householdId && {
+                        householdId: householdId,
+                        ownerId: auth.currentUser.uid,
+                        isShared: true // Services are shared by default in household
+                    })
                 };
                 if (editingService) {
                     await updateDoc(doc(db, 'services', editingService.id), data);
@@ -196,11 +202,11 @@ export default function ServicesManager({ services = [], cards = [], transaction
         <div className="space-y-6 animate-fade-in pb-24">
             <div className="flex justify-between items-center px-2">
                 <div><h2 className={`text-xl font-bold ${isGlass ? 'text-white' : 'text-gray-800'}`}>Calendario</h2><p className={`text-xs font-bold uppercase ${isGlass ? 'text-indigo-300' : 'text-indigo-600'}`}>{currentDate.toLocaleString('es-AR', { month: 'long', year: 'numeric' })}</p></div>
-                <button onClick={() => openModal()} className={`text-xs px-4 py-2 rounded-lg font-bold shadow-md flex items-center gap-1 active:scale-95 transition-transform ${isGlass ? 'bg-white text-indigo-900 hover:bg-indigo-50' : 'bg-gray-900 text-white hover:bg-black'}`}><span>+</span> Nuevo Fijo</button>
+                <button onClick={() => openModal()} className={`text-xs px-4 py-2 rounded-2xl font-bold shadow-md flex items-center gap-1 active:scale-95 transition-transform ${isGlass ? 'bg-white text-indigo-900 hover:bg-indigo-50' : 'bg-gray-900 text-white hover:bg-black'}`}><span>+</span> Nuevo Fijo</button>
             </div>
 
             {/* GRÁFICO MAREA */}
-            <div className={`p-6 rounded-2xl text-white shadow-lg border relative overflow-hidden ${isGlass ? 'bg-white/5 border-white/10' : 'bg-[#0f172a] border-gray-800'}`}>
+            <div className={`p-6 rounded-[30px] text-white shadow-lg border relative overflow-hidden ${isGlass ? 'bg-white/5 border-white/10' : 'bg-[#0f172a] border-gray-800'}`}>
                 <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500 rounded-full blur-[60px] opacity-10 pointer-events-none"></div>
                 <div className="flex justify-between items-center mb-8 relative z-10">
                     <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">Marea Semanal</p>
@@ -224,17 +230,18 @@ export default function ServicesManager({ services = [], cards = [], transaction
                     const status = getStatusLabel(item.day, item.isPaid);
 
                     return (
-                        <div key={item.id} className={`p-4 rounded-xl border transition-all duration-300 group ${isGlass
-                                ? (item.isPaid ? 'bg-green-900/10 border-green-500/20 opacity-60' : 'bg-white/5 border-white/10 hover:bg-white/10')
-                                : (item.isPaid ? 'border-green-200 bg-green-50/30 opacity-75' : 'bg-white border-gray-100 hover:border-blue-300 shadow-sm hover:shadow-md')
+
+                        <div key={item.id} className={`p-4 rounded-3xl border transition-all duration-300 group ${isGlass
+                            ? (item.isPaid ? 'bg-green-900/10 border-green-500/20 opacity-60' : 'bg-white/5 border-white/10 hover:bg-white/10')
+                            : (item.isPaid ? 'border-green-200 bg-green-50/30 opacity-75' : 'bg-white border-gray-100 hover:border-blue-300 shadow-sm hover:shadow-md')
                             }`}>
                             <div className="flex justify-between items-center">
                                 <div className="flex items-center gap-4">
 
                                     {/* CAJA DEL DÍA */}
-                                    <div className={`w-12 h-12 rounded-xl flex flex-col items-center justify-center text-xs font-bold transition-colors border ${item.isPaid
-                                            ? (isGlass ? 'bg-green-500/20 text-green-300 border-green-500/30' : 'bg-green-100 text-green-700 border-green-200')
-                                            : (isGlass ? 'bg-white/10 text-white border-white/5' : 'bg-gray-50 text-gray-600 border-gray-100')
+                                    <div className={`w-12 h-12 rounded-2xl flex flex-col items-center justify-center text-xs font-bold transition-colors border ${item.isPaid
+                                        ? (isGlass ? 'bg-green-500/20 text-green-300 border-green-500/30' : 'bg-green-100 text-green-700 border-green-200')
+                                        : (isGlass ? 'bg-white/10 text-white border-white/5' : 'bg-gray-50 text-gray-600 border-gray-100')
                                         }`}>
                                         <span className="text-lg leading-none">{item.day}</span>
                                         <span className="text-[8px] uppercase opacity-70">Vence</span>
@@ -243,8 +250,8 @@ export default function ServicesManager({ services = [], cards = [], transaction
                                     <div>
                                         <div className="flex items-center gap-2 flex-wrap">
                                             <p className={`font-bold text-sm transition-all ${item.isPaid
-                                                    ? (isGlass ? 'text-green-300 line-through decoration-green-500' : 'text-green-800 line-through decoration-green-500')
-                                                    : (isGlass ? 'text-white' : 'text-gray-800')
+                                                ? (isGlass ? 'text-green-300 line-through decoration-green-500' : 'text-green-800 line-through decoration-green-500')
+                                                : (isGlass ? 'text-white' : 'text-gray-800')
                                                 }`}>
                                                 {item.name}
                                             </p>
@@ -278,13 +285,13 @@ export default function ServicesManager({ services = [], cards = [], transaction
                         </div>
                     );
                 })}
-                {allItems.length === 0 && <div className={`flex flex-col items-center justify-center p-10 text-center border-2 border-dashed rounded-2xl ${isGlass ? 'border-white/10 bg-white/5' : 'border-gray-200 bg-gray-50'}`}><div className="text-4xl mb-2">📅</div><p className={`text-sm font-medium ${isGlass ? 'text-white/40' : 'text-gray-400'}`}>Nada pendiente para {currentDate.toLocaleString('es-AR', { month: 'long' })}.</p></div>}
+                {allItems.length === 0 && <div className={`flex flex-col items-center justify-center p-10 text-center border-2 border-dashed rounded-[30px] ${isGlass ? 'border-white/10 bg-white/5' : 'border-gray-200 bg-gray-50'}`}><div className="text-4xl mb-2">📅</div><p className={`text-sm font-medium ${isGlass ? 'text-white/40' : 'text-gray-400'}`}>Nada pendiente para {currentDate.toLocaleString('es-AR', { month: 'long' })}.</p></div>}
             </div>
 
             {/* MODAL */}
             {isModalOpen && (
                 <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[60] flex items-end sm:items-center justify-center animate-fade-in">
-                    <div className={`w-full max-w-sm rounded-t-3xl sm:rounded-2xl p-6 shadow-2xl animate-slide-up max-h-[90vh] overflow-y-auto ${isGlass ? 'bg-[#1a1b4b] border border-white/10' : 'bg-white'}`}>
+                    <div className={`w-full max-w-sm rounded-t-[30px] sm:rounded-[30px] p-6 shadow-2xl animate-slide-up max-h-[90vh] overflow-y-auto ${isGlass ? 'bg-[#1a1b4b] border border-white/10' : 'bg-white'}`}>
                         <div className={`flex justify-between items-center mb-6 border-b pb-4 sticky top-0 z-10 ${isGlass ? 'border-white/10 bg-[#1a1b4b]' : 'border-gray-100 bg-white'}`}>
                             <h3 className={`text-lg font-bold ${isGlass ? 'text-white' : 'text-gray-800'}`}>{editingService?.type === 'card' ? `Ajustar Resumen ${editingService.bank}` : (editingService ? 'Editar' : 'Nuevo Fijo')}</h3>
                             <button onClick={() => setIsModalOpen(false)} className={`p-2 rounded-full transition-colors ${isGlass ? 'text-white/50 hover:bg-white/10' : 'text-gray-400 hover:text-gray-600 bg-gray-50 hover:bg-gray-100'}`}>✕</button>
@@ -292,17 +299,17 @@ export default function ServicesManager({ services = [], cards = [], transaction
 
                         <form onSubmit={handleSave} className="space-y-5 pb-6">
                             {editingService?.type === 'card' ? (
-                                <div className="bg-blue-900/30 p-4 rounded-xl border border-blue-500/30">
+                                <div className="bg-blue-900/30 p-4 rounded-2xl border border-blue-500/30">
                                     <p className="text-xs text-blue-300 mb-2 font-medium">Ingresa el monto exacto de tu resumen final. Esto reemplazará la suma automática.</p>
                                     <label className="block text-xs font-bold text-blue-200 uppercase mb-1">Monto Final ($)</label>
                                     <input type="tel" className={`w-full p-4 border rounded-xl outline-none font-bold text-center text-xl focus:ring-4 ${isGlass ? 'bg-black/20 border-white/10 text-white focus:ring-blue-500/20' : 'bg-white border-blue-200 text-gray-800 focus:ring-blue-100'}`} placeholder="0" value={form.amount} onChange={e => setForm({ ...form, amount: e.target.value.replace(/\D/g, '') })} autoFocus />
                                 </div>
                             ) : (
                                 <>
-                                    <div><label className={`block text-xs font-bold uppercase mb-1 ${isGlass ? 'text-white/40' : 'text-gray-400'}`}>Nombre</label><input className={`w-full p-4 border rounded-xl outline-none font-bold ${isGlass ? 'bg-black/20 border-white/10 text-white' : 'bg-gray-50 border-gray-200 text-gray-800'}`} placeholder="Ej: Internet..." value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} autoFocus /></div>
+                                    <div><label className={`block text-xs font-bold uppercase mb-1 ${isGlass ? 'text-white/40' : 'text-gray-400'}`}>Nombre</label><input className={`w-full p-4 border rounded-2xl outline-none font-bold ${isGlass ? 'bg-black/20 border-white/10 text-white' : 'bg-gray-50 border-gray-200 text-gray-800'}`} placeholder="Ej: Internet..." value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} autoFocus /></div>
                                     <div className="grid grid-cols-2 gap-4">
-                                        <div><label className={`block text-xs font-bold uppercase mb-1 ${isGlass ? 'text-white/40' : 'text-gray-400'}`}>Monto ($)</label><input type="tel" className={`w-full p-4 border rounded-xl outline-none font-bold text-center ${isGlass ? 'bg-black/20 border-white/10 text-white' : 'bg-gray-50 border-gray-200 text-gray-800'}`} placeholder="0" value={form.amount} onChange={e => setForm({ ...form, amount: e.target.value.replace(/\D/g, '') })} /></div>
-                                        <div><label className={`block text-xs font-bold uppercase mb-1 ${isGlass ? 'text-white/40' : 'text-gray-400'}`}>Día Venc.</label><input type="number" max="31" className={`w-full p-4 border rounded-xl outline-none font-bold text-center ${isGlass ? 'bg-black/20 border-white/10 text-white' : 'bg-gray-50 border-gray-200 text-gray-800'}`} placeholder="10" value={form.day} onChange={e => setForm({ ...form, day: e.target.value })} /></div>
+                                        <div><label className={`block text-xs font-bold uppercase mb-1 ${isGlass ? 'text-white/40' : 'text-gray-400'}`}>Monto ($)</label><input type="tel" className={`w-full p-4 border rounded-2xl outline-none font-bold text-center ${isGlass ? 'bg-black/20 border-white/10 text-white' : 'bg-gray-50 border-gray-200 text-gray-800'}`} placeholder="0" value={form.amount} onChange={e => setForm({ ...form, amount: e.target.value.replace(/\D/g, '') })} /></div>
+                                        <div><label className={`block text-xs font-bold uppercase mb-1 ${isGlass ? 'text-white/40' : 'text-gray-400'}`}>Día Venc.</label><input type="number" max="31" className={`w-full p-4 border rounded-2xl outline-none font-bold text-center ${isGlass ? 'bg-black/20 border-white/10 text-white' : 'bg-gray-50 border-gray-200 text-gray-800'}`} placeholder="10" value={form.day} onChange={e => setForm({ ...form, day: e.target.value })} /></div>
                                     </div>
                                     <div>
                                         <label className={`block text-xs font-bold uppercase mb-1 ${isGlass ? 'text-white/40' : 'text-gray-400'}`}>Frecuencia</label>
@@ -317,11 +324,11 @@ export default function ServicesManager({ services = [], cards = [], transaction
 
                             <div className="pt-4 flex gap-3">
                                 {editingService && (
-                                    <button type="button" onClick={handleDelete} className="p-4 bg-red-500/10 text-red-500 rounded-xl hover:bg-red-500/20 transition-colors border border-red-500/20">
+                                    <button type="button" onClick={handleDelete} className="p-4 bg-red-500/10 text-red-500 rounded-2xl hover:bg-red-500/20 transition-colors border border-red-500/20">
                                         {editingService.type === 'card' ? 'Volver a Automático' : <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>}
                                     </button>
                                 )}
-                                <button type="submit" className={`flex-1 font-bold rounded-xl py-4 shadow-lg active:scale-95 transition-transform text-lg ${isGlass ? 'bg-indigo-600 text-white hover:bg-indigo-500' : 'bg-gray-900 text-white hover:bg-black'}`}>{editingService ? (editingService.type === 'card' ? 'Confirmar Monto' : 'Actualizar') : 'Guardar'}</button>
+                                <button type="submit" className={`flex-1 font-bold rounded-2xl py-4 shadow-lg active:scale-95 transition-transform text-lg ${isGlass ? 'bg-indigo-600 text-white hover:bg-indigo-500' : 'bg-gray-900 text-white hover:bg-black'}`}>{editingService ? (editingService.type === 'card' ? 'Confirmar Monto' : 'Actualizar') : 'Guardar'}</button>
                             </div>
                         </form>
                     </div>

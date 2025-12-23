@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { auth, googleProvider } from '../firebase';
-// CAMBIO IMPORTANTE: Usamos signInWithPopup (más estable para debug)
 import { signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
+import GlassCard from './GlassCard';
 
 export default function Login() {
   const [isRegistering, setIsRegistering] = useState(false);
@@ -13,19 +13,16 @@ export default function Login() {
   const handleGoogleLogin = async () => {
     try {
       setError('');
-      console.log("Intentando abrir Popup de Google...");
-      // Esto abrirá una ventana flotante (o pestaña nueva en celular)
       await signInWithPopup(auth, googleProvider);
-      // Si funciona, App.jsx detectará el usuario automáticamente y cambiará de pantalla.
+      // App.jsx detectará el cambio de usuario automáticamente
     } catch (err) {
       console.error("Error Google:", err);
-      // Aquí atrapamos el error exacto en vivo
       if (err.code === 'auth/popup-closed-by-user') {
-        setError("Cerraste la ventana de Google antes de terminar.");
+        setError("Inicio de sesión cancelado.");
       } else if (err.code === 'auth/popup-blocked') {
-        setError("El navegador bloqueó la ventana emergente. Permítela e intenta de nuevo.");
+        setError("El navegador bloqueó la ventana emergente.");
       } else {
-        setError(`Error Google: ${err.message}`);
+        setError(`Error: ${err.message}`);
       }
     }
   };
@@ -43,68 +40,99 @@ export default function Login() {
     } catch (err) {
       console.error(err);
       if (err.code === 'auth/invalid-credential') setError("Datos incorrectos");
-      else if (err.code === 'auth/email-already-in-use') setError("Este email ya está registrado");
-      else if (err.code === 'auth/weak-password') setError("La contraseña es muy corta (mín 6)");
+      else if (err.code === 'auth/email-already-in-use') setError("Este email ya está en uso");
+      else if (err.code === 'auth/weak-password') setError("Contraseña muy débil (mín 6 car.)");
       else setError("Error: " + err.message);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#f3f4f6] p-4">
-      <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md animate-fade-in">
-        
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-gradient-to-br from-[#0f172a] via-[#1e1b4b] to-[#312e81]">
+
+      {/* Fondo Decorativo (Blobs) */}
+      <div className="absolute top-[-10%] left-[-10%] w-[50vh] h-[50vh] bg-purple-600/30 rounded-full blur-[100px]" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[50vh] h-[50vh] bg-blue-600/20 rounded-full blur-[100px]" />
+
+      <GlassCard className="w-full max-w-md p-8 animate-fade-in border-white/10 shadow-2xl shadow-black/40">
+
         {/* Encabezado */}
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <span className="text-3xl">💳</span>
+        <div className="text-center mb-10">
+          <div className="w-20 h-20 bg-gradient-to-tr from-white/10 to-white/5 rounded-full flex items-center justify-center mx-auto mb-5 border border-white/20 shadow-inner backdrop-blur-md">
+            <span className="text-4xl filter drop-shadow no-select">💳</span>
           </div>
-          <h1 className="text-2xl font-bold text-gray-800">Mi Billetera</h1>
-          <p className="text-gray-500 text-sm mt-1">Tu control financiero personal</p>
+          <h1 className="text-3xl font-bold text-white tracking-tight drop-shadow-lg">Mi Billetera</h1>
+          <p className="text-white/60 text-sm mt-2 font-medium tracking-wide">Tu control financiero personal</p>
         </div>
 
         {/* --- MOSTRAR ERROR SI EXISTE --- */}
         {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-xs font-bold text-center break-words">
-            {error}
+          <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-xl text-red-200 text-xs font-bold text-center break-words backdrop-blur-md animate-pulse">
+            ⚠️ {error}
           </div>
         )}
 
         {/* Botón Google */}
-        <button 
+        <button
           onClick={handleGoogleLogin}
-          className="w-full flex items-center justify-center gap-3 bg-white border border-gray-300 p-3 rounded-xl hover:bg-gray-50 transition-colors text-gray-700 font-medium mb-6 shadow-sm active:scale-95"
+          className="w-full flex items-center justify-center gap-3 bg-white text-gray-800 p-3.5 rounded-xl hover:bg-gray-100 transition-all font-bold mb-8 shadow-lg active:scale-95 group"
         >
-          <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="w-5 h-5" alt="Google" />
+          <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="w-5 h-5 group-hover:scale-110 transition-transform" alt="Google" />
           Continuar con Google
         </button>
 
-        <div className="relative mb-6">
-          <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-gray-200"></div></div>
-          <div className="relative flex justify-center text-sm"><span className="px-2 bg-white text-gray-500">O con email</span></div>
+        <div className="relative mb-8">
+          <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/10"></div></div>
+          <div className="relative flex justify-center text-xs uppercase tracking-widest"><span className="px-3 bg-transparent text-white/40 font-bold backdrop-blur-sm">O usar email</span></div>
         </div>
 
         {/* Formulario Email */}
-        <form onSubmit={handleEmailAuth} className="space-y-4">
-          <div>
-            <label className="block text-xs font-bold text-gray-500 mb-1">Email</label>
-            <input type="email" required value={email} onChange={e => setEmail(e.target.value)} className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" placeholder="nombre@ejemplo.com" />
+        <form onSubmit={handleEmailAuth} className="space-y-5">
+          <div className="group">
+            <label className="block text-xs font-bold text-white/50 mb-1.5 ml-1 uppercase tracking-wider group-focus-within:text-white/80 transition-colors">Email</label>
+            <input
+              type="email"
+              required
+              value={email}
+              autoFocus
+              onChange={e => setEmail(e.target.value)}
+              className="w-full p-3.5 bg-black/20 border border-white/10 rounded-xl focus:border-white/30 focus:bg-black/30 outline-none text-white placeholder-white/20 transition-all"
+              placeholder="nombre@ejemplo.com"
+            />
           </div>
-          <div>
-            <label className="block text-xs font-bold text-gray-500 mb-1">Contraseña</label>
-            <input type="password" required value={password} onChange={e => setPassword(e.target.value)} className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" placeholder="••••••••" />
+          <div className="group">
+            <label className="block text-xs font-bold text-white/50 mb-1.5 ml-1 uppercase tracking-wider group-focus-within:text-white/80 transition-colors">Contraseña</label>
+            <input
+              type="password"
+              required
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              className="w-full p-3.5 bg-black/20 border border-white/10 rounded-xl focus:border-white/30 focus:bg-black/30 outline-none text-white placeholder-white/20 transition-all"
+              placeholder="••••••••"
+            />
           </div>
 
-          <button type="submit" className="w-full py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-transform active:scale-95 shadow-lg shadow-blue-200">
-            {isRegistering ? 'Crear Cuenta' : 'Iniciar Sesión'}
+          <button
+            type="submit"
+            className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-xl hover:from-blue-500 hover:to-indigo-500 transition-all active:scale-95 shadow-lg shadow-blue-900/40 mt-2 border border-blue-400/20"
+          >
+            {isRegistering ? 'Crear Cuenta Gratis' : 'Iniciar Sesión'}
           </button>
         </form>
 
-        <div className="mt-6 text-center">
-          <button onClick={() => setIsRegistering(!isRegistering)} className="text-sm text-blue-600 font-medium hover:underline">
-            {isRegistering ? '¿Ya tienes cuenta? Inicia sesión' : '¿No tienes cuenta? Regístrate gratis'}
+        <div className="mt-8 text-center">
+          <button
+            onClick={() => { setIsRegistering(!isRegistering); setError(''); }}
+            className="text-sm text-white/60 font-medium hover:text-white transition-colors underline decoration-transparent hover:decoration-white/50 underline-offset-4"
+          >
+            {isRegistering ? '¿Ya tienes cuenta? Inicia sesión' : '¿No tienes cuenta? Regístrate'}
           </button>
         </div>
 
+      </GlassCard>
+
+      {/* Footer */}
+      <div className="absolute bottom-4 left-0 right-0 text-center text-[10px] text-white/20">
+        &copy; {new Date().getFullYear()} Mi Billetera App
       </div>
     </div>
   );

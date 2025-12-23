@@ -3,7 +3,7 @@ import { db, auth } from '../../firebase';
 import { collection, addDoc, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { formatMoney } from '../../utils';
 
-export default function SuperList({ items = [], currentDate, isGlass }) {
+export default function SuperList({ items = [], currentDate, isGlass, householdId }) {
     const [newItem, setNewItem] = useState('');
 
     // ESTADO PARA ENFOCAR EL NUEVO ÍTEM AUTOMÁTICAMENTE
@@ -129,6 +129,8 @@ export default function SuperList({ items = [], currentDate, isGlass }) {
     const formatInputCurrency = (val) => val ? '$ ' + Number(val).toLocaleString('es-AR') : '';
     const parseCurrencyInput = (val) => val.replace(/\D/g, '');
 
+
+
     // --- HANDLERS ---
     const handleAdd = async (e) => {
         e.preventDefault();
@@ -142,7 +144,13 @@ export default function SuperList({ items = [], currentDate, isGlass }) {
                 checked: false,
                 userId: auth.currentUser.uid,
                 month: currentMonthKey,
-                createdAt: new Date().toISOString()
+                createdAt: new Date().toISOString(),
+                // Household logic
+                ...(householdId && {
+                    householdId: householdId,
+                    ownerId: auth.currentUser.uid,
+                    isShared: true // Supermarket items are shared by default
+                })
             });
 
             setLastAddedId(docRef.id); // Guardamos ID para el auto-focus
@@ -284,47 +292,44 @@ export default function SuperList({ items = [], currentDate, isGlass }) {
                             <div
                                 key={item.id}
                                 ref={el => itemsRefs.current[item.id] = el}
-                                className={`flex flex-col p-3 rounded-xl border transition-all duration-500 ${item.checked
-                                        ? (isGlass ? 'bg-purple-900/20 border-purple-500/20 opacity-60 order-last' : 'bg-purple-50 border-purple-100 opacity-60 order-last')
-                                        : (isGlass ? 'bg-white/5 border-white/10 hover:bg-white/10' : 'bg-white border-gray-100 shadow-sm')
+                                className={`flex flex-col p-3 rounded-3xl border transition-all duration-500 ${item.checked
+                                    ? (isGlass ? 'bg-purple-900/20 border-purple-500/20 opacity-60 order-last' : 'bg-purple-50 border-purple-100 opacity-60 order-last')
+                                    : (isGlass ? 'bg-white/5 border-white/10 hover:bg-white/10' : 'bg-white border-gray-100 shadow-sm')
                                     }`}
                             >
                                 {/* FILA 1: Check, Nombre, Subtotal */}
                                 <div className="flex items-center gap-3 mb-3">
-                                    <div onClick={() => handleToggle(item)} className={`w-6 h-6 rounded-lg border-2 flex-shrink-0 flex items-center justify-center cursor-pointer transition-colors ${item.checked ? 'bg-purple-500 border-purple-500' : (isGlass ? 'border-white/20 bg-transparent' : 'border-gray-300 bg-white')}`}>
+                                    <div onClick={() => handleToggle(item)} className={`w-6 h-6 rounded-xl border-2 flex-shrink-0 flex items-center justify-center cursor-pointer transition-colors ${item.checked ? 'bg-purple-500 border-purple-500' : (isGlass ? 'border-white/20 bg-transparent' : 'border-gray-300 bg-white')}`}>
                                         {item.checked && <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <div className="flex justify-between items-start">
-                                            <p className={`font-bold text-sm truncate ${item.checked ? 'line-through decoration-purple-400' : ''} ${isGlass ? 'text-white' : 'text-gray-800'}`}>{item.name}</p>
-                                            {subtotal > 0 && <span className={`text-[10px] px-1.5 py-0.5 rounded font-mono font-bold ${isGlass ? 'bg-white/10 text-white/70' : 'bg-gray-100 text-gray-500'}`}>Sub: {formatMoney(subtotal)}</span>}
-                                        </div>
-
-                                        {/* Comparación de Historial */}
-                                        {history && item.price > 0 && (
-                                            <p className="text-[10px] flex items-center gap-1">
-                                                <span className={`${isGlass ? 'text-white/40' : 'text-gray-400'}`}>Antes: {formatMoney(history.lastPrice)}</span>
-                                                {history.diff !== 0 && (
-                                                    <span className={`font-bold ${history.diff > 0 ? 'text-red-400' : 'text-green-400'}`}>
-                                                        ({history.diff > 0 ? '+' : ''}{formatMoney(history.diff)})
-                                                    </span>
-                                                )}
-                                            </p>
-                                        )}
+                                        <p className={`font-bold text-sm truncate ${item.checked ? 'line-through decoration-purple-400' : ''} ${isGlass ? 'text-white' : 'text-gray-800'}`}>{item.name}</p>
+                                        {subtotal > 0 && <span className={`text-[10px] px-1.5 py-0.5 rounded font-mono font-bold ${isGlass ? 'bg-white/10 text-white/70' : 'bg-gray-100 text-gray-500'}`}>Sub: {formatMoney(subtotal)}</span>}
                                     </div>
-                                    <button onClick={() => handleDelete(item.id)} className={`p-1 ${isGlass ? 'text-white/20 hover:text-red-400' : 'text-gray-300 hover:text-red-500'}`}>
-                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                                    </button>
+
+                                    {/* Comparación de Historial */}
+                                    {history && item.price > 0 && (
+                                        <p className="text-[10px] flex items-center gap-1">
+                                            <span className={`${isGlass ? 'text-white/40' : 'text-gray-400'}`}>Antes: {formatMoney(history.lastPrice)}</span>
+                                            {history.diff !== 0 && (
+                                                <span className={`font-bold ${history.diff > 0 ? 'text-red-400' : 'text-green-400'}`}>
+                                                    ({history.diff > 0 ? '+' : ''}{formatMoney(history.diff)})
+                                                </span>
+                                            )}
+                                        </p>
+                                    )}
                                 </div>
+                                <button onClick={() => handleDelete(item.id)} className={`p-1 ${isGlass ? 'text-white/20 hover:text-red-400' : 'text-gray-300 hover:text-red-500'}`}>
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                </button>
 
-                                {/* FILA 2: Controles de Cantidad y Precio */}
                                 <div className="flex gap-3 pl-9">
-                                    <div className={`flex items-center rounded-lg border h-10 ${isGlass ? 'bg-white/5 border-white/10' : 'bg-gray-50 border-gray-200'}`}>
-                                        <button onClick={() => handleUpdateQuantity(item, -1)} className={`w-8 h-full flex items-center justify-center rounded-l-lg transition-colors text-lg font-bold ${isGlass ? 'text-white/50 hover:bg-white/10' : 'text-gray-500 hover:bg-gray-200'}`}>-</button>
+                                    <div className={`flex items-center rounded-2xl border h-10 ${isGlass ? 'bg-white/5 border-white/10' : 'bg-gray-50 border-gray-200'}`}>
+                                        <button onClick={() => handleUpdateQuantity(item, -1)} className={`w-8 h-full flex items-center justify-center rounded-l-2xl transition-colors text-lg font-bold ${isGlass ? 'text-white/50 hover:bg-white/10' : 'text-gray-500 hover:bg-gray-200'}`}>-</button>
                                         <span className={`w-8 text-center text-sm font-bold ${isGlass ? 'text-white' : 'text-gray-700'}`}>{item.quantity}</span>
-                                        <button onClick={() => handleUpdateQuantity(item, 1)} className={`w-8 h-full flex items-center justify-center rounded-r-lg transition-colors text-lg font-bold ${isGlass ? 'text-white/50 hover:bg-white/10' : 'text-gray-500 hover:bg-gray-200'}`}>+</button>
+                                        <button onClick={() => handleUpdateQuantity(item, 1)} className={`w-8 h-full flex items-center justify-center rounded-r-2xl transition-colors text-lg font-bold ${isGlass ? 'text-white/50 hover:bg-white/10' : 'text-gray-500 hover:bg-gray-200'}`}>+</button>
                                     </div>
-                                    <div className={`flex-1 rounded-lg flex items-center px-3 border transition-colors h-10 ${lastAddedId === item.id ? 'border-purple-400 ring-2 ring-purple-100 bg-white' : (isGlass ? 'bg-white/5 border-white/10' : 'bg-gray-50 border-gray-200')}`}>
+                                    <div className={`flex-1 rounded-2xl flex items-center px-3 border transition-colors h-10 ${lastAddedId === item.id ? 'border-purple-400 ring-2 ring-purple-100 bg-white' : (isGlass ? 'bg-white/5 border-white/10' : 'bg-gray-50 border-gray-200')}`}>
                                         <input
                                             type="tel"
                                             className={`w-full bg-transparent outline-none text-sm font-bold text-right ${item.checked ? 'text-purple-700' : (isGlass ? 'text-white' : 'text-gray-800')}`}
@@ -356,6 +361,7 @@ export default function SuperList({ items = [], currentDate, isGlass }) {
                     className={`w-8 flex flex-col items-center justify-center fixed right-0 top-32 bottom-24 z-40 transition-all duration-300 ${isScrolling || activeLetter ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-10 pointer-events-none'}`}
                     onTouchStart={() => setIsScrolling(true)}
                     onTouchMove={handleTouchMove}
+                    onTouchMove={handleTouchMove}
                     onTouchEnd={handleTouchEnd}
                 >
                     <div className={`backdrop-blur-sm rounded-l-xl py-2 shadow-sm border-y border-l flex flex-col gap-0.5 max-h-full overflow-hidden w-6 ${isGlass ? 'bg-white/10 border-white/10' : 'bg-white/50 border-gray-100'}`}>
@@ -370,12 +376,13 @@ export default function SuperList({ items = [], currentDate, isGlass }) {
                         ))}
                     </div>
                 </div>
-            </div>
+            </div >
 
             {/* INPUT ADD FLOTANTE (Simplificado) */}
-            <div className={`fixed bottom-0 left-0 right-0 p-4 border-t md:relative md:border-0 md:bg-transparent md:p-0 z-20 ${isGlass ? 'bg-[#0f0c29] border-white/10' : 'bg-white border-gray-100'}`}>
+            < div className={`fixed bottom-0 left-0 right-0 p-4 border-t md:relative md:border-0 md:bg-transparent md:p-0 z-20 ${isGlass ? 'bg-[#0f0c29] border-white/10' : 'bg-white border-gray-100'}`
+            }>
                 <form onSubmit={handleAdd} className="flex gap-2 max-w-5xl mx-auto">
-                    <div className={`flex-1 rounded-xl flex items-center px-4 border focus-within:border-purple-500 transition-all shadow-sm ${isGlass ? 'bg-white/10 border-white/10 focus-within:bg-white/20' : 'bg-gray-100 border-transparent focus-within:bg-white'}`}>
+                    <div className={`flex-1 rounded-[30px] flex items-center px-4 border focus-within:border-purple-500 transition-all shadow-sm ${isGlass ? 'bg-white/10 border-white/10 focus-within:bg-white/20' : 'bg-gray-100 border-transparent focus-within:bg-white'}`}>
                         <input
                             type="text"
                             className={`w-full bg-transparent outline-none text-sm font-bold py-3 ${isGlass ? 'text-white placeholder-white/30' : 'text-gray-800'}`}
@@ -387,13 +394,13 @@ export default function SuperList({ items = [], currentDate, isGlass }) {
                     <button
                         type="submit"
                         disabled={!newItem}
-                        className="bg-purple-600 text-white w-12 h-12 rounded-xl flex items-center justify-center shadow-lg shadow-purple-200 active:scale-95 disabled:opacity-50 transition-all flex-shrink-0"
+                        className="bg-purple-600 text-white w-12 h-12 rounded-[24px] flex items-center justify-center shadow-lg shadow-purple-200 active:scale-95 disabled:opacity-50 transition-all flex-shrink-0"
                     >
                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
                     </button>
                 </form>
-            </div>
+            </div >
 
-        </div>
+        </div >
     );
 }

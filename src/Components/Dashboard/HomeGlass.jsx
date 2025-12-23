@@ -1,6 +1,7 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import GlassCard from '../GlassCard';
 import CardDetailModal from '../Cards/CardDetailModal';
+import { useDragReorder } from '../../hooks/useDragReorder';
 
 // [SAFE MODE] 
 // Fase 5: Data Binding (Conectando info real)
@@ -13,11 +14,17 @@ const formatMoney = (amount) => {
     }).format(amount);
 };
 
-export default function HomeGlass({ transactions = [], cards = [], supermarketItems = [], services = [], currentDate, user, onToggleTheme, setView, privacyMode }) {
+export default function HomeGlass({ transactions = [], cards = [], supermarketItems = [], services = [], currentDate, user, onToggleTheme, setView, privacyMode, onLogout, householdId }) {
 
     // ESTADO PARA GESTIÓN DE TARJETAS
     const [cardToEdit, setCardToEdit] = useState(null); // null, 'NEW', or card object
     const [isModalOpen, setIsModalOpen] = useState(false);
+
+
+
+
+
+
 
     const handleEditCard = (card) => {
         setCardToEdit(card);
@@ -25,13 +32,11 @@ export default function HomeGlass({ transactions = [], cards = [], supermarketIt
     };
 
     const handleNewCard = () => {
-        setCardToEdit(null); // null means new in the modal logic if we pass it right, or we pass a specific flag
-        // Actually CardDetailModal takes 'card' prop. If card is null/undefined, it treats as new.
-        // But if I pass 'NEW' string it might break. Let's pass null for new, and the card object for edit.
-        // But I need to trigger the modal.
         setCardToEdit(null);
         setIsModalOpen(true);
     };
+
+    const showMoney = (amount) => privacyMode ? '****' : formatMoney(amount);
 
 
     // 1. CLAVE DE MES ACTUAL
@@ -101,20 +106,35 @@ export default function HomeGlass({ transactions = [], cards = [], supermarketIt
             .slice(0, 5); // Mostrar hasta 5 items
     }, [services, cardsWithDebt, targetMonthKey]);
 
-    /* --- RENDERIZADO --- */
+    // 6. ALERTA CRÍTICA (Unificando con Home.jsx)
+    const criticalAlert = useMemo(() => {
+        const firstItem = agenda[0];
+        if (firstItem && firstItem.day <= 5) {
+            return { active: true, msg: `Vencimiento próx: ${firstItem.name} (Día ${firstItem.day})`, amount: firstItem.amount };
+        }
+        return { active: false };
+    }, [agenda]);
 
-    return (
-        <div className="space-y-6 animate-fade-in pb-8">
+    /* --- CONFIGURACIÓN DRAG & DROP --- */
+    const DEFAULT_ORDER = ['target', 'cards', 'agenda', 'super_actions']; // Reverted
+    const getInitialOrder = () => {
+        const saved = localStorage.getItem('widget_order');
+        if (saved) {
+            try {
+                const parsed = JSON.parse(saved);
+                if (parsed.length === DEFAULT_ORDER.length) return parsed;
+            } catch (e) { console.error("Error leyendo orden", e); }
+        }
+        return DEFAULT_ORDER;
+    };
+    const { order, getDragProps, draggingItem } = useDragReorder(getInitialOrder());
+    useEffect(() => { localStorage.setItem('widget_order', JSON.stringify(order)); }, [order]);
 
-            {/* 1. Header (Simplificado por ahora) */}
-            <div className="flex justify-between items-center px-2 pt-2 text-white">
-                <div className="flex flex-col">
-                    <span className="text-xs font-bold uppercase tracking-wider opacity-70">Tu Panel Glass</span>
-                    <h1 className="text-xl font-bold">Hola, {user?.displayName?.split(' ')[0] || 'Nico'} 👋</h1>
-                </div>
-            </div>
 
-            {/* 2. Meta Financiera (Visual - Replicando Estilo Weather) */}
+    /* --- WIDGETS DEFINITIONS --- */
+    const WIDGETS = {
+
+        target: (
             <div className="transition-all duration-300">
                 <GlassCard className="p-6 relative overflow-hidden">
                     <div className="flex justify-between items-center relative z-10">
@@ -168,46 +188,74 @@ export default function HomeGlass({ transactions = [], cards = [], supermarketIt
                     </div>
                 </GlassCard>
             </div>
+        ),
 
-            {/* 3. Tarjetas (Visual - Más Transparente) */}
+        cards: (
             <div>
                 <div className="flex justify-between items-center px-2 mb-3 text-white">
                     <h3 className="font-bold text-sm flex items-center gap-2 drop-shadow-sm">💳 Tus Tarjetas</h3>
                 </div>
                 <div className="flex overflow-x-auto gap-4 pb-4 px-2 snap-x snap-mandatory hide-scrollbar">
-                    {cardsWithDebt.map((card) => (
-                        <div
-                            key={card.id}
-                            onClick={() => handleEditCard(card)}
-                            className="flex-shrink-0 w-[85%] max-w-[280px] h-44 rounded-[30px] p-5 text-white relative overflow-hidden snap-center border border-white/10 shadow-2xl shadow-black/5 backdrop-blur-2xl transition-transform active:scale-95 cursor-pointer hover:border-white/20 group"
-                            style={{ background: `linear-gradient(135deg, ${card.color}66 0%, ${card.color}33 100%)` }}
-                        >
-                            {/* Brillo interno */}
-                            <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-white/20 to-transparent pointer-events-none" />
+                    {cardsWithDebt.map((card) => {
+                        const getCardLogo = (name) => {
+                            const n = (name || '').toLowerCase();
+                            if (n.includes('visa')) return '/logos/visa.png';
+                            if (n.includes('master')) return '/logos/mastercard.png';
+                            if (n.includes('amex') || n.includes('american')) return '/logos/amex.png';
+                            return null;
+                        };
+                        const logo = getCardLogo(card.name);
 
-                            <div className="flex justify-between items-start mb-8 relative z-10">
-                                <div className="flex flex-col">
-                                    <span className="font-medium text-lg tracking-wider uppercase opacity-90 drop-shadow-sm">{card.name}</span>
-                                    <span className="text-[10px] bg-black/20 px-2 py-0.5 rounded-full font-mono backdrop-blur-md border border-white/5 opacity-80 group-hover:opacity-100 transition-opacity w-fit mt-1">{card.bank}</span>
+                        return (
+                            <div
+                                key={card.id}
+                                onClick={() => handleEditCard(card)}
+                                className="flex-shrink-0 w-[85%] max-w-[280px] h-48 rounded-[30px] p-5 text-white relative overflow-hidden snap-center border border-white/10 shadow-2xl shadow-black/5 backdrop-blur-2xl transition-transform active:scale-95 cursor-pointer hover:border-white/20 group"
+                                style={{ background: `linear-gradient(135deg, ${card.color}66 0%, ${card.color}33 100%)` }}
+                            >
+                                {/* Brillo interno */}
+                                <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-white/20 to-transparent pointer-events-none" />
+
+                                {/* Header: Logo & Bank */}
+                                <div className="flex justify-between items-start mb-6 relative z-10">
+                                    {logo ? (
+                                        <img src={logo} alt={card.name} className="h-6 object-contain filter brightness-200 contrast-200 drop-shadow-sm" loading="lazy" />
+                                    ) : (
+                                        <span className="font-bold text-lg tracking-wider uppercase opacity-90 drop-shadow-sm">{card.name}</span>
+                                    )}
+                                    <span className="text-[10px] bg-black/20 px-2 py-0.5 rounded-full font-mono backdrop-blur-md border border-white/5 opacity-80 group-hover:opacity-100 transition-opacity">{card.bank}</span>
                                 </div>
-                                <button className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-white/50 hover:text-white transition-colors backdrop-blur-md border border-white/5" onClick={(e) => { e.stopPropagation(); handleEditCard(card); }}>
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
-                                </button>
+
+                                {/* Info: Limits & Closing */}
+                                <div className="relative z-10 flex gap-4 mb-3">
+                                    <div>
+                                        <p className="text-[8px] opacity-70 uppercase tracking-widest mb-0.5 font-medium">Lim. Financiación</p>
+                                        <p className="font-mono text-xs font-bold opacity-90">{privacyMode ? '****' : formatMoney(card.limit)}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-[8px] opacity-70 uppercase tracking-widest mb-0.5 font-medium">Cierre</p>
+                                        <p className="font-mono text-xs font-bold opacity-90">Día {card.closeDay}</p>
+                                    </div>
+                                </div>
+
+                                {/* Footer: Current Debt & Edit */}
+                                <div className="absolute bottom-4 left-5 right-5 z-10 border-t border-white/10 pt-2 flex justify-between items-end">
+                                    <div>
+                                        <p className="text-[9px] opacity-70 uppercase mb-0.5 font-medium tracking-wide">A pagar este mes</p>
+                                        <p className="font-mono text-2xl font-light tracking-tight drop-shadow-md text-white">{privacyMode ? '****' : formatMoney(card.currentDebt)}</p>
+                                    </div>
+                                    <button className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-white/70 hover:text-white transition-colors backdrop-blur-md border border-white/5 opacity-0 group-hover:opacity-100" onClick={(e) => { e.stopPropagation(); handleEditCard(card); }}>
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                                    </button>
+                                </div>
                             </div>
-                            <div className="relative z-10">
-                                <p className="font-mono text-3xl font-light tracking-tight drop-shadow-md">{privacyMode ? '****' : formatMoney(card.currentDebt)}</p>
-                            </div>
-                            <div className="absolute bottom-5 left-5 right-5 flex justify-between items-end opacity-70 text-[10px] font-mono group-hover:opacity-100 transition-opacity">
-                                <span>Vence: {card.closeDay || 10}</span>
-                                <span className="tracking-widest text-xs">•••• {card.last4 || '****'}</span>
-                            </div>
-                        </div>
-                    ))}
+                        );
+                    })}
 
                     {/* Botón Nueva Tarjeta en el Slider */}
                     <button
                         onClick={handleNewCard}
-                        className="flex-shrink-0 w-[85%] max-w-[280px] h-44 rounded-[30px] border-2 border-dashed border-white/10 flex flex-col items-center justify-center gap-3 text-white/30 hover:text-white/60 hover:border-white/30 hover:bg-white/5 transition-all snap-center active:scale-95"
+                        className="flex-shrink-0 w-[85%] max-w-[280px] h-48 rounded-[30px] border-2 border-dashed border-white/10 flex flex-col items-center justify-center gap-3 text-white/30 hover:text-white/60 hover:border-white/30 hover:bg-white/5 transition-all snap-center active:scale-95"
                     >
                         <div className="w-12 h-12 rounded-full border border-current flex items-center justify-center">
                             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
@@ -215,10 +263,10 @@ export default function HomeGlass({ transactions = [], cards = [], supermarketIt
                         <span className="text-sm font-medium uppercase tracking-widest">Nueva Tarjeta</span>
                     </button>
                 </div>
-
             </div>
+        ),
 
-            {/* 4. Agenda (Visual) */}
+        agenda: (
             <div className="bg-white/5 backdrop-blur-md rounded-3xl border border-white/10 p-5 mx-1">
                 <div className="flex justify-between items-center mb-4">
                     <h3 className="font-medium text-white text-sm">📅 Próximos Vencimientos</h3>
@@ -239,8 +287,9 @@ export default function HomeGlass({ transactions = [], cards = [], supermarketIt
                     </div>
                 ))}
             </div>
+        ),
 
-            {/* 5. Acciones Rápidas (Replicando Home.jsx) */}
+        super_actions: (
             <div className="grid grid-cols-2 gap-3 mx-1">
                 <button onClick={() => setView('super')} className="bg-white/5 p-4 rounded-[24px] border border-white/10 backdrop-blur-md flex flex-col justify-between h-32 active:scale-95 transition-all text-left group hover:bg-white/10">
                     <div className="bg-purple-500/20 text-purple-200 border border-purple-500/30 w-fit p-2.5 rounded-xl group-hover:scale-110 transition-transform">
@@ -262,6 +311,56 @@ export default function HomeGlass({ transactions = [], cards = [], supermarketIt
                     </div>
                 </button>
             </div>
+        )
+    };
+
+    /* --- RENDERIZADO --- */
+
+    return (
+        <div className="space-y-6 animate-fade-in pb-8">
+
+            {/* 1. Header (Simplificado por ahora) */}
+            <div className="flex justify-between items-center px-2 pt-2 text-white">
+                <div className="flex flex-col">
+                    <span className="text-xs font-bold uppercase tracking-wider opacity-70">Tu Panel</span>
+                    <h1 className="text-xl font-bold">Hola, {user?.displayName?.split(' ')[0] || 'Nico'} 👋</h1>
+                </div>
+                <div className="flex items-center gap-2">
+                    <button onClick={() => setView('household')} className="bg-white/10 text-white/70 p-2 rounded-full hover:bg-blue-500/20 hover:text-blue-200 transition-colors backdrop-blur-md border border-white/5">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
+                    </button>
+                    <button onClick={onLogout} className="bg-white/10 text-white/70 p-2 rounded-full hover:bg-red-500/20 hover:text-red-200 transition-colors backdrop-blur-md border border-white/5">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                    </button>
+                </div>
+            </div>
+
+            {/* ALERTA CRÍTICA */}
+            {criticalAlert.active && (
+                <div className="bg-red-500/10 border border-red-500/30 p-4 rounded-[24px] flex items-center justify-between mx-1 backdrop-blur-md animate-pulse shadow-lg shadow-red-900/10">
+                    <div className="flex items-center gap-3">
+                        <div className="bg-red-500/20 p-2 rounded-full text-red-200 border border-red-500/30">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        </div>
+                        <div>
+                            <p className="text-sm font-bold text-red-100">{criticalAlert.msg}</p>
+                            <p className="text-xs text-red-300/80 font-medium cursor-pointer hover:text-white transition-colors underline decoration-red-300/50" onClick={() => setView('services_manager')}>Ir a pagar ahora</p>
+                        </div>
+                    </div>
+                    <p className="font-bold text-red-100">{privacyMode ? '****' : formatMoney(criticalAlert.amount)}</p>
+                </div>
+            )}
+
+            {/* WIDGETS REORDERABLE VIEW */}
+            <div className="space-y-6">
+                {order.map((key) => (
+                    <div key={key} {...getDragProps(key)} className={`transition-all duration-300 ${draggingItem === key ? 'opacity-50 scale-95 cursor-grabbing' : 'cursor-grab'}`}>
+                        {/* Drag Handle Indicator */}
+                        <div className="flex justify-center -mb-2 opacity-0 hover:opacity-100 transition-opacity"><div className="w-10 h-1 bg-white/20 rounded-full"></div></div>
+                        {WIDGETS[key]}
+                    </div>
+                ))}
+            </div>
 
             {/* 6. Botón Análisis Completo */}
             <button onClick={() => setView('stats')} className="w-full h-20 mx-1 rounded-2xl relative overflow-hidden group shadow-lg shadow-black/20 active:scale-95 transition-all border border-white/10 mt-2">
@@ -271,8 +370,9 @@ export default function HomeGlass({ transactions = [], cards = [], supermarketIt
                         <div className="bg-white/20 p-1.5 rounded-full backdrop-blur-sm">
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
                         </div>
-                        <span className="font-bold text-base tracking-wide shadow-black/50 drop-shadow-md">Ver Análisis</span>
+                        <span className="font-bold text-base tracking-wide shadow-black/50 drop-shadow-md">Ver Análisis Completo</span>
                     </div>
+                    <span className="text-[10px] opacity-70 uppercase tracking-widest font-medium">Estadísticas & Proyecciones</span>
                 </div>
             </button>
 
@@ -292,6 +392,7 @@ export default function HomeGlass({ transactions = [], cards = [], supermarketIt
                 card={cardToEdit}
                 privacyMode={privacyMode}
                 isGlass={true}
+                householdId={householdId}
             />
 
         </div>
