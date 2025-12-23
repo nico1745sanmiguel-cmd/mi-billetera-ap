@@ -70,6 +70,44 @@ export default function HouseholdManager({ user, householdId, onBack }) {
     const [copyFeedback, setCopyFeedback] = useState("");
     const [createStatus, setCreateStatus] = useState("idle");
 
+    // SETTINGS DE COMPARTIR
+    const [sharePreferences, setSharePreferences] = useState({
+        shareCards: true,
+        shareSupermarket: true,
+        shareServices: true
+    });
+    const [savingPrefs, setSavingPrefs] = useState(false);
+
+    useEffect(() => {
+        // Cargar preferencias actuales si existen en el objeto user (o buscarlas de la DB si user no está actualizado en realtime)
+        if (user) {
+            const fetchPrefs = async () => {
+                const userDoc = await getDoc(doc(db, 'users', user.uid));
+                if (userDoc.exists()) {
+                    const data = userDoc.data();
+                    if (data.sharePreferences) {
+                        setSharePreferences(data.sharePreferences);
+                    }
+                }
+            };
+            fetchPrefs();
+        }
+    }, [user]);
+
+    const handleToggleShare = async (key) => {
+        const newPrefs = { ...sharePreferences, [key]: !sharePreferences[key] };
+        setSharePreferences(newPrefs);
+        setSavingPrefs(true);
+        try {
+            const userRef = doc(db, 'users', user.uid);
+            await updateDoc(userRef, { sharePreferences: newPrefs });
+        } catch (error) {
+            console.error("Error updating share prefs:", error);
+        } finally {
+            setTimeout(() => setSavingPrefs(false), 800);
+        }
+    };
+
     /* --- JOIN LOGIC --- */
     const [joinCode, setJoinCode] = useState("");
     const [joinStatus, setJoinStatus] = useState(""); // idle, searching, success, error
@@ -192,9 +230,15 @@ export default function HouseholdManager({ user, householdId, onBack }) {
                 <button onClick={onBack} className="p-2 bg-white/10 rounded-xl hover:bg-white/20 transition-colors">
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
                 </button>
-                <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400">
-                    Mi Hogar Digital
-                </h1>
+                <div className="flex items-center gap-3">
+                    <div className="p-2 bg-indigo-500/20 rounded-lg text-indigo-300">
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                    </div>
+                    <div>
+                        <h1 className="text-xl font-bold text-white">Grupo Familiar</h1>
+                        <p className="text-xs text-gray-400">Gestioná tu hogar</p>
+                    </div>
+                </div>
             </div>
 
             <div className="max-w-md mx-auto space-y-8">
@@ -230,6 +274,39 @@ export default function HouseholdManager({ user, householdId, onBack }) {
                                 <HouseholdMembersList memberIds={household.members || []} currentUserUid={user.uid} />
                             </div>
                         </div>
+
+                        {/* CONFIGURACIÓN DE COMPARTIR (Granularidad) */}
+                        <div className="bg-white/5 border border-white/10 p-6 rounded-3xl">
+                            <div className="flex justify-between items-center mb-4">
+                                <h3 className="text-lg font-bold flex items-center gap-2">
+                                    <span className="w-2 h-6 bg-blue-500 rounded-full"></span>
+                                    ¿Qué comparto?
+                                </h3>
+                                {savingPrefs && <span className="text-xs text-green-400 font-bold animate-pulse">Guardando...</span>}
+                            </div>
+                            <p className="text-xs text-gray-400 mb-6">Elegí qué información querés que vean los otros miembros del hogar.</p>
+
+                            <div className="space-y-4">
+                                <div className="flex items-center justify-between p-3 rounded-2xl bg-white/5 hover:bg-white/10 transition-colors">
+                                    <span className="text-sm font-bold text-gray-200">💳 Mis Tarjetas y Gastos</span>
+                                    <button onClick={() => handleToggleShare('shareCards')} className={`w-12 h-6 rounded-full p-1 transition-colors ${sharePreferences.shareCards ? 'bg-green-500' : 'bg-gray-600'}`}>
+                                        <div className={`w-4 h-4 bg-white rounded-full shadow-md transform transition-transform ${sharePreferences.shareCards ? 'translate-x-6' : 'translate-x-0'}`} />
+                                    </button>
+                                </div>
+                                <div className="flex items-center justify-between p-3 rounded-2xl bg-white/5 hover:bg-white/10 transition-colors">
+                                    <span className="text-sm font-bold text-gray-200">🛒 Lista de Supermercado</span>
+                                    <button onClick={() => handleToggleShare('shareSupermarket')} className={`w-12 h-6 rounded-full p-1 transition-colors ${sharePreferences.shareSupermarket ? 'bg-green-500' : 'bg-gray-600'}`}>
+                                        <div className={`w-4 h-4 bg-white rounded-full shadow-md transform transition-transform ${sharePreferences.shareSupermarket ? 'translate-x-6' : 'translate-x-0'}`} />
+                                    </button>
+                                </div>
+                                <div className="flex items-center justify-between p-3 rounded-2xl bg-white/5 hover:bg-white/10 transition-colors">
+                                    <span className="text-sm font-bold text-gray-200">💡 Servicios y Fijos</span>
+                                    <button onClick={() => handleToggleShare('shareServices')} className={`w-12 h-6 rounded-full p-1 transition-colors ${sharePreferences.shareServices ? 'bg-green-500' : 'bg-gray-600'}`}>
+                                        <div className={`w-4 h-4 bg-white rounded-full shadow-md transform transition-transform ${sharePreferences.shareServices ? 'translate-x-6' : 'translate-x-0'}`} />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     </>
                 ) : (
                     <div className="p-6 bg-yellow-500/10 border border-yellow-500/20 rounded-3xl text-center space-y-4">
@@ -252,21 +329,21 @@ export default function HouseholdManager({ user, householdId, onBack }) {
                     <h3 className="text-lg font-bold text-indigo-200 mb-2">¿Te invitaron?</h3>
                     <p className="text-sm text-gray-400 mb-4">Si tu pareja creó el hogar, ingresá su código aquí para unirte.</p>
 
-                    <div className="flex gap-2">
+                    <div className="flex flex-col md:flex-row gap-3">
                         <input
                             type="text"
                             placeholder="000-000"
                             maxLength={6}
                             value={joinCode}
                             onChange={(e) => setJoinCode(e.target.value)}
-                            className="flex-1 bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-center tracking-widest font-mono text-white focus:outline-none focus:border-indigo-500 transition-colors"
+                            className="w-full bg-black/50 border border-white/10 rounded-2xl px-4 py-4 text-center tracking-widest font-mono text-white focus:outline-none focus:border-indigo-500 transition-colors text-lg"
                         />
                         <button
                             onClick={handleJoin}
                             disabled={joinStatus === 'searching' || joinCode.length < 6}
-                            className="bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold disabled:opacity-50 hover:bg-indigo-500 transition-all active:scale-95"
+                            className="w-full md:w-auto bg-indigo-600 text-white px-8 py-4 rounded-2xl font-bold disabled:opacity-50 hover:bg-indigo-500 transition-all active:scale-95 shadow-lg shadow-indigo-900/50"
                         >
-                            Unirme
+                            Confirmar y Unirme
                         </button>
                     </div>
                     {joinStatus === 'searching' && <p className="text-indigo-400 text-sm mt-2 text-center animate-pulse">Buscando hogar...</p>}
