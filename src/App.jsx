@@ -272,6 +272,7 @@ export default function App() {
                 user={user}
                 householdId={userData?.householdId}
                 onBack={() => setView('dashboard')}
+                isGlass={isGlass}
               />
             )}
 
