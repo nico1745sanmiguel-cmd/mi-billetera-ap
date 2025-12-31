@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { auth, googleProvider } from '../firebase';
 import { signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
-import GlassCard from './GlassCard';
+import GlassCard from './UI/GlassCard';
 
 export default function Login() {
   const [isRegistering, setIsRegistering] = useState(false);

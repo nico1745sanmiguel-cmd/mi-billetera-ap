@@ -6,7 +6,8 @@ import InstallPrompt from './Components/UI/InstallPrompt';
 import SkeletonDashboard from './Components/UI/SkeletonDashboard';
 
 // --- LAZY IMPORTS (Para que cargue rápido) ---
-const Dashboard = lazy(() => import('./Components/Dashboard/Dashboard'));
+// --- LAZY IMPORTS (Para que cargue rápido) ---
+const Stats = lazy(() => import('./Components/Dashboard/Stats'));
 const NewPurchase = lazy(() => import('./Components/Purchase/NewPurchase'));
 const SuperList = lazy(() => import('./Components/Supermarket/SuperList'));
 const ServicesManager = lazy(() => import('./Components/Services/ServicesManager'));
@@ -276,7 +277,7 @@ export default function App() {
               />
             )}
 
-            {view === 'stats' && <Dashboard transactions={visibleTransactions} cards={visibleCards} services={visibleServices} privacyMode={privacyMode} currentDate={currentDate} isGlass={isGlass} />}
+            {view === 'stats' && <Stats transactions={visibleTransactions} cards={visibleCards} services={visibleServices} privacyMode={privacyMode} currentDate={currentDate} isGlass={isGlass} />}
 
             {view === 'purchase' && <NewPurchase cards={visibleCards} onSave={addTransaction} transactions={visibleTransactions} privacyMode={privacyMode} currentDate={currentDate} isGlass={isGlass} />}
 
@@ -288,5 +289,4 @@ export default function App() {
       </div>
     </div>
   );
-
 }
