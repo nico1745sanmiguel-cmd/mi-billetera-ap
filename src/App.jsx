@@ -15,6 +15,7 @@ const ServicesManager = lazy(() => import('./Components/Services/ServicesManager
 // [SAFE MODE] Componente Aislado
 const HomeGlass = lazy(() => import('./Components/Dashboard/HomeGlass'));
 const HouseholdManager = lazy(() => import('./Components/Household/HouseholdManager'));
+const ReconciliationDesk = lazy(() => import('./Components/Reconciliation/ReconciliationDesk'));
 
 import { db, auth } from './firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
@@ -264,6 +265,18 @@ export default function App() {
                 currentDate={currentDate}
                 privacyMode={privacyMode}
                 isGlass={isGlass}
+              />
+            )}
+
+            {/* RECONCILIATION DESK (DETECTIVE DE GASTOS) */}
+            {view === 'reconcile' && (
+              <ReconciliationDesk
+                user={user}
+                householdId={userData?.householdId}
+                onBack={() => setView('dashboard')}
+                isGlass={isGlass}
+                cards={visibleCards}
+                existingTransactions={visibleTransactions}
               />
             )}
 
