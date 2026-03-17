@@ -3,8 +3,9 @@ import { formatMoney } from '../../utils';
 import FinancialTarget from './FinancialTarget';
 import CardDetailModal from '../Cards/CardDetailModal';
 import { useDragReorder } from '../../hooks/useDragReorder';
+import { calcularProporciones, getLatestSalary, calcularAporte } from '../../utils/salaryUtils';
 
-export default function Home({ transactions, cards, supermarketItems = [], services = [], privacyMode, setView, onLogout, currentDate, user, onToggleTheme, householdId }) {
+export default function Home({ transactions, cards, supermarketItems = [], services = [], privacyMode, setView, onLogout, currentDate, user, onToggleTheme, householdId, householdMembers = [] }) {
 
     const [selectedCardForModal, setSelectedCardForModal] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -21,13 +22,15 @@ export default function Home({ transactions, cards, supermarketItems = [], servi
     };
 
     // --- 1. CONFIGURACIÓN DRAG & DROP ---
-    const DEFAULT_ORDER = ['target', 'cards', 'agenda', 'super_actions'];
+    const DEFAULT_ORDER = ['target', 'split_summary', 'cards', 'agenda', 'super_actions'];
     const getInitialOrder = () => {
         const saved = localStorage.getItem('widget_order');
         if (saved) {
             try {
                 const parsed = JSON.parse(saved);
-                if (parsed.length === DEFAULT_ORDER.length) return parsed;
+                // Asegurarse de que split_summary esté incluido aunque no esté en la versión guardada
+                const hasAll = DEFAULT_ORDER.every(k => parsed.includes(k));
+                if (hasAll && parsed.length === DEFAULT_ORDER.length) return parsed;
             } catch (e) { console.error("Error leyendo orden", e); }
         }
         return DEFAULT_ORDER;
@@ -130,6 +133,38 @@ export default function Home({ transactions, cards, supermarketItems = [], servi
         return { active: false };
     }, [agenda]);
 
+    // --- CÁLCULO DE REPARTO PROPORCIONAL ---
+    const splitData = useMemo(() => {
+        if (!householdMembers || householdMembers.length < 2) return null;
+        const allHaveSalary = householdMembers.every(m => getLatestSalary(m.salaryHistory) > 0);
+        if (!allHaveSalary) return null;
+
+        const proporciones = calcularProporciones(householdMembers.map(m => ({
+            uid: m.uid,
+            displayName: m.displayName,
+            photoURL: m.photoURL,
+            salaryHistory: m.salaryHistory || []
+        })));
+
+        // Gastos compartidos del mes: servicios + tarjetas con deuda
+        const sharedServicesTotal = services.filter(s => s.isShared !== false).reduce((acc, s) => acc + Number(s.amount || 0), 0);
+        const sharedCardsTotal = cardsWithDebt.filter(c => c.isShared !== false).reduce((acc, c) => acc + Number(c.currentDebt || 0), 0);
+        const sharedSuperTotal = supermarketItems.filter(i => i.month === targetMonthKey && i.isShared !== false).reduce((acc, i) => acc + Number((i.price || 0) * (i.quantity || 1)), 0);
+        const grandTotal = sharedServicesTotal + sharedCardsTotal + sharedSuperTotal;
+
+        const breakdown = proporciones.map(p => ({
+            uid: p.uid,
+            displayName: p.displayName,
+            photoURL: p.photoURL,
+            salary: p.salary,
+            proportion: p.proportion,
+            percentage: p.percentage,
+            aporte: calcularAporte(grandTotal, p.proportion)
+        }));
+
+        return { grandTotal, breakdown, proporciones };
+    }, [householdMembers, services, cardsWithDebt, supermarketItems, targetMonthKey]);
+
 
     // --- 3. DICCIONARIO DE WIDGETS ---
     const WIDGETS = {
@@ -139,6 +174,72 @@ export default function Home({ transactions, cards, supermarketItems = [], servi
                 {privacyMode && <div className="absolute inset-0 flex items-center justify-center font-bold text-gray-500 z-10">Vista Privada</div>}
             </div>
         ),
+
+        split_summary: householdMembers.length >= 2 ? (
+            <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden mx-1">
+                {/* Header */}
+                <div className="px-5 py-4 border-b border-gray-50 flex justify-between items-center bg-gradient-to-r from-emerald-50 to-teal-50">
+                    <div>
+                        <h3 className="font-bold text-gray-800 text-sm">⚖️ Reparto del Mes</h3>
+                        <p className="text-[10px] text-gray-400 font-medium capitalize">{currentDate.toLocaleString('es-AR', { month: 'long', year: 'numeric' })}</p>
+                    </div>
+                    <button onClick={() => setView('household')} className="text-[10px] font-bold text-emerald-600 bg-emerald-50 hover:bg-emerald-100 px-2 py-1 rounded-full transition-colors">
+                        ✏️ Sueldos
+                    </button>
+                </div>
+
+                {splitData ? (
+                    <div className="p-4 space-y-3">
+                        {splitData.breakdown.map((member, idx) => {
+                            const isMe = member.uid === user?.uid;
+                            const barWidth = `${member.percentage}%`;
+                            const colors = ['from-indigo-500 to-purple-500', 'from-emerald-500 to-teal-500'];
+                            const textColors = ['text-indigo-600', 'text-emerald-600'];
+                            const bgColors = ['bg-indigo-50', 'bg-emerald-50'];
+                            return (
+                                <div key={member.uid}>
+                                    <div className="flex items-center justify-between mb-1.5">
+                                        <div className="flex items-center gap-2">
+                                            <div className={`w-6 h-6 rounded-full bg-gradient-to-br ${colors[idx % 2]} flex items-center justify-center text-white text-[10px] font-bold`}>
+                                                {(member.displayName || '?').charAt(0).toUpperCase()}
+                                            </div>
+                                            <span className="text-sm font-semibold text-gray-700">
+                                                {member.displayName?.split(' ')[0]}
+                                                {isMe && <span className="ml-1 text-[9px] text-blue-500 font-bold">VOS</span>}
+                                            </span>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className={`text-sm font-bold font-mono ${privacyMode ? 'blur-sm' : ''} ${textColors[idx % 2]}`}>{showMoney(member.aporte)}</p>
+                                            <p className="text-[10px] text-gray-400">{member.percentage}%</p>
+                                        </div>
+                                    </div>
+                                    {/* Barra de progreso */}
+                                    <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                        <div className={`h-full rounded-full bg-gradient-to-r ${colors[idx % 2]} transition-all duration-700`} style={{ width: barWidth }} />
+                                    </div>
+                                </div>
+                            );
+                        })}
+                        {/* Total */}
+                        <div className="flex justify-between items-center pt-3 border-t border-gray-100">
+                            <span className="text-xs font-bold text-gray-500 uppercase tracking-wide">Total compartido</span>
+                            <span className={`text-base font-bold font-mono text-gray-900 ${privacyMode ? 'blur-sm' : ''}`}>{showMoney(splitData.grandTotal)}</span>
+                        </div>
+                    </div>
+                ) : (
+                    // Estado: falta cargar sueldos
+                    <div className="p-5 text-center">
+                        <p className="text-2xl mb-2">💰</p>
+                        <p className="text-sm font-bold text-gray-700 mb-1">Cargá los sueldos para ver el reparto</p>
+                        <p className="text-xs text-gray-400 mb-3">Cada uno tiene que ingresar su sueldo mensual neto para que podamos calcular cuánto le corresponde de cada gasto compartido.</p>
+                        <button onClick={() => setView('household')} className="text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded-xl transition-colors">
+                            Ir a Grupo Familiar →
+                        </button>
+                    </div>
+                )}
+            </div>
+        ) : null,
+
 
         cards: (
             <div>

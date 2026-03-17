@@ -4,6 +4,9 @@ import Home from './Components/Dashboard/Home';
 import Login from './Components/Login';
 import InstallPrompt from './Components/UI/InstallPrompt';
 import SkeletonDashboard from './Components/UI/SkeletonDashboard';
+import { db, auth } from './firebase';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { collection, onSnapshot, addDoc, query, where, doc, setDoc, getDoc } from 'firebase/firestore';
 
 // --- LAZY IMPORTS (Para que cargue rápido) ---
 // --- LAZY IMPORTS (Para que cargue rápido) ---
@@ -17,9 +20,6 @@ const HomeGlass = lazy(() => import('./Components/Dashboard/HomeGlass'));
 const HouseholdManager = lazy(() => import('./Components/Household/HouseholdManager'));
 const ReconciliationDesk = lazy(() => import('./Components/Reconciliation/ReconciliationDesk'));
 
-import { db, auth } from './firebase';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
-import { collection, onSnapshot, addDoc, query, where, doc, setDoc } from 'firebase/firestore';
 
 import { checkAndMigrateToHousehold } from './utils/householdMigration';
 
@@ -29,6 +29,7 @@ const ENABLE_HOUSEHOLD = true;
 export default function App() {
   const [user, setUser] = useState(null);
   const [userData, setUserData] = useState(null); // Datos extendidos del usuario (householdId, etc)
+  const [householdMembers, setHouseholdMembers] = useState([]); // Miembros con datos de sueldo
   const [loadingUser, setLoadingUser] = useState(true);
   const [showReload, setShowReload] = useState(false);
   const [privacyMode, setPrivacyMode] = useState(false);
@@ -107,6 +108,22 @@ export default function App() {
           // Intentar migrar o obtener ID de hogar
           currentHouseholdId = await checkAndMigrateToHousehold(currentUser);
           setUserData({ householdId: currentHouseholdId });
+
+          // Cargar datos de miembros del hogar (para cálculo de sueldos)
+          if (currentHouseholdId) {
+            try {
+              const hhSnap = await getDoc(doc(db, 'households', currentHouseholdId));
+              if (hhSnap.exists()) {
+                const memberIds = hhSnap.data().members || [];
+                const memberPromises = memberIds.map(uid => getDoc(doc(db, 'users', uid)));
+                const memberSnaps = await Promise.all(memberPromises);
+                const members = memberSnaps.map(s => s.exists() ? { uid: s.id, ...s.data() } : { uid: s.id });
+                setHouseholdMembers(members);
+              }
+            } catch (e) {
+              console.error('Error loading household members:', e);
+            }
+          }
         }
       }
 
@@ -237,6 +254,7 @@ export default function App() {
                   setView={setView}
                   onLogout={handleLogout}
                   householdId={userData?.householdId}
+                  householdMembers={householdMembers}
                 />
 
               ) : (
@@ -252,6 +270,7 @@ export default function App() {
                   user={user}
                   onToggleTheme={() => setIsGlass(true)}
                   householdId={userData?.householdId}
+                  householdMembers={householdMembers}
                 />
               )
             )}

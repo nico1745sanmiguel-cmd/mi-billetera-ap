@@ -5,11 +5,12 @@ import { useDragReorder } from '../../hooks/useDragReorder';
 import { TargetWidget, CardsWidget, AgendaWidget, SuperActionsWidget } from './HomeGlassWidgets';
 import { ReconciliationWidget } from './ReconciliationWidget';
 import { formatMoney } from '../../utils';
+import { calcularProporciones, getLatestSalary, calcularAporte } from '../../utils/salaryUtils';
 
 // [SAFE MODE] 
 // Fase 5: Data Binding (Conectando info real)
 
-export default function HomeGlass({ transactions = [], cards = [], supermarketItems = [], services = [], currentDate, user, onToggleTheme, setView, privacyMode, onLogout, householdId }) {
+export default function HomeGlass({ transactions = [], cards = [], supermarketItems = [], services = [], currentDate, user, onToggleTheme, setView, privacyMode, onLogout, householdId, householdMembers = [] }) {
 
     // ESTADO PARA GESTIÓN DE TARJETAS
     const [cardToEdit, setCardToEdit] = useState(null); // null, 'NEW', or card object
@@ -111,16 +112,15 @@ export default function HomeGlass({ transactions = [], cards = [], supermarketIt
     }, [agenda]);
 
     /* --- CONFIGURACIÓN DRAG & DROP --- */
-    const DEFAULT_ORDER = ['target', 'cards', 'agenda', 'super_actions', 'reconciliation']; // Added reconciliation
+    const DEFAULT_ORDER = ['target', 'split_summary', 'cards', 'agenda', 'super_actions', 'reconciliation'];
     const getInitialOrder = () => {
         const saved = localStorage.getItem('widget_order');
         if (saved) {
             try {
                 const parsed = JSON.parse(saved);
-                // Simple version check: if length differs, reset
-                if (parsed.length === DEFAULT_ORDER.length) return parsed;
-                // Or if it doesn't contain the new widget, reset
-                if (!parsed.includes('reconciliation')) return DEFAULT_ORDER;
+                const hasAll = DEFAULT_ORDER.every(k => parsed.includes(k));
+                if (hasAll && parsed.length === DEFAULT_ORDER.length) return parsed;
+                if (!parsed.includes('reconciliation') || !parsed.includes('split_summary')) return DEFAULT_ORDER;
                 return parsed;
             } catch (e) { console.error("Error leyendo orden", e); }
         }
@@ -130,15 +130,106 @@ export default function HomeGlass({ transactions = [], cards = [], supermarketIt
     useEffect(() => { localStorage.setItem('widget_order', JSON.stringify(order)); }, [order]);
 
 
+    /* --- CÁLCULO REPARTO PROPORCIONAL --- */
+    const splitData = useMemo(() => {
+        if (!householdMembers || householdMembers.length < 2) return null;
+        const allHaveSalary = householdMembers.every(m => getLatestSalary(m.salaryHistory) > 0);
+        if (!allHaveSalary) return null;
+
+        const proporciones = calcularProporciones(householdMembers.map(m => ({
+            uid: m.uid,
+            displayName: m.displayName,
+            salaryHistory: m.salaryHistory || []
+        })));
+
+        const sharedServicesTotal = services.filter(s => s.isShared !== false).reduce((acc, s) => acc + Number(s.amount || 0), 0);
+        const sharedCardsTotal = cardsWithDebt.filter(c => c.isShared !== false).reduce((acc, c) => acc + Number(c.currentDebt || 0), 0);
+        const sharedSuperTotal = supermarketItems.filter(i => i.month === targetMonthKey && i.isShared !== false).reduce((acc, i) => acc + Number((i.price || 0) * (i.quantity || 1)), 0);
+        const grandTotal = sharedServicesTotal + sharedCardsTotal + sharedSuperTotal;
+
+        const breakdown = proporciones.map(p => ({
+            uid: p.uid,
+            displayName: p.displayName,
+            proportion: p.proportion,
+            percentage: p.percentage,
+            aporte: calcularAporte(grandTotal, p.proportion)
+        }));
+
+        return { grandTotal, breakdown };
+    }, [householdMembers, services, cardsWithDebt, supermarketItems, targetMonthKey]);
+
     /* --- WIDGETS DEFINITIONS --- */
     /* --- WIDGETS DEFINITIONS (Memoized to prevent re-renders) --- */
-    const widgetsMap = useMemo(() => ({
-        target: <TargetWidget pendingAmount={pendingAmount} totalNeed={totalNeed} totalPaid={totalPaid} percentage={percentage} privacyMode={privacyMode} />,
-        cards: <CardsWidget cardsWithDebt={cardsWithDebt} handleEditCard={handleEditCard} handleNewCard={handleNewCard} privacyMode={privacyMode} />,
-        agenda: <AgendaWidget agenda={agenda} setView={setView} privacyMode={privacyMode} />,
-        super_actions: <SuperActionsWidget superData={superData} setView={setView} privacyMode={privacyMode} />,
-        reconciliation: <ReconciliationWidget setView={setView} privacyMode={privacyMode} />
-    }), [pendingAmount, totalNeed, totalPaid, percentage, privacyMode, cardsWithDebt, agenda, superData]);
+    const widgetsMap = useMemo(() => {
+        const SplitWidget = householdMembers.length >= 2 ? (
+            <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl overflow-hidden mx-1">
+                <div className="px-5 py-4 border-b border-white/5 flex justify-between items-center">
+                    <div>
+                        <h3 className="font-bold text-white text-sm">⚖️ Reparto del Mes</h3>
+                        <p className="text-[10px] text-white/40 font-medium capitalize">{currentDate?.toLocaleString('es-AR', { month: 'long', year: 'numeric' })}</p>
+                    </div>
+                    <button onClick={() => setView('household')} className="text-[10px] font-bold text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 px-2 py-1 rounded-full transition-colors border border-emerald-500/20">
+                        ✏️ Sueldos
+                    </button>
+                </div>
+
+                {splitData ? (
+                    <div className="p-4 space-y-3">
+                        {splitData.breakdown.map((member, idx) => {
+                            const isMe = member.uid === user?.uid;
+                            const barWidth = `${member.percentage}%`;
+                            const gradients = ['from-indigo-500 to-purple-500', 'from-emerald-500 to-teal-500'];
+                            const textColors = ['text-indigo-300', 'text-emerald-300'];
+                            return (
+                                <div key={member.uid}>
+                                    <div className="flex items-center justify-between mb-1.5">
+                                        <div className="flex items-center gap-2">
+                                            <div className={`w-6 h-6 rounded-full bg-gradient-to-br ${gradients[idx % 2]} flex items-center justify-center text-white text-[10px] font-bold`}>
+                                                {(member.displayName || '?').charAt(0).toUpperCase()}
+                                            </div>
+                                            <span className="text-sm font-semibold text-white/80">
+                                                {member.displayName?.split(' ')[0]}
+                                                {isMe && <span className="ml-1 text-[9px] text-blue-300 font-bold">VOS</span>}
+                                            </span>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className={`text-sm font-bold font-mono ${privacyMode ? 'blur-sm' : ''} ${textColors[idx % 2]}`}>{privacyMode ? '****' : formatMoney(member.aporte)}</p>
+                                            <p className="text-[10px] text-white/30">{member.percentage}%</p>
+                                        </div>
+                                    </div>
+                                    <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+                                        <div className={`h-full rounded-full bg-gradient-to-r ${gradients[idx % 2]} transition-all duration-700`} style={{ width: barWidth }} />
+                                    </div>
+                                </div>
+                            );
+                        })}
+                        <div className="flex justify-between items-center pt-3 border-t border-white/10">
+                            <span className="text-xs font-bold text-white/40 uppercase tracking-wide">Total compartido</span>
+                            <span className={`text-base font-bold font-mono text-white ${privacyMode ? 'blur-sm' : ''}`}>{privacyMode ? '****' : formatMoney(splitData.grandTotal)}</span>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="p-5 text-center">
+                        <p className="text-2xl mb-2">💰</p>
+                        <p className="text-sm font-bold text-white/80 mb-1">Cargá los sueldos para ver el reparto</p>
+                        <p className="text-xs text-white/40 mb-3">Cada uno tiene que ingresar su sueldo mensual neto.</p>
+                        <button onClick={() => setView('household')} className="text-sm font-bold text-white bg-indigo-600/80 hover:bg-indigo-500/80 px-4 py-2 rounded-xl transition-colors border border-indigo-400/30">
+                            Ir a Grupo Familiar →
+                        </button>
+                    </div>
+                )}
+            </div>
+        ) : null;
+
+        return {
+            target: <TargetWidget pendingAmount={pendingAmount} totalNeed={totalNeed} totalPaid={totalPaid} percentage={percentage} privacyMode={privacyMode} />,
+            split_summary: SplitWidget,
+            cards: <CardsWidget cardsWithDebt={cardsWithDebt} handleEditCard={handleEditCard} handleNewCard={handleNewCard} privacyMode={privacyMode} />,
+            agenda: <AgendaWidget agenda={agenda} setView={setView} privacyMode={privacyMode} />,
+            super_actions: <SuperActionsWidget superData={superData} setView={setView} privacyMode={privacyMode} />,
+            reconciliation: <ReconciliationWidget setView={setView} privacyMode={privacyMode} />
+        };
+    }, [pendingAmount, totalNeed, totalPaid, percentage, privacyMode, cardsWithDebt, agenda, superData, splitData, householdMembers]);
 
     /* --- RENDERIZADO --- */
 
