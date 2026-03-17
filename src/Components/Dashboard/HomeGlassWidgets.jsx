@@ -58,7 +58,7 @@ export const TargetWidget = ({ pendingAmount, totalNeed, totalPaid, percentage, 
     </div>
 );
 
-export const CardsWidget = ({ cardsWithDebt, handleEditCard, handleNewCard, privacyMode }) => {
+export const CardsWidget = ({ cardsWithDebt, handleEditCard, handleNewCard, privacyMode, targetMonthKey }) => {
     return (
         <div>
             <div className="flex justify-between items-center px-2 mb-3 text-white">
@@ -95,23 +95,27 @@ export const CardsWidget = ({ cardsWithDebt, handleEditCard, handleNewCard, priv
                                 <span className="text-[10px] bg-black/20 px-2 py-0.5 rounded-full font-mono backdrop-blur-md border border-white/5 opacity-80 group-hover:opacity-100 transition-opacity">{card.bank}</span>
                             </div>
 
-                            {/* Info: Limits & Closing */}
+                            {/* Info: Cierre y Vencimiento */}
                             <div className="relative z-10 flex gap-4 mb-3">
-                                <div>
-                                    <p className="text-[8px] opacity-70 uppercase tracking-widest mb-0.5 font-medium">Lim. Financiación</p>
-                                    <p className="font-mono text-xs font-bold opacity-90">{privacyMode ? '****' : formatMoney(card.limit)}</p>
-                                </div>
                                 <div>
                                     <p className="text-[8px] opacity-70 uppercase tracking-widest mb-0.5 font-medium">Cierre</p>
                                     <p className="font-mono text-xs font-bold opacity-90">Día {card.closeDay}</p>
                                 </div>
+                                <div>
+                                    <p className="text-[8px] opacity-70 uppercase tracking-widest mb-0.5 font-medium">Vence</p>
+                                    <p className="font-mono text-xs font-bold opacity-90">Día {card.dueDay}</p>
+                                </div>
                             </div>
 
-                            {/* Footer: Current Debt & Edit */}
+                            {/* Footer: Resumen Mensual */}
                             <div className="absolute bottom-4 left-5 right-5 z-10 border-t border-white/10 pt-2 flex justify-between items-end">
                                 <div>
-                                    <p className="text-[9px] opacity-70 uppercase mb-0.5 font-medium tracking-wide">A pagar este mes</p>
-                                    <p className="font-mono text-2xl font-light tracking-tight drop-shadow-md text-white">{privacyMode ? '****' : formatMoney(card.currentDebt)}</p>
+                                    <p className="text-[9px] opacity-70 uppercase mb-0.5 font-medium tracking-wide">Total a pagar</p>
+                                    {card.monthlyStatements?.[targetMonthKey] ? (
+                                        <p className="font-mono text-2xl font-light tracking-tight drop-shadow-md text-white">{privacyMode ? '****' : formatMoney(card.monthlyStatements[targetMonthKey].totalDue)}</p>
+                                    ) : (
+                                        <p className="text-sm font-light text-white/40">Sin resumen</p>
+                                    )}
                                 </div>
                                 <button className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-white/70 hover:text-white transition-colors backdrop-blur-md border border-white/5 opacity-0 group-hover:opacity-100" onClick={(e) => { e.stopPropagation(); handleEditCard(card); }}>
                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>

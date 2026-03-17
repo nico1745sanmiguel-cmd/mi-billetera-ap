@@ -144,14 +144,14 @@ export default function NewPurchase({ cards, onSave, transactions, privacyMode, 
                                             {selectedCardId === card.id && <div className="w-2 h-2 bg-blue-500 rounded-full shadow-[0_0_10px_rgba(59,130,246,0.8)]"></div>}
                                         </div>
                                         <p className={`text-sm font-bold truncate ${isGlass ? 'text-white' : 'text-gray-700'}`}>{card.name}</p>
-                                        <div className="flex justify-between items-end mt-2">
+                                        <div class="flex justify-between items-end mt-2">
                                             <div>
-                                                <p className={`text-[9px] uppercase ${isGlass ? 'text-white/30' : 'text-gray-400'}`}>Límite</p>
-                                                <p className={`text-[10px] font-mono ${isGlass ? 'text-white/70' : 'text-gray-600'}`}>{card.limit ? formatMoney(card.limit) : '---'}</p>
+                                                <p className={`text-[9px] uppercase ${isGlass ? 'text-white/30' : 'text-gray-400'}`}>Cierre</p>
+                                                <p className={`text-[10px] font-mono ${isGlass ? 'text-white/70' : 'text-gray-600'}`}>Día {card.closeDay || '--'}</p>
                                             </div>
                                             <div className="text-right">
-                                                <p className={`text-[9px] uppercase ${isGlass ? 'text-white/30' : 'text-gray-400'}`}>Cierre</p>
-                                                <p className={`text-[10px] font-mono ${isGlass ? 'text-white/70' : 'text-gray-600'}`}>{card.closingDate ? new Date(card.closingDate).getDate() : '25'}</p>
+                                                <p className={`text-[9px] uppercase ${isGlass ? 'text-white/30' : 'text-gray-400'}`}>Vence</p>
+                                                <p className={`text-[10px] font-mono ${isGlass ? 'text-white/70' : 'text-gray-600'}`}>Día {card.dueDay || '--'}</p>
                                             </div>
                                         </div>
                                     </div>

@@ -266,23 +266,23 @@ export default function Home({ transactions, cards, supermarketItems = [], servi
                                     <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded font-mono backdrop-blur-sm uppercase tracking-wide">{card.bank}</span>
                                 </div>
 
-                                {/* Info: Limits & Closing */}
+                                {/* Info: Cierre y próximo vencimiento */}
                                 <div className="relative z-10 flex gap-4 mb-4">
-                                    <div>
-                                        <p className="text-[8px] opacity-70 uppercase tracking-widest mb-0.5">Lim. Financiación</p>
-                                        <p className="font-mono text-sm font-bold opacity-90">{showMoney(card.limit)}</p>
-                                    </div>
                                     <div>
                                         <p className="text-[8px] opacity-70 uppercase tracking-widest mb-0.5">Cierre</p>
                                         <p className="font-mono text-sm font-bold opacity-90">Día {card.closeDay}</p>
                                     </div>
+                                    <div>
+                                        <p className="text-[8px] opacity-70 uppercase tracking-widest mb-0.5">Vence</p>
+                                        <p className="font-mono text-sm font-bold opacity-90">Día {card.dueDay}</p>
+                                    </div>
                                 </div>
 
-                                {/* Footer: Current Debt */}
+                                {/* Footer: Resumen Mensual */}
                                 <div className="absolute bottom-4 left-5 right-5 z-10 border-t border-white/20 pt-2 flex justify-between items-end">
                                     <div>
-                                        <p className="text-[9px] opacity-70 uppercase mb-0.5 font-medium tracking-wide">A pagar este mes</p>
-                                        <p className="font-mono text-2xl font-bold tracking-tight text-shadow-sm">{showMoney(cardsWithDebt.find(c => c.id === card.id)?.currentDebt || 0)}</p>
+                                        <p className="text-[9px] opacity-70 uppercase mb-0.5 font-medium tracking-wide">Total a pagar</p>
+                                        <p className="font-mono text-2xl font-bold tracking-tight text-shadow-sm">{card.monthlyStatements?.[targetMonthKey] ? showMoney(card.monthlyStatements[targetMonthKey].totalDue) : <span className="text-sm opacity-60">Sin resumen</span>}</p>
                                     </div>
                                     <button className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-white/70 hover:text-white transition-colors backdrop-blur-md opacity-0 group-hover:opacity-100" onClick={(e) => { e.stopPropagation(); openCardModal(card); }}>
                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
@@ -419,6 +419,7 @@ export default function Home({ transactions, cards, supermarketItems = [], servi
                 card={selectedCardForModal}
                 privacyMode={privacyMode}
                 householdId={householdId}
+                currentDate={currentDate}
             />
 
         </div>

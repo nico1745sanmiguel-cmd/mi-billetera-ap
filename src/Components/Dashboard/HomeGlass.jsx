@@ -224,7 +224,7 @@ export default function HomeGlass({ transactions = [], cards = [], supermarketIt
         return {
             target: <TargetWidget pendingAmount={pendingAmount} totalNeed={totalNeed} totalPaid={totalPaid} percentage={percentage} privacyMode={privacyMode} />,
             split_summary: SplitWidget,
-            cards: <CardsWidget cardsWithDebt={cardsWithDebt} handleEditCard={handleEditCard} handleNewCard={handleNewCard} privacyMode={privacyMode} />,
+            cards: <CardsWidget cardsWithDebt={cardsWithDebt} handleEditCard={handleEditCard} handleNewCard={handleNewCard} privacyMode={privacyMode} targetMonthKey={targetMonthKey} />,
             agenda: <AgendaWidget agenda={agenda} setView={setView} privacyMode={privacyMode} />,
             super_actions: <SuperActionsWidget superData={superData} setView={setView} privacyMode={privacyMode} />,
             reconciliation: <ReconciliationWidget setView={setView} privacyMode={privacyMode} />
@@ -313,6 +313,7 @@ export default function HomeGlass({ transactions = [], cards = [], supermarketIt
                 privacyMode={privacyMode}
                 isGlass={true}
                 householdId={householdId}
+                currentDate={currentDate}
             />
 
         </div>
