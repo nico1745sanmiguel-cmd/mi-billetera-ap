@@ -3,7 +3,7 @@ import { db, auth } from '../../firebase';
 import { doc, getDoc, updateDoc, collection, query, where, getDocs, writeBatch } from 'firebase/firestore';
 import { checkAndMigrateToHousehold } from '../../utils/householdMigration';
 import { getLatestSalary, calcularProporciones } from '../../utils/salaryUtils';
-import { formatMoney } from '../../utils';
+import { formatMoney, formatInputNumber, parseInputNumber } from '../../utils';
 
 // Subcomponente para listar miembros con datos reales de Firestore
 const HouseholdMembersList = ({ memberIds, currentUserUid, isGlass }) => {
@@ -100,7 +100,7 @@ const SalarySection = ({ memberIds, currentUserUid, isGlass }) => {
     };
 
     const handleSaveSalary = async (uid) => {
-        const amount = Number(inputValue.replace(/[^0-9]/g, ''));
+        const amount = parseInputNumber(inputValue);
         if (!amount || amount <= 0) {
             setEditingUid(null);
             return;
@@ -166,10 +166,11 @@ const SalarySection = ({ memberIds, currentUserUid, isGlass }) => {
                             editingUid === member.id ? (
                                 <div className="flex gap-2">
                                     <input
-                                        type="number"
-                                        placeholder="Ej: 500000"
-                                        value={inputValue}
-                                        onChange={(e) => setInputValue(e.target.value)}
+                                        type="text"
+                                        inputMode="numeric"
+                                        placeholder="Ej: 500.000"
+                                        value={formatInputNumber(inputValue)}
+                                        onChange={(e) => setInputValue(parseInputNumber(e.target.value))}
                                         autoFocus
                                         className={`flex-1 px-3 py-2 rounded-xl text-sm border focus:outline-none focus:border-indigo-500 ${isGlass ? 'bg-black/40 border-white/10 text-white' : 'bg-white border-gray-200 text-gray-800'}`}
                                     />

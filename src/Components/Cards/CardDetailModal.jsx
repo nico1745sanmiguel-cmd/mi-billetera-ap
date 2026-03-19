@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { db, auth } from '../../firebase';
 import { doc, deleteDoc, updateDoc, setDoc } from 'firebase/firestore';
+import { formatInputNumber, parseInputNumber } from '../../utils';
 
 const PRESET_COLORS = ['#1a1a1a', '#005f73', '#0a9396', '#ae2012', '#6a4c93', '#ca6702', '#2d3277', '#e63946', '#457b9d', '#ff006e'];
 
@@ -265,11 +266,12 @@ export default function CardDetailModal({ isOpen, onClose, card, privacyMode, is
               <div>
                 <label className={labelClass}>Total a Pagar ($)</label>
                 <input
-                  type="number"
-                  value={statement.totalDue}
-                  onChange={e => setStatement({ ...statement, totalDue: e.target.value })}
+                  type="text"
+                  inputMode="numeric"
+                  value={formatInputNumber(statement.totalDue)}
+                  onChange={e => setStatement({ ...statement, totalDue: parseInputNumber(e.target.value) })}
                   className={inputClass}
-                  placeholder="Ej: 85000"
+                  placeholder="Ej: 85.000"
                 />
               </div>
 

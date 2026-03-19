@@ -90,11 +90,17 @@ const HomeGlass = memo(({ transactions = [], cards = [], supermarketItems = [], 
         return { totalBudget, realSpent, showAmount: (monthlyItems.some(i => i.checked) ? realSpent : totalBudget), label: (monthlyItems.some(i => i.checked) ? 'En Carrito' : 'Presupuesto') };
     }, [supermarketItems, targetMonthKey]);
 
-    // 4. CÁLCULO TOTALES (Target)
-    const totalNeed = services.reduce((acc, s) => acc + s.amount, 0) + cardsWithDebt.reduce((acc, c) => acc + c.currentDebt, 0) + superData.totalBudget;
-    const totalPaid = services.filter(s => s.paidPeriods?.includes(targetMonthKey)).reduce((acc, s) => acc + s.amount, 0) + cardsWithDebt.filter(c => c.paidPeriods?.includes(targetMonthKey)).reduce((acc, c) => acc + c.currentDebt, 0) + superData.realSpent;
+    // 4. CÁLCULO TOTALES (Target) - Forzamos Number para evitar errores de concatenación o NaN
+    const totalNeed = services.reduce((acc, s) => acc + (Number(s.amount) || 0), 0) + 
+                      cardsWithDebt.reduce((acc, c) => acc + (Number(c.currentDebt) || 0), 0) + 
+                      (Number(superData.totalBudget) || 0);
+
+    const totalPaid = services.filter(s => s.paidPeriods?.includes(targetMonthKey)).reduce((acc, s) => acc + (Number(s.amount) || 0), 0) + 
+                      cardsWithDebt.filter(c => c.paidPeriods?.includes(targetMonthKey)).reduce((acc, c) => acc + (Number(c.currentDebt) || 0), 0) + 
+                      (Number(superData.realSpent) || 0);
+
     const percentage = totalNeed > 0 ? Math.round((totalPaid / totalNeed) * 100) : 0;
-    const pendingAmount = totalNeed - totalPaid;
+    const pendingAmount = Math.max(0, totalNeed - totalPaid);
 
     // 5. AGENDA (Próximos Vencimientos)
     const agenda = useMemo(() => {

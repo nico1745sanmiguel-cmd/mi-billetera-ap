@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { db, auth } from '../../firebase';
 import { collection, addDoc, deleteDoc, doc, updateDoc, setDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
-import { formatMoney } from '../../utils';
+import { formatMoney, formatInputNumber, parseInputNumber } from '../../utils';
 
 export default function ServicesManager({ services = [], cards = [], transactions = [], currentDate, privacyMode, isGlass, householdId }) {
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -302,13 +302,13 @@ export default function ServicesManager({ services = [], cards = [], transaction
                                 <div className="bg-blue-900/30 p-4 rounded-2xl border border-blue-500/30">
                                     <p className="text-xs text-blue-300 mb-2 font-medium">Ingresa el monto exacto de tu resumen final. Esto reemplazará la suma automática.</p>
                                     <label className="block text-xs font-bold text-blue-200 uppercase mb-1">Monto Final ($)</label>
-                                    <input type="tel" className={`w-full p-4 border rounded-xl outline-none font-bold text-center text-xl focus:ring-4 ${isGlass ? 'bg-black/20 border-white/10 text-white focus:ring-blue-500/20' : 'bg-white border-blue-200 text-gray-800 focus:ring-blue-100'}`} placeholder="0" value={form.amount} onChange={e => setForm({ ...form, amount: e.target.value.replace(/\D/g, '') })} autoFocus />
+                                    <input type="tel" className={`w-full p-4 border rounded-xl outline-none font-bold text-center text-xl focus:ring-4 ${isGlass ? 'bg-black/20 border-white/10 text-white focus:ring-blue-500/20' : 'bg-white border-blue-200 text-gray-800 focus:ring-blue-100'}`} placeholder="0" value={formatInputNumber(form.amount)} onChange={e => setForm({ ...form, amount: parseInputNumber(e.target.value) })} autoFocus />
                                 </div>
                             ) : (
                                 <>
                                     <div><label className={`block text-xs font-bold uppercase mb-1 ${isGlass ? 'text-white/40' : 'text-gray-400'}`}>Nombre</label><input className={`w-full p-4 border rounded-2xl outline-none font-bold ${isGlass ? 'bg-black/20 border-white/10 text-white' : 'bg-gray-50 border-gray-200 text-gray-800'}`} placeholder="Ej: Internet..." value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} autoFocus /></div>
                                     <div className="grid grid-cols-2 gap-4">
-                                        <div><label className={`block text-xs font-bold uppercase mb-1 ${isGlass ? 'text-white/40' : 'text-gray-400'}`}>Monto ($)</label><input type="tel" className={`w-full p-4 border rounded-2xl outline-none font-bold text-center ${isGlass ? 'bg-black/20 border-white/10 text-white' : 'bg-gray-50 border-gray-200 text-gray-800'}`} placeholder="0" value={form.amount} onChange={e => setForm({ ...form, amount: e.target.value.replace(/\D/g, '') })} /></div>
+                                        <div><label className={`block text-xs font-bold uppercase mb-1 ${isGlass ? 'text-white/40' : 'text-gray-400'}`}>Monto ($)</label><input type="tel" className={`w-full p-4 border rounded-2xl outline-none font-bold text-center ${isGlass ? 'bg-black/20 border-white/10 text-white' : 'bg-gray-50 border-gray-200 text-gray-800'}`} placeholder="0" value={formatInputNumber(form.amount)} onChange={e => setForm({ ...form, amount: parseInputNumber(e.target.value) })} /></div>
                                         <div><label className={`block text-xs font-bold uppercase mb-1 ${isGlass ? 'text-white/40' : 'text-gray-400'}`}>Día Venc.</label><input type="number" max="31" className={`w-full p-4 border rounded-2xl outline-none font-bold text-center ${isGlass ? 'bg-black/20 border-white/10 text-white' : 'bg-gray-50 border-gray-200 text-gray-800'}`} placeholder="10" value={form.day} onChange={e => setForm({ ...form, day: e.target.value })} /></div>
                                     </div>
                                     <div>

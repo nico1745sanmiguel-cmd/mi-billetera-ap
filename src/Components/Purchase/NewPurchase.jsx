@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useFinancialProjections } from '../../hooks/useFinancialProjections';
+import { formatInputNumber, parseInputNumber } from '../../utils';
 
 export default function NewPurchase({ cards, onSave, transactions, privacyMode, currentDate, isGlass, householdId }) {
     const [amount, setAmount] = useState('');
@@ -113,8 +114,8 @@ export default function NewPurchase({ cards, onSave, transactions, privacyMode, 
                         <span className={`text-4xl font-bold ${isGlass ? 'text-white/30' : 'text-gray-300'}`}>$</span>
                         <input
                             type="tel"
-                            value={amount}
-                            onChange={(e) => setAmount(e.target.value.replace(/\D/g, ''))}
+                            value={formatInputNumber(amount)}
+                            onChange={(e) => setAmount(parseInputNumber(e.target.value))}
                             className={`text-5xl font-bold w-full text-center outline-none bg-transparent tracking-tighter ${isGlass ? 'text-white placeholder-white/10' : 'text-gray-800 placeholder-gray-200'}`}
                             placeholder="0"
                             autoFocus
