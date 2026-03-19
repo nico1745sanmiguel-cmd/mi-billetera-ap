@@ -47,12 +47,19 @@ const HomeGlass = memo(({ transactions = [], cards = [], supermarketItems = [], 
         const targetMonthVal = currentDate.getFullYear() * 12 + currentDate.getMonth();
 
         return cards.map(card => {
-            const manualAmount = card.adjustments?.[targetMonthKey];
+            // PRIORIDAD 1: Resumen manual (nuevo sistema: monthlyStatements)
+            const statementAmount = card.monthlyStatements?.[targetMonthKey]?.totalDue;
+            // PRIORIDAD 2: Ajuste manual (viejo sistema: adjustments)
+            const adjustmentAmount = card.adjustments?.[targetMonthKey];
+            
             let debt = 0;
 
-            if (manualAmount !== undefined) {
-                debt = manualAmount;
+            if (statementAmount !== undefined) {
+                debt = statementAmount;
+            } else if (adjustmentAmount !== undefined) {
+                debt = adjustmentAmount;
             } else {
+                // FALLBACK: Cálculo automático por transacciones
                 debt = transactions
                     .filter(t => t.cardId === card.id && t.type !== 'cash')
                     .reduce((acc, t) => {

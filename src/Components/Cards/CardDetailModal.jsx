@@ -12,7 +12,7 @@ const getMonthKey = (date) => {
 export default function CardDetailModal({ isOpen, onClose, card, privacyMode, isGlass, householdId, currentDate }) {
   const [activeTab, setActiveTab] = useState('card');
   const [form, setForm] = useState({ name: '', bank: '', closeDay: '', dueDay: '', color: PRESET_COLORS[0], isShared: true });
-  const [statement, setStatement] = useState({ totalDue: '', dueDate: '', nextCloseDate: '', nextDueDate: '' });
+  const [statement, setStatement] = useState({ totalDue: '', dueDate: '', nextCloseDate: '', nextDueDate: '', isPaid: false });
   const [isAnimating, setIsAnimating] = useState(false);
 
   const monthKey = getMonthKey(currentDate);
@@ -36,10 +36,11 @@ export default function CardDetailModal({ isOpen, onClose, card, privacyMode, is
           dueDate: saved.dueDate || '',
           nextCloseDate: saved.nextCloseDate || '',
           nextDueDate: saved.nextDueDate || '',
+          isPaid: card.paidPeriods?.includes(monthKey) || false,
         });
       } else {
         setForm({ name: '', bank: '', closeDay: '', dueDay: '', color: PRESET_COLORS[0], isShared: true });
-        setStatement({ totalDue: '', dueDate: '', nextCloseDate: '', nextDueDate: '' });
+        setStatement({ totalDue: '', dueDate: '', nextCloseDate: '', nextDueDate: '', isPaid: false });
       }
     } else {
       const timer = setTimeout(() => setIsAnimating(false), 300);
@@ -91,8 +92,18 @@ export default function CardDetailModal({ isOpen, onClose, card, privacyMode, is
     };
 
     try {
+      const currentPaidPeriods = card.paidPeriods || [];
+      let newPaidPeriods = [...currentPaidPeriods];
+      
+      if (statement.isPaid) {
+        if (!newPaidPeriods.includes(monthKey)) newPaidPeriods.push(monthKey);
+      } else {
+        newPaidPeriods = newPaidPeriods.filter(p => p !== monthKey);
+      }
+
       await updateDoc(doc(db, 'cards', card.id), {
         [`monthlyStatements.${monthKey}`]: statementData,
+        paidPeriods: newPaidPeriods,
       });
       onClose();
     } catch (error) {
@@ -230,9 +241,26 @@ export default function CardDetailModal({ isOpen, onClose, card, privacyMode, is
           {/* --- TAB: RESUMEN DEL MES --- */}
           {activeTab === 'statement' && card && (
             <form onSubmit={handleSaveStatement} className="space-y-4">
-              <p className={`text-xs ${isGlass ? 'text-white/50' : 'text-gray-500'}`}>
-                Ingresá los datos del resumen de <span className="font-bold capitalize">{monthLabel}</span>.
-              </p>
+              <div className="flex items-center justify-between p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 mb-2 transition-all">
+                <div className="flex items-center gap-3">
+                  <div className={`p-2 rounded-xl ${statement.isPaid ? 'bg-emerald-500 text-white' : 'bg-white/10 text-emerald-500/50'}`}>
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                  </div>
+                  <div>
+                    <p className={`text-sm font-bold ${isGlass ? 'text-white' : 'text-gray-800'}`}>¿Ya pagaste esta tarjeta?</p>
+                    <p className="text-[10px] text-emerald-500/70 font-bold uppercase tracking-wider">{statement.isPaid ? 'Marcada como pagada' : 'Pendiente de pago'}</p>
+                  </div>
+                </div>
+                <button 
+                  type="button" 
+                  onClick={() => setStatement(s => ({ ...s, isPaid: !s.isPaid }))}
+                  className={`w-12 h-7 rounded-full transition-all relative ${statement.isPaid ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.3)]' : 'bg-white/10'}`}
+                >
+                  <div className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full transition-transform duration-300 shadow-sm ${statement.isPaid ? 'translate-x-5' : 'translate-x-0'}`}></div>
+                </button>
+              </div>
+
+              <p className={`text-[10px] font-bold uppercase ${isGlass ? 'text-white/30' : 'text-gray-400'} ml-1`}>Datos del período</p>
 
               <div>
                 <label className={labelClass}>Total a Pagar ($)</label>
