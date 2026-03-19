@@ -1,12 +1,9 @@
-import { getDocument, GlobalWorkerOptions, version } from 'pdfjs-dist';
-
-// Configurar el worker usando una versión fija compatible para evitar problemas de resolución dinámica.
-// Usamos la versión 3.11.174 que es muy estable, o podríamos intentar usar `version` si está disponible.
-const workerVersion = version || '3.11.174';
-GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${workerVersion}/build/pdf.worker.min.js`;
-
 export const extractTextFromPDF = async (file) => {
     try {
+        const { getDocument, GlobalWorkerOptions, version } = await import('pdfjs-dist');
+        const workerVersion = version || '3.11.174';
+        GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${workerVersion}/build/pdf.worker.min.js`;
+
         const arrayBuffer = await file.arrayBuffer();
 
         // Cargar documento

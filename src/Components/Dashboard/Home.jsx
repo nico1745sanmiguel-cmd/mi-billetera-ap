@@ -1,11 +1,11 @@
-import React, { useMemo, useEffect, useState } from 'react';
+import React, { useMemo, useEffect, useState, memo } from 'react';
 import { formatMoney } from '../../utils';
 import FinancialTarget from './FinancialTarget';
 import CardDetailModal from '../Cards/CardDetailModal';
 import { useDragReorder } from '../../hooks/useDragReorder';
 import { calcularProporciones, getLatestSalary, calcularAporte } from '../../utils/salaryUtils';
 
-export default function Home({ transactions, cards, supermarketItems = [], services = [], privacyMode, setView, onLogout, currentDate, user, onToggleTheme, householdId, householdMembers = [] }) {
+const Home = memo(({ transactions, cards, supermarketItems = [], services = [], privacyMode, setView, onLogout, currentDate, user, onToggleTheme, householdId, householdMembers = [] }) => {
 
     const [selectedCardForModal, setSelectedCardForModal] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -424,4 +424,6 @@ export default function Home({ transactions, cards, supermarketItems = [], servi
 
         </div>
     );
-}
+});
+
+export default Home;

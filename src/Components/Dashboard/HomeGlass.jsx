@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, memo } from 'react';
 import GlassCard from '../UI/GlassCard';
 import CardDetailModal from '../Cards/CardDetailModal';
 import { useDragReorder } from '../../hooks/useDragReorder';
@@ -10,7 +10,7 @@ import { calcularProporciones, getLatestSalary, calcularAporte } from '../../uti
 // [SAFE MODE] 
 // Fase 5: Data Binding (Conectando info real)
 
-export default function HomeGlass({ transactions = [], cards = [], supermarketItems = [], services = [], currentDate, user, onToggleTheme, setView, privacyMode, onLogout, householdId, householdMembers = [] }) {
+const HomeGlass = memo(({ transactions = [], cards = [], supermarketItems = [], services = [], currentDate, user, onToggleTheme, setView, privacyMode, onLogout, householdId, householdMembers = [] }) => {
 
     // ESTADO PARA GESTIÓN DE TARJETAS
     const [cardToEdit, setCardToEdit] = useState(null); // null, 'NEW', or card object
@@ -319,4 +319,6 @@ export default function HomeGlass({ transactions = [], cards = [], supermarketIt
         </div>
 
     );
-}
+});
+
+export default HomeGlass;

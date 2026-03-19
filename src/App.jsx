@@ -1,206 +1,128 @@
-import React, { useState, useEffect, Suspense, lazy } from 'react';
+import React, { useState, useEffect, Suspense, lazy, useMemo } from 'react';
 import Navbar from './Components/Layout/Navbar';
 import Home from './Components/Dashboard/Home';
 import Login from './Components/Login';
 import InstallPrompt from './Components/UI/InstallPrompt';
 import SkeletonDashboard from './Components/UI/SkeletonDashboard';
-import { db, auth } from './firebase';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
-import { collection, onSnapshot, addDoc, query, where, doc, setDoc, getDoc } from 'firebase/firestore';
+import { auth } from './firebase';
+import { signOut } from 'firebase/auth';
+import { useFinancial } from './context/FinancialContext';
 
-// --- LAZY IMPORTS (Para que cargue rápido) ---
-// --- LAZY IMPORTS (Para que cargue rápido) ---
+// --- LAZY IMPORTS ---
 const Stats = lazy(() => import('./Components/Dashboard/Stats'));
 const NewPurchase = lazy(() => import('./Components/Purchase/NewPurchase'));
 const SuperList = lazy(() => import('./Components/Supermarket/SuperList'));
 const ServicesManager = lazy(() => import('./Components/Services/ServicesManager'));
-// [SAFE MODE] Componente Aislado
-// [SAFE MODE] Componente Aislado
 const HomeGlass = lazy(() => import('./Components/Dashboard/HomeGlass'));
 const HouseholdManager = lazy(() => import('./Components/Household/HouseholdManager'));
 const ReconciliationDesk = lazy(() => import('./Components/Reconciliation/ReconciliationDesk'));
 
-
-import { checkAndMigrateToHousehold } from './utils/householdMigration';
-
-// [KILL SWITCH] Apagar esto si falla la beta.
 const ENABLE_HOUSEHOLD = true;
 
-export default function App() {
-  const [user, setUser] = useState(null);
-  const [userData, setUserData] = useState(null); // Datos extendidos del usuario (householdId, etc)
-  const [householdMembers, setHouseholdMembers] = useState([]); // Miembros con datos de sueldo
-  const [loadingUser, setLoadingUser] = useState(true);
-  const [showReload, setShowReload] = useState(false);
-  const [privacyMode, setPrivacyMode] = useState(false);
-  const [view, setView] = useState('dashboard');
-
-  // [SAFE MODE] Toggle Persistente
-  const [isGlass, setIsGlass] = useState(() => localStorage.getItem('glass_mode') === 'true');
-  useEffect(() => {
-    localStorage.setItem('glass_mode', isGlass);
-    // Browser Theme Color
-    const metaThemeColor = document.querySelector("meta[name='theme-color']");
-    if (metaThemeColor) {
-      metaThemeColor.setAttribute("content", isGlass ? "#0f0c29" : "#ffffff");
-    }
-  }, [isGlass]);
-
-  // FECHA GLOBAL (La Máquina del Tiempo ⏳)
-  const [currentDate, setCurrentDate] = useState(new Date());
-
-  const getFormattedDate = (date) => {
-    const options = { month: 'long', year: 'numeric' };
-    let text = date.toLocaleDateString('es-AR', options).replace(' de ', ' ');
-    return text.charAt(0).toUpperCase() + text.slice(1);
-  };
-
-  const changeMonth = (offset) => {
-    const newDate = new Date(currentDate);
-    newDate.setMonth(newDate.getMonth() + offset);
-    setCurrentDate(newDate);
-  };
-
-  // DATOS (Caché local para arranque instantáneo)
-  const [cards, setCards] = useState(() => JSON.parse(localStorage.getItem('cache_cards')) || []);
-  const [transactions, setTransactions] = useState(() => JSON.parse(localStorage.getItem('cache_transactions')) || []);
-  const [superItems, setSuperItems] = useState(() => JSON.parse(localStorage.getItem('cache_superItems')) || []);
-  const [services, setServices] = useState(() => JSON.parse(localStorage.getItem('cache_services')) || []);
-
-  // --- FILTRADO DE PRIVACIDAD (HOUSEHOLD) ---
-  const getFilteredData = (dataList) => {
-    if (!ENABLE_HOUSEHOLD || !userData?.householdId) return dataList;
-    return dataList.filter(item => {
-      if (!item.ownerId) return true;
-      return item.isShared === true || item.ownerId === user?.uid;
-    });
-  };
-
-  const visibleCards = getFilteredData(cards);
-  const visibleTransactions = getFilteredData(transactions);
-  const visibleSuperItems = getFilteredData(superItems);
-  const visibleServices = getFilteredData(services);
-
-  // --- MANEJO DEL BOTÓN ATRÁS (HISTORIAL NATIVO) ---
-  useEffect(() => {
-    if (view !== 'dashboard') {
-      window.history.pushState({ page: view }, "", "");
-    }
-    const handleBackButton = (event) => {
-      setView('dashboard');
-    };
-    window.addEventListener('popstate', handleBackButton);
-    return () => window.removeEventListener('popstate', handleBackButton);
-  }, [view]);
-
-  // 1. Auth Listener & Migration
-  useEffect(() => {
-    const safetyTimer = setTimeout(() => { if (loadingUser) setShowReload(true); }, 8000);
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      setUser(currentUser);
-
-      let currentHouseholdId = null;
-
-      if (currentUser) {
-
-
-        if (ENABLE_HOUSEHOLD) {
-          // Intentar migrar o obtener ID de hogar
-          currentHouseholdId = await checkAndMigrateToHousehold(currentUser);
-          setUserData({ householdId: currentHouseholdId });
-
-          // Cargar datos de miembros del hogar (para cálculo de sueldos)
-          if (currentHouseholdId) {
-            try {
-              const hhSnap = await getDoc(doc(db, 'households', currentHouseholdId));
-              if (hhSnap.exists()) {
-                const memberIds = hhSnap.data().members || [];
-                const memberPromises = memberIds.map(uid => getDoc(doc(db, 'users', uid)));
-                const memberSnaps = await Promise.all(memberPromises);
-                const members = memberSnaps.map(s => s.exists() ? { uid: s.id, ...s.data() } : { uid: s.id });
-                setHouseholdMembers(members);
-              }
-            } catch (e) {
-              console.error('Error loading household members:', e);
-            }
-          }
-        }
-      }
-
-      const hasCache = cards.length > 0 || transactions.length > 0;
-      setTimeout(() => setLoadingUser(false), hasCache ? 0 : 500);
-    });
-    return () => { unsubscribe(); clearTimeout(safetyTimer); };
-  }, []);
-
-  // 2. Firebase Sync (Sincronización en tiempo real)
-  useEffect(() => {
-    if (!user) return;
-
-    // Si Household está activo y tenemos ID, usamos el ID del hogar. Si no, seguimos como antes (userId).
-    const useHouseholdQuery = ENABLE_HOUSEHOLD && userData?.householdId;
-    const queryField = useHouseholdQuery ? "householdId" : "userId";
-    const queryValue = useHouseholdQuery ? userData.householdId : user.uid;
-
-    console.log(`Syncing data using: ${queryField} = ${queryValue}`);
-
-    const syncData = (queryRef, setState, cacheKey) => {
-      return onSnapshot(queryRef, (snap) => {
-        const data = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setState(data);
-        localStorage.setItem(cacheKey, JSON.stringify(data));
-      }, (error) => console.log("Offline:", error));
-    };
-
-    const unsubCards = syncData(query(collection(db, 'cards'), where(queryField, "==", queryValue)), setCards, 'cache_cards');
-    const unsubTrans = syncData(query(collection(db, 'transactions'), where(queryField, "==", queryValue)), setTransactions, 'cache_transactions');
-    const unsubSuper = syncData(query(collection(db, 'supermarket_items'), where(queryField, "==", queryValue)), setSuperItems, 'cache_superItems');
-    const unsubServices = syncData(query(collection(db, 'services'), where(queryField, "==", queryValue)), setServices, 'cache_services');
-
-    return () => { unsubCards(); unsubTrans(); unsubSuper(); unsubServices(); };
-  }, [user, userData]); // Re-run when userData (householdId) is ready
-
-  const addTransaction = async (t) => {
-    try {
-      if (!user) return;
-      const { id, ...dataToSave } = t;
-
-      const payload = { ...dataToSave, userId: user.uid };
-
-      // Inject Household Info
-      if (ENABLE_HOUSEHOLD && userData?.householdId) {
-        payload.householdId = userData.householdId;
-        payload.ownerId = user.uid;
-        // La privacidad se manejará desde el formulario, pero por defecto:
-        if (payload.isShared === undefined) payload.isShared = true;
-      }
-
-      await addDoc(collection(db, 'transactions'), payload);
-      setView('dashboard');
-    } catch (error) { alert("Error al guardar."); }
-  };
-
-  const handleLogout = () => {
-    if (window.confirm("¿Cerrar sesión?")) {
-      signOut(auth);
-      localStorage.clear();
-      window.location.reload();
-    }
-  };
-
-  const handleReload = () => window.location.reload();
-
-  const LazyLoader = () => (
+const LazyLoader = () => (
     <div className="flex justify-center items-center h-40 animate-pulse">
-      <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+        <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
     </div>
-  );
+);
 
-  if (loadingUser) {
-    if (showReload) return <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center"><p className="mb-4">Conexión lenta...</p><button onClick={handleReload} className="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold">Recargar</button></div>;
-    return <div className={`min-h-screen ${isGlass ? 'bg-night-gradient' : 'bg-[#f3f4f6]'}`}><SkeletonDashboard isGlass={isGlass} /></div>;
-  }
-  if (!user) return <Login />;
+export default function App() {
+    const { 
+        user, 
+        userData, 
+        householdMembers, 
+        loadingUser, 
+        cards, 
+        transactions, 
+        superItems, 
+        services, 
+        addTransaction 
+    } = useFinancial();
+
+    const [showReload, setShowReload] = useState(false);
+    const [privacyMode, setPrivacyMode] = useState(false);
+    const [view, setView] = useState('dashboard');
+    const [isGlass, setIsGlass] = useState(() => localStorage.getItem('glass_mode') === 'true');
+    const [currentDate, setCurrentDate] = useState(new Date());
+
+    useEffect(() => {
+        if (loadingUser) {
+            const timer = setTimeout(() => setShowReload(true), 8000);
+            return () => clearTimeout(timer);
+        }
+    }, [loadingUser]);
+
+    useEffect(() => {
+        localStorage.setItem('glass_mode', isGlass);
+        const metaThemeColor = document.querySelector("meta[name='theme-color']");
+        if (metaThemeColor) {
+            metaThemeColor.setAttribute("content", isGlass ? "#0f0c29" : "#ffffff");
+        }
+    }, [isGlass]);
+
+    const getFormattedDate = (date) => {
+        const options = { month: 'long', year: 'numeric' };
+        let text = date.toLocaleDateString('es-AR', options).replace(' de ', ' ');
+        return text.charAt(0).toUpperCase() + text.slice(1);
+    };
+
+    const changeMonth = (offset) => {
+        const newDate = new Date(currentDate);
+        newDate.setMonth(newDate.getMonth() + offset);
+        setCurrentDate(newDate);
+    };
+
+    // --- FILTRADO DE PRIVACIDAD MEMOIZADO (OPTIMIZACIÓN CLAVE) ---
+    const visibleCards = useMemo(() => {
+        if (!ENABLE_HOUSEHOLD || !userData?.householdId) return cards;
+        return cards.filter(item => !item.ownerId || item.isShared === true || item.ownerId === user?.uid);
+    }, [cards, userData, user]);
+
+    const visibleTransactions = useMemo(() => {
+        if (!ENABLE_HOUSEHOLD || !userData?.householdId) return transactions;
+        return transactions.filter(item => !item.ownerId || item.isShared === true || item.ownerId === user?.uid);
+    }, [transactions, userData, user]);
+
+    const visibleSuperItems = useMemo(() => {
+        if (!ENABLE_HOUSEHOLD || !userData?.householdId) return superItems;
+        return superItems.filter(item => !item.ownerId || item.isShared === true || item.ownerId === user?.uid);
+    }, [superItems, userData, user]);
+
+    const visibleServices = useMemo(() => {
+        if (!ENABLE_HOUSEHOLD || !userData?.householdId) return services;
+        return services.filter(item => !item.ownerId || item.isShared === true || item.ownerId === user?.uid);
+    }, [services, userData, user]);
+
+    useEffect(() => {
+        if (view !== 'dashboard') {
+            window.history.pushState({ page: view }, "", "");
+        }
+        const handleBackButton = () => setView('dashboard');
+        window.addEventListener('popstate', handleBackButton);
+        return () => window.removeEventListener('popstate', handleBackButton);
+    }, [view]);
+
+    const handleLogout = () => {
+        if (window.confirm("¿Cerrar sesión?")) {
+            signOut(auth);
+            localStorage.clear();
+            window.location.reload();
+        }
+    };
+
+    const handleReload = () => window.location.reload();
+
+    if (loadingUser) {
+        if (showReload) return (
+            <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center">
+                <p className="mb-4">Conexión lenta...</p>
+                <button onClick={handleReload} className="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold">Recargar</button>
+            </div>
+        );
+        return <div className={`min-h-screen ${isGlass ? 'bg-night-gradient' : 'bg-[#f3f4f6]'}`}><SkeletonDashboard isGlass={isGlass} /></div>;
+    }
+
+    if (!user) return <Login />;
+
 
   return (
 

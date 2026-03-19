@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { memo } from 'react';
 import GlassCard from '../UI/GlassCard';
 import { formatMoney } from '../../utils';
 
-export const TargetWidget = ({ pendingAmount, totalNeed, totalPaid, percentage, privacyMode }) => (
+export const TargetWidget = memo(({ pendingAmount, totalNeed, totalPaid, percentage, privacyMode }) => (
     <div className="transition-all duration-300">
         <GlassCard className="p-6 relative overflow-hidden">
             <div className="flex justify-between items-center relative z-10">
@@ -56,9 +56,9 @@ export const TargetWidget = ({ pendingAmount, totalNeed, totalPaid, percentage, 
             </div>
         </GlassCard>
     </div>
-);
+));
 
-export const CardsWidget = ({ cardsWithDebt, handleEditCard, handleNewCard, privacyMode, targetMonthKey }) => {
+export const CardsWidget = memo(({ cardsWithDebt, handleEditCard, handleNewCard, privacyMode, targetMonthKey }) => {
     return (
         <div>
             <div className="flex justify-between items-center px-2 mb-3 text-white">
@@ -138,9 +138,9 @@ export const CardsWidget = ({ cardsWithDebt, handleEditCard, handleNewCard, priv
             </div>
         </div>
     );
-}
+});
 
-export const AgendaWidget = ({ agenda, setView, privacyMode }) => (
+export const AgendaWidget = memo(({ agenda, setView, privacyMode }) => (
     <div className="bg-white/5 backdrop-blur-md rounded-3xl border border-white/10 p-5 mx-1">
         <div className="flex justify-between items-center mb-4">
             <h3 className="font-medium text-white text-sm">📅 Próximos Vencimientos</h3>
@@ -161,9 +161,9 @@ export const AgendaWidget = ({ agenda, setView, privacyMode }) => (
             </div>
         ))}
     </div>
-);
+));
 
-export const SuperActionsWidget = ({ superData, setView, privacyMode }) => (
+export const SuperActionsWidget = memo(({ superData, setView, privacyMode }) => (
     <div className="grid grid-cols-2 gap-3 mx-1">
         <button onClick={() => setView('super')} className="bg-white/5 p-4 rounded-[24px] border border-white/10 backdrop-blur-md flex flex-col justify-between h-32 active:scale-95 transition-all text-left group hover:bg-white/10">
             <div className="bg-purple-500/20 text-purple-200 border border-purple-500/30 w-fit p-2.5 rounded-xl group-hover:scale-110 transition-transform">
@@ -185,4 +185,4 @@ export const SuperActionsWidget = ({ superData, setView, privacyMode }) => (
             </div>
         </button>
     </div>
-);
+));
