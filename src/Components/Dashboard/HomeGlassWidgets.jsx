@@ -140,7 +140,7 @@ export const CardsWidget = memo(({ cardsWithDebt, handleEditCard, handleNewCard,
     );
 });
 
-export const AgendaWidget = memo(({ agenda, setView, privacyMode }) => (
+export const AgendaWidget = memo(({ agenda, setView, privacyMode, householdId }) => (
     <div className="bg-white/5 backdrop-blur-md rounded-3xl border border-white/10 p-5 mx-1">
         <div className="flex justify-between items-center mb-4">
             <h3 className="font-medium text-white text-sm">📅 Próximos Vencimientos</h3>
@@ -153,7 +153,10 @@ export const AgendaWidget = memo(({ agenda, setView, privacyMode }) => (
                         <span>{item.day}</span>
                     </div>
                     <div>
-                        <p className="font-medium text-white text-sm">{item.name}</p>
+                        <div className="flex items-center gap-2">
+                            <p className="font-medium text-white text-sm">{item.name}</p>
+                            {householdId && item.isShared === false && <span className="text-[8px] px-1.5 py-0.5 rounded font-bold border bg-gray-500/20 text-gray-300 border-gray-500/30">👤 Privado</span>}
+                        </div>
                         <p className="text-xs text-white/50">{item.type === 'card' ? 'Tarjeta' : 'Servicio'}</p>
                     </div>
                 </div>

@@ -236,6 +236,19 @@ export default function NewPurchase({ cards, onSave, transactions, privacyMode, 
                     </div>
                 </div>
 
+                {/* COMPARTIR TOGGLE */}
+                {householdId && (
+                    <div className={`p-4 mb-6 rounded-[24px] border flex items-center justify-between ${isGlass ? 'bg-white/5 border-white/10' : 'bg-white border-gray-100'}`}>
+                        <div>
+                            <p className={`text-sm font-bold ${isGlass ? 'text-white' : 'text-gray-800'}`}>Compartir en Hogar</p>
+                            <p className={`text-[10px] ${isGlass ? 'text-white/50' : 'text-gray-500'}`}>Visible para el reparto proporcional</p>
+                        </div>
+                        <button type="button" onClick={() => setIsShared(!isShared)} className={`w-12 h-7 rounded-full transition-colors relative focus:outline-none flex-shrink-0 ${isShared ? 'bg-indigo-600' : 'bg-gray-400'}`}>
+                            <div className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full transition-transform ${isShared ? 'translate-x-5' : 'translate-x-0'}`}></div>
+                        </button>
+                    </div>
+                )}
+
                 {/* 5. SAVE BUTTON */}
                 <button
                     type="submit"

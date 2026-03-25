@@ -79,7 +79,8 @@ export default function ServicesManager({ services = [], cards = [], transaction
                 type: 'card',
                 bank: c.bank,
                 frequency: 'Mensual',
-                isManual: manualAmount !== undefined
+                isManual: manualAmount !== undefined,
+                isShared: c.isShared
             };
         }).filter(Boolean);
     }, [cards, transactions, currentMonthKey, currentDate]);
@@ -256,6 +257,9 @@ export default function ServicesManager({ services = [], cards = [], transaction
                                                 }`}>
                                                 {item.name}
                                             </p>
+
+                                            {/* ETIQUETA: Identificador de Privado */}
+                                            {householdId && item.isShared === false && <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold border ${isGlass ? 'bg-gray-500/20 text-gray-300 border-gray-500/30' : 'bg-gray-100 text-gray-700 border-gray-300'}`}>👤 Privado</span>}
 
                                             {/* ETIQUETA: Si es tarjeta, solo mostramos el ícono de edición manual si aplica, pero ya no repetimos el banco si es redundante */}
                                             {item.type === 'card' && item.isManual && <span className="text-[9px] px-1.5 py-0.5 rounded font-bold border bg-yellow-100 text-yellow-700 border-yellow-200">Ajustado ✎</span>}

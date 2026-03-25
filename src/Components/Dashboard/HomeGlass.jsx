@@ -104,9 +104,9 @@ const HomeGlass = memo(({ transactions = [], cards = [], supermarketItems = [], 
 
     // 5. AGENDA (Próximos Vencimientos)
     const agenda = useMemo(() => {
-        const realServices = services.map(s => ({ id: s.id, name: s.name, amount: s.amount, day: s.day, isPaid: s.paidPeriods?.includes(targetMonthKey) || false, type: 'service' }));
+        const realServices = services.map(s => ({ id: s.id, name: s.name, amount: s.amount, day: s.day, isPaid: s.paidPeriods?.includes(targetMonthKey) || false, type: 'service', isShared: s.isShared }));
         const cardServices = cardsWithDebt.filter(c => c.currentDebt > 0).map(c => ({
-            id: c.id, name: c.name, amount: c.currentDebt, day: c.dueDay || 10, isPaid: c.paidPeriods?.includes(targetMonthKey) || false, type: 'card', bank: c.bank
+            id: c.id, name: c.name, amount: c.currentDebt, day: c.dueDay || 10, isPaid: c.paidPeriods?.includes(targetMonthKey) || false, type: 'card', bank: c.bank, isShared: c.isShared
         }));
 
         return [...realServices, ...cardServices]
@@ -238,7 +238,7 @@ const HomeGlass = memo(({ transactions = [], cards = [], supermarketItems = [], 
             target: <TargetWidget pendingAmount={pendingAmount} totalNeed={totalNeed} totalPaid={totalPaid} percentage={percentage} privacyMode={privacyMode} />,
             split_summary: SplitWidget,
             cards: <CardsWidget cardsWithDebt={cardsWithDebt} handleEditCard={handleEditCard} handleNewCard={handleNewCard} privacyMode={privacyMode} targetMonthKey={targetMonthKey} />,
-            agenda: <AgendaWidget agenda={agenda} setView={setView} privacyMode={privacyMode} />,
+            agenda: <AgendaWidget agenda={agenda} setView={setView} privacyMode={privacyMode} householdId={householdId} />,
             super_actions: <SuperActionsWidget superData={superData} setView={setView} privacyMode={privacyMode} />,
             reconciliation: <ReconciliationWidget setView={setView} privacyMode={privacyMode} />
         };
