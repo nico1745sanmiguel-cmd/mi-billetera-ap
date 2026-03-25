@@ -206,6 +206,7 @@ export default function App() {
                 currentDate={currentDate}
                 privacyMode={privacyMode}
                 isGlass={isGlass}
+                householdId={userData?.householdId}
               />
             )}
 
@@ -233,7 +234,7 @@ export default function App() {
 
             {view === 'stats' && <Stats transactions={visibleTransactions} cards={visibleCards} services={visibleServices} privacyMode={privacyMode} currentDate={currentDate} isGlass={isGlass} />}
 
-            {view === 'purchase' && <NewPurchase cards={visibleCards} onSave={addTransaction} transactions={visibleTransactions} privacyMode={privacyMode} currentDate={currentDate} isGlass={isGlass} />}
+            {view === 'purchase' && <NewPurchase cards={visibleCards} onSave={addTransaction} transactions={visibleTransactions} privacyMode={privacyMode} currentDate={currentDate} isGlass={isGlass} householdId={userData?.householdId} />}
 
             {view === 'super' && <SuperList items={visibleSuperItems} currentDate={currentDate} isGlass={isGlass} householdId={userData?.householdId} />}
 
