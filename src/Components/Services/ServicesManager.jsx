@@ -7,7 +7,7 @@ export default function ServicesManager({ services = [], cards = [], transaction
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingService, setEditingService] = useState(null);
 
-    const [form, setForm] = useState({ name: '', amount: '', day: '', frequency: 'Mensual' });
+    const [form, setForm] = useState({ name: '', amount: '', day: '', frequency: 'Mensual', isShared: true });
 
     // Helper para privacidad
     const showMoney = (amount) => privacyMode ? '****' : formatMoney(amount);
@@ -134,11 +134,12 @@ export default function ServicesManager({ services = [], cards = [], transaction
                 name: item.name,
                 amount: item.amount,
                 day: item.day,
-                frequency: item.frequency || 'Mensual'
+                frequency: item.frequency || 'Mensual',
+                isShared: item.isShared !== undefined ? item.isShared : true
             });
         } else {
             setEditingService(null);
-            setForm({ name: '', amount: '', day: '', frequency: 'Mensual' });
+            setForm({ name: '', amount: '', day: '', frequency: 'Mensual', isShared: true });
         }
         setIsModalOpen(true);
     };
@@ -162,7 +163,7 @@ export default function ServicesManager({ services = [], cards = [], transaction
                     ...(householdId && {
                         householdId: householdId,
                         ownerId: auth.currentUser.uid,
-                        isShared: true // Services are shared by default in household
+                        isShared: form.isShared // Services follow the switch value
                     })
                 };
                 if (editingService) {
@@ -298,6 +299,20 @@ export default function ServicesManager({ services = [], cards = [], transaction
                         </div>
 
                         <form onSubmit={handleSave} className="space-y-5 pb-6">
+                            
+                            {/* Toggle Compartir */}
+                            {householdId && (!editingService || editingService.type !== 'card') && (
+                                <div className={`p-3 rounded-xl flex items-center justify-between ${isGlass ? 'bg-white/5 border border-white/10' : 'bg-gray-50 border border-gray-100'}`}>
+                                  <div>
+                                    <p className={`text-sm font-bold ${isGlass ? 'text-white' : 'text-gray-800'}`}>Compartir en Hogar</p>
+                                    <p className={`text-[10px] ${isGlass ? 'text-white/50' : 'text-gray-500'}`}>Visible para el reparto proporcional</p>
+                                  </div>
+                                  <button type="button" onClick={() => setForm(f => ({ ...f, isShared: !f.isShared }))} className={`w-12 h-7 rounded-full transition-colors relative focus:outline-none ${form.isShared ? 'bg-indigo-600' : 'bg-gray-400'}`}>
+                                    <div className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full transition-transform ${form.isShared ? 'translate-x-5' : 'translate-x-0'}`}></div>
+                                  </button>
+                                </div>
+                            )}
+
                             {editingService?.type === 'card' ? (
                                 <div className="bg-blue-900/30 p-4 rounded-2xl border border-blue-500/30">
                                     <p className="text-xs text-blue-300 mb-2 font-medium">Ingresa el monto exacto de tu resumen final. Esto reemplazará la suma automática.</p>

@@ -235,7 +235,7 @@ export default function App() {
 
             {view === 'purchase' && <NewPurchase cards={visibleCards} onSave={addTransaction} transactions={visibleTransactions} privacyMode={privacyMode} currentDate={currentDate} isGlass={isGlass} />}
 
-            {view === 'super' && <SuperList items={visibleSuperItems} currentDate={currentDate} isGlass={isGlass} />}
+            {view === 'super' && <SuperList items={visibleSuperItems} currentDate={currentDate} isGlass={isGlass} householdId={userData?.householdId} />}
 
           </Suspense>
 
