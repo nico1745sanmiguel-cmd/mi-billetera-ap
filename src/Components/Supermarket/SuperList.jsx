@@ -88,6 +88,61 @@ export default function SuperList({ items = [], currentDate, isGlass, householdI
         });
     }, [items, currentMonthKey]);
 
+    // 2.5 LISTA DEL MES ANTERIOR (PARA COPIAR AL NUEVO MES)
+    const lastMonthItems = useMemo(() => {
+        if (!items || items.length === 0) return [];
+        // Buscar meses anteriores al actual
+        const pastMonths = [...new Set(items.map(i => i.month).filter(m => m && m < currentMonthKey))].sort().reverse();
+        if (pastMonths.length === 0) return [];
+        
+        const lastM = pastMonths[0]; // El mes más reciente con items
+        const pastItems = items.filter(i => i.month === lastM);
+        
+        // Evitar duplicados por nombre
+        const uniqueNames = new Set();
+        const toCopy = [];
+        for (const item of pastItems) {
+            const normalized = (item.name || '').trim().toLowerCase();
+            if (!uniqueNames.has(normalized)) {
+                uniqueNames.add(normalized);
+                toCopy.push(item);
+            }
+        }
+        return toCopy.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+    }, [items, currentMonthKey]);
+
+    const [isCopying, setIsCopying] = useState(false);
+
+    const handleCopyPreviousMonth = async () => {
+        if (!lastMonthItems.length || !auth.currentUser) return;
+        setIsCopying(true);
+        try {
+            const promises = lastMonthItems.map(item => {
+                return addDoc(collection(db, 'supermarket_items'), {
+                    name: item.name,
+                    price: item.price || 0, // Nico pidió mantener el último precio pagado
+                    quantity: item.quantity || 1, 
+                    checked: false, // Desmarcado tal cual lo pidió
+                    userId: auth.currentUser.uid,
+                    month: currentMonthKey,
+                    createdAt: new Date().toISOString(),
+                    ...(householdId && {
+                        householdId: householdId,
+                        ownerId: auth.currentUser.uid,
+                        isShared: true
+                    })
+                });
+            });
+            await Promise.all(promises);
+            showToast(`¡Lista copiada! (${promises.length} ítems)`);
+        } catch (error) { 
+            console.error(error); 
+            showToast("Error al copiar"); 
+        } finally {
+            setIsCopying(false);
+        }
+    };
+
     // 3. AUTO-SCROLL Y FOCO AL AGREGAR 🎯
     useEffect(() => {
         if (lastAddedId && itemsRefs.current[lastAddedId]) {
@@ -348,10 +403,27 @@ export default function SuperList({ items = [], currentDate, isGlass, householdI
                     })}
 
                     {monthlyList.length === 0 && (
-                        <div className={`text-center py-10 ${isGlass ? 'opacity-30' : 'opacity-50'}`}>
-                            <span className="text-4xl">🛒</span>
-                            <p className="text-sm font-bold mt-2">Lista vacía</p>
-                            <p className="text-xs">Agrega cosas para {currentDate.toLocaleString('es-AR', { month: 'long' })}</p>
+                        <div className={`text-center py-10 ${isGlass ? 'text-white' : 'text-gray-800'} animate-fade-in`}>
+                            <span className={`text-4xl block mb-4 ${isGlass ? 'opacity-50' : 'opacity-70'}`}>🛒</span>
+                            <p className={`text-lg font-bold ${isGlass ? 'opacity-90' : 'opacity-100'}`}>Carrito vacío</p>
+                            <p className={`text-sm mt-1 mb-6 ${isGlass ? 'text-white/60' : 'text-gray-500'}`}>Aún no hay compras para {currentDate.toLocaleString('es-AR', { month: 'long' })}</p>
+                            
+                            {lastMonthItems.length > 0 ? (
+                                <button 
+                                    onClick={handleCopyPreviousMonth}
+                                    disabled={isCopying}
+                                    className={`mx-auto flex items-center justify-center gap-2 px-6 py-3 rounded-full font-bold shadow-lg transition-all transform active:scale-95 ${isGlass ? 'bg-white text-purple-900 border border-white/20 hover:bg-gray-100' : 'bg-purple-600 text-white hover:bg-purple-700'}`}
+                                >
+                                    {isCopying ? (
+                                        <span className="animate-spin text-xl">⏳</span>
+                                    ) : (
+                                        <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" /></svg>
+                                    )}
+                                    {isCopying ? 'Armando carrito...' : `Traer ${lastMonthItems.length} ítems del último carrito`}
+                                </button>
+                            ) : (
+                                <p className={`text-xs ${isGlass ? 'text-white/50' : 'text-gray-400'}`}>Agregá cosas usando la barra de abajo</p>
+                            )}
                         </div>
                     )}
                 </div>
