@@ -115,8 +115,9 @@ export default function Stats({ transactions = [], cards = [], services = [], pr
 
         let total = 0;
         cards.forEach(c => {
-            if (c.adjustments?.[nextMonthKey] !== undefined) {
-                total += c.adjustments[nextMonthKey];
+            const manualNextValue = c.monthlyStatements?.[nextMonthKey]?.totalDue ?? c.adjustments?.[nextMonthKey];
+            if (manualNextValue !== undefined) {
+                total += manualNextValue;
             } else {
                 const cardDebt = transactions
                     .filter(t => t.cardId === c.id && t.type !== 'cash')
@@ -168,9 +169,11 @@ export default function Stats({ transactions = [], cards = [], services = [], pr
         return cards.map(c => {
             let debt = 0;
             let cardTransactions = [];
-            if (c.adjustments?.[currentMonthKey] !== undefined) {
-                debt = c.adjustments[currentMonthKey];
-                cardTransactions = [{ id: 'adj', description: 'Ajuste Manual', monthlyInstallment: debt, installments: 1, installmentCount: 1 }];
+            const manualDebt = c.monthlyStatements?.[currentMonthKey]?.totalDue ?? c.adjustments?.[currentMonthKey];
+            
+            if (manualDebt !== undefined) {
+                debt = manualDebt;
+                cardTransactions = [{ id: 'adj', description: 'Resumen Manual', monthlyInstallment: debt, installments: 1, installmentCount: 1 }];
             } else {
                 cardTransactions = monthlyTransactions.filter(t => t.cardId === c.id);
                 debt = cardTransactions.reduce((acc, t) => acc + t.displayAmount, 0);

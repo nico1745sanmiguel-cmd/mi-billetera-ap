@@ -46,7 +46,7 @@ const Home = memo(({ transactions, cards, supermarketItems = [], services = [], 
         const targetMonthVal = currentDate.getFullYear() * 12 + currentDate.getMonth();
 
         return cards.map(card => {
-            const manualAmount = card.adjustments?.[targetMonthKey];
+            const manualAmount = card.monthlyStatements?.[targetMonthKey]?.totalDue ?? card.adjustments?.[targetMonthKey];
             let debt = 0;
 
             if (manualAmount !== undefined) {
