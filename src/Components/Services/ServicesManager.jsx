@@ -47,7 +47,7 @@ export default function ServicesManager({ services = [], cards = [], transaction
         const targetMonthVal = currentDate.getFullYear() * 12 + currentDate.getMonth();
 
         return cards.map(c => {
-            const manualAmount = c.adjustments?.[currentMonthKey];
+            const manualAmount = c.monthlyStatements?.[currentMonthKey]?.totalDue ?? c.adjustments?.[currentMonthKey];
             let debt = 0;
             if (manualAmount !== undefined) {
                 debt = manualAmount;
@@ -152,7 +152,10 @@ export default function ServicesManager({ services = [], cards = [], transaction
         try {
             if (editingService && editingService.type === 'card') {
                 const cardRef = doc(db, 'cards', editingService.id);
-                await setDoc(cardRef, { adjustments: { [currentMonthKey]: Number(form.amount) } }, { merge: true });
+                await setDoc(cardRef, { 
+                    monthlyStatements: { [currentMonthKey]: { totalDue: Number(form.amount) } },
+                    adjustments: { [currentMonthKey]: Number(form.amount) } 
+                }, { merge: true });
             } else {
                 const data = {
                     name: form.name,
@@ -182,7 +185,10 @@ export default function ServicesManager({ services = [], cards = [], transaction
             if (window.confirm("¿Quitar ajuste manual?")) {
                 const { deleteField } = await import('firebase/firestore');
                 const cardRef = doc(db, 'cards', editingService.id);
-                await updateDoc(cardRef, { [`adjustments.${currentMonthKey}`]: deleteField() });
+                await updateDoc(cardRef, { 
+                    [`adjustments.${currentMonthKey}`]: deleteField(),
+                    [`monthlyStatements.${currentMonthKey}.totalDue`]: deleteField()
+                });
                 setIsModalOpen(false);
             }
             return;

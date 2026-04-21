@@ -42,8 +42,9 @@ export const useFinancialProjections = (transactions = [], cards = [], currentDa
 
             // Add manual adjustments from cards if any (legacy feature support)
             cards.forEach(card => {
-                if (card.adjustments?.[futureKey]) {
-                    existingDebt += Number(card.adjustments[futureKey]);
+                const manualNextValue = card.monthlyStatements?.[futureKey]?.totalDue ?? card.adjustments?.[futureKey];
+                if (manualNextValue !== undefined) {
+                    existingDebt += Number(manualNextValue);
                 }
             });
 
