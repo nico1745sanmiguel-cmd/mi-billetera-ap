@@ -7,7 +7,7 @@ import SkeletonDashboard from './Components/UI/SkeletonDashboard';
 import { auth } from './firebase';
 import { signOut } from 'firebase/auth';
 import { useFinancial } from './context/FinancialContext';
-import { Home, ChevronLeft, ChevronRight, Eye, EyeOff } from 'lucide-react';
+import { Home as HomeIcon, ChevronLeft, ChevronRight, Eye, EyeOff } from 'lucide-react';
 
 // --- LAZY IMPORTS ---
 const Stats = lazy(() => import('./Components/Dashboard/Stats'));
@@ -144,7 +144,7 @@ export default function App() {
         {/* HEADER MÓVIL */}
         <div className={`md:hidden px-4 py-3 shadow-sm sticky top-0 z-40 flex items-center justify-between gap-3 transition-colors duration-300 ${isGlass ? 'bg-[#0f0c29]/90 backdrop-blur-md text-white border-b border-white/5' : 'bg-white text-gray-800'}`}>
           <button onClick={() => setView('dashboard')} className={`p-2 rounded-xl transition-all active:scale-95 ${view === 'dashboard' ? (isGlass ? 'bg-white/20 text-white' : 'bg-blue-50 text-blue-600') : (isGlass ? 'bg-transparent text-white/60' : 'bg-gray-100 text-gray-500')}`}>
-            <Home size={24} />
+            <HomeIcon size={24} />
           </button>
 
           {/* SELECTOR DE MES */}
