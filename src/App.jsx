@@ -16,6 +16,7 @@ const ServicesManager = lazy(() => import('./Components/Services/ServicesManager
 const HomeGlass = lazy(() => import('./Components/Dashboard/HomeGlass'));
 const HouseholdManager = lazy(() => import('./Components/Household/HouseholdManager'));
 const ReconciliationDesk = lazy(() => import('./Components/Reconciliation/ReconciliationDesk'));
+const ReceiptScanner = lazy(() => import('./Components/ReceiptScanner/ReceiptScanner'));
 
 const ENABLE_HOUSEHOLD = true;
 
@@ -236,7 +237,9 @@ export default function App() {
 
             {view === 'purchase' && <NewPurchase cards={visibleCards} onSave={addTransaction} transactions={visibleTransactions} privacyMode={privacyMode} currentDate={currentDate} isGlass={isGlass} householdId={userData?.householdId} />}
 
-            {view === 'super' && <SuperList items={visibleSuperItems} currentDate={currentDate} isGlass={isGlass} householdId={userData?.householdId} />}
+            {view === 'super' && <SuperList items={visibleSuperItems} currentDate={currentDate} isGlass={isGlass} householdId={userData?.householdId} setView={setView} />}
+
+            {view === 'scanner' && <ReceiptScanner isGlass={isGlass} items={visibleSuperItems} onBack={() => setView('super')} />}
 
           </Suspense>
 

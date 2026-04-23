@@ -3,7 +3,7 @@ import { db, auth } from '../../firebase';
 import { collection, addDoc, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { formatMoney } from '../../utils';
 
-export default function SuperList({ items = [], currentDate, isGlass, householdId }) {
+export default function SuperList({ items = [], currentDate, isGlass, householdId, setView }) {
     const [newItem, setNewItem] = useState('');
 
     // ESTADO PARA ENFOCAR EL NUEVO ÍTEM AUTOMÁTICAMENTE
@@ -313,8 +313,19 @@ export default function SuperList({ items = [], currentDate, isGlass, householdI
             <div className={`sticky top-0 z-30 pt-2 pb-3 mb-2 transition-all shadow-sm -mx-4 px-6 border-b ${isGlass ? 'bg-[#0f0c29]/95 border-white/10 text-white backdrop-blur-md' : 'bg-[#f3f4f6]/95 border-gray-200/50 text-gray-800 backdrop-blur-sm'}`}>
                 <div className="flex justify-between items-end mb-2">
                     <div>
-                        <h2 className={`text-xl font-bold ${isGlass ? 'text-white' : 'text-gray-800'}`}>Supermercado</h2>
-                        <p className={`text-xs font-bold uppercase ${isGlass ? 'text-purple-300' : 'text-purple-600'}`}>Lista de {currentDate.toLocaleString('es-AR', { month: 'long' })}</p>
+                        <div className="flex items-center gap-3">
+                            <h2 className={`text-xl font-bold ${isGlass ? 'text-white' : 'text-gray-800'}`}>Supermercado</h2>
+                            {setView && (
+                                <button 
+                                    onClick={() => setView('scanner')}
+                                    className={`px-3 py-1 text-[10px] font-bold rounded-full uppercase tracking-wider flex items-center gap-1 transition-all active:scale-95 shadow-sm ${isGlass ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' : 'bg-purple-100 text-purple-700 border border-purple-200'}`}
+                                >
+                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path></svg>
+                                    Escanear
+                                </button>
+                            )}
+                        </div>
+                        <p className={`text-xs font-bold uppercase mt-1 ${isGlass ? 'text-purple-300' : 'text-purple-600'}`}>Lista de {currentDate.toLocaleString('es-AR', { month: 'long' })}</p>
                     </div>
                     <div className="text-right">
                         {/* Lógica Visual: Si hay algo checkeado es "En Carrito", si no es "Presupuesto" */}
