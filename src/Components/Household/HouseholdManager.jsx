@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Pencil, Wallet, CreditCard, ShoppingCart, Lightbulb } from 'lucide-react';
 import { db, auth } from '../../firebase';
 import { doc, getDoc, updateDoc, collection, query, where, getDocs, writeBatch } from 'firebase/firestore';
 import { checkAndMigrateToHousehold } from '../../utils/householdMigration';
@@ -203,7 +204,7 @@ const SalarySection = ({ memberIds, currentUserUid, isGlass }) => {
                                             {salary > 0 ? formatMoney(salary) : 'Cargar sueldo'}
                                         </p>
                                     </div>
-                                    <span className={`text-xs font-bold px-3 py-1 rounded-full transition-colors ${ isGlass ? 'bg-white/10 text-gray-300 group-hover:bg-indigo-500/30 group-hover:text-indigo-200' : 'bg-gray-100 text-gray-500 group-hover:bg-indigo-100 group-hover:text-indigo-600'}`}>✏️ Editar</span>
+                                    <span className={`text-xs font-bold px-3 py-1 rounded-full transition-colors flex items-center gap-1 ${ isGlass ? 'bg-white/10 text-gray-300 group-hover:bg-indigo-500/30 group-hover:text-indigo-200' : 'bg-gray-100 text-gray-500 group-hover:bg-indigo-100 group-hover:text-indigo-600'}`}><Pencil size={12} /> Editar</span>
                                 </button>
                             )
                         ) : (
@@ -475,7 +476,7 @@ export default function HouseholdManager({ user, householdId, onBack, isGlass })
                             <div className="mb-4">
                                 <h3 className={`text-lg font-bold flex items-center gap-2 mb-1 ${isGlass ? 'text-white' : 'text-gray-800'}`}>
                                     <span className="w-2 h-6 bg-green-500 rounded-full"></span>
-                                    💰 Sueldos del Hogar
+                                    <Wallet size={20} className="text-green-500" /> Sueldos del Hogar
                                 </h3>
                                 <p className={`text-xs ${isGlass ? 'text-gray-400' : 'text-gray-500'}`}>
                                     Usamos los sueldos para calcular cuánto aporta cada uno a los gastos compartidos.
@@ -501,19 +502,19 @@ export default function HouseholdManager({ user, householdId, onBack, isGlass })
 
                             <div className="space-y-4">
                                 <div className={`flex items-center justify-between p-3 rounded-2xl transition-colors ${isGlass ? 'bg-white/5 hover:bg-white/10' : 'bg-gray-50 hover:bg-gray-100 text-gray-700'}`}>
-                                    <span className="text-sm font-bold">💳 Mis Tarjetas y Gastos</span>
+                                    <span className="text-sm font-bold flex items-center gap-2"><CreditCard size={18} className="text-indigo-400" /> Mis Tarjetas y Gastos</span>
                                     <button onClick={() => handleToggleShare('shareCards')} className={`w-12 h-6 rounded-full p-1 transition-colors ${sharePreferences.shareCards ? 'bg-green-500' : 'bg-gray-400'}`}>
                                         <div className={`w-4 h-4 bg-white rounded-full shadow-md transform transition-transform ${sharePreferences.shareCards ? 'translate-x-6' : 'translate-x-0'}`} />
                                     </button>
                                 </div>
                                 <div className={`flex items-center justify-between p-3 rounded-2xl transition-colors ${isGlass ? 'bg-white/5 hover:bg-white/10' : 'bg-gray-50 hover:bg-gray-100 text-gray-700'}`}>
-                                    <span className="text-sm font-bold">🛒 Lista de Supermercado</span>
+                                    <span className="text-sm font-bold flex items-center gap-2"><ShoppingCart size={18} className="text-purple-400" /> Lista de Supermercado</span>
                                     <button onClick={() => handleToggleShare('shareSupermarket')} className={`w-12 h-6 rounded-full p-1 transition-colors ${sharePreferences.shareSupermarket ? 'bg-green-500' : 'bg-gray-400'}`}>
                                         <div className={`w-4 h-4 bg-white rounded-full shadow-md transform transition-transform ${sharePreferences.shareSupermarket ? 'translate-x-6' : 'translate-x-0'}`} />
                                     </button>
                                 </div>
                                 <div className={`flex items-center justify-between p-3 rounded-2xl transition-colors ${isGlass ? 'bg-white/5 hover:bg-white/10' : 'bg-gray-50 hover:bg-gray-100 text-gray-700'}`}>
-                                    <span className="text-sm font-bold">💡 Servicios y Fijos</span>
+                                    <span className="text-sm font-bold flex items-center gap-2"><Lightbulb size={18} className="text-yellow-400" /> Servicios y Fijos</span>
                                     <button onClick={() => handleToggleShare('shareServices')} className={`w-12 h-6 rounded-full p-1 transition-colors ${sharePreferences.shareServices ? 'bg-green-500' : 'bg-gray-400'}`}>
                                         <div className={`w-4 h-4 bg-white rounded-full shadow-md transform transition-transform ${sharePreferences.shareServices ? 'translate-x-6' : 'translate-x-0'}`} />
                                     </button>

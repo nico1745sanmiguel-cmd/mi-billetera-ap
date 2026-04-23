@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { db, auth } from '../../firebase';
 import { collection, addDoc, deleteDoc, doc, updateDoc } from 'firebase/firestore';
+import { ShoppingCart, Loader2, Camera, Check, Trash2, Copy, Plus } from 'lucide-react';
 import { formatMoney } from '../../utils';
 
 export default function SuperList({ items = [], currentDate, isGlass, householdId, setView }) {
@@ -320,7 +321,7 @@ export default function SuperList({ items = [], currentDate, isGlass, householdI
                                     onClick={() => setView('scanner')}
                                     className={`px-3 py-1 text-[10px] font-bold rounded-full uppercase tracking-wider flex items-center gap-1 transition-all active:scale-95 shadow-sm ${isGlass ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' : 'bg-purple-100 text-purple-700 border border-purple-200'}`}
                                 >
-                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path></svg>
+                                    <Camera size={12} />
                                     Escanear
                                 </button>
                             )}
@@ -366,7 +367,7 @@ export default function SuperList({ items = [], currentDate, isGlass, householdI
                                 {/* FILA 1: Check, Nombre, Subtotal */}
                                 <div className="flex items-center gap-3 mb-3">
                                     <div onClick={() => handleToggle(item)} className={`w-6 h-6 rounded-xl border-2 flex-shrink-0 flex items-center justify-center cursor-pointer transition-colors ${item.checked ? 'bg-purple-500 border-purple-500' : (isGlass ? 'border-white/20 bg-transparent' : 'border-gray-300 bg-white')}`}>
-                                        {item.checked && <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                                        {item.checked && <Check size={16} className="text-white" strokeWidth={3} />}
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <p className={`font-bold text-sm truncate ${item.checked ? 'line-through decoration-purple-400' : ''} ${isGlass ? 'text-white' : 'text-gray-800'}`}>{item.name}</p>
@@ -386,7 +387,7 @@ export default function SuperList({ items = [], currentDate, isGlass, householdI
                                     )}
                                 </div>
                                 <button onClick={() => handleDelete(item.id)} className={`p-1 ${isGlass ? 'text-white/20 hover:text-red-400' : 'text-gray-300 hover:text-red-500'}`}>
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                    <Trash2 size={16} />
                                 </button>
 
                                 <div className="flex gap-3 pl-9">
@@ -415,7 +416,7 @@ export default function SuperList({ items = [], currentDate, isGlass, householdI
 
                     {monthlyList.length === 0 && (
                         <div className={`text-center py-10 ${isGlass ? 'text-white' : 'text-gray-800'} animate-fade-in`}>
-                            <span className={`text-4xl block mb-4 ${isGlass ? 'opacity-50' : 'opacity-70'}`}>🛒</span>
+                            <ShoppingCart size={48} className={`mx-auto mb-4 ${isGlass ? 'opacity-50' : 'opacity-70'}`} />
                             <p className={`text-lg font-bold ${isGlass ? 'opacity-90' : 'opacity-100'}`}>Carrito vacío</p>
                             <p className={`text-sm mt-1 mb-6 ${isGlass ? 'text-white/60' : 'text-gray-500'}`}>Aún no hay compras para {currentDate.toLocaleString('es-AR', { month: 'long' })}</p>
                             
@@ -426,9 +427,9 @@ export default function SuperList({ items = [], currentDate, isGlass, householdI
                                     className={`mx-auto flex items-center justify-center gap-2 px-6 py-3 rounded-full font-bold shadow-lg transition-all transform active:scale-95 ${isGlass ? 'bg-white text-purple-900 border border-white/20 hover:bg-gray-100' : 'bg-purple-600 text-white hover:bg-purple-700'}`}
                                 >
                                     {isCopying ? (
-                                        <span className="animate-spin text-xl">⏳</span>
+                                        <Loader2 size={20} className="animate-spin flex-shrink-0" />
                                     ) : (
-                                        <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" /></svg>
+                                        <Copy size={20} className="flex-shrink-0" />
                                     )}
                                     {isCopying ? 'Armando carrito...' : `Traer ${lastMonthItems.length} ítems del último carrito`}
                                 </button>
@@ -478,7 +479,7 @@ export default function SuperList({ items = [], currentDate, isGlass, householdI
                         disabled={!newItem}
                         className="bg-purple-600 text-white w-12 h-12 rounded-[24px] flex items-center justify-center shadow-lg shadow-purple-200 active:scale-95 disabled:opacity-50 transition-all flex-shrink-0"
                     >
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                        <Plus size={24} />
                     </button>
                 </form>
             </div >

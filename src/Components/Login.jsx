@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { auth, googleProvider } from '../firebase';
 import { signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
+import { CreditCard, AlertTriangle } from 'lucide-react';
 import GlassCard from './UI/GlassCard';
 
 export default function Login() {
@@ -58,7 +59,7 @@ export default function Login() {
         {/* Encabezado */}
         <div className="text-center mb-10">
           <div className="w-20 h-20 bg-gradient-to-tr from-white/10 to-white/5 rounded-full flex items-center justify-center mx-auto mb-5 border border-white/20 shadow-inner backdrop-blur-md">
-            <span className="text-4xl filter drop-shadow no-select">💳</span>
+            <CreditCard className="text-white drop-shadow" size={40} strokeWidth={1.5} />
           </div>
           <h1 className="text-3xl font-bold text-white tracking-tight drop-shadow-lg">Mi Billetera</h1>
           <p className="text-white/60 text-sm mt-2 font-medium tracking-wide">Tu control financiero personal</p>
@@ -66,8 +67,8 @@ export default function Login() {
 
         {/* --- MOSTRAR ERROR SI EXISTE --- */}
         {error && (
-          <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-xl text-red-200 text-xs font-bold text-center break-words backdrop-blur-md animate-pulse">
-            ⚠️ {error}
+          <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-xl text-red-200 text-xs font-bold text-center break-words backdrop-blur-md animate-pulse flex items-center justify-center gap-2">
+            <AlertTriangle size={16} /> {error}
           </div>
         )}
 

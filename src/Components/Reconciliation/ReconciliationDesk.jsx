@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { ChevronLeft, Loader2, UploadCloud, Check } from 'lucide-react';
 import { parseBankText } from '../../utils/bankParser';
 import { extractTextFromPDF } from '../../utils/pdfParser';
 import { useAliases } from '../../hooks/useAliases';
@@ -142,7 +143,7 @@ const ReconciliationDesk = ({
             {/* HEADER */}
             <div className="flex items-center mb-6">
                 <button onClick={onBack} className="mr-4 p-2 rounded-full hover:bg-white/10">
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+                    <ChevronLeft size={24} />
                 </button>
                 <h1 className="text-2xl font-bold">Conciliación Inteligente</h1>
             </div>
@@ -159,9 +160,9 @@ const ReconciliationDesk = ({
                     <div className="text-center mb-6 pointer-events-none">
                         <div className="w-16 h-16 mx-auto bg-blue-500/20 text-blue-300 rounded-full flex items-center justify-center mb-3">
                             {isProcessing ? (
-                                <svg className="w-8 h-8 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                <Loader2 className="w-8 h-8 animate-spin" />
                             ) : (
-                                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
+                                <UploadCloud className="w-8 h-8" />
                             )}
                         </div>
                         <p className="text-lg font-bold">Arrastrá tu PDF acá</p>
@@ -209,7 +210,7 @@ const ReconciliationDesk = ({
                             {/* FILA INFERIOR: ACCIÓN SUGERIDA */}
                             {item.status === 'matched' && (
                                 <div className="bg-green-500/20 text-green-400 p-2 rounded-lg text-sm flex items-center gap-2">
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                                    <Check size={16} />
                                     <span>Ya está cargado (posible coincidencia)</span>
                                 </div>
                             )}
@@ -261,11 +262,11 @@ const ReconciliationDesk = ({
                                             }}
                                         >
                                             <option value="">Categoría</option>
-                                            <option value="supermercado">🛒 Super</option>
-                                            <option value="comida">🍔 Comida</option>
-                                            <option value="transporte">🚕 Taxi/Uber</option>
-                                            <option value="servicios">💡 Servicios</option>
-                                            <option value="varios">📦 Varios</option>
+                                            <option value="supermercado">Super</option>
+                                            <option value="comida">Comida</option>
+                                            <option value="transporte">Taxi/Uber</option>
+                                            <option value="servicios">Servicios</option>
+                                            <option value="varios">Varios</option>
                                         </select>
                                     </div>
 

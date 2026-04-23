@@ -1,4 +1,5 @@
 import React, { memo } from 'react';
+import { CreditCard, CalendarDays, User, ExternalLink, Plus, ShoppingCart } from 'lucide-react';
 import GlassCard from '../UI/GlassCard';
 import { formatMoney } from '../../utils';
 
@@ -62,7 +63,7 @@ export const CardsWidget = memo(({ cardsWithDebt, handleEditCard, handleNewCard,
     return (
         <div>
             <div className="flex justify-between items-center px-2 mb-3 text-white">
-                <h3 className="font-bold text-sm flex items-center gap-2 drop-shadow-sm">💳 Tus Tarjetas</h3>
+                <h3 className="font-bold text-sm flex items-center gap-2 drop-shadow-sm"><CreditCard size={18} /> Tus Tarjetas</h3>
             </div>
             <div className="flex overflow-x-auto gap-4 pb-4 px-2 snap-x snap-mandatory hide-scrollbar">
                 {cardsWithDebt.map((card) => {
@@ -118,7 +119,7 @@ export const CardsWidget = memo(({ cardsWithDebt, handleEditCard, handleNewCard,
                                     )}
                                 </div>
                                 <button className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-white/70 hover:text-white transition-colors backdrop-blur-md border border-white/5 opacity-0 group-hover:opacity-100" onClick={(e) => { e.stopPropagation(); handleEditCard(card); }}>
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                                    <ExternalLink size={16} />
                                 </button>
                             </div>
                         </div>
@@ -131,7 +132,7 @@ export const CardsWidget = memo(({ cardsWithDebt, handleEditCard, handleNewCard,
                     className="flex-shrink-0 w-[85%] max-w-[280px] h-48 rounded-[30px] border-2 border-dashed border-white/10 flex flex-col items-center justify-center gap-3 text-white/30 hover:text-white/60 hover:border-white/30 hover:bg-white/5 transition-all snap-center active:scale-95"
                 >
                     <div className="w-12 h-12 rounded-full border border-current flex items-center justify-center">
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                        <Plus size={24} />
                     </div>
                     <span className="text-sm font-medium uppercase tracking-widest">Nueva Tarjeta</span>
                 </button>
@@ -143,7 +144,7 @@ export const CardsWidget = memo(({ cardsWithDebt, handleEditCard, handleNewCard,
 export const AgendaWidget = memo(({ agenda, setView, privacyMode, householdId }) => (
     <div className="bg-white/5 backdrop-blur-md rounded-3xl border border-white/10 p-5 mx-1">
         <div className="flex justify-between items-center mb-4">
-            <h3 className="font-medium text-white text-sm">📅 Próximos Vencimientos</h3>
+            <h3 className="font-medium text-white text-sm flex items-center gap-2"><CalendarDays size={18} /> Próximos Vencimientos</h3>
             <button onClick={() => setView('services_manager')} className="text-xs font-bold text-white/50 hover:text-white uppercase tracking-wider transition-colors">Ver Todo</button>
         </div>
         {agenda.map((item) => (
@@ -155,7 +156,7 @@ export const AgendaWidget = memo(({ agenda, setView, privacyMode, householdId })
                     <div>
                         <div className="flex items-center gap-2">
                             <p className="font-medium text-white text-sm">{item.name}</p>
-                            {householdId && item.isShared === false && <span className="text-[8px] px-1.5 py-0.5 rounded font-bold border bg-gray-500/20 text-gray-300 border-gray-500/30">👤 Privado</span>}
+                            {householdId && item.isShared === false && <span className="text-[8px] px-1.5 py-0.5 rounded font-bold border flex items-center gap-1 bg-gray-500/20 text-gray-300 border-gray-500/30"><User size={10} /> Privado</span>}
                         </div>
                         <p className="text-xs text-white/50">{item.type === 'card' ? 'Tarjeta' : 'Servicio'}</p>
                     </div>
@@ -170,7 +171,7 @@ export const SuperActionsWidget = memo(({ superData, setView, privacyMode }) => 
     <div className="grid grid-cols-2 gap-3 mx-1">
         <button onClick={() => setView('super')} className="bg-white/5 p-4 rounded-[24px] border border-white/10 backdrop-blur-md flex flex-col justify-between h-32 active:scale-95 transition-all text-left group hover:bg-white/10">
             <div className="bg-purple-500/20 text-purple-200 border border-purple-500/30 w-fit p-2.5 rounded-xl group-hover:scale-110 transition-transform">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                <ShoppingCart size={24} />
             </div>
             <div>
                 <p className="text-xs text-white/50 font-bold uppercase mb-0.5">{superData.label || 'Supermercado'}</p>
@@ -180,7 +181,7 @@ export const SuperActionsWidget = memo(({ superData, setView, privacyMode }) => 
 
         <button onClick={() => setView('purchase')} className="bg-white/10 p-4 rounded-[24px] border border-white/20 backdrop-blur-xl shadow-lg flex flex-col justify-between h-32 active:scale-95 transition-all text-left group hover:bg-white/20">
             <div className="bg-white/20 w-fit p-2.5 rounded-xl text-white border border-white/10 group-hover:scale-110 transition-transform">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                <Plus size={24} />
             </div>
             <div>
                 <p className="text-xs text-white/50 font-bold uppercase mb-0.5">Nuevo Gasto</p>

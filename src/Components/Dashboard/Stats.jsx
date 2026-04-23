@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { ShoppingCart, Stethoscope, Utensils, CarFront, Lightbulb, ShoppingBag, Home, BookOpen, Package, BarChart3, CreditCard, Banknote, CalendarDays, ChevronDown } from 'lucide-react';
 import { formatMoney } from '../../utils';
 import { db } from '../../firebase';
 import { doc, deleteDoc } from 'firebase/firestore';
@@ -16,15 +17,15 @@ const CAT_LABELS = {
 };
 
 const CAT_ICONS = {
-    'supermarket': '🛒',
-    'health': '🩺',
-    'food': '🍔',
-    'transport': '🚕',
-    'services': '💡',
-    'shopping': '🛍️',
-    'home': '🏠',
-    'education': '📚',
-    'varios': '📦'
+    'supermarket': ShoppingCart,
+    'health': Stethoscope,
+    'food': Utensils,
+    'transport': CarFront,
+    'services': Lightbulb,
+    'shopping': ShoppingBag,
+    'home': Home,
+    'education': BookOpen,
+    'varios': Package
 };
 
 // Componente simple de Gráfico de Donas SVG
@@ -147,10 +148,13 @@ export default function Stats({ transactions = [], cards = [], services = [], pr
         });
 
         return Object.entries(groups)
-            .map(([key, amount]) => ({
-                key, label: CAT_LABELS[key] || key, icon: CAT_ICONS[key] || '📦', amount,
-                percent: totalMonthSpent > 0 ? (amount / totalMonthSpent) * 100 : 0
-            }))
+            .map(([key, amount]) => {
+                const Icon = CAT_ICONS[key] || Package;
+                return {
+                    key, label: CAT_LABELS[key] || key, Icon, amount,
+                    percent: totalMonthSpent > 0 ? (amount / totalMonthSpent) * 100 : 0
+                };
+            })
             .sort((a, b) => b.amount - a.amount)
             .slice(0, 5);
     }, [monthlyTransactions, totalMonthSpent]);
@@ -215,7 +219,7 @@ export default function Stats({ transactions = [], cards = [], services = [], pr
                 <div className={`p-5 rounded-[28px] border shadow-sm flex flex-col justify-between h-32 ${glassClass}`}>
                     <div className="flex items-start justify-between">
                         <div className={`p-2 rounded-xl ${isGlass ? 'bg-white/10' : 'bg-orange-50 text-orange-500'}`}>
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                            <Banknote size={20} />
                         </div>
                     </div>
                     <div>
@@ -228,7 +232,7 @@ export default function Stats({ transactions = [], cards = [], services = [], pr
                     <div className="absolute top-0 right-0 w-20 h-20 bg-indigo-500 rounded-full blur-[40px] opacity-10"></div>
                     <div className="flex items-start justify-between relative z-10">
                         <div className={`p-2 rounded-xl ${isGlass ? 'bg-white/10' : 'bg-indigo-50 text-indigo-500'}`}>
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                            <CalendarDays size={20} />
                         </div>
                     </div>
                     <div className="relative z-10">
@@ -242,7 +246,7 @@ export default function Stats({ transactions = [], cards = [], services = [], pr
             <div className={`p-6 rounded-[30px] shadow-sm border flex items-center gap-6 ${glassClass}`}>
                 <div className="flex-1">
                     <h3 className={`font-bold text-sm mb-4 flex items-center gap-2 ${glassTextPrimary}`}>
-                        💡 Gastos Fijos
+                        <Lightbulb size={18} className={isGlass ? "text-yellow-300" : "text-yellow-500"} /> Gastos Fijos
                     </h3>
                     <div className="space-y-2">
                         {fixedExpensesData.slice(0, 4).map((item, idx) => (
@@ -265,7 +269,9 @@ export default function Stats({ transactions = [], cards = [], services = [], pr
             {/* 3. TOP CATEGORÍAS (Toggle List/Map) */}
             <div className={`p-6 rounded-[30px] shadow-sm border ${glassClass}`}>
                 <div className="flex justify-between items-center mb-6">
-                    <h3 className={`font-bold text-sm flex items-center gap-2 ${glassTextPrimary}`}>📊 Top Categorías</h3>
+                    <h3 className={`font-bold text-sm flex items-center gap-2 ${glassTextPrimary}`}>
+                        <BarChart3 size={18} className={isGlass ? "text-indigo-300" : "text-indigo-500"} /> Top Categorías
+                    </h3>
                     <div className={`flex rounded-lg p-0.5 ${isGlass ? 'bg-white/10' : 'bg-gray-100'}`}>
                         <button onClick={() => setCategoryView('list')} className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${categoryView === 'list' ? (isGlass ? 'bg-white/20 text-white shadow' : 'bg-white shadow text-indigo-600') : (isGlass ? 'text-white/40' : 'text-gray-400')}`}>Lista</button>
                         <button onClick={() => setCategoryView('map')} className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${categoryView === 'map' ? (isGlass ? 'bg-white/20 text-white shadow' : 'bg-white shadow text-indigo-600') : (isGlass ? 'text-white/40' : 'text-gray-400')}`}>Mapa</button>
@@ -278,7 +284,7 @@ export default function Stats({ transactions = [], cards = [], services = [], pr
                             <div key={cat.key}>
                                 <div className="flex justify-between items-center mb-2">
                                     <div className="flex items-center gap-3">
-                                        <span className="text-xl">{cat.icon}</span>
+                                        <span className={`flex items-center ${isGlass ? "text-indigo-300" : "text-indigo-500"}`}><cat.Icon size={20} /></span>
                                         <span className={`text-sm font-bold ${glassTextPrimary}`}>{cat.label}</span>
                                     </div>
                                     <span className={`font-mono font-bold text-sm ${glassTextPrimary}`}>{showMoney(cat.amount)}</span>
@@ -310,7 +316,7 @@ export default function Stats({ transactions = [], cards = [], services = [], pr
                             return (
                                 <div key={cat.key} className={`${spanClass} rounded-2xl ${colorClass} p-3 relative overflow-hidden shadow-sm flex flex-col justify-between group transition-transform active:scale-95`}>
                                     {/* Background Icon */}
-                                    <span className="absolute -bottom-2 -right-2 text-4xl opacity-20 grayscale">{cat.icon}</span>
+                                    <span className="absolute -bottom-2 -right-2 opacity-20"><cat.Icon size={48} strokeWidth={1.5} /></span>
 
                                     <div className="relative z-10 flex justify-between items-start">
                                         <span className="text-[10px] font-bold text-white/90 uppercase truncate max-w-[80%]">{cat.label}</span>
@@ -331,7 +337,9 @@ export default function Stats({ transactions = [], cards = [], services = [], pr
             <div className={`p-6 rounded-[30px] shadow-sm border ${glassClass}`}>
                 <div className="flex justify-between items-end mb-6">
                     <div>
-                        <h3 className={`font-bold text-sm mb-1 flex items-center gap-2 ${glassTextPrimary}`}>💳 Tarjetas de Crédito</h3>
+                        <h3 className={`font-bold text-sm mb-1 flex items-center gap-2 ${glassTextPrimary}`}>
+                            <CreditCard size={18} className={isGlass ? "text-blue-300" : "text-blue-500"} /> Tarjetas de Crédito
+                        </h3>
                         <p className={`text-[10px] ${glassTextSecondary}`}>Toca para ver detalle</p>
                     </div>
                     <div className="text-right">
@@ -362,7 +370,7 @@ export default function Stats({ transactions = [], cards = [], services = [], pr
                                     </div>
                                     <div className="text-right">
                                         <p className={`font-mono font-bold text-sm ${glassTextPrimary}`}>{showMoney(card.currentMonthDebt)}</p>
-                                        <p className={`text-[9px] transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''} ${glassTextSecondary}`}>▼</p>
+                                        <ChevronDown size={14} className={`inline-block transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''} ${glassTextSecondary}`} />
                                     </div>
                                 </div>
 

@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { db, auth } from '../../firebase';
 import { collection, addDoc, deleteDoc, doc, updateDoc, setDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { Star, Pencil, CalendarDays, User } from 'lucide-react';
 import { formatMoney, formatInputNumber, parseInputNumber } from '../../utils';
 
 export default function ServicesManager({ services = [], cards = [], transactions = [], currentDate, privacyMode, isGlass, householdId }) {
@@ -224,7 +225,7 @@ export default function ServicesManager({ services = [], cards = [], transaction
                     {weeklyData.map((week, idx) => (
                         <div key={idx} className="flex-1 flex flex-col items-center gap-3 group relative h-full justify-end">
                             <div className={`absolute -top-10 transition-all duration-300 transform ${week.total > 0 ? 'opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0' : 'hidden'}`}><div className="bg-white text-gray-900 text-[10px] font-bold px-2 py-1 rounded shadow-lg whitespace-nowrap">{showMoney(week.paid)} / {showMoney(week.total)}</div><div className="w-2 h-2 bg-white rotate-45 mx-auto -mt-1"></div></div>
-                            {week.percentFilled >= 100 && week.total > 0 && <div className="absolute -top-8 animate-bounce z-20 drop-shadow-[0_0_10px_rgba(255,215,0,0.6)]"><span className="text-xl">⭐</span></div>}
+                            {week.percentFilled >= 100 && week.total > 0 && <div className="absolute -top-8 animate-bounce z-20 drop-shadow-[0_0_10px_rgba(255,215,0,0.6)]"><Star size={20} className="text-yellow-400 fill-current" /></div>}
                             <div className="w-full bg-gray-800/50 rounded-t-lg relative flex items-end overflow-hidden transition-all duration-500" style={{ height: `${week.heightTotal}%` }}><div className={`w-full transition-all duration-1000 ease-out relative ${week.percentFilled >= 100 ? 'bg-green-400 shadow-[0_0_20px_rgba(74,222,128,0.4)]' : 'bg-green-500/80'}`} style={{ height: `${week.percentFilled}%` }}><div className="absolute top-0 left-0 right-0 h-[1px] bg-white/50"></div></div></div>
                             <span className={`text-[10px] font-bold uppercase tracking-wider transition-colors ${week.percentFilled >= 100 && week.total > 0 ? 'text-green-400' : 'text-gray-500'}`}>{week.label}</span>
                         </div>
@@ -265,10 +266,10 @@ export default function ServicesManager({ services = [], cards = [], transaction
                                             </p>
 
                                             {/* ETIQUETA: Identificador de Privado */}
-                                            {householdId && item.isShared === false && <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold border ${isGlass ? 'bg-gray-500/20 text-gray-300 border-gray-500/30' : 'bg-gray-100 text-gray-700 border-gray-300'}`}>👤 Privado</span>}
+                                            {householdId && item.isShared === false && <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold border flex items-center gap-1 ${isGlass ? 'bg-gray-500/20 text-gray-300 border-gray-500/30' : 'bg-gray-100 text-gray-700 border-gray-300'}`}><User size={10} /> Privado</span>}
 
                                             {/* ETIQUETA: Si es tarjeta, solo mostramos el ícono de edición manual si aplica, pero ya no repetimos el banco si es redundante */}
-                                            {item.type === 'card' && item.isManual && <span className="text-[9px] px-1.5 py-0.5 rounded font-bold border bg-yellow-100 text-yellow-700 border-yellow-200">Ajustado ✎</span>}
+                                            {item.type === 'card' && item.isManual && <span className="text-[9px] px-1.5 py-0.5 rounded font-bold border bg-yellow-100 text-yellow-700 border-yellow-200 flex items-center gap-1">Ajustado <Pencil size={10} /></span>}
 
                                             {!item.isPaid && (
                                                 <button onClick={(e) => { e.stopPropagation(); openModal(item); }} className={`p-1 rounded-full transition-colors opacity-0 group-hover:opacity-100 ${isGlass ? 'text-white/30 hover:text-blue-300 hover:bg-white/10' : 'text-gray-300 hover:text-blue-500 hover:bg-blue-50'}`}>
@@ -296,7 +297,7 @@ export default function ServicesManager({ services = [], cards = [], transaction
                         </div>
                     );
                 })}
-                {allItems.length === 0 && <div className={`flex flex-col items-center justify-center p-10 text-center border-2 border-dashed rounded-[30px] ${isGlass ? 'border-white/10 bg-white/5' : 'border-gray-200 bg-gray-50'}`}><div className="text-4xl mb-2">📅</div><p className={`text-sm font-medium ${isGlass ? 'text-white/40' : 'text-gray-400'}`}>Nada pendiente para {currentDate.toLocaleString('es-AR', { month: 'long' })}.</p></div>}
+                {allItems.length === 0 && <div className={`flex flex-col items-center justify-center p-10 text-center border-2 border-dashed rounded-[30px] ${isGlass ? 'border-white/10 bg-white/5' : 'border-gray-200 bg-gray-50'}`}><CalendarDays size={40} className="mb-2 opacity-50 mx-auto" /><p className={`text-sm font-medium ${isGlass ? 'text-white/40' : 'text-gray-400'}`}>Nada pendiente para {currentDate.toLocaleString('es-AR', { month: 'long' })}.</p></div>}
             </div>
 
             {/* MODAL */}

@@ -1,4 +1,5 @@
 import React, { useMemo, useEffect, useState, memo } from 'react';
+import { Scale, Wallet, CreditCard, CalendarDays, PartyPopper, ExternalLink, Plus, ShoppingCart, Receipt, Users, LogOut, AlertCircle, BarChart3, Moon } from 'lucide-react';
 import { formatMoney } from '../../utils';
 import FinancialTarget from './FinancialTarget';
 import CardDetailModal from '../Cards/CardDetailModal';
@@ -180,11 +181,11 @@ const Home = memo(({ transactions, cards, supermarketItems = [], services = [], 
                 {/* Header */}
                 <div className="px-5 py-4 border-b border-gray-50 flex justify-between items-center bg-gradient-to-r from-emerald-50 to-teal-50">
                     <div>
-                        <h3 className="font-bold text-gray-800 text-sm">⚖️ Reparto del Mes</h3>
+                        <h3 className="font-bold text-gray-800 text-sm flex items-center gap-2"><Scale size={18} className="text-emerald-600" /> Reparto del Mes</h3>
                         <p className="text-[10px] text-gray-400 font-medium capitalize">{currentDate.toLocaleString('es-AR', { month: 'long', year: 'numeric' })}</p>
                     </div>
                     <button onClick={() => setView('household')} className="text-[10px] font-bold text-emerald-600 bg-emerald-50 hover:bg-emerald-100 px-2 py-1 rounded-full transition-colors">
-                        ✏️ Sueldos
+                        Sueldos
                     </button>
                 </div>
 
@@ -229,7 +230,7 @@ const Home = memo(({ transactions, cards, supermarketItems = [], services = [], 
                 ) : (
                     // Estado: falta cargar sueldos
                     <div className="p-5 text-center">
-                        <p className="text-2xl mb-2">💰</p>
+                        <div className="flex justify-center mb-2"><Wallet size={32} className="text-yellow-500 drop-shadow-sm" /></div>
                         <p className="text-sm font-bold text-gray-700 mb-1">Cargá los sueldos para ver el reparto</p>
                         <p className="text-xs text-gray-400 mb-3">Cada uno tiene que ingresar su sueldo mensual neto para que podamos calcular cuánto le corresponde de cada gasto compartido.</p>
                         <button onClick={() => setView('household')} className="text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded-xl transition-colors">
@@ -244,7 +245,7 @@ const Home = memo(({ transactions, cards, supermarketItems = [], services = [], 
         cards: (
             <div>
                 <div className="flex justify-between items-center px-2 mb-3">
-                    <h3 className="font-bold text-gray-800 text-sm flex items-center gap-2">💳 Tus Tarjetas <span className="text-[9px] bg-gray-100 px-1.5 rounded text-gray-400 font-normal">Desliza</span></h3>
+                    <h3 className="font-bold text-gray-800 text-sm flex items-center gap-2"><CreditCard size={18} /> Tus Tarjetas <span className="text-[9px] bg-gray-100 px-1.5 rounded text-gray-400 font-normal">Desliza</span></h3>
                 </div>
 
                 <div className="flex overflow-x-auto gap-3 pb-8 px-2 snap-x snap-mandatory hide-scrollbar">
@@ -285,7 +286,7 @@ const Home = memo(({ transactions, cards, supermarketItems = [], services = [], 
                                         <p className="font-mono text-2xl font-bold tracking-tight text-shadow-sm">{card.monthlyStatements?.[targetMonthKey] ? showMoney(card.monthlyStatements[targetMonthKey].totalDue) : <span className="text-sm opacity-60">Sin resumen</span>}</p>
                                     </div>
                                     <button className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-white/70 hover:text-white transition-colors backdrop-blur-md opacity-0 group-hover:opacity-100" onClick={(e) => { e.stopPropagation(); openCardModal(card); }}>
-                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                                        <ExternalLink size={16} />
                                     </button>
                                 </div>
                             </div>
@@ -295,7 +296,7 @@ const Home = memo(({ transactions, cards, supermarketItems = [], services = [], 
                     {/* Add New Card Placeholder */}
                     <div onClick={() => openCardModal(null)} className="flex-shrink-0 w-[85%] max-w-[280px] h-48 rounded-[30px] border-2 border-dashed border-gray-300 flex flex-col items-center justify-center gap-3 cursor-pointer hover:bg-white hover:border-gray-400 active:scale-95 transition-all snap-center group">
                         <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 group-hover:bg-gray-200 group-hover:text-gray-600 transition-colors">
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                            <Plus size={24} />
                         </div>
                         <span className="text-gray-400 font-bold text-sm group-hover:text-gray-600">Agregar Tarjeta</span>
                     </div>
@@ -306,7 +307,7 @@ const Home = memo(({ transactions, cards, supermarketItems = [], services = [], 
         agenda: (
             <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden mx-1">
                 <div className="px-5 py-4 border-b border-gray-50 flex justify-between items-center bg-gray-50/50 cursor-pointer" onClick={() => setView('services_manager')}>
-                    <h3 className="font-bold text-gray-800 text-sm">📅 Agenda {currentDate.toLocaleString('es-AR', { month: 'long' })}</h3>
+                    <h3 className="font-bold text-gray-800 text-sm flex items-center gap-2"><CalendarDays size={18} /> Agenda {currentDate.toLocaleString('es-AR', { month: 'long' })}</h3>
                     <span className="text-xs font-bold text-gray-400">Ver todo →</span>
                 </div>
                 <div>
@@ -319,7 +320,7 @@ const Home = memo(({ transactions, cards, supermarketItems = [], services = [], 
                             <p className="font-mono font-bold text-gray-800">{showMoney(item.amount)}</p>
                         </div>
                     ))}
-                    {agenda.length === 0 && <div className="p-6 text-center text-gray-400"><p className="text-xs">🎉 Nada pendiente este mes</p></div>}
+                    {agenda.length === 0 && <div className="p-6 text-center text-gray-400"><p className="text-xs flex items-center justify-center gap-1"><PartyPopper size={16} /> Nada pendiente este mes</p></div>}
                 </div>
             </div>
         ),
@@ -329,7 +330,7 @@ const Home = memo(({ transactions, cards, supermarketItems = [], services = [], 
                 <div onClick={() => setView('super')} className="bg-white p-4 rounded-[24px] border border-gray-100 shadow-sm cursor-pointer hover:border-purple-200 transition-colors group flex flex-col justify-between h-32">
                     <div className="flex justify-between items-start">
                         <div className="bg-purple-50 text-purple-600 p-2.5 rounded-xl">
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                            <ShoppingCart size={24} />
                         </div>
                         {superData.percent > 0 && <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-green-100 text-green-700">{Math.round(superData.percent)}%</span>}
                     </div>
@@ -341,7 +342,7 @@ const Home = memo(({ transactions, cards, supermarketItems = [], services = [], 
 
                 <div onClick={() => setView('purchase')} className="bg-gray-900 p-4 rounded-[24px] shadow-lg cursor-pointer active:scale-95 transition-all flex flex-col justify-between group h-32">
                     <div className="bg-gray-700 w-fit p-2.5 rounded-xl text-white group-hover:bg-gray-600 transition-colors">
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                        <Plus size={24} />
                     </div>
                     <div>
                         <p className="text-xs text-gray-400 font-bold uppercase mb-0.5">Acción Rápida</p>
@@ -364,20 +365,20 @@ const Home = memo(({ transactions, cards, supermarketItems = [], services = [], 
                 </div>
                 <div className="flex items-center gap-2">
                     <button onClick={() => setView('reconcile')} className="bg-green-50 text-green-600 p-2 rounded-full hover:bg-green-100 transition-colors" title="Conciliar Consumos">
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /></svg>
+                        <Receipt size={20} />
                     </button>
                     <button onClick={() => setView('household')} className="bg-blue-50 text-blue-500 p-2 rounded-full hover:bg-blue-100 transition-colors">
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                        <Users size={20} />
                     </button>
                     <button onClick={onLogout} className="bg-gray-50 text-gray-400 p-2 rounded-full hover:bg-red-50 hover:text-red-500 transition-colors">
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                        <LogOut size={20} />
                     </button>
                 </div>
             </div>
 
             {criticalAlert.active && (
                 <div className="bg-red-50 border border-red-100 p-4 rounded-xl flex items-center justify-between mx-1 animate-pulse">
-                    <div className="flex items-center gap-3"><div className="bg-red-100 p-2 rounded-full text-red-600"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg></div><div><p className="text-sm font-bold text-red-800">{criticalAlert.msg}</p><p className="text-xs text-red-600 font-medium cursor-pointer underline" onClick={() => setView('services_manager')}>Ir a pagar ahora</p></div></div><p className="font-bold text-red-800">{showMoney(criticalAlert.amount)}</p>
+                    <div className="flex items-center gap-3"><div className="bg-red-100 p-2 rounded-full text-red-600"><AlertCircle size={20} /></div><div><p className="text-sm font-bold text-red-800">{criticalAlert.msg}</p><p className="text-xs text-red-600 font-medium cursor-pointer underline" onClick={() => setView('services_manager')}>Ir a pagar ahora</p></div></div><p className="font-bold text-red-800">{showMoney(criticalAlert.amount)}</p>
                 </div>
             )}
 
@@ -395,7 +396,7 @@ const Home = memo(({ transactions, cards, supermarketItems = [], services = [], 
                 <div className="relative z-10 flex flex-col items-center justify-center h-full text-white gap-1">
                     <div className="flex items-center gap-2">
                         <div className="bg-white/20 p-1.5 rounded-full backdrop-blur-sm">
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+                            <BarChart3 size={16} />
                         </div>
                         <span className="font-bold text-base tracking-wide">Ver Análisis Completo</span>
                     </div>
@@ -408,7 +409,7 @@ const Home = memo(({ transactions, cards, supermarketItems = [], services = [], 
                 onClick={onToggleTheme}
                 className="w-full py-4 mt-6 rounded-full border border-gray-100 text-gray-400 text-xs font-bold uppercase tracking-widest hover:bg-gray-50 hover:text-gray-600 transition-all flex items-center justify-center gap-2"
             >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+                <Moon size={16} />
                 Cambiar a Modo Noche
             </button>
 

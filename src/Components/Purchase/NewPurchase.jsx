@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useFinancialProjections } from '../../hooks/useFinancialProjections';
 import { formatInputNumber, parseInputNumber } from '../../utils';
+import { Banknote, CreditCard } from 'lucide-react';
 
 export default function NewPurchase({ cards, onSave, transactions, privacyMode, currentDate, isGlass, householdId }) {
     const [amount, setAmount] = useState('');
@@ -97,14 +98,14 @@ export default function NewPurchase({ cards, onSave, transactions, privacyMode, 
                         onClick={() => setType('cash')}
                         className={`flex-1 py-4 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${type === 'cash' ? (isGlass ? 'bg-white/10 text-green-300 shadow-sm border border-white/5' : 'bg-white text-green-600 shadow-sm') : (isGlass ? 'text-white/30 hover:text-white/60' : 'text-gray-400')}`}
                     >
-                        <span>💵</span> Efectivo / Débito
+                        <Banknote size={18} /> Efectivo / Débito
                     </button>
                     <button
                         type="button"
                         onClick={() => setType('credit')}
                         className={`flex-1 py-4 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${type === 'credit' ? (isGlass ? 'bg-white/10 text-blue-300 shadow-sm border border-white/5' : 'bg-white text-blue-600 shadow-sm') : (isGlass ? 'text-white/30 hover:text-white/60' : 'text-gray-400')}`}
                     >
-                        <span>💳</span> Crédito
+                        <CreditCard size={18} /> Crédito
                     </button>
                 </div>
 
