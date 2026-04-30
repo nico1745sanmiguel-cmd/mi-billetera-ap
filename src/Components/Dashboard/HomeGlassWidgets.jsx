@@ -168,25 +168,42 @@ export const AgendaWidget = memo(({ agenda, setView, privacyMode, householdId })
 ));
 
 export const SuperActionsWidget = memo(({ superData, setView, privacyMode }) => (
-    <div className="grid grid-cols-2 gap-3 mx-1">
-        <button onClick={() => setView('super')} className="bg-white/5 p-4 rounded-[24px] border border-white/10 backdrop-blur-md flex flex-col justify-between h-32 active:scale-95 transition-all text-left group hover:bg-white/10">
-            <div className="bg-purple-500/20 text-purple-200 border border-purple-500/30 w-fit p-2.5 rounded-xl group-hover:scale-110 transition-transform">
-                <ShoppingCart size={24} />
-            </div>
-            <div>
-                <p className="text-xs text-white/50 font-bold uppercase mb-0.5">{superData.label || 'Supermercado'}</p>
-                <p className="text-xl font-light text-white">{privacyMode ? '****' : formatMoney(superData.showAmount || 0)}</p>
-            </div>
-        </button>
+    <div className="space-y-3 mx-1">
+        <div className="grid grid-cols-2 gap-3">
+            <button onClick={() => setView('super')} className="bg-white/5 p-4 rounded-[24px] border border-white/10 backdrop-blur-md flex flex-col justify-between h-32 active:scale-95 transition-all text-left group hover:bg-white/10">
+                <div className="bg-purple-500/20 text-purple-200 border border-purple-500/30 w-fit p-2.5 rounded-xl group-hover:scale-110 transition-transform">
+                    <ShoppingCart size={24} />
+                </div>
+                <div>
+                    <p className="text-xs text-white/50 font-bold uppercase mb-0.5">{superData.label || 'Supermercado'}</p>
+                    <p className="text-xl font-light text-white">{privacyMode ? '****' : formatMoney(superData.showAmount || 0)}</p>
+                </div>
+            </button>
 
-        <button onClick={() => setView('purchase')} className="bg-white/10 p-4 rounded-[24px] border border-white/20 backdrop-blur-xl shadow-lg flex flex-col justify-between h-32 active:scale-95 transition-all text-left group hover:bg-white/20">
-            <div className="bg-white/20 w-fit p-2.5 rounded-xl text-white border border-white/10 group-hover:scale-110 transition-transform">
-                <Plus size={24} />
+            <button onClick={() => setView('purchase')} className="bg-white/10 p-4 rounded-[24px] border border-white/20 backdrop-blur-xl shadow-lg flex flex-col justify-between h-32 active:scale-95 transition-all text-left group hover:bg-white/20">
+                <div className="bg-white/20 w-fit p-2.5 rounded-xl text-white border border-white/10 group-hover:scale-110 transition-transform">
+                    <Plus size={24} />
+                </div>
+                <div>
+                    <p className="text-xs text-white/50 font-bold uppercase mb-0.5">Nuevo Gasto</p>
+                    <p className="text-xl font-light text-white">Registrar</p>
+                </div>
+            </button>
+        </div>
+
+        {/* Botón Mercado Fresco (fila separada, ancho completo) */}
+        <button onClick={() => setView('fresh')} className="w-full bg-gradient-to-r from-green-900/30 to-emerald-900/20 border border-green-500/20 p-4 rounded-[24px] backdrop-blur-md flex items-center justify-between active:scale-95 transition-all group hover:from-green-900/50 hover:to-emerald-900/40">
+            <div className="flex items-center gap-3">
+                <div className="bg-green-500/20 text-green-300 border border-green-500/30 p-2.5 rounded-xl group-hover:scale-110 transition-transform">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>
+                </div>
+                <div className="text-left">
+                    <p className="text-sm font-bold text-white">Mercado Fresco</p>
+                    <p className="text-[10px] text-green-300/70 font-medium">Verdulería · Carnicería / Freezer</p>
+                </div>
             </div>
-            <div>
-                <p className="text-xs text-white/50 font-bold uppercase mb-0.5">Nuevo Gasto</p>
-                <p className="text-xl font-light text-white">Registrar</p>
-            </div>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-white/30 group-hover:text-white/60 group-hover:translate-x-1 transition-all"><path d="M9 18l6-6-6-6"/></svg>
         </button>
     </div>
 ));
+

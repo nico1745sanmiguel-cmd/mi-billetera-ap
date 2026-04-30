@@ -13,6 +13,7 @@ import { Home as HomeIcon, ChevronLeft, ChevronRight, Eye, EyeOff } from 'lucide
 const Stats = lazy(() => import('./Components/Dashboard/Stats'));
 const NewPurchase = lazy(() => import('./Components/Purchase/NewPurchase'));
 const SuperList = lazy(() => import('./Components/Supermarket/SuperList'));
+const FreshShop = lazy(() => import('./Components/Supermarket/FreshShop'));
 const ServicesManager = lazy(() => import('./Components/Services/ServicesManager'));
 const HomeGlass = lazy(() => import('./Components/Dashboard/HomeGlass'));
 const HouseholdManager = lazy(() => import('./Components/Household/HouseholdManager'));
@@ -37,6 +38,7 @@ export default function App() {
         transactions, 
         superItems, 
         services, 
+        freshItems,
         addTransaction 
     } = useFinancial();
 
@@ -239,6 +241,8 @@ export default function App() {
             {view === 'purchase' && <NewPurchase cards={visibleCards} onSave={addTransaction} transactions={visibleTransactions} privacyMode={privacyMode} currentDate={currentDate} isGlass={isGlass} householdId={userData?.householdId} />}
 
             {view === 'super' && <SuperList items={visibleSuperItems} currentDate={currentDate} isGlass={isGlass} householdId={userData?.householdId} setView={setView} />}
+
+            {view === 'fresh' && <FreshShop items={freshItems} currentDate={currentDate} isGlass={isGlass} householdId={userData?.householdId} />}
 
             {view === 'scanner' && <ReceiptScanner isGlass={isGlass} items={visibleSuperItems} onBack={() => setView('super')} />}
 

@@ -326,28 +326,43 @@ const Home = memo(({ transactions, cards, supermarketItems = [], services = [], 
         ),
 
         super_actions: (
-            <div className="grid grid-cols-2 gap-3 mx-1">
-                <div onClick={() => setView('super')} className="bg-white p-4 rounded-[24px] border border-gray-100 shadow-sm cursor-pointer hover:border-purple-200 transition-colors group flex flex-col justify-between h-32">
-                    <div className="flex justify-between items-start">
-                        <div className="bg-purple-50 text-purple-600 p-2.5 rounded-xl">
-                            <ShoppingCart size={24} />
+            <div className="space-y-3 mx-1">
+                <div className="grid grid-cols-2 gap-3">
+                    <div onClick={() => setView('super')} className="bg-white p-4 rounded-[24px] border border-gray-100 shadow-sm cursor-pointer hover:border-purple-200 transition-colors group flex flex-col justify-between h-32">
+                        <div className="flex justify-between items-start">
+                            <div className="bg-purple-50 text-purple-600 p-2.5 rounded-xl">
+                                <ShoppingCart size={24} />
+                            </div>
+                            {superData.percent > 0 && <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-green-100 text-green-700">{Math.round(superData.percent)}%</span>}
                         </div>
-                        {superData.percent > 0 && <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-green-100 text-green-700">{Math.round(superData.percent)}%</span>}
+                        <div>
+                            <p className="text-xs text-gray-400 font-bold uppercase mb-0.5">{superData.label}</p>
+                            <p className={`text-xl font-bold ${superData.statusColor}`}>{showMoney(superData.showAmount)}</p>
+                        </div>
                     </div>
-                    <div>
-                        <p className="text-xs text-gray-400 font-bold uppercase mb-0.5">{superData.label}</p>
-                        <p className={`text-xl font-bold ${superData.statusColor}`}>{showMoney(superData.showAmount)}</p>
+
+                    <div onClick={() => setView('purchase')} className="bg-gray-900 p-4 rounded-[24px] shadow-lg cursor-pointer active:scale-95 transition-all flex flex-col justify-between group h-32">
+                        <div className="bg-gray-700 w-fit p-2.5 rounded-xl text-white group-hover:bg-gray-600 transition-colors">
+                            <Plus size={24} />
+                        </div>
+                        <div>
+                            <p className="text-xs text-gray-400 font-bold uppercase mb-0.5">Acción Rápida</p>
+                            <p className="text-xl font-bold text-white">Registrar Gasto</p>
+                        </div>
                     </div>
                 </div>
 
-                <div onClick={() => setView('purchase')} className="bg-gray-900 p-4 rounded-[24px] shadow-lg cursor-pointer active:scale-95 transition-all flex flex-col justify-between group h-32">
-                    <div className="bg-gray-700 w-fit p-2.5 rounded-xl text-white group-hover:bg-gray-600 transition-colors">
-                        <Plus size={24} />
+                <div onClick={() => setView('fresh')} className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 p-4 rounded-[24px] cursor-pointer hover:from-green-100 hover:to-emerald-100 active:scale-95 transition-all flex items-center justify-between group shadow-sm">
+                    <div className="flex items-center gap-3">
+                        <div className="bg-green-100 text-green-600 p-2.5 rounded-xl group-hover:scale-110 transition-transform">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>
+                        </div>
+                        <div>
+                            <p className="font-bold text-gray-800 text-sm">Mercado Fresco</p>
+                            <p className="text-[10px] text-green-600 font-medium">Verdulería · Carnicería / Freezer</p>
+                        </div>
                     </div>
-                    <div>
-                        <p className="text-xs text-gray-400 font-bold uppercase mb-0.5">Acción Rápida</p>
-                        <p className="text-xl font-bold text-white">Registrar Gasto</p>
-                    </div>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-gray-300 group-hover:text-green-500 group-hover:translate-x-1 transition-all"><path d="M9 18l6-6-6-6"/></svg>
                 </div>
             </div>
         )

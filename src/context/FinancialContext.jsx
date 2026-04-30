@@ -25,6 +25,7 @@ export const FinancialProvider = ({ children }) => {
     const [transactions, setTransactions] = useState(() => JSON.parse(localStorage.getItem('cache_transactions')) || []);
     const [superItems, setSuperItems] = useState(() => JSON.parse(localStorage.getItem('cache_superItems')) || []);
     const [services, setServices] = useState(() => JSON.parse(localStorage.getItem('cache_services')) || []);
+    const [freshItems, setFreshItems] = useState(() => JSON.parse(localStorage.getItem('cache_freshItems')) || []);
 
     // 1. Auth Listener & Household Migration
     useEffect(() => {
@@ -77,12 +78,14 @@ export const FinancialProvider = ({ children }) => {
         const unsubTrans = syncData('transactions', setTransactions, 'cache_transactions');
         const unsubSuper = syncData('supermarket_items', setSuperItems, 'cache_superItems');
         const unsubServices = syncData('services', setServices, 'cache_services');
+        const unsubFresh = syncData('fresh_purchases', setFreshItems, 'cache_freshItems');
 
         return () => {
             unsubCards();
             unsubTrans();
             unsubSuper();
             unsubServices();
+            unsubFresh();
         };
     }, [user, userData]);
 
@@ -113,8 +116,9 @@ export const FinancialProvider = ({ children }) => {
         transactions,
         superItems,
         services,
+        freshItems,
         addTransaction
-    }), [user, userData, householdMembers, loadingUser, cards, transactions, superItems, services]);
+    }), [user, userData, householdMembers, loadingUser, cards, transactions, superItems, services, freshItems]);
 
     return (
         <FinancialContext.Provider value={value}>
