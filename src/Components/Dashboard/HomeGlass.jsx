@@ -176,13 +176,19 @@ const HomeGlass = memo(({ transactions = [], cards = [], supermarketItems = [], 
     /* --- WIDGETS DEFINITIONS (Memoized to prevent re-renders) --- */
     const widgetsMap = useMemo(() => {
         const SplitWidget = householdMembers.length >= 2 ? (
-            <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl overflow-hidden mx-1">
+            <div 
+                onClick={() => setView('reparto')}
+                className="bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl overflow-hidden mx-1 cursor-pointer hover:bg-white/10 transition-all group"
+            >
                 <div className="px-5 py-4 border-b border-white/5 flex justify-between items-center">
                     <div>
                         <h3 className="font-bold text-white text-sm flex items-center gap-2"><Scale size={18} className="text-emerald-400" /> Reparto del Mes</h3>
                         <p className="text-[10px] text-white/40 font-medium capitalize">{currentDate?.toLocaleString('es-AR', { month: 'long', year: 'numeric' })}</p>
                     </div>
-                    <button onClick={() => setView('household')} className="text-[10px] font-bold text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 px-2 py-1 rounded-full transition-colors border border-emerald-500/20">
+                    <button 
+                        onClick={(e) => { e.stopPropagation(); setView('household'); }} 
+                        className="text-[10px] font-bold text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 px-2 py-1 rounded-full transition-colors border border-emerald-500/20"
+                    >
                         Sueldos
                     </button>
                 </div>

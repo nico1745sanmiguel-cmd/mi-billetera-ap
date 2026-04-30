@@ -177,14 +177,20 @@ const Home = memo(({ transactions, cards, supermarketItems = [], services = [], 
         ),
 
         split_summary: householdMembers.length >= 2 ? (
-            <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden mx-1">
+            <div 
+                onClick={() => setView('reparto')}
+                className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden mx-1 cursor-pointer hover:border-emerald-200 transition-all"
+            >
                 {/* Header */}
                 <div className="px-5 py-4 border-b border-gray-50 flex justify-between items-center bg-gradient-to-r from-emerald-50 to-teal-50">
                     <div>
                         <h3 className="font-bold text-gray-800 text-sm flex items-center gap-2"><Scale size={18} className="text-emerald-600" /> Reparto del Mes</h3>
                         <p className="text-[10px] text-gray-400 font-medium capitalize">{currentDate.toLocaleString('es-AR', { month: 'long', year: 'numeric' })}</p>
                     </div>
-                    <button onClick={() => setView('household')} className="text-[10px] font-bold text-emerald-600 bg-emerald-50 hover:bg-emerald-100 px-2 py-1 rounded-full transition-colors">
+                    <button 
+                        onClick={(e) => { e.stopPropagation(); setView('household'); }} 
+                        className="text-[10px] font-bold text-emerald-600 bg-emerald-50 hover:bg-emerald-100 px-2 py-1 rounded-full transition-colors"
+                    >
                         Sueldos
                     </button>
                 </div>
