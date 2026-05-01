@@ -7,7 +7,9 @@ import SkeletonDashboard from './Components/UI/SkeletonDashboard';
 import { auth } from './firebase';
 import { signOut } from 'firebase/auth';
 import { useFinancial } from './context/FinancialContext';
+import { useUI } from './context/UIContext';
 import { Home as HomeIcon, ChevronLeft, ChevronRight, Eye, EyeOff } from 'lucide-react';
+import { ENABLE_HOUSEHOLD, SLOW_CONNECTION_TIMEOUT_MS } from './config/constants';
 
 // --- LAZY IMPORTS ---
 const Stats = lazy(() => import('./Components/Dashboard/Stats'));
@@ -21,8 +23,6 @@ const ReconciliationDesk = lazy(() => import('./Components/Reconciliation/Reconc
 const SharedExpensesDashboard = lazy(() => import('./Components/Shared/SharedExpensesDashboard'));
 const ReceiptScanner = lazy(() => import('./Components/ReceiptScanner/ReceiptScanner'));
 
-const ENABLE_HOUSEHOLD = true;
-
 const LazyLoader = () => (
     <div className="flex justify-center items-center h-40 animate-pulse">
         <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
@@ -30,243 +30,273 @@ const LazyLoader = () => (
 );
 
 export default function App() {
-    const { 
-        user, 
-        userData, 
-        householdMembers, 
-        loadingUser, 
-        cards, 
-        transactions, 
-        superItems, 
-        services, 
+    // ─── DATOS FINANCIEROS ───────────────────────────────────────────────────
+    const {
+        user,
+        userData,
+        householdMembers,
+        loadingUser,
+        cards,
+        transactions,
+        superItems,
+        services,
         freshItems,
-        addTransaction 
+        addTransaction
     } = useFinancial();
 
-    const [showReload, setShowReload] = useState(false);
-    const [privacyMode, setPrivacyMode] = useState(false);
-    const [view, setView] = useState('dashboard');
-    const [isGlass, setIsGlass] = useState(() => localStorage.getItem('glass_mode') === 'true');
-    const [currentDate, setCurrentDate] = useState(new Date());
+    // ─── ESTADO DE UI (viene de UIContext) ───────────────────────────────────
+    const {
+        view,
+        setView,
+        privacyMode,
+        setPrivacyMode,
+        isGlass,
+        setIsGlass,
+        currentDate,
+        changeMonth,
+    } = useUI();
 
+    // ─── ESTADO LOCAL (solo afecta a App.jsx, no necesita contexto) ─────────
+    const [showReload, setShowReload] = useState(false);
+
+    // Mostrar botón de recarga si tarda demasiado
     useEffect(() => {
         if (loadingUser) {
-            const timer = setTimeout(() => setShowReload(true), 8000);
+            const timer = setTimeout(() => setShowReload(true), SLOW_CONNECTION_TIMEOUT_MS);
             return () => clearTimeout(timer);
         }
     }, [loadingUser]);
 
-    useEffect(() => {
-        localStorage.setItem('glass_mode', isGlass);
-        const metaThemeColor = document.querySelector("meta[name='theme-color']");
-        if (metaThemeColor) {
-            metaThemeColor.setAttribute("content", isGlass ? "#0f0c29" : "#ffffff");
-        }
-    }, [isGlass]);
-
+    // Formateador de fecha para el header móvil
     const getFormattedDate = (date) => {
         const options = { month: 'long', year: 'numeric' };
         let text = date.toLocaleDateString('es-AR', options).replace(' de ', ' ');
         return text.charAt(0).toUpperCase() + text.slice(1);
     };
 
-    const changeMonth = (offset) => {
-        const newDate = new Date(currentDate);
-        newDate.setMonth(newDate.getMonth() + offset);
-        setCurrentDate(newDate);
+    // ─── FILTRADO POR HOUSEHOLD ──────────────────────────────────────────────
+    // Solo muestra los ítems del usuario o los compartidos con el hogar
+    const filterByHousehold = (items) => {
+        if (!ENABLE_HOUSEHOLD || !userData?.householdId) return items;
+        return items.filter(item => !item.ownerId || item.isShared === true || item.ownerId === user?.uid);
     };
 
-    // --- FILTRADO DE PRIVACIDAD MEMOIZADO (OPTIMIZACIÓN CLAVE) ---
-    const visibleCards = useMemo(() => {
-        if (!ENABLE_HOUSEHOLD || !userData?.householdId) return cards;
-        return cards.filter(item => !item.ownerId || item.isShared === true || item.ownerId === user?.uid);
-    }, [cards, userData, user]);
-
-    const visibleTransactions = useMemo(() => {
-        if (!ENABLE_HOUSEHOLD || !userData?.householdId) return transactions;
-        return transactions.filter(item => !item.ownerId || item.isShared === true || item.ownerId === user?.uid);
-    }, [transactions, userData, user]);
-
-    const visibleSuperItems = useMemo(() => {
-        if (!ENABLE_HOUSEHOLD || !userData?.householdId) return superItems;
-        return superItems.filter(item => !item.ownerId || item.isShared === true || item.ownerId === user?.uid);
-    }, [superItems, userData, user]);
-
-    const visibleServices = useMemo(() => {
-        if (!ENABLE_HOUSEHOLD || !userData?.householdId) return services;
-        return services.filter(item => !item.ownerId || item.isShared === true || item.ownerId === user?.uid);
-    }, [services, userData, user]);
-
-    useEffect(() => {
-        if (view !== 'dashboard') {
-            window.history.pushState({ page: view }, "", "");
-        }
-        const handleBackButton = () => setView('dashboard');
-        window.addEventListener('popstate', handleBackButton);
-        return () => window.removeEventListener('popstate', handleBackButton);
-    }, [view]);
+    const visibleCards        = useMemo(() => filterByHousehold(cards),        [cards, userData, user]);
+    const visibleTransactions = useMemo(() => filterByHousehold(transactions), [transactions, userData, user]);
+    const visibleSuperItems   = useMemo(() => filterByHousehold(superItems),   [superItems, userData, user]);
+    const visibleServices     = useMemo(() => filterByHousehold(services),     [services, userData, user]);
 
     const handleLogout = () => {
-        if (window.confirm("¿Cerrar sesión?")) {
+        if (window.confirm('¿Cerrar sesión?')) {
             signOut(auth);
             localStorage.clear();
             window.location.reload();
         }
     };
 
-    const handleReload = () => window.location.reload();
-
+    // ─── ESTADOS DE CARGA / AUTH ─────────────────────────────────────────────
     if (loadingUser) {
         if (showReload) return (
             <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center">
                 <p className="mb-4">Conexión lenta...</p>
-                <button onClick={handleReload} className="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold">Recargar</button>
+                <button onClick={() => window.location.reload()} className="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold">
+                    Recargar
+                </button>
             </div>
         );
-        return <div className={`min-h-screen ${isGlass ? 'bg-night-gradient' : 'bg-[#f3f4f6]'}`}><SkeletonDashboard isGlass={isGlass} /></div>;
+        return (
+            <div className={`min-h-screen ${isGlass ? 'bg-night-gradient' : 'bg-[#f3f4f6]'}`}>
+                <SkeletonDashboard isGlass={isGlass} />
+            </div>
+        );
     }
 
     if (!user) return <Login />;
 
+    // ─── RENDER PRINCIPAL ────────────────────────────────────────────────────
+    return (
+        <div className="min-h-screen font-sans relative bg-[#f3f4f6]">
+            {/* BACKGROUND TRANSITION OVERLAY */}
+            <div className={`absolute inset-0 z-0 bg-night-gradient transition-opacity duration-1000 ease-out pointer-events-none ${isGlass ? 'opacity-100' : 'opacity-0'}`}></div>
 
-  return (
+            {/* MAIN CONTENT WRAPPER */}
+            <div className={`relative z-10 min-h-screen transition-colors duration-700 ease-in-out flex flex-col ${isGlass ? 'text-white' : 'text-gray-800'}`}>
+                <InstallPrompt />
 
-    <div className="min-h-screen font-sans relative bg-[#f3f4f6]">
-      {/* BACKGROUND TRANSITION OVERLAY */}
-      <div className={`absolute inset-0 z-0 bg-night-gradient transition-opacity duration-1000 ease-out pointer-events-none ${isGlass ? 'opacity-100' : 'opacity-0'}`}></div>
+                {/* NAVBAR DESKTOP */}
+                <div className="hidden md:block relative">
+                    <Navbar currentView={view} setView={setView} privacyMode={privacyMode} setPrivacyMode={setPrivacyMode} />
+                </div>
 
-      {/* MAIN CONTENT WRAPPER */}
-      <div className={`relative z-10 min-h-screen transition-colors duration-700 ease-in-out flex flex-col ${isGlass ? 'text-white' : 'text-gray-800'}`}>
-        <InstallPrompt />
+                {/* HEADER MÓVIL */}
+                <div className={`md:hidden px-4 py-3 shadow-sm sticky top-0 z-40 flex items-center justify-between gap-3 transition-colors duration-300 ${isGlass ? 'bg-[#0f0c29]/90 backdrop-blur-md text-white border-b border-white/5' : 'bg-white text-gray-800'}`}>
+                    <button
+                        onClick={() => setView('dashboard')}
+                        className={`p-2 rounded-xl transition-all active:scale-95 ${view === 'dashboard' ? (isGlass ? 'bg-white/20 text-white' : 'bg-blue-50 text-blue-600') : (isGlass ? 'bg-transparent text-white/60' : 'bg-gray-100 text-gray-500')}`}
+                    >
+                        <HomeIcon size={24} />
+                    </button>
 
-        <div className="hidden md:block relative">
-          <Navbar currentView={view} setView={setView} privacyMode={privacyMode} setPrivacyMode={setPrivacyMode} />
+                    {/* SELECTOR DE MES */}
+                    <div className={`flex-1 flex items-center justify-between rounded-xl p-1 max-w-[200px] transition-colors ${isGlass ? 'bg-white/10 border border-white/10 text-white' : 'bg-gray-50 text-gray-800'}`}>
+                        <button onClick={() => changeMonth(-1)} className={`p-2 rounded-lg active:scale-95 transition-colors ${isGlass ? 'text-white/70 hover:bg-white/10' : 'text-gray-400 hover:bg-gray-200'}`}>
+                            <ChevronLeft size={16} strokeWidth={2.5} />
+                        </button>
+                        <span className="font-bold text-sm capitalize">{getFormattedDate(currentDate)}</span>
+                        <button onClick={() => changeMonth(1)} className={`p-2 rounded-lg active:scale-95 transition-colors ${isGlass ? 'text-white/70 hover:bg-white/10' : 'text-gray-400 hover:bg-gray-200'}`}>
+                            <ChevronRight size={16} strokeWidth={2.5} />
+                        </button>
+                    </div>
+
+                    {/* BOTÓN PRIVACIDAD */}
+                    <button onClick={() => setPrivacyMode(!privacyMode)} className={`p-2 rounded-xl transition-all active:scale-95 ${privacyMode ? 'bg-indigo-50 text-indigo-600' : 'bg-gray-100 text-gray-400'}`}>
+                        {privacyMode ? <EyeOff size={24} /> : <Eye size={24} />}
+                    </button>
+                </div>
+
+                <main className="max-w-5xl mx-auto p-4 mt-2 pb-10 w-full flex-grow">
+                    <Suspense fallback={<LazyLoader />}>
+
+                        {/* DASHBOARD */}
+                        {view === 'dashboard' && (
+                            isGlass ? (
+                                <HomeGlass
+                                    transactions={visibleTransactions}
+                                    cards={visibleCards}
+                                    supermarketItems={visibleSuperItems}
+                                    services={visibleServices}
+                                    currentDate={currentDate}
+                                    user={user}
+                                    privacyMode={privacyMode}
+                                    onToggleTheme={() => setIsGlass(false)}
+                                    setView={setView}
+                                    onLogout={handleLogout}
+                                    householdId={userData?.householdId}
+                                    householdMembers={householdMembers}
+                                />
+                            ) : (
+                                <Home
+                                    transactions={visibleTransactions}
+                                    cards={visibleCards}
+                                    supermarketItems={visibleSuperItems}
+                                    services={visibleServices}
+                                    privacyMode={privacyMode}
+                                    setView={setView}
+                                    onLogout={handleLogout}
+                                    currentDate={currentDate}
+                                    user={user}
+                                    onToggleTheme={() => setIsGlass(true)}
+                                    householdId={userData?.householdId}
+                                    householdMembers={householdMembers}
+                                />
+                            )
+                        )}
+
+                        {/* SERVICIOS */}
+                        {view === 'services_manager' && (
+                            <ServicesManager
+                                services={visibleServices}
+                                cards={visibleCards}
+                                transactions={visibleTransactions}
+                                currentDate={currentDate}
+                                privacyMode={privacyMode}
+                                isGlass={isGlass}
+                                householdId={userData?.householdId}
+                            />
+                        )}
+
+                        {/* DETECTIVE DE GASTOS */}
+                        {view === 'reconcile' && (
+                            <ReconciliationDesk
+                                user={user}
+                                householdId={userData?.householdId}
+                                onBack={() => setView('dashboard')}
+                                isGlass={isGlass}
+                                cards={visibleCards}
+                                existingTransactions={visibleTransactions}
+                            />
+                        )}
+
+                        {/* GRUPO FAMILIAR */}
+                        {view === 'household' && (
+                            <HouseholdManager
+                                user={user}
+                                householdId={userData?.householdId}
+                                onBack={() => setView('dashboard')}
+                                isGlass={isGlass}
+                            />
+                        )}
+
+                        {view === 'stats' && (
+                            <Stats
+                                transactions={visibleTransactions}
+                                cards={visibleCards}
+                                services={visibleServices}
+                                privacyMode={privacyMode}
+                                currentDate={currentDate}
+                                isGlass={isGlass}
+                            />
+                        )}
+
+                        {view === 'purchase' && (
+                            <NewPurchase
+                                cards={visibleCards}
+                                onSave={addTransaction}
+                                transactions={visibleTransactions}
+                                privacyMode={privacyMode}
+                                currentDate={currentDate}
+                                isGlass={isGlass}
+                                householdId={userData?.householdId}
+                            />
+                        )}
+
+                        {view === 'super' && (
+                            <SuperList
+                                items={visibleSuperItems}
+                                currentDate={currentDate}
+                                isGlass={isGlass}
+                                householdId={userData?.householdId}
+                                setView={setView}
+                            />
+                        )}
+
+                        {view === 'fresh' && (
+                            <FreshShop
+                                items={freshItems}
+                                currentDate={currentDate}
+                                isGlass={isGlass}
+                                householdId={userData?.householdId}
+                            />
+                        )}
+
+                        {/* REPARTO DEL MES */}
+                        {view === 'reparto' && (
+                            <SharedExpensesDashboard
+                                services={visibleServices}
+                                cards={visibleCards}
+                                transactions={visibleTransactions}
+                                supermarketItems={visibleSuperItems}
+                                freshItems={freshItems}
+                                currentDate={currentDate}
+                                privacyMode={privacyMode}
+                                isGlass={isGlass}
+                                householdId={userData?.householdId}
+                                onBack={() => setView('dashboard')}
+                                setView={setView}
+                            />
+                        )}
+
+                        {view === 'scanner' && (
+                            <ReceiptScanner
+                                isGlass={isGlass}
+                                items={visibleSuperItems}
+                                onBack={() => setView('super')}
+                            />
+                        )}
+
+                    </Suspense>
+                </main>
+            </div>
         </div>
-
-        {/* HEADER MÓVIL */}
-        {/* HEADER MÓVIL */}
-        <div className={`md:hidden px-4 py-3 shadow-sm sticky top-0 z-40 flex items-center justify-between gap-3 transition-colors duration-300 ${isGlass ? 'bg-[#0f0c29]/90 backdrop-blur-md text-white border-b border-white/5' : 'bg-white text-gray-800'}`}>
-          <button onClick={() => setView('dashboard')} className={`p-2 rounded-xl transition-all active:scale-95 ${view === 'dashboard' ? (isGlass ? 'bg-white/20 text-white' : 'bg-blue-50 text-blue-600') : (isGlass ? 'bg-transparent text-white/60' : 'bg-gray-100 text-gray-500')}`}>
-            <HomeIcon size={24} />
-          </button>
-
-          {/* SELECTOR DE MES */}
-          <div className={`flex-1 flex items-center justify-between rounded-xl p-1 max-w-[200px] transition-colors ${isGlass ? 'bg-white/10 border border-white/10 text-white' : 'bg-gray-50 text-gray-800'}`}>
-            <button onClick={() => changeMonth(-1)} className={`p-2 rounded-lg active:scale-95 transition-colors ${isGlass ? 'text-white/70 hover:bg-white/10' : 'text-gray-400 hover:bg-gray-200'}`}><ChevronLeft size={16} strokeWidth={2.5} /></button>
-            <span className="font-bold text-sm capitalize">{getFormattedDate(currentDate)}</span>
-            <button onClick={() => changeMonth(1)} className={`p-2 rounded-lg active:scale-95 transition-colors ${isGlass ? 'text-white/70 hover:bg-white/10' : 'text-gray-400 hover:bg-gray-200'}`}><ChevronRight size={16} strokeWidth={2.5} /></button>
-          </div>
-
-          {/* BOTÓN PRIVACIDAD */}
-          <button onClick={() => setPrivacyMode(!privacyMode)} className={`p-2 rounded-xl transition-all active:scale-95 ${privacyMode ? 'bg-indigo-50 text-indigo-600' : 'bg-gray-100 text-gray-400'}`}>
-            {privacyMode ? <EyeOff size={24} /> : <Eye size={24} />}
-          </button>
-        </div>
-
-        <main className="max-w-5xl mx-auto p-4 mt-2 pb-10 w-full flex-grow">
-
-          <Suspense fallback={<LazyLoader />}>
-
-            {view === 'dashboard' && (
-              isGlass ? (
-                <HomeGlass
-                  transactions={visibleTransactions}
-                  cards={visibleCards}
-                  supermarketItems={visibleSuperItems}
-                  services={visibleServices}
-                  currentDate={currentDate}
-                  user={user}
-                  privacyMode={privacyMode}
-                  onToggleTheme={() => setIsGlass(false)}
-                  setView={setView}
-                  onLogout={handleLogout}
-                  householdId={userData?.householdId}
-                  householdMembers={householdMembers}
-                />
-
-              ) : (
-                <Home
-                  transactions={visibleTransactions}
-                  cards={visibleCards}
-                  supermarketItems={visibleSuperItems}
-                  services={visibleServices}
-                  privacyMode={privacyMode}
-                  setView={setView}
-                  onLogout={handleLogout}
-                  currentDate={currentDate}
-                  user={user}
-                  onToggleTheme={() => setIsGlass(true)}
-                  householdId={userData?.householdId}
-                  householdMembers={householdMembers}
-                />
-              )
-            )}
-
-            {/* AQUÍ PASAMOS EL PRIVACY MODE AL GESTOR DE SERVICIOS */}
-            {view === 'services_manager' && (
-              <ServicesManager
-                services={visibleServices}
-                cards={visibleCards}
-                transactions={visibleTransactions}
-                currentDate={currentDate}
-                privacyMode={privacyMode}
-                isGlass={isGlass}
-                householdId={userData?.householdId}
-              />
-            )}
-
-            {/* RECONCILIATION DESK (DETECTIVE DE GASTOS) */}
-            {view === 'reconcile' && (
-              <ReconciliationDesk
-                user={user}
-                householdId={userData?.householdId}
-                onBack={() => setView('dashboard')}
-                isGlass={isGlass}
-                cards={visibleCards}
-                existingTransactions={visibleTransactions}
-              />
-            )}
-
-            {/* HOUSEHOLD MANAGER */}
-            {view === 'household' && (
-              <HouseholdManager
-                user={user}
-                householdId={userData?.householdId}
-                onBack={() => setView('dashboard')}
-                isGlass={isGlass}
-              />
-            )}
-
-            {view === 'stats' && <Stats transactions={visibleTransactions} cards={visibleCards} services={visibleServices} privacyMode={privacyMode} currentDate={currentDate} isGlass={isGlass} />}
-
-            {view === 'purchase' && <NewPurchase cards={visibleCards} onSave={addTransaction} transactions={visibleTransactions} privacyMode={privacyMode} currentDate={currentDate} isGlass={isGlass} householdId={userData?.householdId} />}
-
-            {view === 'super' && <SuperList items={visibleSuperItems} currentDate={currentDate} isGlass={isGlass} householdId={userData?.householdId} setView={setView} />}
-
-            {view === 'fresh' && <FreshShop items={freshItems} currentDate={currentDate} isGlass={isGlass} householdId={userData?.householdId} />}
-
-            {view === 'reparto' && (
-              <SharedExpensesDashboard
-                services={visibleServices}
-                cards={visibleCards}
-                transactions={visibleTransactions}
-                supermarketItems={visibleSuperItems}
-                freshItems={freshItems}
-                currentDate={currentDate}
-                privacyMode={privacyMode}
-                isGlass={isGlass}
-                householdId={userData?.householdId}
-                onBack={() => setView('dashboard')}
-                setView={setView}
-              />
-            )}
-
-            {view === 'scanner' && <ReceiptScanner isGlass={isGlass} items={visibleSuperItems} onBack={() => setView('super')} />}
-
-          </Suspense>
-
-        </main>
-      </div>
-    </div>
-  );
+    );
 }

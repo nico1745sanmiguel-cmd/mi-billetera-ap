@@ -1,4 +1,6 @@
 import { useMemo } from 'react';
+import { formatMonthKey, calcularDeudaTarjetaMes } from '../utils/cardDebtUtils';
+import { PROJECTION_MONTHS } from '../config/constants';
 
 /**
  * Hook to calculate financial projections for the next 6 months.
@@ -15,30 +17,22 @@ export const useFinancialProjections = (transactions = [], cards = [], currentDa
         const projections = [];
         const baseDate = new Date(currentDate);
 
-        // Helper to get year-month key
-        const getMonthKey = (date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        // Helper to get year-month key — ahora viene de cardDebtUtils
+        // const getMonthKey = ... (eliminado, se usa formatMonthKey)
 
-        // Generate next 6 months
-        for (let i = 0; i < 6; i++) {
+        // Generar los próximos N meses (cantidad definida en PROJECTION_MONTHS)
+        for (let i = 0; i < PROJECTION_MONTHS; i++) {
             const futureDate = new Date(baseDate.getFullYear(), baseDate.getMonth() + i, 1);
             const futureMonthVal = futureDate.getFullYear() * 12 + futureDate.getMonth();
-            const futureKey = getMonthKey(futureDate);
+            const futureKey = formatMonthKey(futureDate);
 
-            // 1. Calculate Existing Debt (From Transactions)
-            let existingDebt = 0;
-
-            // Sum from active installments
-            transactions.filter(t => t.type === 'credit').forEach(t => {
-                const tDate = new Date(t.date);
-                // Fix timezone offset for local calculation if needed
-                const tLocal = new Date(tDate.valueOf() + tDate.getTimezoneOffset() * 60000); // Simple fix
-                const startVal = tLocal.getFullYear() * 12 + tLocal.getMonth();
-                const endVal = startVal + (t.installments || 1);
-
-                if (futureMonthVal >= startVal && futureMonthVal < endVal) {
-                    existingDebt += Number(t.monthlyInstallment) || 0;
-                }
-            });
+            // Suma todas las cuotas de crédito activas en este mes futuro
+            // calcularDeudaTarjetaMes con cardId=null suma TODAS las tarjetas
+            const existingDebt = calcularDeudaTarjetaMes(
+                transactions.filter(t => t.type === 'credit'),
+                null,
+                futureMonthVal
+            );
 
             // Add manual adjustments from cards if any (legacy feature support)
             cards.forEach(card => {

@@ -1,8 +1,16 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { db, auth } from '../../firebase';
-import { collection, addDoc, deleteDoc, doc, updateDoc } from 'firebase/firestore';
+import { auth } from '../../firebase';
 import { ShoppingCart, Loader2, Camera, Check, Trash2, Copy, Plus } from 'lucide-react';
 import { formatMoney } from '../../utils';
+import { formatMonthKey } from '../../utils/cardDebtUtils';
+import {
+    addSuperItem,
+    deleteSuperItem,
+    updateSuperPrice,
+    updateSuperQuantity,
+    toggleSuperChecked,
+    updateSuperFields,
+} from '../../repositories/supermarketRepository';
 
 export default function SuperList({ items = [], currentDate, isGlass, householdId, setView }) {
     const [newItem, setNewItem] = useState('');
@@ -67,10 +75,7 @@ export default function SuperList({ items = [], currentDate, isGlass, householdI
     };
 
     // 1. CLAVE DEL MES (MÁQUINA DEL TIEMPO ⏳)
-    const currentMonthKey = useMemo(() => {
-        if (!currentDate) return '';
-        return `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
-    }, [currentDate]);
+    const currentMonthKey = useMemo(() => formatMonthKey(currentDate), [currentDate]);
 
     // 2. LISTA FILTRADA Y ORDENADA
     const monthlyList = useMemo(() => {
@@ -118,27 +123,26 @@ export default function SuperList({ items = [], currentDate, isGlass, householdI
         if (!lastMonthItems.length || !auth.currentUser) return;
         setIsCopying(true);
         try {
-            const promises = lastMonthItems.map(item => {
-                return addDoc(collection(db, 'supermarket_items'), {
+            const promises = lastMonthItems.map(item =>
+                addSuperItem({
                     name: item.name,
-                    price: item.price || 0, // Nico pidió mantener el último precio pagado
-                    quantity: item.quantity || 1, 
-                    checked: false, // Desmarcado tal cual lo pidió
+                    price: item.price || 0,
+                    quantity: item.quantity || 1,
+                    checked: false,
                     userId: auth.currentUser.uid,
                     month: currentMonthKey,
-                    createdAt: new Date().toISOString(),
                     ...(householdId && {
-                        householdId: householdId,
+                        householdId,
                         ownerId: auth.currentUser.uid,
                         isShared: true
                     })
-                });
-            });
+                })
+            );
             await Promise.all(promises);
             showToast(`¡Lista copiada! (${promises.length} ítems)`);
-        } catch (error) { 
-            console.error(error); 
-            showToast("Error al copiar"); 
+        } catch (error) {
+            console.error(error);
+            showToast('Error al copiar');
         } finally {
             setIsCopying(false);
         }
@@ -191,40 +195,34 @@ export default function SuperList({ items = [], currentDate, isGlass, householdI
     const handleAdd = async (e) => {
         e.preventDefault();
         if (!newItem || !auth.currentUser) return;
-
         try {
-            const docRef = await addDoc(collection(db, 'supermarket_items'), {
+            const docRef = await addSuperItem({
                 name: newItem,
-                price: 0, // Precio por defecto 0
-                quantity: 1, // Cantidad por defecto 1
+                price: 0,
+                quantity: 1,
                 checked: false,
                 userId: auth.currentUser.uid,
                 month: currentMonthKey,
-                createdAt: new Date().toISOString(),
-                // Household logic
                 ...(householdId && {
-                    householdId: householdId,
+                    householdId,
                     ownerId: auth.currentUser.uid,
-                    isShared: true // Supermarket items are shared by default
+                    isShared: true
                 })
             });
-
-            setLastAddedId(docRef.id); // Guardamos ID para el auto-focus
+            setLastAddedId(docRef.id);
             setNewItem('');
-
             showToast(`Agregado: ${newItem}`, async () => {
-                await deleteDoc(docRef);
+                await deleteSuperItem(docRef.id);
             });
         } catch (error) { console.error(error); }
     };
 
     const handleToggle = async (item) => {
-        const itemRef = doc(db, 'supermarket_items', item.id);
-        await updateDoc(itemRef, { checked: !item.checked });
+        await toggleSuperChecked(item.id, !item.checked);
     };
 
     const handleDelete = async (id) => {
-        if (window.confirm("¿Borrar item?")) await deleteDoc(doc(db, 'supermarket_items', id));
+        if (window.confirm('¿Borrar item?')) await deleteSuperItem(id);
     };
 
     // --- HANDLERS PRECIO Y CONFIRMACIÓN ---
@@ -241,51 +239,34 @@ export default function SuperList({ items = [], currentDate, isGlass, householdI
 
     const handleUpdatePrice = async (item, rawValue) => {
         const numericValue = parseCurrencyInput(rawValue);
-        const itemRef = doc(db, 'supermarket_items', item.id);
-
-        // Solo actualizamos el precio en tiempo real, SIN cambiar el check
-        await updateDoc(itemRef, { price: Number(numericValue) });
+        await updateSuperPrice(item.id, numericValue);
     };
 
     const handlePriceBlur = async (item) => {
-        // Al salir del input (Blur o Enter), verificamos si hay que marcarlo como comprado
-        // La regla es: Si tiene precio > 0 y NO estaba checkeado, lo marcamos.
-
         if (!editingItemRef.current || editingItemRef.current.id !== item.id) return;
-
         const { initialPrice, initialChecked } = editingItemRef.current;
-        const currentPrice = item.price; // El precio ya está actualizado en DB por el onChange
-        const itemRef = doc(db, 'supermarket_items', item.id);
+        const currentPrice = item.price;
 
-        // CASO 1: Auto-Check (Estaba sin check y ahora tiene precio)
         if (!item.checked && currentPrice > 0) {
-            await updateDoc(itemRef, { checked: true });
-
-            showToast("Marcado como comprado", async () => {
-                // Undo: volver a precio original y des-checkear
-                await updateDoc(itemRef, { price: initialPrice, checked: initialChecked });
+            await toggleSuperChecked(item.id, true);
+            showToast('Marcado como comprado', async () => {
+                await updateSuperFields(item.id, { price: initialPrice, checked: initialChecked });
+            });
+        } else if (currentPrice !== initialPrice) {
+            showToast('Precio actualizado', async () => {
+                await updateSuperPrice(item.id, initialPrice);
             });
         }
-        // CASO 2: Solo cambió el precio (Ya estaba checkeado o sigue en 0)
-        else if (currentPrice !== initialPrice) {
-            showToast("Precio actualizado", async () => {
-                await updateDoc(itemRef, { price: initialPrice });
-            });
-        }
-
-        editingItemRef.current = null; // Limpiar ref
+        editingItemRef.current = null;
     };
 
     const handleUpdateQuantity = async (item, delta) => {
         const oldQty = item.quantity;
         const newQty = Math.max(1, item.quantity + delta);
         if (oldQty === newQty) return;
-
-        const itemRef = doc(db, 'supermarket_items', item.id);
-        await updateDoc(itemRef, { quantity: newQty });
-
-        showToast("Cantidad modificada", async () => {
-            await updateDoc(itemRef, { quantity: oldQty });
+        await updateSuperQuantity(item.id, newQty);
+        showToast('Cantidad modificada', async () => {
+            await updateSuperQuantity(item.id, oldQty);
         });
     };
 

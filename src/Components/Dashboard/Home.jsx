@@ -5,6 +5,15 @@ import FinancialTarget from './FinancialTarget';
 import CardDetailModal from '../Cards/CardDetailModal';
 import { useDragReorder } from '../../hooks/useDragReorder';
 import { calcularProporciones, getLatestSalary, calcularAporte } from '../../utils/salaryUtils';
+import { buildCardsWithDebt, formatMonthKey } from '../../utils/cardDebtUtils';
+import {
+    AGENDA_MAX_ITEMS,
+    DEFAULT_WIDGET_ORDER,
+    CRITICAL_DUE_DAY_THRESHOLD,
+    CARD_LOGO_MAP,
+    CACHE_KEYS,
+} from '../../config/constants';
+import { getCache, setCache } from '../../utils/cache';
 
 const Home = memo(({ transactions, cards, supermarketItems = [], services = [], privacyMode, setView, onLogout, currentDate, user, onToggleTheme, householdId, householdMembers = [] }) => {
 
@@ -12,10 +21,8 @@ const Home = memo(({ transactions, cards, supermarketItems = [], services = [], 
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     // Clave del mes seleccionado
-    const targetMonthKey = useMemo(() => {
-        if (!currentDate) return '';
-        return `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
-    }, [currentDate]);
+    const targetMonthKey = useMemo(() => formatMonthKey(currentDate), [currentDate]);
+    const targetMonthVal = useMemo(() => currentDate.getFullYear() * 12 + currentDate.getMonth(), [currentDate]);
 
     const openCardModal = (card) => {
         setSelectedCardForModal(card);
@@ -23,61 +30,34 @@ const Home = memo(({ transactions, cards, supermarketItems = [], services = [], 
     };
 
     // --- 1. CONFIGURACIÓN DRAG & DROP ---
-    const DEFAULT_ORDER = ['target', 'split_summary', 'cards', 'agenda', 'super_actions'];
     const getInitialOrder = () => {
-        const saved = localStorage.getItem('widget_order');
-        if (saved) {
+        const saved = getCache(CACHE_KEYS.WIDGET_ORDER, null);
+        const legacy = localStorage.getItem('widget_order'); // compatibilidad con versión anterior
+        const raw = saved || (legacy ? JSON.parse(legacy) : null);
+        if (raw) {
             try {
-                const parsed = JSON.parse(saved);
-                // Asegurarse de que split_summary esté incluido aunque no esté en la versión guardada
-                const hasAll = DEFAULT_ORDER.every(k => parsed.includes(k));
-                if (hasAll && parsed.length === DEFAULT_ORDER.length) return parsed;
+                const hasAll = DEFAULT_WIDGET_ORDER.every(k => raw.includes(k));
+                if (hasAll && raw.length === DEFAULT_WIDGET_ORDER.length) return raw;
             } catch (e) { console.error("Error leyendo orden", e); }
         }
-        return DEFAULT_ORDER;
+        return DEFAULT_WIDGET_ORDER;
     };
     const { order, getDragProps, draggingItem } = useDragReorder(getInitialOrder());
-    useEffect(() => { localStorage.setItem('widget_order', JSON.stringify(order)); }, [order]);
+    useEffect(() => { setCache(CACHE_KEYS.WIDGET_ORDER, order); }, [order]);
 
 
     // --- 2. CÁLCULOS ---
 
-    // A. Tarjetas (Con Logos y Deuda)
+    // A. Tarjetas (Con Logos y Deuda) — usa buildCardsWithDebt de cardDebtUtils
     const cardsWithDebt = useMemo(() => {
-        const targetMonthVal = currentDate.getFullYear() * 12 + currentDate.getMonth();
+        return buildCardsWithDebt(cards, transactions, targetMonthKey, targetMonthVal);
+    }, [cards, transactions, targetMonthKey, targetMonthVal]);
 
-        return cards.map(card => {
-            const manualAmount = card.monthlyStatements?.[targetMonthKey]?.totalDue ?? card.adjustments?.[targetMonthKey];
-            let debt = 0;
-
-            if (manualAmount !== undefined) {
-                debt = manualAmount;
-            } else {
-                debt = transactions
-                    .filter(t => t.cardId === card.id && t.type !== 'cash')
-                    .reduce((acc, t) => {
-                        const tDate = new Date(t.date);
-                        const tLocal = new Date(tDate.valueOf() + tDate.getTimezoneOffset() * 60000);
-                        const startMonthVal = tLocal.getFullYear() * 12 + tLocal.getMonth();
-                        const endMonthVal = startMonthVal + (t.installments || 1);
-                        if (targetMonthVal >= startMonthVal && targetMonthVal < endMonthVal) {
-                            return acc + Number(t.monthlyInstallment);
-                        }
-                        return acc;
-                    }, 0);
-            }
-
-            return { ...card, currentDebt: debt };
-        });
-    }, [cards, transactions, currentDate, targetMonthKey]);
-
-    // Helper Logos
+    // Helper Logos — usa CARD_LOGO_MAP de constants
     const getCardLogo = (name) => {
         const n = (name || '').toLowerCase();
-        if (n.includes('visa')) return '/logos/visa.png';
-        if (n.includes('master')) return '/logos/mastercard.png';
-        if (n.includes('amex') || n.includes('american')) return '/logos/amex.png';
-        return null;
+        const match = CARD_LOGO_MAP.find(({ keywords }) => keywords.some(kw => n.includes(kw)));
+        return match?.path || null;
     };
 
     // B. Supermercado
@@ -118,7 +98,7 @@ const Home = memo(({ transactions, cards, supermarketItems = [], services = [], 
         return [...realServices, ...cardServices]
             .sort((a, b) => a.day - b.day)
             .filter(item => !item.isPaid)
-            .slice(0, 3);
+            .slice(0, AGENDA_MAX_ITEMS);
     }, [services, cardsWithDebt, targetMonthKey]);
 
     // Totales
@@ -128,7 +108,7 @@ const Home = memo(({ transactions, cards, supermarketItems = [], services = [], 
 
     const criticalAlert = useMemo(() => {
         const firstItem = agenda[0];
-        if (firstItem && firstItem.day <= 5) {
+        if (firstItem && firstItem.day <= CRITICAL_DUE_DAY_THRESHOLD) {
             return { active: true, msg: `Vencimiento próx: ${firstItem.name} (Día ${firstItem.day})`, amount: firstItem.amount };
         }
         return { active: false };

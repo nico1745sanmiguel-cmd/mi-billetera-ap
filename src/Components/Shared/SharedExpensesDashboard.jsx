@@ -1,9 +1,10 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { db, auth } from '../../firebase';
 import { doc, getDoc } from 'firebase/firestore';
-import { Scale, Users, ChevronLeft, CreditCard, ShoppingCart, Lightbulb, User } from 'lucide-react';
+import { Scale, Users, ChevronLeft, CreditCard, ShoppingCart, Lightbulb, User, Leaf } from 'lucide-react';
 import { formatMoney } from '../../utils';
 import { calcularProporciones, getLatestSalary } from '../../utils/salaryUtils';
+import { buildCardsWithDebt, formatMonthKey } from '../../utils/cardDebtUtils';
 
 export default function SharedExpensesDashboard({ 
     services = [], 
@@ -24,10 +25,8 @@ export default function SharedExpensesDashboard({
     const currentUid = auth.currentUser?.uid;
     const showMoney = (amount) => privacyMode ? '****' : formatMoney(amount);
 
-    const currentMonthKey = useMemo(() => {
-        if (!currentDate) return '';
-        return `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
-    }, [currentDate]);
+    const currentMonthKey = useMemo(() => formatMonthKey(currentDate), [currentDate]);
+    const targetMonthVal = useMemo(() => currentDate.getFullYear() * 12 + currentDate.getMonth(), [currentDate]);
 
     // 1. OBTENER ITEMS COMPARTIDOS
     const sharedItems = useMemo(() => {
@@ -39,36 +38,17 @@ export default function SharedExpensesDashboard({
         }));
 
         // B. Tarjetas compartidas (deuda del mes)
-        const targetMonthVal = currentDate.getFullYear() * 12 + currentDate.getMonth();
-        const sharedCards = cards.filter(c => c.isShared !== false).map(c => {
-            const manualAmount = c.monthlyStatements?.[currentMonthKey]?.totalDue ?? c.adjustments?.[currentMonthKey];
-            let debt = 0;
-            if (manualAmount !== undefined) {
-                debt = manualAmount;
-            } else {
-                debt = transactions
-                    .filter(t => t.cardId === c.id && t.type !== 'cash')
-                    .reduce((acc, t) => {
-                        const tDate = new Date(t.date);
-                        const tLocal = new Date(tDate.valueOf() + tDate.getTimezoneOffset() * 60000);
-                        const startMonthVal = tLocal.getFullYear() * 12 + tLocal.getMonth();
-                        const endMonthVal = startMonthVal + (t.installments || 1);
-                        if (targetMonthVal >= startMonthVal && targetMonthVal < endMonthVal) {
-                            return acc + Number(t.monthlyInstallment);
-                        }
-                        return acc;
-                    }, 0);
-            }
-            if (debt === 0 && manualAmount === undefined) return null;
-            return {
+        const allCardsWithDebt = buildCardsWithDebt(cards, transactions, currentMonthKey, targetMonthVal);
+        const sharedCards = allCardsWithDebt
+            .filter(c => c.isShared !== false && c.currentDebt > 0)
+            .map(c => ({
                 id: c.id,
                 name: c.name,
-                amount: debt,
+                amount: c.currentDebt,
                 day: c.dueDay || 10,
                 type: 'card',
                 icon: <CreditCard size={16} className="text-indigo-400" />
-            };
-        }).filter(Boolean);
+            }));
 
         // C. Supermercado compartido
         const sharedSuperItems = supermarketItems.filter(i => i.month === currentMonthKey && i.isShared !== false);

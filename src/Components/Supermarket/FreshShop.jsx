@@ -1,8 +1,13 @@
 import React, { useState, useMemo, useRef } from 'react';
-import { db, auth } from '../../firebase';
-import { collection, addDoc, deleteDoc, doc, updateDoc } from 'firebase/firestore';
+import { auth } from '../../firebase';
 import { Leaf, Beef, Plus, Trash2, ChevronDown, ChevronUp, Users, Lock, ShoppingBag, CheckCircle2, Circle, Calendar } from 'lucide-react';
 import { formatMoney, formatInputNumber, parseInputNumber } from '../../utils';
+import {
+    addFreshItem,
+    deleteFreshItem,
+    updateFreshTotal,
+    toggleFreshCompleted,
+} from '../../repositories/freshRepository';
 
 // ────────────────────────────────────────────────────────────────
 // Categorías disponibles
@@ -187,15 +192,14 @@ function FreshSection({ cat, trips, currentMonthKey, isGlass, householdId }) {
 
         setAdding(true);
         try {
-            await addDoc(collection(db, 'fresh_purchases'), {
+            await addFreshItem({
                 category: cat,
                 note: addingNote.trim() || '',
                 total: parseInputNumber(addingTotal) || 0,
                 date: addingDate,
                 month: currentMonthKey,
-                completed: false, // Por defecto entra como presupuesto
+                completed: false,
                 userId: auth.currentUser.uid,
-                createdAt: new Date().toISOString(),
                 ...(householdId && {
                     householdId,
                     ownerId: auth.currentUser.uid,
@@ -214,16 +218,16 @@ function FreshSection({ cat, trips, currentMonthKey, isGlass, householdId }) {
 
     const handleDelete = async (id) => {
         if (window.confirm('¿Borrar este ítem?')) {
-            await deleteDoc(doc(db, 'fresh_purchases', id));
+            await deleteFreshItem(id);
         }
     };
 
     const handleUpdateTotal = async (id, newTotal) => {
-        await updateDoc(doc(db, 'fresh_purchases', id), { total: newTotal });
+        await updateFreshTotal(id, newTotal);
     };
 
     const handleToggleCompleted = async (id, completed) => {
-        await updateDoc(doc(db, 'fresh_purchases', id), { completed });
+        await toggleFreshCompleted(id, completed);
     };
 
     return (
@@ -323,12 +327,12 @@ function FreshSection({ cat, trips, currentMonthKey, isGlass, householdId }) {
                             </div>
                         </div>
 
-                        <div className="flex gap-2">
+                        <div className="flex flex-col gap-2">
                             {/* Nota (opcional) */}
                             <input
                                 ref={noteRef}
                                 type="text"
-                                className={`flex-1 px-3 py-2 rounded-xl text-sm border focus:outline-none transition-colors ${
+                                className={`w-full px-3 py-2.5 rounded-xl text-sm border focus:outline-none transition-colors ${
                                     isGlass
                                         ? 'bg-black/30 border-white/10 text-white placeholder-white/30 focus:border-white/30'
                                         : 'bg-gray-50 border-gray-200 text-gray-800 focus:border-gray-400'
@@ -338,16 +342,16 @@ function FreshSection({ cat, trips, currentMonthKey, isGlass, householdId }) {
                                 onChange={e => setAddingNote(e.target.value)}
                             />
                             {/* Precio Estimado */}
-                            <div className={`flex items-center rounded-xl px-3 border w-32 flex-shrink-0 ${
+                            <div className={`flex items-center rounded-xl px-3 border w-full ${
                                 isGlass ? 'bg-black/30 border-white/10' : 'bg-gray-50 border-gray-200'
                             }`}>
-                                <span className={`text-xs mr-1 ${isGlass ? 'text-gray-500' : 'text-gray-400'}`}>$</span>
+                                <span className={`text-xs mr-2 font-bold ${isGlass ? 'text-gray-500' : 'text-gray-400'}`}>Monto Estimado: $</span>
                                 <input
                                     type="tel"
-                                    className={`w-full bg-transparent outline-none text-sm font-bold text-right py-2 ${
+                                    className={`w-full bg-transparent outline-none text-sm font-bold text-right py-2.5 ${
                                         isGlass ? 'text-white placeholder-white/30' : 'text-gray-800'
                                     }`}
-                                    placeholder="Estimado"
+                                    placeholder="0"
                                     value={formatInputNumber(addingTotal)}
                                     onChange={e => setAddingTotal(String(parseInputNumber(e.target.value)))}
                                 />

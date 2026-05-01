@@ -3,6 +3,8 @@ import { db, auth } from '../firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { collection, onSnapshot, query, where, doc, getDoc, addDoc } from 'firebase/firestore';
 import { checkAndMigrateToHousehold } from '../utils/householdMigration';
+import { getCache, setCache, cleanOldCaches } from '../utils/cache';
+import { COLLECTIONS, CACHE_KEYS, SLOW_CONNECTION_TIMEOUT_MS, LOADING_DELAY_MS } from '../config/constants';
 
 const FinancialContext = createContext();
 
@@ -20,12 +22,15 @@ export const FinancialProvider = ({ children }) => {
     const [householdMembers, setHouseholdMembers] = useState([]);
     const [loadingUser, setLoadingUser] = useState(true);
 
-    // DATOS (Caché local para arranque instantáneo)
-    const [cards, setCards] = useState(() => JSON.parse(localStorage.getItem('cache_cards')) || []);
-    const [transactions, setTransactions] = useState(() => JSON.parse(localStorage.getItem('cache_transactions')) || []);
-    const [superItems, setSuperItems] = useState(() => JSON.parse(localStorage.getItem('cache_superItems')) || []);
-    const [services, setServices] = useState(() => JSON.parse(localStorage.getItem('cache_services')) || []);
-    const [freshItems, setFreshItems] = useState(() => JSON.parse(localStorage.getItem('cache_freshItems')) || []);
+    // DATOS (Caché local para arranque instantáneo — robusto con versionado y try/catch)
+    const [cards, setCards] = useState(() => getCache(CACHE_KEYS.CARDS));
+    const [transactions, setTransactions] = useState(() => getCache(CACHE_KEYS.TRANSACTIONS));
+    const [superItems, setSuperItems] = useState(() => getCache(CACHE_KEYS.SUPER_ITEMS));
+    const [services, setServices] = useState(() => getCache(CACHE_KEYS.SERVICES));
+    const [freshItems, setFreshItems] = useState(() => getCache(CACHE_KEYS.FRESH_ITEMS));
+
+    // Limpiar caches de versiones anteriores (solo corre una vez al montar)
+    useEffect(() => { cleanOldCaches(); }, []);
 
     // 1. Auth Listener & Household Migration
     useEffect(() => {
@@ -50,9 +55,9 @@ export const FinancialProvider = ({ children }) => {
                     }
                 }
             }
-            // Small delay to ensure cache is used first if available
+            // Small delay para asegurarnos de mostrar el cache antes de mostrar la app
             const hasCache = cards.length > 0 || transactions.length > 0;
-            setTimeout(() => setLoadingUser(false), hasCache ? 0 : 500);
+            setTimeout(() => setLoadingUser(false), hasCache ? 0 : LOADING_DELAY_MS);
         });
         return () => unsubscribe();
     }, []);
@@ -68,17 +73,17 @@ export const FinancialProvider = ({ children }) => {
         const syncData = (collectionName, setState, cacheKey) => {
             const q = query(collection(db, collectionName), where(queryField, "==", queryValue));
             return onSnapshot(q, (snap) => {
-                const data = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
                 setState(data);
-                localStorage.setItem(cacheKey, JSON.stringify(data));
+                setCache(cacheKey, data); // cache robusto con versionado
             }, (error) => console.log(`Offline/Error for ${collectionName}:`, error));
         };
 
-        const unsubCards = syncData('cards', setCards, 'cache_cards');
-        const unsubTrans = syncData('transactions', setTransactions, 'cache_transactions');
-        const unsubSuper = syncData('supermarket_items', setSuperItems, 'cache_superItems');
-        const unsubServices = syncData('services', setServices, 'cache_services');
-        const unsubFresh = syncData('fresh_purchases', setFreshItems, 'cache_freshItems');
+        const unsubCards    = syncData(COLLECTIONS.CARDS,        setCards,        CACHE_KEYS.CARDS);
+        const unsubTrans    = syncData(COLLECTIONS.TRANSACTIONS,  setTransactions,  CACHE_KEYS.TRANSACTIONS);
+        const unsubSuper    = syncData(COLLECTIONS.SUPERMARKET,   setSuperItems,    CACHE_KEYS.SUPER_ITEMS);
+        const unsubServices = syncData(COLLECTIONS.SERVICES,      setServices,      CACHE_KEYS.SERVICES);
+        const unsubFresh    = syncData(COLLECTIONS.FRESH_PURCHASES, setFreshItems,  CACHE_KEYS.FRESH_ITEMS);
 
         return () => {
             unsubCards();
@@ -100,7 +105,7 @@ export const FinancialProvider = ({ children }) => {
         };
 
         try {
-            await addDoc(collection(db, 'transactions'), payload);
+            await addDoc(collection(db, COLLECTIONS.TRANSACTIONS), payload);
         } catch (error) {
             console.error("Error adding transaction:", error);
             throw error;
