@@ -10,6 +10,7 @@ export default function SharedExpensesDashboard({
     cards = [], 
     transactions = [], 
     supermarketItems = [], 
+    freshItems = [],
     currentDate, 
     privacyMode, 
     isGlass, 
@@ -73,6 +74,10 @@ export default function SharedExpensesDashboard({
         const sharedSuperItems = supermarketItems.filter(i => i.month === currentMonthKey && i.isShared !== false);
         const superTotal = sharedSuperItems.reduce((acc, i) => acc + (Number(i.price) * Number(i.quantity)), 0);
         
+        // D. Mercado Fresco compartido
+        const sharedFreshItems = freshItems.filter(i => i.month === currentMonthKey && i.isShared !== false);
+        const freshTotal = sharedFreshItems.reduce((acc, i) => acc + (Number(i.total) || 0), 0);
+
         const result = [...sharedServices, ...sharedCards];
         if (superTotal > 0) {
             result.push({
@@ -84,9 +89,19 @@ export default function SharedExpensesDashboard({
                 icon: <ShoppingCart size={16} className="text-purple-400" />
             });
         }
+        if (freshTotal > 0) {
+            result.push({
+                id: 'fresh_total',
+                name: 'Mercado Fresco (Presupuesto/Gasto)',
+                amount: freshTotal,
+                day: 1,
+                type: 'fresh',
+                icon: <Leaf size={16} className="text-green-400" />
+            });
+        }
 
         return result.sort((a, b) => a.day - b.day);
-    }, [services, cards, transactions, supermarketItems, currentMonthKey, currentDate]);
+    }, [services, cards, transactions, supermarketItems, currentMonthKey, currentDate, freshItems]);
 
     const grandTotal = useMemo(() => sharedItems.reduce((acc, i) => acc + (i.amount || 0), 0), [sharedItems]);
 

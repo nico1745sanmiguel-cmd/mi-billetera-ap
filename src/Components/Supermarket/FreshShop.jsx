@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useRef } from 'react';
 import { db, auth } from '../../firebase';
 import { collection, addDoc, deleteDoc, doc, updateDoc } from 'firebase/firestore';
-import { Leaf, Beef, Plus, Trash2, ChevronDown, ChevronUp, Users, Lock, ShoppingBag } from 'lucide-react';
+import { Leaf, Beef, Plus, Trash2, ChevronDown, ChevronUp, Users, Lock, ShoppingBag, CheckCircle2, Circle, Calendar } from 'lucide-react';
 import { formatMoney, formatInputNumber, parseInputNumber } from '../../utils';
 
 // ────────────────────────────────────────────────────────────────
@@ -47,7 +47,7 @@ export const FRESH_CATEGORIES = {
 // ────────────────────────────────────────────────────────────────
 // Subcomponente: Una sola "salida de compra" (trip)
 // ────────────────────────────────────────────────────────────────
-function TripCard({ trip, cat, isGlass, onDelete, onUpdateTotal }) {
+function TripCard({ trip, cat, isGlass, onDelete, onUpdateTotal, onToggleCompleted }) {
     const [editing, setEditing] = useState(false);
     const [inputVal, setInputVal] = useState('');
     const inputRef = useRef(null);
@@ -71,8 +71,17 @@ function TripCard({ trip, cat, isGlass, onDelete, onUpdateTotal }) {
 
     return (
         <div className={`flex items-center gap-3 p-3 rounded-2xl border transition-all ${
-            isGlass ? 'bg-white/5 border-white/10 hover:bg-white/10' : 'bg-white border-gray-100 shadow-sm hover:border-gray-200'
-        }`}>
+            isGlass ? 'bg-white/5 border-white/10' : 'bg-white border-gray-100 shadow-sm'
+        } ${trip.completed ? 'opacity-60' : ''}`}>
+            
+            {/* Checkbox Comprado */}
+            <button 
+                onClick={() => onToggleCompleted(trip.id, !trip.completed)}
+                className={`p-1 transition-colors ${trip.completed ? 'text-emerald-500' : (isGlass ? 'text-white/20' : 'text-gray-300')}`}
+            >
+                {trip.completed ? <CheckCircle2 size={24} /> : <Circle size={24} />}
+            </button>
+
             {/* Fecha */}
             <div className={`w-11 h-11 rounded-xl flex flex-col items-center justify-center flex-shrink-0 font-bold text-center ${
                 isGlass ? cfg.accentGlass : cfg.accentLight
@@ -83,8 +92,11 @@ function TripCard({ trip, cat, isGlass, onDelete, onUpdateTotal }) {
 
             {/* Nota */}
             <div className="flex-1 min-w-0">
-                <p className={`text-xs truncate ${isGlass ? 'text-gray-400' : 'text-gray-500'}`}>
+                <p className={`text-sm font-bold truncate ${isGlass ? 'text-white' : 'text-gray-800'} ${trip.completed ? 'line-through opacity-50' : ''}`}>
                     {trip.note || 'Sin nota'}
+                </p>
+                <p className={`text-[10px] ${isGlass ? 'text-gray-400' : 'text-gray-500'}`}>
+                    {trip.completed ? 'Comprado' : 'Pendiente (Presupuesto)'}
                 </p>
             </div>
 
@@ -145,6 +157,10 @@ function FreshSection({ cat, trips, currentMonthKey, isGlass, householdId }) {
     const [isOpen, setIsOpen] = useState(true);
     const [addingNote, setAddingNote] = useState('');
     const [addingTotal, setAddingTotal] = useState('');
+    const [addingDate, setAddingDate] = useState(() => {
+        const today = new Date();
+        return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    });
     const [isShared, setIsShared] = useState(true);
     const [adding, setAdding] = useState(false);
     const noteRef = useRef(null);
@@ -153,25 +169,31 @@ function FreshSection({ cat, trips, currentMonthKey, isGlass, householdId }) {
     const monthTrips = useMemo(() => {
         return trips
             .filter(t => t.category === cat && t.month === currentMonthKey)
-            .sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+            .sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0)); // Orden cronológico para presupuesto
     }, [trips, cat, currentMonthKey]);
 
-    const totalMes = useMemo(() => monthTrips.reduce((acc, t) => acc + (t.total || 0), 0), [monthTrips]);
+    const budgetTrips = monthTrips.filter(t => !t.completed);
+    const completedTrips = monthTrips.filter(t => t.completed);
+
+    const totalReal = useMemo(() => completedTrips.reduce((acc, t) => acc + (t.total || 0), 0), [completedTrips]);
+    const totalBudget = useMemo(() => monthTrips.reduce((acc, t) => acc + (t.total || 0), 0), [monthTrips]);
+    
     const tripCount = monthTrips.length;
 
     const handleAdd = async (e) => {
         e.preventDefault();
         if (!auth.currentUser) return;
+        if (!addingNote.trim() && !addingTotal) return;
+
         setAdding(true);
         try {
-            const today = new Date();
-            const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
             await addDoc(collection(db, 'fresh_purchases'), {
                 category: cat,
                 note: addingNote.trim() || '',
                 total: parseInputNumber(addingTotal) || 0,
-                date: dateStr,
+                date: addingDate,
                 month: currentMonthKey,
+                completed: false, // Por defecto entra como presupuesto
                 userId: auth.currentUser.uid,
                 createdAt: new Date().toISOString(),
                 ...(householdId && {
@@ -191,13 +213,17 @@ function FreshSection({ cat, trips, currentMonthKey, isGlass, householdId }) {
     };
 
     const handleDelete = async (id) => {
-        if (window.confirm('¿Borrar esta compra?')) {
+        if (window.confirm('¿Borrar este ítem?')) {
             await deleteDoc(doc(db, 'fresh_purchases', id));
         }
     };
 
     const handleUpdateTotal = async (id, newTotal) => {
         await updateDoc(doc(db, 'fresh_purchases', id), { total: newTotal });
+    };
+
+    const handleToggleCompleted = async (id, completed) => {
+        await updateDoc(doc(db, 'fresh_purchases', id), { completed });
     };
 
     return (
@@ -218,20 +244,18 @@ function FreshSection({ cat, trips, currentMonthKey, isGlass, householdId }) {
                     <div>
                         <p className={`font-bold text-sm ${isGlass ? 'text-white' : 'text-gray-800'}`}>{cfg.label}</p>
                         <p className={`text-[10px] ${isGlass ? 'text-gray-400' : 'text-gray-500'}`}>
-                            {tripCount === 0 ? 'Sin compras este mes' : `${tripCount} compra${tripCount > 1 ? 's' : ''} este mes`}
+                            {tripCount === 0 ? 'Sin planes este mes' : `${budgetTrips.length} pendientes · ${completedTrips.length} comprados`}
                         </p>
                     </div>
                 </div>
                 <div className="flex items-center gap-3">
                     <div className="text-right">
-                        <p className={`font-mono font-bold ${isGlass ? 'text-white' : 'text-gray-900'} ${totalMes === 0 ? 'opacity-30' : ''}`}>
-                            {formatMoney(totalMes)}
+                        <p className={`font-mono font-bold ${isGlass ? 'text-white' : 'text-gray-900'}`}>
+                            {formatMoney(totalReal)}
                         </p>
-                        {householdId && tripCount > 0 && (
-                            <p className={`text-[9px] font-bold ${isGlass ? 'text-gray-500' : 'text-gray-400'}`}>
-                                {monthTrips.some(t => t.isShared) ? 'Compartido' : 'Solo tuyo'}
-                            </p>
-                        )}
+                        <p className={`text-[9px] font-bold ${isGlass ? 'text-white/40' : 'text-gray-400'}`}>
+                            Presupuesto: {formatMoney(totalBudget)}
+                        </p>
                     </div>
                     {isOpen
                         ? <ChevronUp size={16} className={isGlass ? 'text-white/40' : 'text-gray-400'} />
@@ -242,12 +266,13 @@ function FreshSection({ cat, trips, currentMonthKey, isGlass, householdId }) {
 
             {/* Cuerpo desplegable */}
             {isOpen && (
-                <div className="px-4 pb-4 space-y-3">
+                <div className="px-4 pb-4 space-y-4">
 
-                    {/* Lista de compras del mes */}
-                    {monthTrips.length > 0 && (
+                    {/* Lista de PENDIENTES */}
+                    {budgetTrips.length > 0 && (
                         <div className="space-y-2">
-                            {monthTrips.map(trip => (
+                            <p className={`text-[10px] font-bold uppercase tracking-widest ${isGlass ? 'text-white/30' : 'text-gray-400'}`}>Planeado / Presupuesto</p>
+                            {budgetTrips.map(trip => (
                                 <TripCard
                                     key={trip.id}
                                     trip={trip}
@@ -255,32 +280,48 @@ function FreshSection({ cat, trips, currentMonthKey, isGlass, householdId }) {
                                     isGlass={isGlass}
                                     onDelete={handleDelete}
                                     onUpdateTotal={handleUpdateTotal}
+                                    onToggleCompleted={handleToggleCompleted}
                                 />
                             ))}
                         </div>
                     )}
 
-                    {/* Separador con total acumulado si hay más de 1 compra */}
-                    {monthTrips.length > 1 && (
-                        <div className={`flex justify-between items-center px-3 py-2 rounded-2xl ${
-                            isGlass ? 'bg-white/5 border border-white/10' : 'bg-white border border-gray-100'
-                        }`}>
-                            <span className={`text-xs font-bold ${isGlass ? 'text-gray-400' : 'text-gray-500'}`}>
-                                Total acumulado
-                            </span>
-                            <span className={`font-mono font-bold text-sm ${isGlass ? 'text-white' : 'text-gray-900'}`}>
-                                {formatMoney(totalMes)}
-                            </span>
+                    {/* Lista de COMPRADOS */}
+                    {completedTrips.length > 0 && (
+                        <div className="space-y-2">
+                            <p className={`text-[10px] font-bold uppercase tracking-widest ${isGlass ? 'text-white/30' : 'text-gray-400'}`}>Comprado / Historial</p>
+                            {completedTrips.map(trip => (
+                                <TripCard
+                                    key={trip.id}
+                                    trip={trip}
+                                    cat={cat}
+                                    isGlass={isGlass}
+                                    onDelete={handleDelete}
+                                    onUpdateTotal={handleUpdateTotal}
+                                    onToggleCompleted={handleToggleCompleted}
+                                />
+                            ))}
                         </div>
                     )}
 
-                    {/* Formulario: nueva compra */}
+                    {/* Formulario: nueva compra / presupuesto */}
                     <form onSubmit={handleAdd} className={`rounded-2xl border p-3 space-y-2 ${
                         isGlass ? 'bg-black/20 border-white/10' : 'bg-white border-gray-200 shadow-sm'
                     }`}>
-                        <p className={`text-[10px] font-bold uppercase tracking-wider ${isGlass ? 'text-gray-500' : 'text-gray-400'}`}>
-                            + Registrar compra
-                        </p>
+                        <div className="flex justify-between items-center mb-1">
+                            <p className={`text-[10px] font-bold uppercase tracking-wider ${isGlass ? 'text-gray-500' : 'text-gray-400'}`}>
+                                + Nuevo Presupuesto
+                            </p>
+                            <div className="flex items-center gap-1">
+                                <Calendar size={12} className="text-gray-400" />
+                                <input 
+                                    type="date" 
+                                    className={`bg-transparent text-[10px] font-bold outline-none border-none ${isGlass ? 'text-indigo-300' : 'text-indigo-600'}`}
+                                    value={addingDate}
+                                    onChange={e => setAddingDate(e.target.value)}
+                                />
+                            </div>
+                        </div>
 
                         <div className="flex gap-2">
                             {/* Nota (opcional) */}
@@ -292,11 +333,11 @@ function FreshSection({ cat, trips, currentMonthKey, isGlass, householdId }) {
                                         ? 'bg-black/30 border-white/10 text-white placeholder-white/30 focus:border-white/30'
                                         : 'bg-gray-50 border-gray-200 text-gray-800 focus:border-gray-400'
                                 }`}
-                                placeholder="Nota opcional..."
+                                placeholder="Qué comprar? (ej: Asado domingo)"
                                 value={addingNote}
                                 onChange={e => setAddingNote(e.target.value)}
                             />
-                            {/* Precio */}
+                            {/* Precio Estimado */}
                             <div className={`flex items-center rounded-xl px-3 border w-32 flex-shrink-0 ${
                                 isGlass ? 'bg-black/30 border-white/10' : 'bg-gray-50 border-gray-200'
                             }`}>
@@ -306,10 +347,9 @@ function FreshSection({ cat, trips, currentMonthKey, isGlass, householdId }) {
                                     className={`w-full bg-transparent outline-none text-sm font-bold text-right py-2 ${
                                         isGlass ? 'text-white placeholder-white/30' : 'text-gray-800'
                                     }`}
-                                    placeholder="0"
+                                    placeholder="Estimado"
                                     value={formatInputNumber(addingTotal)}
                                     onChange={e => setAddingTotal(String(parseInputNumber(e.target.value)))}
-                                    onKeyDown={e => e.key === 'Enter' && e.currentTarget.form?.requestSubmit()}
                                 />
                             </div>
                         </div>
@@ -319,18 +359,18 @@ function FreshSection({ cat, trips, currentMonthKey, isGlass, householdId }) {
                             <button
                                 type="button"
                                 onClick={() => setIsShared(s => !s)}
-                                className={`w-full flex items-center justify-between p-2.5 rounded-xl border transition-colors ${
+                                className={`w-full flex items-center justify-between p-2 rounded-xl border transition-colors ${
                                     isShared
                                         ? (isGlass ? 'bg-indigo-500/15 border-indigo-500/30 text-indigo-300' : 'bg-indigo-50 border-indigo-200 text-indigo-700')
                                         : (isGlass ? 'bg-white/5 border-white/10 text-gray-400' : 'bg-gray-50 border-gray-200 text-gray-500')
                                 }`}
                             >
-                                <span className="flex items-center gap-2 text-xs font-bold">
-                                    {isShared ? <Users size={14} /> : <Lock size={14} />}
-                                    {isShared ? 'Gasto del hogar compartido' : 'Solo mi gasto'}
+                                <span className="flex items-center gap-2 text-[10px] font-bold">
+                                    {isShared ? <Users size={12} /> : <Lock size={12} />}
+                                    {isShared ? 'Compartir con el hogar' : 'Solo mi presupuesto'}
                                 </span>
-                                <div className={`w-8 h-5 rounded-full p-0.5 transition-colors ${isShared ? 'bg-indigo-500' : (isGlass ? 'bg-white/20' : 'bg-gray-300')}`}>
-                                    <div className={`w-4 h-4 bg-white rounded-full shadow transition-transform ${isShared ? 'translate-x-3' : 'translate-x-0'}`} />
+                                <div className={`w-7 h-4 rounded-full p-0.5 transition-colors ${isShared ? 'bg-indigo-500' : (isGlass ? 'bg-white/20' : 'bg-gray-300')}`}>
+                                    <div className={`w-3 h-3 bg-white rounded-full shadow transition-transform ${isShared ? 'translate-x-3' : 'translate-x-0'}`} />
                                 </div>
                             </button>
                         )}
@@ -343,7 +383,7 @@ function FreshSection({ cat, trips, currentMonthKey, isGlass, householdId }) {
                             } shadow-sm`}
                         >
                             <Plus size={16} />
-                            {adding ? 'Guardando...' : 'Agregar compra'}
+                            {adding ? 'Agregando...' : 'Agregar al Presupuesto'}
                         </button>
                     </form>
                 </div>
@@ -362,10 +402,11 @@ export default function FreshShop({ items = [], currentDate, isGlass, householdI
         return `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
     }, [currentDate]);
 
-    const totalMes = useMemo(() => {
-        return items
-            .filter(t => t.month === currentMonthKey)
-            .reduce((acc, t) => acc + (t.total || 0), 0);
+    const totals = useMemo(() => {
+        const monthItems = items.filter(t => t.month === currentMonthKey);
+        const spent = monthItems.filter(t => t.completed).reduce((acc, t) => acc + (t.total || 0), 0);
+        const budget = monthItems.reduce((acc, t) => acc + (t.total || 0), 0);
+        return { spent, budget };
     }, [items, currentMonthKey]);
 
     return (
@@ -386,9 +427,9 @@ export default function FreshShop({ items = [], currentDate, isGlass, householdI
                         </p>
                     </div>
                     <div className="text-right">
-                        <p className={`text-[10px] uppercase font-bold ${isGlass ? 'text-white/50' : 'text-gray-400'}`}>Total del mes</p>
-                        <p className={`text-2xl font-bold font-mono ${totalMes > 0 ? (isGlass ? 'text-white' : 'text-gray-900') : (isGlass ? 'text-white/30' : 'text-gray-300')}`}>
-                            {formatMoney(totalMes)}
+                        <p className={`text-[10px] uppercase font-bold ${isGlass ? 'text-white/50' : 'text-gray-400'}`}>Real / Presupuesto</p>
+                        <p className={`text-2xl font-bold font-mono ${isGlass ? 'text-white' : 'text-gray-900'}`}>
+                            {formatMoney(totals.spent)} <span className="text-xs opacity-40">/ {formatMoney(totals.budget)}</span>
                         </p>
                     </div>
                 </div>

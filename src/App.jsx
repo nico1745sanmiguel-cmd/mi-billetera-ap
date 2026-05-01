@@ -251,6 +251,7 @@ export default function App() {
                 cards={visibleCards}
                 transactions={visibleTransactions}
                 supermarketItems={visibleSuperItems}
+                freshItems={freshItems}
                 currentDate={currentDate}
                 privacyMode={privacyMode}
                 isGlass={isGlass}
