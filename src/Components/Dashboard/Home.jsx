@@ -15,7 +15,7 @@ import {
 } from '../../config/constants';
 import { getCache, setCache } from '../../utils/cache';
 
-const Home = memo(({ transactions, cards, supermarketItems = [], services = [], privacyMode, setView, onLogout, currentDate, user, onToggleTheme, householdId, householdMembers = [] }) => {
+const Home = memo(({ transactions, cards, supermarketItems = [], services = [], freshItems = [], privacyMode, setView, onLogout, currentDate, user, onToggleTheme, householdId, householdMembers = [] }) => {
 
     const [selectedCardForModal, setSelectedCardForModal] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -131,7 +131,9 @@ const Home = memo(({ transactions, cards, supermarketItems = [], services = [], 
         const sharedServicesTotal = services.filter(s => s.isShared !== false).reduce((acc, s) => acc + Number(s.amount || 0), 0);
         const sharedCardsTotal = cardsWithDebt.filter(c => c.isShared !== false).reduce((acc, c) => acc + Number(c.currentDebt || 0), 0);
         const sharedSuperTotal = supermarketItems.filter(i => i.month === targetMonthKey && i.isShared !== false).reduce((acc, i) => acc + Number((i.price || 0) * (i.quantity || 1)), 0);
-        const grandTotal = sharedServicesTotal + sharedCardsTotal + sharedSuperTotal;
+        const sharedFreshTotal = freshItems.filter(i => i.month === targetMonthKey && i.isShared !== false).reduce((acc, i) => acc + (Number(i.total) || 0), 0);
+        
+        const grandTotal = sharedServicesTotal + sharedCardsTotal + sharedSuperTotal + sharedFreshTotal;
 
         const breakdown = proporciones.map(p => ({
             uid: p.uid,
@@ -140,11 +142,11 @@ const Home = memo(({ transactions, cards, supermarketItems = [], services = [], 
             salary: p.salary,
             proportion: p.proportion,
             percentage: p.percentage,
-            aporte: calcularAporte(grandTotal, p.proportion)
+            aporte: Math.round(grandTotal * p.proportion)
         }));
 
         return { grandTotal, breakdown, proporciones };
-    }, [householdMembers, services, cardsWithDebt, supermarketItems, targetMonthKey]);
+    }, [householdMembers, services, cardsWithDebt, supermarketItems, freshItems, targetMonthKey]);
 
 
     // --- 3. DICCIONARIO DE WIDGETS ---

@@ -165,6 +165,7 @@ export default function App() {
                                     cards={visibleCards}
                                     supermarketItems={visibleSuperItems}
                                     services={visibleServices}
+                                    freshItems={freshItems}
                                     currentDate={currentDate}
                                     user={user}
                                     privacyMode={privacyMode}
@@ -180,6 +181,7 @@ export default function App() {
                                     cards={visibleCards}
                                     supermarketItems={visibleSuperItems}
                                     services={visibleServices}
+                                    freshItems={freshItems}
                                     privacyMode={privacyMode}
                                     setView={setView}
                                     onLogout={handleLogout}

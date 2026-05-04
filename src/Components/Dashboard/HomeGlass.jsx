@@ -11,7 +11,7 @@ import { calcularProporciones, getLatestSalary, calcularAporte } from '../../uti
 // [SAFE MODE] 
 // Fase 5: Data Binding (Conectando info real)
 
-const HomeGlass = memo(({ transactions = [], cards = [], supermarketItems = [], services = [], currentDate, user, onToggleTheme, setView, privacyMode, onLogout, householdId, householdMembers = [] }) => {
+const HomeGlass = memo(({ transactions = [], cards = [], supermarketItems = [], services = [], freshItems = [], currentDate, user, onToggleTheme, setView, privacyMode, onLogout, householdId, householdMembers = [] }) => {
 
     // ESTADO PARA GESTIÓN DE TARJETAS
     const [cardToEdit, setCardToEdit] = useState(null); // null, 'NEW', or card object
@@ -159,18 +159,20 @@ const HomeGlass = memo(({ transactions = [], cards = [], supermarketItems = [], 
         const sharedServicesTotal = services.filter(s => s.isShared !== false).reduce((acc, s) => acc + Number(s.amount || 0), 0);
         const sharedCardsTotal = cardsWithDebt.filter(c => c.isShared !== false).reduce((acc, c) => acc + Number(c.currentDebt || 0), 0);
         const sharedSuperTotal = supermarketItems.filter(i => i.month === targetMonthKey && i.isShared !== false).reduce((acc, i) => acc + Number((i.price || 0) * (i.quantity || 1)), 0);
-        const grandTotal = sharedServicesTotal + sharedCardsTotal + sharedSuperTotal;
+        const sharedFreshTotal = freshItems.filter(i => i.month === targetMonthKey && i.isShared !== false).reduce((acc, i) => acc + (Number(i.total) || 0), 0);
+        
+        const grandTotal = sharedServicesTotal + sharedCardsTotal + sharedSuperTotal + sharedFreshTotal;
 
         const breakdown = proporciones.map(p => ({
             uid: p.uid,
             displayName: p.displayName,
             proportion: p.proportion,
             percentage: p.percentage,
-            aporte: calcularAporte(grandTotal, p.proportion)
+            aporte: Math.round(grandTotal * p.proportion)
         }));
 
         return { grandTotal, breakdown };
-    }, [householdMembers, services, cardsWithDebt, supermarketItems, targetMonthKey]);
+    }, [householdMembers, services, cardsWithDebt, supermarketItems, freshItems, targetMonthKey]);
 
     /* --- WIDGETS DEFINITIONS --- */
     /* --- WIDGETS DEFINITIONS (Memoized to prevent re-renders) --- */
