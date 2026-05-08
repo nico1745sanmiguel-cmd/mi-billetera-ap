@@ -158,7 +158,7 @@ const Home = memo(({ transactions, cards, supermarketItems = [], services = [], 
             </div>
         ),
 
-        split_summary: householdMembers.length >= 2 ? (
+        split_summary: (
             <div 
                 onClick={() => setView('reparto')}
                 className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden mx-1 cursor-pointer hover:border-emerald-200 transition-all"
@@ -177,14 +177,13 @@ const Home = memo(({ transactions, cards, supermarketItems = [], services = [], 
                     </button>
                 </div>
 
-                {splitData ? (
+                {householdMembers.length >= 2 && splitData ? (
                     <div className="p-4 space-y-3">
                         {splitData.breakdown.map((member, idx) => {
                             const isMe = member.uid === user?.uid;
                             const barWidth = `${member.percentage}%`;
                             const colors = ['from-indigo-500 to-purple-500', 'from-emerald-500 to-teal-500'];
                             const textColors = ['text-indigo-600', 'text-emerald-600'];
-                            const bgColors = ['bg-indigo-50', 'bg-emerald-50'];
                             return (
                                 <div key={member.uid}>
                                     <div className="flex items-center justify-between mb-1.5">
@@ -202,7 +201,6 @@ const Home = memo(({ transactions, cards, supermarketItems = [], services = [], 
                                             <p className="text-[10px] text-gray-400">{member.percentage}%</p>
                                         </div>
                                     </div>
-                                    {/* Barra de progreso */}
                                     <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
                                         <div className={`h-full rounded-full bg-gradient-to-r ${colors[idx % 2]} transition-all duration-700`} style={{ width: barWidth }} />
                                     </div>
@@ -216,18 +214,17 @@ const Home = memo(({ transactions, cards, supermarketItems = [], services = [], 
                         </div>
                     </div>
                 ) : (
-                    // Estado: falta cargar sueldos
                     <div className="p-5 text-center">
                         <div className="flex justify-center mb-2"><Wallet size={32} className="text-yellow-500 drop-shadow-sm" /></div>
                         <p className="text-sm font-bold text-gray-700 mb-1">Cargá los sueldos para ver el reparto</p>
                         <p className="text-xs text-gray-400 mb-3">Cada uno tiene que ingresar su sueldo mensual neto para que podamos calcular cuánto le corresponde de cada gasto compartido.</p>
-                        <button onClick={() => setView('household')} className="text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded-xl transition-colors">
+                        <button onClick={(e) => { e.stopPropagation(); setView('household'); }} className="text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded-xl transition-colors">
                             Ir a Grupo Familiar →
                         </button>
                     </div>
                 )}
             </div>
-        ) : null,
+        ),
 
 
         cards: (
