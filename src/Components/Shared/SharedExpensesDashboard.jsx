@@ -1,11 +1,219 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { db, auth } from '../../firebase';
-import { doc, getDoc } from 'firebase/firestore';
-import { Scale, Users, ChevronLeft, CreditCard, ShoppingCart, Lightbulb, User, Leaf } from 'lucide-react';
+import { doc, getDoc, collection, query, where, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
+import { Scale, Users, ChevronLeft, CreditCard, ShoppingCart, Lightbulb, User, Leaf, Plus, X, CheckCircle, Clock, TrendingUp } from 'lucide-react';
 import { formatMoney } from '../../utils';
 import { calcularProporciones, getLatestSalary } from '../../utils/salaryUtils';
 import { buildCardsWithDebt, formatMonthKey } from '../../utils/cardDebtUtils';
+import { COLLECTIONS } from '../../config/constants';
 
+// ── MODAL DE APORTES ──────────────────────────────────────────────────────────
+function ContributionModal({ person, totalTarget, monthKey, householdId, isGlass, onClose, privacyMode }) {
+    const [contributions, setContributions] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [amount, setAmount] = useState('');
+    const [note, setNote] = useState('');
+    const [saving, setSaving] = useState(false);
+
+    const showMoney = (v) => privacyMode ? '****' : formatMoney(v);
+    const isMe = person.uid === auth.currentUser?.uid;
+    const colors = isMe ? 'from-indigo-600 to-blue-600' : 'from-emerald-600 to-teal-600';
+    const accentColor = isMe ? 'indigo' : 'emerald';
+
+    // Escuchar aportes en tiempo real
+    useEffect(() => {
+        const q = query(
+            collection(db, COLLECTIONS.CONTRIBUTIONS),
+            where('householdId', '==', householdId),
+            where('uid', '==', person.uid),
+            where('monthKey', '==', monthKey)
+        );
+        const unsub = onSnapshot(q, (snap) => {
+            const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            data.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+            setContributions(data);
+            setLoading(false);
+        });
+        return () => unsub();
+    }, [householdId, person.uid, monthKey]);
+
+    const totalPagado = useMemo(() => contributions.reduce((acc, c) => acc + (c.amount || 0), 0), [contributions]);
+    const progreso = totalTarget > 0 ? Math.min((totalPagado / totalTarget) * 100, 100) : 0;
+    const falta = Math.max(totalTarget - totalPagado, 0);
+
+    const handleAdd = async () => {
+        const num = parseFloat(amount.replace(/\./g, '').replace(',', '.'));
+        if (!num || num <= 0) return;
+        setSaving(true);
+        try {
+            await addDoc(collection(db, COLLECTIONS.CONTRIBUTIONS), {
+                householdId,
+                uid: person.uid,
+                monthKey,
+                amount: num,
+                note: note.trim() || null,
+                createdAt: serverTimestamp(),
+            });
+            setAmount('');
+            setNote('');
+        } catch (e) {
+            console.error('Error al guardar aporte:', e);
+        }
+        setSaving(false);
+    };
+
+    const handleKeyDown = (e) => { if (e.key === 'Enter') handleAdd(); };
+
+    // Formatear input con puntos de miles al escribir
+    const handleAmountChange = (e) => {
+        const raw = e.target.value.replace(/\D/g, '');
+        if (!raw) { setAmount(''); return; }
+        setAmount(Number(raw).toLocaleString('es-AR'));
+    };
+
+    return (
+        <div
+            className="fixed inset-0 z-50 flex items-end justify-center p-0"
+            onClick={onClose}
+        >
+            {/* Fondo oscuro */}
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+
+            {/* Panel deslizante desde abajo */}
+            <div
+                className={`relative w-full max-w-lg rounded-t-3xl shadow-2xl overflow-hidden animate-slide-up ${
+                    isGlass
+                        ? 'bg-gray-900 text-white border-t border-white/10'
+                        : 'bg-white text-gray-900'
+                }`}
+                onClick={e => e.stopPropagation()}
+                style={{ maxHeight: '90vh', overflowY: 'auto' }}
+            >
+                {/* Tirador */}
+                <div className="flex justify-center pt-3 pb-1">
+                    <div className={`w-10 h-1 rounded-full ${isGlass ? 'bg-white/20' : 'bg-gray-200'}`} />
+                </div>
+
+                {/* Encabezado con gradiente */}
+                <div className={`bg-gradient-to-br ${colors} p-5 mx-4 mt-2 rounded-2xl text-white`}>
+                    <div className="flex items-center justify-between mb-3">
+                        <div>
+                            <p className="text-xs font-bold uppercase opacity-70 tracking-widest">
+                                {isMe ? 'Tu Aporte' : `Aporte ${person.displayName?.split(' ')[0]}`}
+                            </p>
+                            <p className="text-2xl font-bold font-mono">{showMoney(totalPagado)}</p>
+                            <p className="text-xs opacity-70 mt-0.5">de {showMoney(totalTarget)}</p>
+                        </div>
+                        <button onClick={onClose} className="w-9 h-9 bg-white/20 rounded-full flex items-center justify-center">
+                            <X size={18} />
+                        </button>
+                    </div>
+
+                    {/* Barra de progreso grande */}
+                    <div className="w-full h-3 bg-white/20 rounded-full overflow-hidden">
+                        <div
+                            className="h-full bg-white rounded-full transition-all duration-700"
+                            style={{ width: `${progreso}%` }}
+                        />
+                    </div>
+                    <div className="flex justify-between mt-1.5 text-[10px] font-bold">
+                        <span>{progreso.toFixed(0)}% aportado</span>
+                        {falta > 0
+                            ? <span className="opacity-70">Falta {showMoney(falta)}</span>
+                            : <span className="flex items-center gap-1"><CheckCircle size={11} /> Completado!</span>
+                        }
+                    </div>
+                </div>
+
+                {/* Input para nuevo aporte */}
+                <div className="px-4 mt-4">
+                    <p className={`text-xs font-bold uppercase tracking-widest mb-2 ${isGlass ? 'text-gray-400' : 'text-gray-500'}`}>
+                        Registrar aporte
+                    </p>
+                    <div className="flex gap-2">
+                        <div className={`flex-1 flex items-center gap-2 px-4 py-3 rounded-2xl border ${
+                            isGlass ? 'bg-white/5 border-white/10' : 'bg-gray-50 border-gray-200'
+                        }`}>
+                            <span className={`text-sm font-bold ${isGlass ? 'text-gray-400' : 'text-gray-400'}`}>$</span>
+                            <input
+                                type="text"
+                                inputMode="numeric"
+                                placeholder="0"
+                                value={amount}
+                                onChange={handleAmountChange}
+                                onKeyDown={handleKeyDown}
+                                autoFocus
+                                className={`flex-1 bg-transparent font-mono font-bold text-base outline-none ${
+                                    isGlass ? 'text-white placeholder-gray-600' : 'text-gray-900 placeholder-gray-300'
+                                }`}
+                            />
+                        </div>
+                        <button
+                            onClick={handleAdd}
+                            disabled={!amount || saving}
+                            className={`w-14 h-14 rounded-2xl flex items-center justify-center font-bold transition-all active:scale-95 bg-gradient-to-br ${colors} text-white disabled:opacity-40`}
+                        >
+                            {saving ? <Clock size={20} className="animate-spin" /> : <Plus size={20} />}
+                        </button>
+                    </div>
+
+                    {/* Nota opcional */}
+                    <input
+                        type="text"
+                        placeholder="Nota (opcional)..."
+                        value={note}
+                        onChange={e => setNote(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        className={`w-full mt-2 px-4 py-2.5 rounded-xl border text-sm outline-none ${
+                            isGlass
+                                ? 'bg-white/5 border-white/10 text-white placeholder-gray-600'
+                                : 'bg-gray-50 border-gray-200 text-gray-700 placeholder-gray-400'
+                        }`}
+                    />
+                </div>
+
+                {/* Lista de aportes previos */}
+                <div className="px-4 mt-5 pb-8">
+                    <p className={`text-xs font-bold uppercase tracking-widest mb-3 ${isGlass ? 'text-gray-400' : 'text-gray-500'}`}>
+                        Aportes del mes
+                    </p>
+
+                    {loading && (
+                        <div className={`text-center py-4 text-sm ${isGlass ? 'text-gray-500' : 'text-gray-400'}`}>Cargando...</div>
+                    )}
+
+                    {!loading && contributions.length === 0 && (
+                        <div className={`text-center py-6 rounded-2xl border border-dashed ${isGlass ? 'border-white/10 text-gray-500' : 'border-gray-200 text-gray-400'}`}>
+                            <TrendingUp size={28} className="mx-auto mb-2 opacity-30" />
+                            <p className="text-sm">Sin aportes registrados aún</p>
+                        </div>
+                    )}
+
+                    <div className="space-y-2">
+                        {contributions.map((c) => {
+                            const fecha = c.createdAt?.toDate?.()?.toLocaleDateString('es-AR', { day: '2-digit', month: 'short' }) || '—';
+                            return (
+                                <div key={c.id} className={`flex items-center justify-between px-4 py-3 rounded-2xl ${
+                                    isGlass ? 'bg-white/5' : 'bg-gray-50'
+                                }`}>
+                                    <div>
+                                        <p className={`text-xs ${isGlass ? 'text-gray-400' : 'text-gray-500'}`}>{fecha}</p>
+                                        {c.note && <p className={`text-xs mt-0.5 ${isGlass ? 'text-gray-300' : 'text-gray-600'}`}>{c.note}</p>}
+                                    </div>
+                                    <p className={`font-mono font-bold text-sm text-${accentColor}-${isGlass ? '300' : '600'}`}>
+                                        + {showMoney(c.amount)}
+                                    </p>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// ── COMPONENTE PRINCIPAL ──────────────────────────────────────────────────────
 export default function SharedExpensesDashboard({ 
     services = [], 
     cards = [], 
@@ -21,6 +229,8 @@ export default function SharedExpensesDashboard({
 }) {
     const [proporciones, setProporciones] = useState([]);
     const [loadingProps, setLoadingProps] = useState(false);
+    const [selectedPerson, setSelectedPerson] = useState(null); // { uid, displayName, proportion }
+    const [allContributions, setAllContributions] = useState([]);
 
     const currentUid = auth.currentUser?.uid;
     const showMoney = (amount) => privacyMode ? '****' : formatMoney(amount);
@@ -30,55 +240,29 @@ export default function SharedExpensesDashboard({
 
     // 1. OBTENER ITEMS COMPARTIDOS
     const sharedItems = useMemo(() => {
-        // A. Servicios compartidos
         const sharedServices = services.filter(s => s.isShared !== false).map(s => ({
-            ...s,
-            type: 'service',
+            ...s, type: 'service',
             icon: <Lightbulb size={16} className="text-yellow-400" />
         }));
 
-        // B. Tarjetas compartidas (deuda del mes)
         const allCardsWithDebt = buildCardsWithDebt(cards, transactions, currentMonthKey, targetMonthVal);
         const sharedCards = allCardsWithDebt
             .filter(c => c.isShared !== false && c.currentDebt > 0)
             .map(c => ({
-                id: c.id,
-                name: c.name,
-                amount: c.currentDebt,
-                day: c.dueDay || 10,
-                type: 'card',
+                id: c.id, name: c.name, amount: c.currentDebt,
+                day: c.dueDay || 10, type: 'card',
                 icon: <CreditCard size={16} className="text-indigo-400" />
             }));
 
-        // C. Supermercado compartido
         const sharedSuperItems = supermarketItems.filter(i => i.month === currentMonthKey && i.isShared !== false);
         const superTotal = sharedSuperItems.reduce((acc, i) => acc + (Number(i.price) * Number(i.quantity)), 0);
         
-        // D. Mercado Fresco compartido
         const sharedFreshItems = freshItems.filter(i => i.month === currentMonthKey && i.isShared !== false);
         const freshTotal = sharedFreshItems.reduce((acc, i) => acc + (Number(i.total) || 0), 0);
 
         const result = [...sharedServices, ...sharedCards];
-        if (superTotal > 0) {
-            result.push({
-                id: 'super_total',
-                name: 'Supermercado (Presupuesto)',
-                amount: superTotal,
-                day: 1, 
-                type: 'super',
-                icon: <ShoppingCart size={16} className="text-purple-400" />
-            });
-        }
-        if (freshTotal > 0) {
-            result.push({
-                id: 'fresh_total',
-                name: 'Mercado Fresco (Presupuesto/Gasto)',
-                amount: freshTotal,
-                day: 1,
-                type: 'fresh',
-                icon: <Leaf size={16} className="text-green-400" />
-            });
-        }
+        if (superTotal > 0) result.push({ id: 'super_total', name: 'Supermercado (Presupuesto)', amount: superTotal, day: 1, type: 'super', icon: <ShoppingCart size={16} className="text-purple-400" /> });
+        if (freshTotal > 0) result.push({ id: 'fresh_total', name: 'Mercado Fresco (Presupuesto/Gasto)', amount: freshTotal, day: 1, type: 'fresh', icon: <Leaf size={16} className="text-green-400" /> });
 
         return result.sort((a, b) => a.day - b.day);
     }, [services, cards, transactions, supermarketItems, currentMonthKey, currentDate, freshItems]);
@@ -104,6 +288,27 @@ export default function SharedExpensesDashboard({
         loadProps();
     }, [householdId]);
 
+    // 3. ESCUCHAR TODOS LOS APORTES DEL MES (tiempo real, para las barras de las tarjetas)
+    useEffect(() => {
+        if (!householdId) return;
+        const q = query(
+            collection(db, COLLECTIONS.CONTRIBUTIONS),
+            where('householdId', '==', householdId),
+            where('monthKey', '==', currentMonthKey)
+        );
+        const unsub = onSnapshot(q, (snap) => {
+            setAllContributions(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+        });
+        return () => unsub();
+    }, [householdId, currentMonthKey]);
+
+    // Total pagado por persona (para las barras)
+    const getPagadoPor = useCallback((uid) => {
+        return allContributions
+            .filter(c => c.uid === uid)
+            .reduce((acc, c) => acc + (c.amount || 0), 0);
+    }, [allContributions]);
+
     const allHaveProportions = proporciones.length > 0;
 
     return (
@@ -121,26 +326,56 @@ export default function SharedExpensesDashboard({
                 </div>
             </div>
 
-            {/* RESUMEN DE APORTES (Cartas superiores) */}
+            {/* RESUMEN DE APORTES — Botones con barra de progreso */}
             {allHaveProportions && (
                 <div className="grid grid-cols-2 gap-4 px-1">
-                    {proporciones.map((p, idx) => {
+                    {proporciones.map((p) => {
                         const isMe = p.uid === currentUid;
                         const aporte = Math.round(grandTotal * p.proportion);
+                        const pagado = getPagadoPor(p.uid);
+                        const progreso = aporte > 0 ? Math.min((pagado / aporte) * 100, 100) : 0;
+                        const falta = Math.max(aporte - pagado, 0);
                         const colors = isMe ? 'from-indigo-600 to-blue-600' : 'from-emerald-600 to-teal-600';
+                        const completo = pagado >= aporte && aporte > 0;
+
                         return (
-                            <div key={p.uid} className={`relative overflow-hidden p-4 rounded-[24px] text-white shadow-lg bg-gradient-to-br ${colors}`}>
+                            <button
+                                key={p.uid}
+                                onClick={() => setSelectedPerson({ ...p, totalTarget: aporte })}
+                                className={`relative overflow-hidden p-4 rounded-[24px] text-white shadow-lg bg-gradient-to-br ${colors} text-left active:scale-95 transition-transform select-none`}
+                            >
                                 <div className="relative z-10">
                                     <p className="text-[10px] font-bold uppercase opacity-70 tracking-widest mb-1">
                                         {isMe ? 'Tu Aporte' : `Aporte ${p.displayName?.split(' ')[0]}`}
                                     </p>
-                                    <p className="text-xl font-bold font-mono leading-none">{showMoney(aporte)}</p>
-                                    <p className="text-[10px] mt-2 font-medium bg-white/20 w-fit px-2 py-0.5 rounded-full">{p.percentage}% del total</p>
+                                    <p className="text-xl font-bold font-mono leading-none">{showMoney(pagado)}</p>
+                                    <p className="text-[10px] opacity-60 font-mono mt-0.5">de {showMoney(aporte)}</p>
+
+                                    {/* Barra de progreso */}
+                                    <div className="w-full h-1.5 bg-white/20 rounded-full overflow-hidden mt-3 mb-1.5">
+                                        <div
+                                            className="h-full bg-white rounded-full transition-all duration-700"
+                                            style={{ width: `${progreso}%` }}
+                                        />
+                                    </div>
+
+                                    {completo
+                                        ? <p className="text-[10px] font-bold bg-white/20 w-fit px-2 py-0.5 rounded-full flex items-center gap-1">
+                                            <CheckCircle size={9} /> Completo
+                                          </p>
+                                        : <p className="text-[10px] font-medium bg-white/20 w-fit px-2 py-0.5 rounded-full">
+                                            Falta {showMoney(falta)}
+                                          </p>
+                                    }
                                 </div>
                                 <div className="absolute -right-2 -bottom-2 opacity-20">
                                     <User size={64} />
                                 </div>
-                            </div>
+                                {/* Indicador de toque */}
+                                <div className="absolute top-2 right-2 opacity-40">
+                                    <Plus size={14} />
+                                </div>
+                            </button>
                         );
                     })}
                 </div>
@@ -172,7 +407,6 @@ export default function SharedExpensesDashboard({
                                 </div>
                             </div>
 
-                            {/* División por persona */}
                             {allHaveProportions && (
                                 <div className="grid grid-cols-2 gap-2 pt-2 border-t border-white/5">
                                     {proporciones.map(p => {
@@ -219,6 +453,19 @@ export default function SharedExpensesDashboard({
                         Configurar Sueldos Ahora
                     </button>
                 </div>
+            )}
+
+            {/* MODAL DE APORTES */}
+            {selectedPerson && (
+                <ContributionModal
+                    person={selectedPerson}
+                    totalTarget={selectedPerson.totalTarget}
+                    monthKey={currentMonthKey}
+                    householdId={householdId}
+                    isGlass={isGlass}
+                    privacyMode={privacyMode}
+                    onClose={() => setSelectedPerson(null)}
+                />
             )}
         </div>
     );

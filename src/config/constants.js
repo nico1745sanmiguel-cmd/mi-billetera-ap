@@ -87,6 +87,7 @@ export const COLLECTIONS = {
     SUPERMARKET:      'supermarket_items',
     SERVICES:         'services',
     FRESH_PURCHASES:  'fresh_purchases',
+    CONTRIBUTIONS:    'contributions',
 };
 
 // ─── CACHE KEYS ───────────────────────────────────────────────────────────────

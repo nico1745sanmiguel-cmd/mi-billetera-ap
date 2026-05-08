@@ -28,7 +28,7 @@ export const useFinancialProjections = (transactions = [], cards = [], currentDa
 
             // Suma todas las cuotas de crédito activas en este mes futuro
             // calcularDeudaTarjetaMes con cardId=null suma TODAS las tarjetas
-            const existingDebt = calcularDeudaTarjetaMes(
+            let existingDebt = calcularDeudaTarjetaMes(
                 transactions.filter(t => t.type === 'credit'),
                 null,
                 futureMonthVal
