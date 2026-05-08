@@ -41,10 +41,19 @@ function ContributionModal({ person, totalTarget, monthKey, householdId, isGlass
     const progreso = totalTarget > 0 ? Math.min((totalPagado / totalTarget) * 100, 100) : 0;
     const falta = Math.max(totalTarget - totalPagado, 0);
 
+    const [saveError, setSaveError] = useState('');
+
     const handleAdd = async () => {
         const num = parseFloat(amount.replace(/\./g, '').replace(',', '.'));
         if (!num || num <= 0) return;
+
+        if (!householdId) {
+            setSaveError('Error: no se encontró el hogar. Volvé al inicio y reintentá.');
+            return;
+        }
+
         setSaving(true);
+        setSaveError('');
         try {
             await addDoc(collection(db, COLLECTIONS.CONTRIBUTIONS), {
                 householdId,
@@ -58,6 +67,7 @@ function ContributionModal({ person, totalTarget, monthKey, householdId, isGlass
             setNote('');
         } catch (e) {
             console.error('Error al guardar aporte:', e);
+            setSaveError(`No se pudo guardar: ${e.message}`);
         }
         setSaving(false);
     };
@@ -170,6 +180,11 @@ function ContributionModal({ person, totalTarget, monthKey, householdId, isGlass
                                 : 'bg-gray-50 border-gray-200 text-gray-700 placeholder-gray-400'
                         }`}
                     />
+                    {saveError && (
+                        <p className="mt-2 text-xs font-bold text-red-400 bg-red-500/10 px-3 py-2 rounded-xl">
+                            ⚠️ {saveError}
+                        </p>
+                    )}
                 </div>
 
                 {/* Lista de aportes previos */}
