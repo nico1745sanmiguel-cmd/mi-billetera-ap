@@ -165,6 +165,7 @@ function RepartoPanel({ allItems, householdId, currentUid, isGlass, showMoney })
 }
 
 export default function ServicesManager({ services = [], cards = [], transactions = [], currentDate, privacyMode, isGlass, householdId }) {
+    const [viewMode, setViewMode] = useState('list');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingService, setEditingService] = useState(null);
 
@@ -369,11 +370,53 @@ export default function ServicesManager({ services = [], cards = [], transaction
 
     const currentUid = auth.currentUser?.uid;
 
+    // 6. DATOS PARA CALENDARIO
+    const calendarDays = useMemo(() => {
+        if (!currentDate) return [];
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const firstDayOfMonth = new Date(year, month, 1).getDay(); // 0 (Dom) a 6 (Sab)
+        const firstDayIndex = firstDayOfMonth === 0 ? 6 : firstDayOfMonth - 1; // Ajustar Lunes=0, Dom=6
+
+        const grid = [];
+        for (let i = 0; i < firstDayIndex; i++) grid.push(null);
+        for (let i = 1; i <= daysInMonth; i++) grid.push(i);
+        
+        while (grid.length % 7 !== 0) grid.push(null);
+        
+        return grid;
+    }, [currentDate]);
+
+    const calendarItemsByDay = useMemo(() => {
+        const map = {};
+        allItems.forEach(item => {
+            const d = parseInt(item.day);
+            if (!map[d]) map[d] = [];
+            map[d].push(item);
+        });
+        return map;
+    }, [allItems]);
+
+    const daysOfWeek = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+
     return (
         <div className="space-y-6 animate-fade-in pb-24">
             <div className="flex justify-between items-center px-2">
                 <div><h2 className={`text-xl font-bold ${isGlass ? 'text-white' : 'text-gray-800'}`}>Calendario</h2><p className={`text-xs font-bold uppercase ${isGlass ? 'text-indigo-300' : 'text-indigo-600'}`}>{currentDate.toLocaleString('es-AR', { month: 'long', year: 'numeric' })}</p></div>
-                <button onClick={() => openModal()} className={`text-xs px-4 py-2 rounded-2xl font-bold shadow-md flex items-center gap-1 active:scale-95 transition-transform ${isGlass ? 'bg-white text-indigo-900 hover:bg-indigo-50' : 'bg-gray-900 text-white hover:bg-black'}`}><span>+</span> Nuevo Fijo</button>
+                <div className="flex items-center gap-2">
+                    <div className={`hidden sm:flex items-center rounded-xl p-1 ${isGlass ? 'bg-white/10' : 'bg-gray-100'}`}>
+                        <button onClick={() => setViewMode('list')} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${viewMode === 'list' ? (isGlass ? 'bg-indigo-600 text-white shadow-md' : 'bg-white text-gray-900 shadow-sm') : (isGlass ? 'text-white/50 hover:text-white' : 'text-gray-500 hover:text-gray-900')}`}>Lista</button>
+                        <button onClick={() => setViewMode('calendar')} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${viewMode === 'calendar' ? (isGlass ? 'bg-indigo-600 text-white shadow-md' : 'bg-white text-gray-900 shadow-sm') : (isGlass ? 'text-white/50 hover:text-white' : 'text-gray-500 hover:text-gray-900')}`}>Mes</button>
+                    </div>
+                    <button onClick={() => openModal()} className={`text-xs px-4 py-2 rounded-2xl font-bold shadow-md flex items-center gap-1 active:scale-95 transition-transform ${isGlass ? 'bg-white text-indigo-900 hover:bg-indigo-50' : 'bg-gray-900 text-white hover:bg-black'}`}><span>+</span> Nuevo Fijo</button>
+                </div>
+            </div>
+            
+            {/* Switch para mobile */}
+            <div className={`sm:hidden flex items-center rounded-xl p-1 mx-2 ${isGlass ? 'bg-white/10' : 'bg-gray-100'}`}>
+                <button onClick={() => setViewMode('list')} className={`flex-1 px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${viewMode === 'list' ? (isGlass ? 'bg-indigo-600 text-white shadow-md' : 'bg-white text-gray-900 shadow-sm') : (isGlass ? 'text-white/50 hover:text-white' : 'text-gray-500 hover:text-gray-900')}`}>Lista</button>
+                <button onClick={() => setViewMode('calendar')} className={`flex-1 px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${viewMode === 'calendar' ? (isGlass ? 'bg-indigo-600 text-white shadow-md' : 'bg-white text-gray-900 shadow-sm') : (isGlass ? 'text-white/50 hover:text-white' : 'text-gray-500 hover:text-gray-900')}`}>Mes</button>
             </div>
 
             {/* PANEL DE REPARTO */}
@@ -404,72 +447,116 @@ export default function ServicesManager({ services = [], cards = [], transaction
                 </div>
             </div>
 
-            {/* LISTA DE VENCIMIENTOS */}
-            <div className="space-y-3">
-                {allItems.map((item) => {
-                    const status = getStatusLabel(item.day, item.isPaid);
+            {/* VISTAS: LISTA O CALENDARIO */}
+            {viewMode === 'list' ? (
+                <div className="space-y-3 animate-fade-in">
+                    {allItems.map((item) => {
+                        const status = getStatusLabel(item.day, item.isPaid);
 
-                    return (
+                        return (
+                            <div key={item.id} className={`p-4 rounded-3xl border transition-all duration-300 group ${isGlass
+                                ? (item.isPaid ? 'bg-green-900/10 border-green-500/20 opacity-60' : 'bg-white/5 border-white/10 hover:bg-white/10')
+                                : (item.isPaid ? 'border-green-200 bg-green-50/30 opacity-75' : 'bg-white border-gray-100 hover:border-blue-300 shadow-sm hover:shadow-md')
+                                }`}>
+                                <div className="flex justify-between items-center">
+                                    <div className="flex items-center gap-4">
 
-                        <div key={item.id} className={`p-4 rounded-3xl border transition-all duration-300 group ${isGlass
-                            ? (item.isPaid ? 'bg-green-900/10 border-green-500/20 opacity-60' : 'bg-white/5 border-white/10 hover:bg-white/10')
-                            : (item.isPaid ? 'border-green-200 bg-green-50/30 opacity-75' : 'bg-white border-gray-100 hover:border-blue-300 shadow-sm hover:shadow-md')
-                            }`}>
-                            <div className="flex justify-between items-center">
-                                <div className="flex items-center gap-4">
-
-                                    {/* CAJA DEL DÍA */}
-                                    <div className={`w-12 h-12 rounded-2xl flex flex-col items-center justify-center text-xs font-bold transition-colors border ${item.isPaid
-                                        ? (isGlass ? 'bg-green-500/20 text-green-300 border-green-500/30' : 'bg-green-100 text-green-700 border-green-200')
-                                        : (isGlass ? 'bg-white/10 text-white border-white/5' : 'bg-gray-50 text-gray-600 border-gray-100')
-                                        }`}>
-                                        <span className="text-lg leading-none">{item.day}</span>
-                                        <span className="text-[8px] uppercase opacity-70">Vence</span>
-                                    </div>
-
-                                    <div>
-                                        <div className="flex items-center gap-2 flex-wrap">
-                                            <p className={`font-bold text-sm transition-all ${item.isPaid
-                                                ? (isGlass ? 'text-green-300 line-through decoration-green-500' : 'text-green-800 line-through decoration-green-500')
-                                                : (isGlass ? 'text-white' : 'text-gray-800')
-                                                }`}>
-                                                {item.name}
-                                            </p>
-
-                                            {/* ETIQUETA: Identificador de Privado */}
-                                            {householdId && item.isShared === false && <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold border flex items-center gap-1 ${isGlass ? 'bg-gray-500/20 text-gray-300 border-gray-500/30' : 'bg-gray-100 text-gray-700 border-gray-300'}`}><User size={10} /> Privado</span>}
-
-                                            {/* ETIQUETA: Si es tarjeta, solo mostramos el ícono de edición manual si aplica, pero ya no repetimos el banco si es redundante */}
-                                            {item.type === 'card' && item.isManual && <span className="text-[9px] px-1.5 py-0.5 rounded font-bold border bg-yellow-100 text-yellow-700 border-yellow-200 flex items-center gap-1">Ajustado <Pencil size={10} /></span>}
-
-                                            {!item.isPaid && (
-                                                <button onClick={(e) => { e.stopPropagation(); openModal(item); }} className={`p-1 rounded-full transition-colors opacity-0 group-hover:opacity-100 ${isGlass ? 'text-white/30 hover:text-blue-300 hover:bg-white/10' : 'text-gray-300 hover:text-blue-500 hover:bg-blue-50'}`}>
-                                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
-                                                </button>
-                                            )}
+                                        {/* CAJA DEL DÍA */}
+                                        <div className={`w-12 h-12 rounded-2xl flex flex-col items-center justify-center text-xs font-bold transition-colors border ${item.isPaid
+                                            ? (isGlass ? 'bg-green-500/20 text-green-300 border-green-500/30' : 'bg-green-100 text-green-700 border-green-200')
+                                            : (isGlass ? 'bg-white/10 text-white border-white/5' : 'bg-gray-50 text-gray-600 border-gray-100')
+                                            }`}>
+                                            <span className="text-lg leading-none">{item.day}</span>
+                                            <span className="text-[8px] uppercase opacity-70">Vence</span>
                                         </div>
 
-                                        {/* LEYENDA DE ESTADO (Vence en X días / Pagado) */}
-                                        <div className="mt-1">
-                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${status.color}`}>
-                                                {status.text}
-                                            </span>
+                                        <div>
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                                <p className={`font-bold text-sm transition-all ${item.isPaid
+                                                    ? (isGlass ? 'text-green-300 line-through decoration-green-500' : 'text-green-800 line-through decoration-green-500')
+                                                    : (isGlass ? 'text-white' : 'text-gray-800')
+                                                    }`}>
+                                                    {item.name}
+                                                </p>
+
+                                                {/* ETIQUETA: Identificador de Privado */}
+                                                {householdId && item.isShared === false && <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold border flex items-center gap-1 ${isGlass ? 'bg-gray-500/20 text-gray-300 border-gray-500/30' : 'bg-gray-100 text-gray-700 border-gray-300'}`}><User size={10} /> Privado</span>}
+
+                                                {/* ETIQUETA: Si es tarjeta, solo mostramos el ícono de edición manual si aplica, pero ya no repetimos el banco si es redundante */}
+                                                {item.type === 'card' && item.isManual && <span className="text-[9px] px-1.5 py-0.5 rounded font-bold border bg-yellow-100 text-yellow-700 border-yellow-200 flex items-center gap-1">Ajustado <Pencil size={10} /></span>}
+
+                                                {!item.isPaid && (
+                                                    <button onClick={(e) => { e.stopPropagation(); openModal(item); }} className={`p-1 rounded-full transition-colors opacity-0 group-hover:opacity-100 ${isGlass ? 'text-white/30 hover:text-blue-300 hover:bg-white/10' : 'text-gray-300 hover:text-blue-500 hover:bg-blue-50'}`}>
+                                                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                                                    </button>
+                                                )}
+                                            </div>
+
+                                            {/* LEYENDA DE ESTADO (Vence en X días / Pagado) */}
+                                            <div className="mt-1">
+                                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${status.color}`}>
+                                                    {status.text}
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
 
-                                <div className="text-right flex items-center gap-4">
-                                    <p className={`font-mono font-bold transition-colors ${item.isPaid ? 'text-green-500' : (isGlass ? 'text-white' : 'text-gray-900')}`}>{showMoney(item.amount)}</p>
-                                    <button onClick={() => togglePaid(item)} className={`w-8 h-8 rounded-full border-2 flex items-center justify-center cursor-pointer transition-all duration-300 active:scale-90 ${item.isPaid ? 'bg-green-500 border-green-500 shadow-[0_0_10px_rgba(34,197,94,0.4)] rotate-0' : (isGlass ? 'border-white/20 bg-transparent hover:border-blue-400 rotate-180' : 'border-gray-200 hover:border-blue-400 rotate-180 bg-white')}`}>
-                                        {item.isPaid && <svg className="w-5 h-5 text-white animate-fade-in" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
-                                    </button>
+                                    <div className="text-right flex items-center gap-4">
+                                        <p className={`font-mono font-bold transition-colors ${item.isPaid ? 'text-green-500' : (isGlass ? 'text-white' : 'text-gray-900')}`}>{showMoney(item.amount)}</p>
+                                        <button onClick={() => togglePaid(item)} className={`w-8 h-8 rounded-full border-2 flex items-center justify-center cursor-pointer transition-all duration-300 active:scale-90 ${item.isPaid ? 'bg-green-500 border-green-500 shadow-[0_0_10px_rgba(34,197,94,0.4)] rotate-0' : (isGlass ? 'border-white/20 bg-transparent hover:border-blue-400 rotate-180' : 'border-gray-200 hover:border-blue-400 rotate-180 bg-white')}`}>
+                                            {item.isPaid && <svg className="w-5 h-5 text-white animate-fade-in" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    );
-                })}
-                {allItems.length === 0 && <div className={`flex flex-col items-center justify-center p-10 text-center border-2 border-dashed rounded-[30px] ${isGlass ? 'border-white/10 bg-white/5' : 'border-gray-200 bg-gray-50'}`}><CalendarDays size={40} className="mb-2 opacity-50 mx-auto" /><p className={`text-sm font-medium ${isGlass ? 'text-white/40' : 'text-gray-400'}`}>Nada pendiente para {currentDate.toLocaleString('es-AR', { month: 'long' })}.</p></div>}
-            </div>
+                        );
+                    })}
+                    {allItems.length === 0 && <div className={`flex flex-col items-center justify-center p-10 text-center border-2 border-dashed rounded-[30px] ${isGlass ? 'border-white/10 bg-white/5' : 'border-gray-200 bg-gray-50'}`}><CalendarDays size={40} className="mb-2 opacity-50 mx-auto" /><p className={`text-sm font-medium ${isGlass ? 'text-white/40' : 'text-gray-400'}`}>Nada pendiente para {currentDate.toLocaleString('es-AR', { month: 'long' })}.</p></div>}
+                </div>
+            ) : (
+                <div className={`p-4 rounded-[30px] border animate-fade-in ${isGlass ? 'bg-white/5 border-white/10' : 'bg-white border-gray-100 shadow-sm'}`}>
+                    <div className="grid grid-cols-7 gap-1 md:gap-2 mb-2">
+                        {daysOfWeek.map(d => (
+                            <div key={d} className={`text-center text-[10px] font-bold uppercase tracking-wider ${isGlass ? 'text-white/40' : 'text-gray-400'}`}>{d}</div>
+                        ))}
+                    </div>
+                    <div className="grid grid-cols-7 gap-1 md:gap-2">
+                        {calendarDays.map((day, idx) => {
+                            if (!day) return <div key={`empty-${idx}`} className={`rounded-2xl border min-h-[70px] md:min-h-[90px] ${isGlass ? 'bg-white/5 border-white/5' : 'bg-gray-50 border-gray-100'} opacity-30`} />;
+                            
+                            const dayItems = calendarItemsByDay[day] || [];
+                            
+                            const todayDate = new Date();
+                            const isToday = todayDate.getDate() === day && todayDate.getMonth() === currentDate.getMonth() && todayDate.getFullYear() === currentDate.getFullYear();
+                            
+                            return (
+                                <div key={day} className={`min-h-[80px] md:min-h-[100px] rounded-2xl border p-1.5 md:p-2 flex flex-col transition-all overflow-hidden ${isToday ? (isGlass ? 'bg-indigo-500/20 border-indigo-400/50 shadow-[0_0_15px_rgba(99,102,241,0.2)]' : 'bg-indigo-50 border-indigo-300 shadow-sm') : (isGlass ? 'bg-white/5 border-white/10 hover:bg-white/10' : 'bg-white border-gray-100 hover:border-gray-300')}`}>
+                                    <div className={`text-[10px] md:text-xs font-bold mb-1.5 flex justify-center items-center w-5 h-5 md:w-6 md:h-6 rounded-full ${isToday ? (isGlass ? 'bg-indigo-500 text-white' : 'bg-indigo-600 text-white') : (isGlass ? 'text-white/70' : 'text-gray-600')}`}>
+                                        {day}
+                                    </div>
+                                    <div className="flex-1 flex flex-col gap-1 overflow-y-auto no-scrollbar pb-1">
+                                        {dayItems.map(item => (
+                                            <div 
+                                                key={item.id} 
+                                                onClick={() => openModal(item)}
+                                                className={`text-[9px] md:text-[10px] px-1.5 py-1 rounded-lg cursor-pointer transition-transform active:scale-95 flex flex-col ${
+                                                    item.isPaid 
+                                                        ? (isGlass ? 'bg-green-500/10 text-green-400/50 line-through border border-green-500/20' : 'bg-green-50 text-green-600/60 line-through border border-green-100') 
+                                                        : (isGlass ? 'bg-indigo-500/30 text-indigo-100 border border-indigo-500/50 hover:bg-indigo-500/40' : 'bg-indigo-100 text-indigo-800 border border-indigo-200 hover:bg-indigo-200')
+                                                }`}
+                                                title={`${item.name} - ${showMoney(item.amount)}`}
+                                            >
+                                                <span className="truncate font-bold leading-tight">{item.name}</span>
+                                                <span className="font-mono text-[8px] opacity-80 mt-0.5">{showMoney(item.amount)}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
 
             {/* MODAL */}
             {isModalOpen && (
