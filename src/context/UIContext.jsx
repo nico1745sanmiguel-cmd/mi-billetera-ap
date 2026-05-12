@@ -31,6 +31,7 @@ export const UIProvider = ({ children }) => {
     const [view, setViewRaw] = useState('dashboard');
     const [privacyMode, setPrivacyMode] = useState(false);
     const [currentDate, setCurrentDate] = useState(new Date());
+    const [toast, setToast] = useState(null); // { message, type }
 
     // Inicializar isGlass desde cache (con compatibilidad al key viejo de localStorage)
     const [isGlass, setIsGlassRaw] = useState(() => {
@@ -77,6 +78,14 @@ export const UIProvider = ({ children }) => {
         });
     };
 
+    const showToast = (message, type = 'success') => {
+        setToast({ message, type });
+    };
+
+    const hideToast = () => {
+        setToast(null);
+    };
+
     const value = {
         view,
         setView,
@@ -88,6 +97,9 @@ export const UIProvider = ({ children }) => {
         currentDate,
         setCurrentDate,
         changeMonth,
+        toast,
+        showToast,
+        hideToast,
     };
 
     return <UIContext.Provider value={value}>{children}</UIContext.Provider>;

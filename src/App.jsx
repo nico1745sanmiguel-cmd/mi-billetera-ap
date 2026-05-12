@@ -4,6 +4,7 @@ import Home from './Components/Dashboard/Home';
 import Login from './Components/Login';
 import InstallPrompt from './Components/UI/InstallPrompt';
 import SkeletonDashboard from './Components/UI/SkeletonDashboard';
+import Toast from './Components/UI/Toast';
 import { auth } from './firebase';
 import { signOut } from 'firebase/auth';
 import { useFinancial } from './context/FinancialContext';
@@ -55,6 +56,8 @@ export default function App() {
         setIsGlass,
         currentDate,
         changeMonth,
+        toast,
+        hideToast,
     } = useUI();
 
     // ─── ESTADO LOCAL (solo afecta a App.jsx, no necesita contexto) ─────────
@@ -122,6 +125,7 @@ export default function App() {
 
             {/* MAIN CONTENT WRAPPER */}
             <div className={`relative z-10 min-h-screen transition-colors duration-700 ease-in-out flex flex-col ${isGlass ? 'text-white' : 'text-gray-800'}`}>
+                {toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
                 <InstallPrompt />
 
                 {/* NAVBAR DESKTOP */}
@@ -250,6 +254,7 @@ export default function App() {
                                 currentDate={currentDate}
                                 isGlass={isGlass}
                                 householdId={userData?.householdId}
+                                setView={setView}
                             />
                         )}
 

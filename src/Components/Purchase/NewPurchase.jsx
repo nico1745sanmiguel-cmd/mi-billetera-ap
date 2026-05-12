@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useFinancialProjections } from '../../hooks/useFinancialProjections';
 import { formatInputNumber, parseInputNumber } from '../../utils';
 import { Banknote, CreditCard } from 'lucide-react';
+import { useUI } from '../../context/UIContext';
 
-export default function NewPurchase({ cards, onSave, transactions, privacyMode, currentDate, isGlass, householdId }) {
+export default function NewPurchase({ cards, onSave, transactions, privacyMode, currentDate, isGlass, householdId, setView }) {
     const [amount, setAmount] = useState('');
     const [description, setDescription] = useState('');
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
@@ -12,6 +13,8 @@ export default function NewPurchase({ cards, onSave, transactions, privacyMode, 
     const [installments, setInstallments] = useState(1);
     const [category, setCategory] = useState('varios');
     const [isShared, setIsShared] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
+    const { showToast } = useUI();
 
     // --- PROJECTIONS HOOK ---
     const projections = useFinancialProjections(
@@ -55,10 +58,11 @@ export default function NewPurchase({ cards, onSave, transactions, privacyMode, 
         return <span className="text-[10px] font-bold bg-gray-100 px-1 rounded text-gray-500">{cardName?.substring(0, 3)}</span>;
     };
 
-    const handleSave = (e) => {
+    const handleSave = async (e) => {
         e.preventDefault();
-        if (!amount) return;
+        if (!amount || isSaving) return;
 
+        setIsSaving(true);
         const transactionData = {
             amount: Number(amount),
             description: description || 'Gasto General',
@@ -72,6 +76,7 @@ export default function NewPurchase({ cards, onSave, transactions, privacyMode, 
         if (type === 'credit') {
             if (!selectedCardId) {
                 alert("Selecciona una tarjeta");
+                setIsSaving(false);
                 return;
             }
             transactionData.cardId = selectedCardId;
@@ -79,7 +84,16 @@ export default function NewPurchase({ cards, onSave, transactions, privacyMode, 
             transactionData.monthlyInstallment = transactionData.amount / transactionData.installments;
         }
 
-        onSave(transactionData);
+        try {
+            await onSave(transactionData);
+            showToast('¡Gasto guardado con éxito!');
+            if (setView) setView('dashboard');
+        } catch (error) {
+            console.error("Error al guardar gasto:", error);
+            showToast('Hubo un error al guardar el gasto.', 'error');
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     const getSelectedCardInfo = () => cards.find(c => c.id === selectedCardId);
@@ -253,9 +267,21 @@ export default function NewPurchase({ cards, onSave, transactions, privacyMode, 
                 {/* 5. SAVE BUTTON */}
                 <button
                     type="submit"
-                    className={`w-full py-4 rounded-[30px] font-bold shadow-lg active:scale-95 transition-all text-lg ${isGlass ? 'bg-white text-indigo-900 border border-white/50 hover:bg-indigo-50' : 'bg-gray-900 text-white shadow-gray-400'}`}
+                    disabled={isSaving || !amount}
+                    className={`w-full py-4 rounded-[30px] font-bold shadow-lg transition-all text-lg flex justify-center items-center gap-2 ${
+                        isSaving || !amount 
+                            ? (isGlass ? 'bg-white/20 text-white/50 cursor-not-allowed' : 'bg-gray-300 text-gray-500 cursor-not-allowed')
+                            : (isGlass ? 'bg-white text-indigo-900 border border-white/50 hover:bg-indigo-50 active:scale-95' : 'bg-gray-900 text-white shadow-gray-400 active:scale-95')
+                    }`}
                 >
-                    Confirmar Gasto
+                    {isSaving ? (
+                        <>
+                            <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                            Guardando...
+                        </>
+                    ) : (
+                        "Confirmar Gasto"
+                    )}
                 </button>
 
             </form>
