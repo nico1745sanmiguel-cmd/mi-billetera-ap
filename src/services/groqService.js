@@ -92,7 +92,7 @@ Asegurate de devolver SOLO un JSON válido.`;
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
         headers: {
-            'Authorization': \`Bearer \${GROQ_API_KEY}\`,
+            'Authorization': `Bearer ${GROQ_API_KEY}`,
             'Content-Type': 'application/json'
         },
         body: JSON.stringify({
@@ -113,16 +113,16 @@ Asegurate de devolver SOLO un JSON válido.`;
 
     if (!response.ok) {
         const errText = await response.text();
-        throw new Error(\`Error de Groq: \${response.status} \${errText}\`);
+        throw new Error(`Error de Groq: ${response.status} ${errText}`);
     }
 
     const data = await response.json();
     let content = data.choices[0].message.content.trim();
     
-    if (content.startsWith('\`\`\`json')) {
-        content = content.replace(/^\`\`\`json/, '').replace(/\`\`\`$/, '').trim();
-    } else if (content.startsWith('\`\`\`')) {
-        content = content.replace(/^\`\`\`/, '').replace(/\`\`\`$/, '').trim();
+    if (content.startsWith('```json')) {
+        content = content.replace(/^```json/, '').replace(/```$/, '').trim();
+    } else if (content.startsWith('```')) {
+        content = content.replace(/^```/, '').replace(/```$/, '').trim();
     }
 
     try {
