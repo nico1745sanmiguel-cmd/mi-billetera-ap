@@ -161,17 +161,17 @@ const Home = memo(({ transactions, cards, supermarketItems = [], services = [], 
         split_summary: (
             <div 
                 onClick={() => setView('reparto')}
-                className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden mx-1 cursor-pointer hover:border-emerald-200 transition-all"
+                className="bg-white dark:bg-white/5 rounded-3xl border border-gray-100 dark:border-white/10 shadow-sm overflow-hidden mx-1 cursor-pointer hover:border-emerald-200 dark:hover:bg-white/10 transition-all dark:backdrop-blur-md group"
             >
                 {/* Header */}
-                <div className="px-5 py-4 border-b border-gray-50 flex justify-between items-center bg-gradient-to-r from-emerald-50 to-teal-50">
+                <div className="px-5 py-4 border-b border-gray-50 dark:border-white/5 flex justify-between items-center bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-transparent dark:to-transparent">
                     <div>
-                        <h3 className="font-bold text-gray-800 text-sm flex items-center gap-2"><Scale size={18} className="text-emerald-600" /> Reparto del Mes</h3>
-                        <p className="text-[10px] text-gray-400 font-medium capitalize">{currentDate.toLocaleString('es-AR', { month: 'long', year: 'numeric' })}</p>
+                        <h3 className="font-bold text-gray-800 dark:text-white text-sm flex items-center gap-2"><Scale size={18} className="text-emerald-600 dark:text-emerald-400" /> Reparto del Mes</h3>
+                        <p className="text-[10px] text-gray-400 dark:text-white/40 font-medium capitalize">{currentDate.toLocaleString('es-AR', { month: 'long', year: 'numeric' })}</p>
                     </div>
                     <button 
                         onClick={(e) => { e.stopPropagation(); setView('household'); }} 
-                        className="text-[10px] font-bold text-emerald-600 bg-emerald-50 hover:bg-emerald-100 px-2 py-1 rounded-full transition-colors"
+                        className="text-[10px] font-bold text-emerald-600 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-500/10 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 px-2 py-1 rounded-full transition-colors dark:border dark:border-emerald-500/20"
                     >
                         Sueldos
                     </button>
@@ -191,34 +191,34 @@ const Home = memo(({ transactions, cards, supermarketItems = [], services = [], 
                                             <div className={`w-6 h-6 rounded-full bg-gradient-to-br ${colors[idx % 2]} flex items-center justify-center text-white text-[10px] font-bold`}>
                                                 {(member.displayName || '?').charAt(0).toUpperCase()}
                                             </div>
-                                            <span className="text-sm font-semibold text-gray-700">
+                                            <span className="text-sm font-semibold text-gray-700 dark:text-white/80">
                                                 {member.displayName?.split(' ')[0]}
-                                                {isMe && <span className="ml-1 text-[9px] text-blue-500 font-bold">VOS</span>}
+                                                {isMe && <span className="ml-1 text-[9px] text-blue-500 dark:text-blue-300 font-bold">VOS</span>}
                                             </span>
                                         </div>
                                         <div className="text-right">
-                                            <p className={`text-sm font-bold font-mono ${privacyMode ? 'blur-sm' : ''} ${textColors[idx % 2]}`}>{showMoney(member.aporte)}</p>
-                                            <p className="text-[10px] text-gray-400">{member.percentage}%</p>
+                                            <p className={`text-sm font-bold font-mono ${privacyMode ? 'blur-sm' : ''} ${textColors[idx % 2]} dark:text-opacity-80`}>{showMoney(member.aporte)}</p>
+                                            <p className="text-[10px] text-gray-400 dark:text-white/30">{member.percentage}%</p>
                                         </div>
                                     </div>
-                                    <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                    <div className="h-1.5 bg-gray-100 dark:bg-white/10 rounded-full overflow-hidden">
                                         <div className={`h-full rounded-full bg-gradient-to-r ${colors[idx % 2]} transition-all duration-700`} style={{ width: barWidth }} />
                                     </div>
                                 </div>
                             );
                         })}
                         {/* Total */}
-                        <div className="flex justify-between items-center pt-3 border-t border-gray-100">
-                            <span className="text-xs font-bold text-gray-500 uppercase tracking-wide">Total compartido</span>
-                            <span className={`text-base font-bold font-mono text-gray-900 ${privacyMode ? 'blur-sm' : ''}`}>{showMoney(splitData.grandTotal)}</span>
+                        <div className="flex justify-between items-center pt-3 border-t border-gray-100 dark:border-white/10">
+                            <span className="text-xs font-bold text-gray-500 dark:text-white/40 uppercase tracking-wide">Total compartido</span>
+                            <span className={`text-base font-bold font-mono text-gray-900 dark:text-white ${privacyMode ? 'blur-sm' : ''}`}>{showMoney(splitData.grandTotal)}</span>
                         </div>
                     </div>
                 ) : (
                     <div className="p-5 text-center">
-                        <div className="flex justify-center mb-2"><Wallet size={32} className="text-yellow-500 drop-shadow-sm" /></div>
-                        <p className="text-sm font-bold text-gray-700 mb-1">Cargá los sueldos para ver el reparto</p>
-                        <p className="text-xs text-gray-400 mb-3">Cada uno tiene que ingresar su sueldo mensual neto para que podamos calcular cuánto le corresponde de cada gasto compartido.</p>
-                        <button onClick={(e) => { e.stopPropagation(); setView('household'); }} className="text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded-xl transition-colors">
+                        <div className="flex justify-center mb-2"><Wallet size={32} className="text-yellow-500 dark:text-yellow-400 drop-shadow-sm" /></div>
+                        <p className="text-sm font-bold text-gray-700 dark:text-white/80 mb-1">Cargá los sueldos para ver el reparto</p>
+                        <p className="text-xs text-gray-400 dark:text-white/40 mb-3">Cada uno tiene que ingresar su sueldo mensual neto para que podamos calcular cuánto le corresponde de cada gasto compartido.</p>
+                        <button onClick={(e) => { e.stopPropagation(); setView('household'); }} className="text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-500 dark:bg-indigo-600/80 dark:hover:bg-indigo-500/80 px-4 py-2 rounded-xl transition-colors dark:border dark:border-indigo-400/30">
                             Ir a Grupo Familiar →
                         </button>
                     </div>
@@ -230,7 +230,7 @@ const Home = memo(({ transactions, cards, supermarketItems = [], services = [], 
         cards: (
             <div>
                 <div className="flex justify-between items-center px-2 mb-3">
-                    <h3 className="font-bold text-gray-800 text-sm flex items-center gap-2"><CreditCard size={18} /> Tus Tarjetas <span className="text-[9px] bg-gray-100 px-1.5 rounded text-gray-400 font-normal">Desliza</span></h3>
+                    <h3 className="font-bold text-gray-800 dark:text-white text-sm flex items-center gap-2"><CreditCard size={18} /> Tus Tarjetas <span className="text-[9px] bg-gray-100 dark:bg-white/10 px-1.5 rounded text-gray-400 dark:text-white/40 font-normal">Desliza</span></h3>
                 </div>
 
                 <div className="flex overflow-x-auto gap-3 pb-8 px-2 snap-x snap-mandatory hide-scrollbar">
@@ -279,33 +279,33 @@ const Home = memo(({ transactions, cards, supermarketItems = [], services = [], 
                     })}
 
                     {/* Add New Card Placeholder */}
-                    <div onClick={() => openCardModal(null)} className="flex-shrink-0 w-[85%] max-w-[280px] h-48 rounded-[30px] border-2 border-dashed border-gray-300 flex flex-col items-center justify-center gap-3 cursor-pointer hover:bg-white hover:border-gray-400 active:scale-95 transition-all snap-center group">
-                        <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 group-hover:bg-gray-200 group-hover:text-gray-600 transition-colors">
+                    <div onClick={() => openCardModal(null)} className="flex-shrink-0 w-[85%] max-w-[280px] h-48 rounded-[30px] border-2 border-dashed border-gray-300 dark:border-white/20 flex flex-col items-center justify-center gap-3 cursor-pointer hover:bg-white dark:hover:bg-white/5 hover:border-gray-400 dark:hover:border-white/40 active:scale-95 transition-all snap-center group">
+                        <div className="w-12 h-12 bg-gray-100 dark:bg-white/10 rounded-full flex items-center justify-center text-gray-400 dark:text-white/40 group-hover:bg-gray-200 dark:group-hover:bg-white/20 group-hover:text-gray-600 dark:group-hover:text-white/80 transition-colors">
                             <Plus size={24} />
                         </div>
-                        <span className="text-gray-400 font-bold text-sm group-hover:text-gray-600">Agregar Tarjeta</span>
+                        <span className="text-gray-400 dark:text-white/40 font-bold text-sm group-hover:text-gray-600 dark:group-hover:text-white/80">Agregar Tarjeta</span>
                     </div>
                 </div>
             </div>
         ),
 
         agenda: (
-            <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden mx-1">
-                <div className="px-5 py-4 border-b border-gray-50 flex justify-between items-center bg-gray-50/50 cursor-pointer" onClick={() => setView('services_manager')}>
-                    <h3 className="font-bold text-gray-800 text-sm flex items-center gap-2"><CalendarDays size={18} /> Agenda {currentDate.toLocaleString('es-AR', { month: 'long' })}</h3>
-                    <span className="text-xs font-bold text-gray-400">Ver todo →</span>
+            <div className="bg-white dark:bg-white/5 rounded-3xl border border-gray-100 dark:border-white/10 shadow-sm overflow-hidden mx-1 dark:backdrop-blur-md">
+                <div className="px-5 py-4 border-b border-gray-50 dark:border-white/5 flex justify-between items-center bg-gray-50/50 dark:bg-transparent cursor-pointer" onClick={() => setView('services_manager')}>
+                    <h3 className="font-bold text-gray-800 dark:text-white text-sm flex items-center gap-2"><CalendarDays size={18} /> Agenda {currentDate.toLocaleString('es-AR', { month: 'long' })}</h3>
+                    <span className="text-xs font-bold text-gray-400 dark:text-white/40">Ver todo →</span>
                 </div>
                 <div>
                     {agenda.map((item) => (
-                        <div key={item.id} className="flex items-center justify-between p-4 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors">
+                        <div key={item.id} className="flex items-center justify-between p-4 border-b border-gray-50 dark:border-white/5 last:border-0 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
                             <div className="flex items-center gap-3">
-                                <div className={`w-10 h-10 rounded-xl flex flex-col items-center justify-center text-[10px] font-bold ${item.day <= 5 ? 'bg-red-50 text-red-600' : 'bg-gray-100 text-gray-500'}`}><span className="text-sm">{item.day}</span><span className="text-[8px] uppercase">Día</span></div>
-                                <div><p className="font-bold text-gray-800 text-sm">{item.name}</p><p className="text-xs text-gray-400">{item.type === 'card_item' ? 'Tarjeta Crédito' : 'Servicio'}</p></div>
+                                <div className={`w-10 h-10 rounded-xl flex flex-col items-center justify-center text-[10px] font-bold ${item.day <= 5 ? 'bg-red-50 text-red-600 dark:bg-red-500/20 dark:text-red-300' : 'bg-gray-100 text-gray-500 dark:bg-white/10 dark:text-white/70'}`}><span className="text-sm">{item.day}</span><span className="text-[8px] uppercase">Día</span></div>
+                                <div><p className="font-bold text-gray-800 dark:text-white/90 text-sm">{item.name}</p><p className="text-xs text-gray-400 dark:text-white/40">{item.type === 'card_item' ? 'Tarjeta Crédito' : 'Servicio'}</p></div>
                             </div>
-                            <p className="font-mono font-bold text-gray-800">{showMoney(item.amount)}</p>
+                            <p className="font-mono font-bold text-gray-800 dark:text-white">{showMoney(item.amount)}</p>
                         </div>
                     ))}
-                    {agenda.length === 0 && <div className="p-6 text-center text-gray-400"><p className="text-xs flex items-center justify-center gap-1"><PartyPopper size={16} /> Nada pendiente este mes</p></div>}
+                    {agenda.length === 0 && <div className="p-6 text-center text-gray-400 dark:text-white/40"><p className="text-xs flex items-center justify-center gap-1"><PartyPopper size={16} /> Nada pendiente este mes</p></div>}
                 </div>
             </div>
         ),
@@ -313,41 +313,41 @@ const Home = memo(({ transactions, cards, supermarketItems = [], services = [], 
         super_actions: (
             <div className="space-y-3 mx-1">
                 <div className="grid grid-cols-2 gap-3">
-                    <div onClick={() => setView('super')} className="bg-white p-4 rounded-[24px] border border-gray-100 shadow-sm cursor-pointer hover:border-purple-200 transition-colors group flex flex-col justify-between h-32">
+                    <div onClick={() => setView('super')} className="bg-white dark:bg-[#0f0c29]/50 p-4 rounded-[24px] border border-gray-100 dark:border-white/10 shadow-sm cursor-pointer hover:border-purple-200 dark:hover:border-purple-500/50 transition-colors group flex flex-col justify-between h-32 dark:backdrop-blur-md">
                         <div className="flex justify-between items-start">
-                            <div className="bg-purple-50 text-purple-600 p-2.5 rounded-xl">
+                            <div className="bg-purple-50 text-purple-600 dark:bg-purple-500/20 dark:text-purple-300 p-2.5 rounded-xl">
                                 <ShoppingCart size={24} />
                             </div>
-                            {superData.percent > 0 && <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-green-100 text-green-700">{Math.round(superData.percent)}%</span>}
+                            {superData.percent > 0 && <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-300">{Math.round(superData.percent)}%</span>}
                         </div>
                         <div>
-                            <p className="text-xs text-gray-400 font-bold uppercase mb-0.5">{superData.label}</p>
-                            <p className={`text-xl font-bold ${superData.statusColor}`}>{showMoney(superData.showAmount)}</p>
+                            <p className="text-xs text-gray-400 dark:text-white/40 font-bold uppercase mb-0.5">{superData.label}</p>
+                            <p className={`text-xl font-bold ${superData.statusColor === 'text-gray-900' ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-white/40'}`}>{showMoney(superData.showAmount)}</p>
                         </div>
                     </div>
 
-                    <div onClick={() => setView('purchase')} className="bg-gray-900 p-4 rounded-[24px] shadow-lg cursor-pointer active:scale-95 transition-all flex flex-col justify-between group h-32">
-                        <div className="bg-gray-700 w-fit p-2.5 rounded-xl text-white group-hover:bg-gray-600 transition-colors">
+                    <div onClick={() => setView('purchase')} className="bg-gray-900 dark:bg-white/10 p-4 rounded-[24px] shadow-lg cursor-pointer active:scale-95 transition-all flex flex-col justify-between group h-32 dark:backdrop-blur-md dark:border dark:border-white/10">
+                        <div className="bg-gray-700 dark:bg-white/10 w-fit p-2.5 rounded-xl text-white group-hover:bg-gray-600 dark:group-hover:bg-white/20 transition-colors">
                             <Plus size={24} />
                         </div>
                         <div>
-                            <p className="text-xs text-gray-400 font-bold uppercase mb-0.5">Acción Rápida</p>
+                            <p className="text-xs text-gray-400 dark:text-white/60 font-bold uppercase mb-0.5">Acción Rápida</p>
                             <p className="text-xl font-bold text-white">Registrar Gasto</p>
                         </div>
                     </div>
                 </div>
 
-                <div onClick={() => setView('fresh')} className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 p-4 rounded-[24px] cursor-pointer hover:from-green-100 hover:to-emerald-100 active:scale-95 transition-all flex items-center justify-between group shadow-sm">
+                <div onClick={() => setView('fresh')} className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-emerald-900/20 dark:to-green-900/20 border border-green-200 dark:border-green-500/20 p-4 rounded-[24px] cursor-pointer hover:from-green-100 hover:to-emerald-100 dark:hover:from-emerald-900/40 dark:hover:to-green-900/40 active:scale-95 transition-all flex items-center justify-between group shadow-sm dark:backdrop-blur-md">
                     <div className="flex items-center gap-3">
-                        <div className="bg-green-100 text-green-600 p-2.5 rounded-xl group-hover:scale-110 transition-transform">
+                        <div className="bg-green-100 text-green-600 dark:bg-green-500/20 dark:text-green-300 p-2.5 rounded-xl group-hover:scale-110 transition-transform">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>
                         </div>
                         <div>
-                            <p className="font-bold text-gray-800 text-sm">Mercado Fresco</p>
-                            <p className="text-[10px] text-green-600 font-medium">Verdulería · Carnicería / Freezer</p>
+                            <p className="font-bold text-gray-800 dark:text-white text-sm">Mercado Fresco</p>
+                            <p className="text-[10px] text-green-600 dark:text-green-400 font-medium">Verdulería · Carnicería / Freezer</p>
                         </div>
                     </div>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-gray-300 group-hover:text-green-500 group-hover:translate-x-1 transition-all"><path d="M9 18l6-6-6-6"/></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-gray-300 dark:text-white/20 group-hover:text-green-500 dark:group-hover:text-green-400 group-hover:translate-x-1 transition-all"><path d="M9 18l6-6-6-6"/></svg>
                 </div>
             </div>
         )
@@ -358,27 +358,27 @@ const Home = memo(({ transactions, cards, supermarketItems = [], services = [], 
 
             <div className="flex justify-between items-center px-2 pt-2">
                 <div className="flex flex-col">
-                    <span className="text-xs text-gray-400 font-bold uppercase tracking-wider">Tu Panel</span>
-                    <h1 className="text-xl font-bold text-gray-800">
+                    <span className="text-xs text-gray-400 dark:text-white/70 font-bold uppercase tracking-wider">Tu Panel</span>
+                    <h1 className="text-xl font-bold text-gray-800 dark:text-white">
                         Hola, {user?.displayName?.split(' ')[0] || 'Nico'} 👋
                     </h1>
                 </div>
                 <div className="flex items-center gap-2">
-                    <button onClick={() => setView('reconcile')} className="bg-green-50 text-green-600 p-2 rounded-full hover:bg-green-100 transition-colors" title="Conciliar Consumos">
+                    <button onClick={() => setView('reconcile')} className="bg-green-50 text-green-600 dark:bg-white/10 dark:text-white/70 p-2 rounded-full hover:bg-green-100 dark:hover:bg-green-500/20 dark:hover:text-green-200 transition-colors dark:backdrop-blur-md dark:border dark:border-white/5" title="Conciliar Consumos">
                         <Receipt size={20} />
                     </button>
-                    <button onClick={() => setView('household')} className="bg-blue-50 text-blue-500 p-2 rounded-full hover:bg-blue-100 transition-colors">
+                    <button onClick={() => setView('household')} className="bg-blue-50 text-blue-500 dark:bg-white/10 dark:text-white/70 p-2 rounded-full hover:bg-blue-100 dark:hover:bg-blue-500/20 dark:hover:text-blue-200 transition-colors dark:backdrop-blur-md dark:border dark:border-white/5">
                         <Users size={20} />
                     </button>
-                    <button onClick={onLogout} className="bg-gray-50 text-gray-400 p-2 rounded-full hover:bg-red-50 hover:text-red-500 transition-colors">
+                    <button onClick={onLogout} className="bg-gray-50 text-gray-400 dark:bg-white/10 dark:text-white/70 p-2 rounded-full hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-500/20 dark:hover:text-red-200 transition-colors dark:backdrop-blur-md dark:border dark:border-white/5">
                         <LogOut size={20} />
                     </button>
                 </div>
             </div>
 
             {criticalAlert.active && (
-                <div className="bg-red-50 border border-red-100 p-4 rounded-xl flex items-center justify-between mx-1 animate-pulse">
-                    <div className="flex items-center gap-3"><div className="bg-red-100 p-2 rounded-full text-red-600"><AlertCircle size={20} /></div><div><p className="text-sm font-bold text-red-800">{criticalAlert.msg}</p><p className="text-xs text-red-600 font-medium cursor-pointer underline" onClick={() => setView('services_manager')}>Ir a pagar ahora</p></div></div><p className="font-bold text-red-800">{showMoney(criticalAlert.amount)}</p>
+                <div className="bg-red-50 dark:bg-red-500/10 border border-red-100 dark:border-red-500/30 p-4 rounded-xl flex items-center justify-between mx-1 animate-pulse dark:shadow-lg dark:shadow-red-900/10">
+                    <div className="flex items-center gap-3"><div className="bg-red-100 dark:bg-red-500/20 p-2 rounded-full text-red-600 dark:text-red-200 dark:border dark:border-red-500/30"><AlertCircle size={20} /></div><div><p className="text-sm font-bold text-red-800 dark:text-red-100">{criticalAlert.msg}</p><p className="text-xs text-red-600 dark:text-red-300/80 font-medium cursor-pointer underline dark:decoration-red-300/50" onClick={() => setView('services_manager')}>Ir a pagar ahora</p></div></div><p className="font-bold text-red-800 dark:text-red-100">{showMoney(criticalAlert.amount)}</p>
                 </div>
             )}
 
@@ -407,10 +407,12 @@ const Home = memo(({ transactions, cards, supermarketItems = [], services = [], 
             {/* TOGGLE TEMA (FULL WIDTH) */}
             <button
                 onClick={onToggleTheme}
-                className="w-full py-4 mt-6 rounded-full border border-gray-100 text-gray-400 text-xs font-bold uppercase tracking-widest hover:bg-gray-50 hover:text-gray-600 transition-all flex items-center justify-center gap-2"
+                className="w-full py-4 mt-6 rounded-full border border-gray-100 dark:border-white/10 text-gray-400 dark:text-white/40 text-xs font-bold uppercase tracking-widest hover:bg-gray-50 dark:hover:bg-white/5 hover:text-gray-600 dark:hover:text-white/80 transition-all flex items-center justify-center gap-2"
             >
-                <Moon size={16} />
-                Cambiar a Modo Noche
+                <Moon size={16} className="dark:hidden" />
+                <span className="dark:hidden">Cambiar a Modo Noche</span>
+                <Moon size={16} className="hidden dark:block text-yellow-300" />
+                <span className="hidden dark:block">Volver a Modo Día</span>
             </button>
 
             {/* --- MODAL PARA TARJETAS --- */}

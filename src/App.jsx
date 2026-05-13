@@ -18,7 +18,6 @@ const NewPurchase = lazy(() => import('./Components/Purchase/NewPurchase'));
 const SuperList = lazy(() => import('./Components/Supermarket/SuperList'));
 const FreshShop = lazy(() => import('./Components/Supermarket/FreshShop'));
 const ServicesManager = lazy(() => import('./Components/Services/ServicesManager'));
-const HomeGlass = lazy(() => import('./Components/Dashboard/HomeGlass'));
 const HouseholdManager = lazy(() => import('./Components/Household/HouseholdManager'));
 const ReconciliationDesk = lazy(() => import('./Components/Reconciliation/ReconciliationDesk'));
 const SharedExpensesDashboard = lazy(() => import('./Components/Shared/SharedExpensesDashboard'));
@@ -164,39 +163,21 @@ export default function App() {
 
                         {/* DASHBOARD */}
                         {view === 'dashboard' && (
-                            isGlass ? (
-                                <HomeGlass
-                                    transactions={visibleTransactions}
-                                    cards={visibleCards}
-                                    supermarketItems={visibleSuperItems}
-                                    services={visibleServices}
-                                    freshItems={freshItems}
-                                    currentDate={currentDate}
-                                    user={user}
-                                    privacyMode={privacyMode}
-                                    onToggleTheme={() => setIsGlass(false)}
-                                    setView={setView}
-                                    onLogout={handleLogout}
-                                    householdId={userData?.householdId}
-                                    householdMembers={householdMembers}
-                                />
-                            ) : (
-                                <Home
-                                    transactions={visibleTransactions}
-                                    cards={visibleCards}
-                                    supermarketItems={visibleSuperItems}
-                                    services={visibleServices}
-                                    freshItems={freshItems}
-                                    privacyMode={privacyMode}
-                                    setView={setView}
-                                    onLogout={handleLogout}
-                                    currentDate={currentDate}
-                                    user={user}
-                                    onToggleTheme={() => setIsGlass(true)}
-                                    householdId={userData?.householdId}
-                                    householdMembers={householdMembers}
-                                />
-                            )
+                            <Home
+                                transactions={visibleTransactions}
+                                cards={visibleCards}
+                                supermarketItems={visibleSuperItems}
+                                services={visibleServices}
+                                freshItems={freshItems}
+                                privacyMode={privacyMode}
+                                setView={setView}
+                                onLogout={handleLogout}
+                                currentDate={currentDate}
+                                user={user}
+                                onToggleTheme={() => setIsGlass(!isGlass)}
+                                householdId={userData?.householdId}
+                                householdMembers={householdMembers}
+                            />
                         )}
 
                         {/* SERVICIOS */}

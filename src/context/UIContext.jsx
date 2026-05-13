@@ -40,13 +40,19 @@ export const UIProvider = ({ children }) => {
         return localStorage.getItem('glass_mode') === 'true';
     });
 
-    // Sincronizar isGlass → meta theme-color y cache
+    // Sincronizar isGlass → meta theme-color, cache y Tailwind .dark class
     useEffect(() => {
         setCache(CACHE_KEYS.GLASS_MODE, isGlass);
         localStorage.setItem('glass_mode', isGlass); // compatibilidad legacy
         const metaThemeColor = document.querySelector("meta[name='theme-color']");
         if (metaThemeColor) {
             metaThemeColor.setAttribute('content', isGlass ? THEME_COLOR_GLASS : THEME_COLOR_LIGHT);
+        }
+        // Aplicar clase dark al HTML para Tailwind
+        if (isGlass) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
         }
     }, [isGlass]);
 
