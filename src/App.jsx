@@ -23,7 +23,7 @@ const HouseholdManager = lazy(() => import('./Components/Household/HouseholdMana
 const ReconciliationDesk = lazy(() => import('./Components/Reconciliation/ReconciliationDesk'));
 const SharedExpensesDashboard = lazy(() => import('./Components/Shared/SharedExpensesDashboard'));
 const ReceiptScanner = lazy(() => import('./Components/ReceiptScanner/ReceiptScanner'));
-import DriverScanner from './Components/DriverScanner/DriverScanner';
+
 
 const LazyLoader = () => (
     <div className="flex justify-center items-center h-40 animate-pulse">
@@ -305,8 +305,7 @@ export default function App() {
                     </Suspense>
                 </main>
                 
-                {/* BOTÓN MÁGICO PERSISTENTE DE IA */}
-                <DriverScanner />
+
             </div>
         </div>
     );
