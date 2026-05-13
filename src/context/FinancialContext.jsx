@@ -19,7 +19,7 @@ export const useFinancial = () => {
 export const FinancialProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [userData, setUserData] = useState(null);
-    const [householdMembers, setHouseholdMembers] = useState([]);
+    const [householdMembers, setHouseholdMembers] = useState(() => getCache('householdMembers', []));
     const [loadingUser, setLoadingUser] = useState(true);
 
     // DATOS (Caché local para arranque instantáneo — robusto con versionado y try/catch)
@@ -37,27 +37,46 @@ export const FinancialProvider = ({ children }) => {
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
             setUser(currentUser);
             if (currentUser) {
-                const currentHouseholdId = await checkAndMigrateToHousehold(currentUser);
-                setUserData({ householdId: currentHouseholdId });
+                // 1. Si tenemos datos esenciales cacheados, podemos mostrar la UI enseguida
+                const hasCache = cards.length > 0 || transactions.length > 0;
+                
+                // Tratar de recuperar userData (householdId) del cache
+                const cachedUserData = getCache('userData', null);
+                if (cachedUserData) {
+                    setUserData(cachedUserData);
+                    if (hasCache) {
+                        setLoadingUser(false);
+                    }
+                }
 
+                // 2. Traer el dato real de Firebase (y migrar si es necesario)
+                const currentHouseholdId = await checkAndMigrateToHousehold(currentUser);
+                if (!cachedUserData || cachedUserData.householdId !== currentHouseholdId) {
+                    setUserData({ householdId: currentHouseholdId });
+                    setCache('userData', { householdId: currentHouseholdId });
+                }
+
+                // 3. Si no teníamos cache, apagamos el loading acá
+                if (!cachedUserData || !hasCache) {
+                    setTimeout(() => setLoadingUser(false), hasCache ? 0 : LOADING_DELAY_MS);
+                }
+
+                // 4. Traer miembros en background (sin bloquear con await)
                 if (currentHouseholdId) {
-                    try {
-                        const hhSnap = await getDoc(doc(db, 'households', currentHouseholdId));
+                    getDoc(doc(db, 'households', currentHouseholdId)).then(async (hhSnap) => {
                         if (hhSnap.exists()) {
                             const memberIds = hhSnap.data().members || [];
                             const memberPromises = memberIds.map(uid => getDoc(doc(db, 'users', uid)));
                             const memberSnaps = await Promise.all(memberPromises);
                             const members = memberSnaps.map(s => s.exists() ? { uid: s.id, ...s.data() } : { uid: s.id });
                             setHouseholdMembers(members);
+                            setCache('householdMembers', members);
                         }
-                    } catch (e) {
-                        console.error('Error loading household members:', e);
-                    }
+                    }).catch(e => console.error('Error loading household members:', e));
                 }
+            } else {
+                setLoadingUser(false);
             }
-            // Small delay para asegurarnos de mostrar el cache antes de mostrar la app
-            const hasCache = cards.length > 0 || transactions.length > 0;
-            setTimeout(() => setLoadingUser(false), hasCache ? 0 : LOADING_DELAY_MS);
         });
         return () => unsubscribe();
     }, []);
