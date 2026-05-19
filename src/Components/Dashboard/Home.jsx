@@ -1,5 +1,7 @@
 import React, { useMemo, useEffect, useState, memo } from 'react';
-import { Scale, Wallet, CreditCard, CalendarDays, PartyPopper, ExternalLink, Plus, ShoppingCart, Receipt, Users, LogOut, AlertCircle, BarChart3, Moon, LayoutList, RefreshCw } from 'lucide-react';
+import { Scale, Wallet, CreditCard, CalendarDays, PartyPopper, ExternalLink, Plus, ShoppingCart, Receipt, Users, LogOut, AlertCircle, BarChart3, Moon, LayoutList, RefreshCw, Bell, CheckCheck, X } from 'lucide-react';
+import { db } from '../../firebase';
+import { doc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { formatMoney } from '../../utils';
 import FinancialTarget from './FinancialTarget';
 import CardDetailModal from '../Cards/CardDetailModal';
@@ -15,10 +17,26 @@ import {
 } from '../../config/constants';
 import { getCache, setCache } from '../../utils/cache';
 
-const Home = memo(({ transactions, cards, supermarketItems = [], services = [], freshItems = [], privacyMode, setView, onLogout, currentDate, user, onToggleTheme, householdId, householdMembers = [] }) => {
+const Home = memo(({ transactions, cards, supermarketItems = [], services = [], freshItems = [], privacyMode, setView, onLogout, currentDate, user, onToggleTheme, householdId, householdMembers = [], notifications = [] }) => {
 
     const [selectedCardForModal, setSelectedCardForModal] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+
+    const unreadNotifsCount = useMemo(() => {
+        if (!user || !notifications) return 0;
+        return notifications.filter(n => !n.readBy?.includes(user.uid)).length;
+    }, [notifications, user]);
+
+    const handleMarkAsRead = async (notifId) => {
+        if (!user?.uid || !householdId) return;
+        try {
+            const notifRef = doc(db, 'households', householdId, 'notifications', notifId);
+            await updateDoc(notifRef, {
+                readBy: arrayUnion(user.uid)
+            });
+        } catch(e) { console.error("Error al marcar como leido", e); }
+    };
 
     // Clave del mes seleccionado
     const targetMonthKey = useMemo(() => formatMonthKey(currentDate), [currentDate]);
@@ -396,6 +414,15 @@ const Home = memo(({ transactions, cards, supermarketItems = [], services = [], 
                     <button onClick={() => setView('household')} className="bg-blue-50 text-blue-500 dark:bg-white/10 dark:text-white/70 p-2 rounded-full hover:bg-blue-100 dark:hover:bg-blue-500/20 dark:hover:text-blue-200 transition-colors dark:backdrop-blur-md dark:border dark:border-white/5">
                         <Users size={20} />
                     </button>
+                    {/* CAMPANA NOTIFICACIONES */}
+                    <button onClick={() => setIsNotificationsOpen(true)} className="relative bg-indigo-50 text-indigo-500 dark:bg-white/10 dark:text-white/70 p-2 rounded-full hover:bg-indigo-100 dark:hover:bg-indigo-500/20 dark:hover:text-indigo-200 transition-colors dark:backdrop-blur-md dark:border dark:border-white/5">
+                        <Bell size={20} className={unreadNotifsCount > 0 ? "animate-pulse" : ""} />
+                        {unreadNotifsCount > 0 && (
+                            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-lg border-2 border-white dark:border-[#1a1b4b]">
+                                {unreadNotifsCount}
+                            </span>
+                        )}
+                    </button>
                     <button onClick={onLogout} className="bg-gray-50 text-gray-400 dark:bg-white/10 dark:text-white/70 p-2 rounded-full hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-500/20 dark:hover:text-red-200 transition-colors dark:backdrop-blur-md dark:border dark:border-white/5">
                         <LogOut size={20} />
                     </button>
@@ -459,6 +486,63 @@ const Home = memo(({ transactions, cards, supermarketItems = [], services = [], 
                 householdId={householdId}
                 currentDate={currentDate}
             />
+
+            {/* --- MODAL DE NOTIFICACIONES --- */}
+            {isNotificationsOpen && (
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[70] flex items-end sm:items-center justify-center animate-fade-in" onClick={() => setIsNotificationsOpen(false)}>
+                    <div className="w-full max-w-md bg-[#f3f4f6] dark:bg-[#1a1b4b] rounded-t-[30px] sm:rounded-[30px] p-6 pb-12 shadow-2xl animate-slide-up max-h-[85vh] flex flex-col" onClick={e => e.stopPropagation()}>
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                                <Bell className="text-indigo-500" /> Notificaciones
+                            </h3>
+                            <button onClick={() => setIsNotificationsOpen(false)} className="p-2 bg-gray-200 dark:bg-white/10 rounded-full text-gray-500 dark:text-white/50 hover:bg-gray-300 dark:hover:bg-white/20 transition-colors">
+                                <X size={20} />
+                            </button>
+                        </div>
+                        
+                        <div className="overflow-y-auto space-y-3 pr-2 custom-scrollbar">
+                            {(!notifications || notifications.length === 0) ? (
+                                <div className="text-center py-10 opacity-50">
+                                    <Bell size={40} className="mx-auto mb-3" />
+                                    <p className="font-bold text-gray-600 dark:text-white">No hay notificaciones</p>
+                                </div>
+                            ) : (
+                                notifications.map(n => {
+                                    const isRead = n.readBy?.includes(user?.uid);
+                                    return (
+                                        <div key={n.id} className={`p-4 rounded-2xl border transition-all ${isRead ? 'bg-white/60 dark:bg-white/5 border-gray-200 dark:border-white/5 opacity-70' : 'bg-white dark:bg-indigo-900/20 border-indigo-200 dark:border-indigo-500/30 shadow-md'}`}>
+                                            <div className="flex items-start gap-3">
+                                                <div className={`p-2 rounded-xl mt-1 ${isRead ? 'bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-white/40' : 'bg-indigo-50 dark:bg-indigo-500/30 text-indigo-600 dark:text-indigo-300'}`}>
+                                                    <Wallet size={20} />
+                                                </div>
+                                                <div className="flex-1">
+                                                    <p className={`text-sm ${isRead ? 'text-gray-600 dark:text-gray-300' : 'text-gray-900 dark:text-white'}`}>
+                                                        <span className="font-bold text-indigo-600 dark:text-indigo-400">{n.paidByName}</span> acaba de pagar <span className="font-bold">{n.itemName}</span> que vencía el día {n.dueDate}
+                                                    </p>
+                                                    <p className={`text-xl font-mono font-bold mt-1 ${isRead ? 'text-gray-500 dark:text-gray-400' : 'text-gray-900 dark:text-white'}`}>
+                                                        {privacyMode ? '****' : formatMoney(n.amount)}
+                                                    </p>
+                                                    <div className="text-[10px] text-gray-400 dark:text-white/40 mt-3 flex justify-between items-center border-t border-gray-100 dark:border-white/5 pt-2">
+                                                        <span>{new Date(n.createdAt?.toMillis() || Date.now()).toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' })}</span>
+                                                        {!isRead && (
+                                                            <button 
+                                                                onClick={() => handleMarkAsRead(n.id)}
+                                                                className="flex items-center gap-1 text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 font-bold px-2 py-1 bg-indigo-50 dark:bg-indigo-500/20 rounded-lg transition-colors active:scale-95"
+                                                            >
+                                                                <CheckCheck size={12} /> Marcar leído
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
 
         </div>
     );

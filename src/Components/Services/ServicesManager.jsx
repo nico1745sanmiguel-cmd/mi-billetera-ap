@@ -364,8 +364,28 @@ export default function ServicesManager({ services = [], cards = [], transaction
     const togglePaid = async (item) => {
         const collectionName = item.type === 'card' ? 'cards' : 'services';
         const ref = doc(db, collectionName, item.id);
-        if (item.isPaid) await updateDoc(ref, { paidPeriods: arrayRemove(currentMonthKey) });
-        else await updateDoc(ref, { paidPeriods: arrayUnion(currentMonthKey) });
+        if (item.isPaid) {
+            await updateDoc(ref, { paidPeriods: arrayRemove(currentMonthKey) });
+        } else {
+            await updateDoc(ref, { paidPeriods: arrayUnion(currentMonthKey) });
+            // Notificar al hogar
+            if (householdId && auth.currentUser) {
+                try {
+                    const { serverTimestamp } = await import('firebase/firestore');
+                    await addDoc(collection(db, 'households', householdId, 'notifications'), {
+                        type: 'payment',
+                        itemName: item.name,
+                        amount: item.amount,
+                        dueDate: item.day,
+                        itemType: item.type, // 'card' o 'service'
+                        paidByUid: auth.currentUser.uid,
+                        paidByName: auth.currentUser.displayName || 'Alguien',
+                        createdAt: serverTimestamp(),
+                        readBy: [auth.currentUser.uid] // Ya leído por quien pagó
+                    });
+                } catch(e) { console.error("Error saving notification", e); }
+            }
+        }
     };
 
     const currentUid = auth.currentUser?.uid;

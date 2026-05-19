@@ -43,6 +43,7 @@ export default function App() {
         services,
         freshItems,
         plannerCategories,
+        notifications,
         addTransaction
     } = useFinancial();
 
@@ -179,6 +180,7 @@ export default function App() {
                                 onToggleTheme={() => setIsGlass(!isGlass)}
                                 householdId={userData?.householdId}
                                 householdMembers={householdMembers}
+                                notifications={notifications}
                             />
                         )}
 

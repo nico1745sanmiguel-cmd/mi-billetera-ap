@@ -29,6 +29,7 @@ export const FinancialProvider = ({ children }) => {
     const [services, setServices] = useState(() => getCache(CACHE_KEYS.SERVICES));
     const [freshItems, setFreshItems] = useState(() => getCache(CACHE_KEYS.FRESH_ITEMS));
     const [plannerCategories, setPlannerCategories] = useState(() => getCache(CACHE_KEYS.PLANNER_CATEGORIES) || []);
+    const [notifications, setNotifications] = useState([]);
 
     // Limpiar caches de versiones anteriores (solo corre una vez al montar)
     useEffect(() => { cleanOldCaches(); }, []);
@@ -106,6 +107,16 @@ export const FinancialProvider = ({ children }) => {
         const unsubFresh    = syncData(COLLECTIONS.FRESH_PURCHASES, setFreshItems,  CACHE_KEYS.FRESH_ITEMS);
         const unsubPlannerCat = syncData(COLLECTIONS.PLANNER_CATEGORIES, setPlannerCategories, CACHE_KEYS.PLANNER_CATEGORIES);
 
+        // Notificaciones (solo si hay household)
+        let unsubNotifications = () => {};
+        if (householdId) {
+            const qNotif = query(collection(db, 'households', householdId, 'notifications'));
+            unsubNotifications = onSnapshot(qNotif, (snap) => {
+                const data = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
+                setNotifications(data);
+            }, (error) => console.log('Offline/Error notifications:', error));
+        }
+
         return () => {
             unsubCards();
             unsubTrans();
@@ -113,6 +124,7 @@ export const FinancialProvider = ({ children }) => {
             unsubServices();
             unsubFresh();
             unsubPlannerCat();
+            unsubNotifications();
         };
     }, [user, userData]);
 
@@ -145,8 +157,9 @@ export const FinancialProvider = ({ children }) => {
         services,
         freshItems,
         plannerCategories,
+        notifications,
         addTransaction
-    }), [user, userData, householdMembers, loadingUser, cards, transactions, superItems, services, freshItems, plannerCategories]);
+    }), [user, userData, householdMembers, loadingUser, cards, transactions, superItems, services, freshItems, plannerCategories, notifications]);
 
     return (
         <FinancialContext.Provider value={value}>
