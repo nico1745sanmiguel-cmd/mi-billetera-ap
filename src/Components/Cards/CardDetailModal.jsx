@@ -4,6 +4,7 @@ import { doc, deleteDoc, updateDoc, setDoc } from 'firebase/firestore';
 import { formatInputNumber, parseInputNumber } from '../../utils';
 import StatementUploader from './StatementUploader';
 import StatementReviewer from './StatementReviewer';
+import StatementDashboard from './StatementDashboard';
 import { Sparkles } from 'lucide-react';
 
 const PRESET_COLORS = ['#1a1a1a', '#005f73', '#0a9396', '#ae2012', '#6a4c93', '#ca6702', '#2d3277', '#e63946', '#457b9d', '#ff006e'];
@@ -45,10 +46,11 @@ export default function CardDetailModal({ isOpen, onClose, card, privacyMode, is
           nextCloseDate: saved.nextCloseDate || '',
           nextDueDate: saved.nextDueDate || '',
           isPaid: card.paidPeriods?.includes(monthKey) || false,
+          transactions: saved.transactions || [],
         });
       } else {
         setForm({ name: '', bank: '', closeDay: '', dueDay: '', color: PRESET_COLORS[0], isShared: true });
-        setStatement({ totalDue: '', dueDate: '', nextCloseDate: '', nextDueDate: '', isPaid: false });
+        setStatement({ totalDue: '', dueDate: '', nextCloseDate: '', nextDueDate: '', isPaid: false, transactions: [] });
       }
     } else {
       const timer = setTimeout(() => setIsAnimating(false), 300);
@@ -153,11 +155,44 @@ export default function CardDetailModal({ isOpen, onClose, card, privacyMode, is
     };
 
     try {
-      const currentPaidPeriods = card.paidPeriods || [];
-      await updateDoc(doc(db, 'cards', card.id), {
+      const updates = {
         [`monthlyStatements.${monthKey}`]: statementData,
+      };
+
+      // Proyectar cuotas a futuro
+      const [year, month] = monthKey.split('-').map(Number);
+      confirmedData.transactions.forEach(tx => {
+        if (tx.isInstallment && tx.installmentTotal > 1 && tx.installmentCurrent < tx.installmentTotal) {
+          const remaining = tx.installmentTotal - tx.installmentCurrent;
+          for (let i = 1; i <= remaining; i++) {
+            const nextMonth = month + i;
+            const nextYear = year + Math.floor((nextMonth - 1) / 12);
+            const nextMonthNormalized = ((nextMonth - 1) % 12) + 1;
+            const futureMonthKey = `${nextYear}-${String(nextMonthNormalized).padStart(2, '0')}`;
+            
+            const futureTx = {
+              ...tx,
+              installmentCurrent: tx.installmentCurrent + i,
+            };
+
+            if (!updates[`monthlyStatements.${futureMonthKey}`]) {
+              const existingFuture = card.monthlyStatements?.[futureMonthKey] || { totalDue: 0, transactions: [] };
+              updates[`monthlyStatements.${futureMonthKey}`] = {
+                ...existingFuture,
+                transactions: existingFuture.transactions ? [...existingFuture.transactions] : []
+              };
+            }
+            
+            updates[`monthlyStatements.${futureMonthKey}`].transactions.push(futureTx);
+            // Sumar el monto de la cuota al total adeudado de ese mes futuro
+            updates[`monthlyStatements.${futureMonthKey}`].totalDue = (updates[`monthlyStatements.${futureMonthKey}`].totalDue || 0) + (tx.amount || 0);
+          }
+        }
       });
+
+      await updateDoc(doc(db, 'cards', card.id), updates);
       setAiState('idle');
+      setStatement(s => ({ ...s, transactions: confirmedData.transactions }));
     } catch (error) {
       console.error(error);
       alert('Error al guardar los datos de la IA.');
@@ -308,15 +343,23 @@ export default function CardDetailModal({ isOpen, onClose, card, privacyMode, is
 
               {aiState === 'idle' && (
                 <>
-                  <button 
-                      onClick={() => setAiState('uploading')}
-                      className="w-full flex items-center justify-center gap-2 py-4 px-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white rounded-2xl font-bold shadow-lg shadow-emerald-500/20 transition-all hover:scale-[1.02]"
-                  >
-                      <Sparkles className="w-5 h-5" />
-                      Cargar Resumen con IA
-                  </button>
+                  {statement.transactions && statement.transactions.length > 0 ? (
+                    <StatementDashboard 
+                      statement={statement} 
+                      isGlass={isGlass} 
+                      onReload={() => setAiState('uploading')} 
+                    />
+                  ) : (
+                    <button 
+                        onClick={() => setAiState('uploading')}
+                        className="w-full flex items-center justify-center gap-2 py-4 px-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white rounded-2xl font-bold shadow-lg shadow-emerald-500/20 transition-all hover:scale-[1.02]"
+                    >
+                        <Sparkles className="w-5 h-5" />
+                        Cargar Resumen con IA
+                    </button>
+                  )}
                   
-                  <div className="relative flex items-center py-2">
+                  <div className="relative flex items-center py-2 mt-4">
                       <div className={`flex-grow border-t ${isGlass ? 'border-white/10' : 'border-gray-200'}`}></div>
                       <span className={`flex-shrink-0 mx-4 text-xs font-bold uppercase ${isGlass ? 'text-white/30' : 'text-gray-400'}`}>O carga manual</span>
                       <div className={`flex-grow border-t ${isGlass ? 'border-white/10' : 'border-gray-200'}`}></div>
