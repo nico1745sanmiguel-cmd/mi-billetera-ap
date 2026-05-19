@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { db, auth } from '../../firebase';
 import { doc, deleteDoc, updateDoc, setDoc } from 'firebase/firestore';
 import { formatInputNumber, parseInputNumber } from '../../utils';
+import StatementUploader from './StatementUploader';
+import StatementReviewer from './StatementReviewer';
+import { Sparkles } from 'lucide-react';
 
 const PRESET_COLORS = ['#1a1a1a', '#005f73', '#0a9396', '#ae2012', '#6a4c93', '#ca6702', '#2d3277', '#e63946', '#457b9d', '#ff006e'];
 
@@ -15,6 +18,8 @@ export default function CardDetailModal({ isOpen, onClose, card, privacyMode, is
   const [form, setForm] = useState({ name: '', bank: '', closeDay: '', dueDay: '', color: PRESET_COLORS[0], isShared: true });
   const [statement, setStatement] = useState({ totalDue: '', dueDate: '', nextCloseDate: '', nextDueDate: '', isPaid: false });
   const [isAnimating, setIsAnimating] = useState(false);
+  const [aiState, setAiState] = useState('idle'); // 'idle', 'uploading', 'reviewing'
+  const [aiData, setAiData] = useState(null);
 
   const monthKey = getMonthKey(currentDate);
 
@@ -22,6 +27,8 @@ export default function CardDetailModal({ isOpen, onClose, card, privacyMode, is
     if (isOpen) {
       setIsAnimating(true);
       setActiveTab('card');
+      setAiState('idle');
+      setAiData(null);
       if (card) {
         setForm({
           name: card.name || '',
@@ -122,6 +129,41 @@ export default function CardDetailModal({ isOpen, onClose, card, privacyMode, is
     }
   };
 
+  const handleAIConfirm = async (confirmedData) => {
+    if (!auth.currentUser || !card?.id) return;
+    
+    // Auto-completar el formulario con el resumen de la IA
+    const newTotalDue = confirmedData.summary.totalConsumption || confirmedData.summary.currentBalance || 0;
+    const newDueDate = confirmedData.summary.dueDate || statement.dueDate;
+    
+    setStatement(s => ({
+        ...s,
+        totalDue: newTotalDue,
+        dueDate: newDueDate,
+        nextCloseDate: confirmedData.summary.nextClosingDate || s.nextCloseDate
+    }));
+    
+    // Guardar en Firestore incluyendo las transacciones
+    const statementData = {
+      totalDue: Number(newTotalDue) || 0,
+      dueDate: newDueDate,
+      nextCloseDate: confirmedData.summary.nextClosingDate || statement.nextCloseDate,
+      nextDueDate: statement.nextDueDate,
+      transactions: confirmedData.transactions
+    };
+
+    try {
+      const currentPaidPeriods = card.paidPeriods || [];
+      await updateDoc(doc(db, 'cards', card.id), {
+        [`monthlyStatements.${monthKey}`]: statementData,
+      });
+      setAiState('idle');
+    } catch (error) {
+      console.error(error);
+      alert('Error al guardar los datos de la IA.');
+    }
+  };
+
   if (!isAnimating && !isOpen) return null;
 
   const inputClass = `w-full p-3 rounded-xl outline-none font-medium transition-colors ${isGlass ? 'bg-white/5 border border-white/10 text-white placeholder-white/30 focus:bg-white/10 focus:border-white/30' : 'bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-500'}`;
@@ -135,7 +177,7 @@ export default function CardDetailModal({ isOpen, onClose, card, privacyMode, is
     <div className={`fixed inset-0 z-[60] flex items-center justify-center p-4 transition-all duration-300 ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
       <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={onClose}></div>
 
-      <div className={`w-full max-w-sm rounded-3xl shadow-2xl z-10 overflow-hidden transform transition-all duration-300 ${isOpen ? 'translate-y-0 scale-100' : 'translate-y-10 scale-95'} ${isGlass ? 'bg-[#0f172a] border border-white/10 text-white shadow-blue-900/20' : 'bg-white text-gray-800'}`}>
+      <div className={`w-full ${aiState === 'reviewing' ? 'max-w-5xl' : 'max-w-sm'} rounded-3xl shadow-2xl z-10 overflow-hidden transform transition-all duration-300 ${isOpen ? 'translate-y-0 scale-100' : 'translate-y-10 scale-95'} ${isGlass ? 'bg-[#0f172a] border border-white/10 text-white shadow-blue-900/20' : 'bg-white text-gray-800'}`}>
 
         {/* Header */}
         <div className={`px-6 py-4 flex justify-between items-center ${isGlass ? 'border-b border-white/5 bg-white/5' : 'border-b border-gray-100 bg-gray-50/50'}`}>
@@ -241,7 +283,46 @@ export default function CardDetailModal({ isOpen, onClose, card, privacyMode, is
 
           {/* --- TAB: RESUMEN DEL MES --- */}
           {activeTab === 'statement' && card && (
-            <form onSubmit={handleSaveStatement} className="space-y-4">
+            <div className="space-y-4">
+              
+              {aiState === 'uploading' && (
+                  <div className="py-2 animate-in fade-in">
+                      <StatementUploader 
+                          onAnalysisComplete={data => { setAiData(data); setAiState('reviewing'); }} 
+                      />
+                      <button onClick={() => setAiState('idle')} className={`w-full mt-4 text-xs font-bold uppercase tracking-wider ${isGlass ? 'text-white/50 hover:text-white' : 'text-gray-400 hover:text-gray-600'}`}>
+                          Cancelar
+                      </button>
+                  </div>
+              )}
+
+              {aiState === 'reviewing' && aiData && (
+                  <div className="-mx-4 -my-4">
+                      <StatementReviewer 
+                          data={aiData} 
+                          onConfirm={handleAIConfirm} 
+                          onCancel={() => { setAiState('idle'); setAiData(null); }} 
+                      />
+                  </div>
+              )}
+
+              {aiState === 'idle' && (
+                <>
+                  <button 
+                      onClick={() => setAiState('uploading')}
+                      className="w-full flex items-center justify-center gap-2 py-4 px-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white rounded-2xl font-bold shadow-lg shadow-emerald-500/20 transition-all hover:scale-[1.02]"
+                  >
+                      <Sparkles className="w-5 h-5" />
+                      Cargar Resumen con IA
+                  </button>
+                  
+                  <div className="relative flex items-center py-2">
+                      <div className={`flex-grow border-t ${isGlass ? 'border-white/10' : 'border-gray-200'}`}></div>
+                      <span className={`flex-shrink-0 mx-4 text-xs font-bold uppercase ${isGlass ? 'text-white/30' : 'text-gray-400'}`}>O carga manual</span>
+                      <div className={`flex-grow border-t ${isGlass ? 'border-white/10' : 'border-gray-200'}`}></div>
+                  </div>
+
+                  <form onSubmit={handleSaveStatement} className="space-y-4">
               <div className="flex items-center justify-between p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 mb-2 transition-all">
                 <div className="flex items-center gap-3">
                   <div className={`p-2 rounded-xl ${statement.isPaid ? 'bg-emerald-500 text-white' : 'bg-white/10 text-emerald-500/50'}`}>
@@ -313,6 +394,9 @@ export default function CardDetailModal({ isOpen, onClose, card, privacyMode, is
                 Guardar Resumen
               </button>
             </form>
+            </>
+            )}
+            </div>
           )}
 
         </div>
