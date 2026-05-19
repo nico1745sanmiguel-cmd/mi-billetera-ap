@@ -15,7 +15,7 @@ const getMonthKey = (date) => {
 };
 
 export default function CardDetailModal({ isOpen, onClose, card, privacyMode, isGlass, householdId, currentDate }) {
-  const [activeTab, setActiveTab] = useState('card');
+  const [activeTab, setActiveTab] = useState('statement');
   const [form, setForm] = useState({ name: '', bank: '', closeDay: '', dueDay: '', color: PRESET_COLORS[0], isShared: true });
   const [statement, setStatement] = useState({ totalDue: '', dueDate: '', nextCloseDate: '', nextDueDate: '', isPaid: false });
   const [isAnimating, setIsAnimating] = useState(false);
@@ -27,7 +27,7 @@ export default function CardDetailModal({ isOpen, onClose, card, privacyMode, is
   useEffect(() => {
     if (isOpen) {
       setIsAnimating(true);
-      setActiveTab('card');
+      setActiveTab('statement');
       setAiState('idle');
       setAiData(null);
       if (card) {
@@ -51,6 +51,7 @@ export default function CardDetailModal({ isOpen, onClose, card, privacyMode, is
       } else {
         setForm({ name: '', bank: '', closeDay: '', dueDay: '', color: PRESET_COLORS[0], isShared: true });
         setStatement({ totalDue: '', dueDate: '', nextCloseDate: '', nextDueDate: '', isPaid: false, transactions: [] });
+        setActiveTab('card');
       }
     } else {
       const timer = setTimeout(() => setIsAnimating(false), 300);
@@ -99,6 +100,7 @@ export default function CardDetailModal({ isOpen, onClose, card, privacyMode, is
       dueDate: statement.dueDate,
       nextCloseDate: statement.nextCloseDate,
       nextDueDate: statement.nextDueDate,
+      transactions: statement.transactions || []
     };
 
     try {
@@ -343,27 +345,23 @@ export default function CardDetailModal({ isOpen, onClose, card, privacyMode, is
 
               {aiState === 'idle' && (
                 <>
-                  {statement.transactions && statement.transactions.length > 0 ? (
-                    <StatementDashboard 
-                      statement={statement} 
-                      isGlass={isGlass} 
-                      onReload={() => setAiState('uploading')} 
-                    />
-                  ) : (
-                    <button 
-                        onClick={() => setAiState('uploading')}
-                        className="w-full flex items-center justify-center gap-2 py-4 px-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white rounded-2xl font-bold shadow-lg shadow-emerald-500/20 transition-all hover:scale-[1.02]"
-                    >
-                        <Sparkles className="w-5 h-5" />
-                        Cargar Resumen con IA
-                    </button>
+                  {(!statement.transactions || statement.transactions.length === 0) && (
+                    <>
+                      <button 
+                          onClick={() => setAiState('uploading')}
+                          className="w-full flex items-center justify-center gap-2 py-4 px-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white rounded-2xl font-bold shadow-lg shadow-emerald-500/20 transition-all hover:scale-[1.02]"
+                      >
+                          <Sparkles className="w-5 h-5" />
+                          Cargar Resumen con IA
+                      </button>
+                      
+                      <div className="relative flex items-center py-2 mt-4">
+                          <div className={`flex-grow border-t ${isGlass ? 'border-white/10' : 'border-gray-200'}`}></div>
+                          <span className={`flex-shrink-0 mx-4 text-xs font-bold uppercase ${isGlass ? 'text-white/30' : 'text-gray-400'}`}>O carga manual</span>
+                          <div className={`flex-grow border-t ${isGlass ? 'border-white/10' : 'border-gray-200'}`}></div>
+                      </div>
+                    </>
                   )}
-                  
-                  <div className="relative flex items-center py-2 mt-4">
-                      <div className={`flex-grow border-t ${isGlass ? 'border-white/10' : 'border-gray-200'}`}></div>
-                      <span className={`flex-shrink-0 mx-4 text-xs font-bold uppercase ${isGlass ? 'text-white/30' : 'text-gray-400'}`}>O carga manual</span>
-                      <div className={`flex-grow border-t ${isGlass ? 'border-white/10' : 'border-gray-200'}`}></div>
-                  </div>
 
                   <form onSubmit={handleSaveStatement} className="space-y-4">
               <div className="flex items-center justify-between p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 mb-2 transition-all">
@@ -437,6 +435,16 @@ export default function CardDetailModal({ isOpen, onClose, card, privacyMode, is
                 Guardar Resumen
               </button>
             </form>
+
+            {statement.transactions && statement.transactions.length > 0 && (
+              <div className={`mt-6 pt-6 border-t ${isGlass ? 'border-white/10' : 'border-gray-200'}`}>
+                <StatementDashboard 
+                  statement={statement} 
+                  isGlass={isGlass} 
+                  onReload={() => setAiState('uploading')} 
+                />
+              </div>
+            )}
             </>
             )}
             </div>
