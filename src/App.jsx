@@ -42,6 +42,7 @@ export default function App() {
         superItems,
         services,
         freshItems,
+        plannerCategories,
         addTransaction
     } = useFinancial();
 
@@ -169,6 +170,7 @@ export default function App() {
                                 supermarketItems={visibleSuperItems}
                                 services={visibleServices}
                                 freshItems={freshItems}
+                                plannerCategories={plannerCategories}
                                 privacyMode={privacyMode}
                                 setView={setView}
                                 onLogout={handleLogout}
@@ -252,6 +254,7 @@ export default function App() {
                         {view === 'fresh' && (
                             <FreshShop
                                 items={freshItems}
+                                plannerCategories={plannerCategories}
                                 currentDate={currentDate}
                                 isGlass={isGlass}
                                 householdId={userData?.householdId}
@@ -266,6 +269,7 @@ export default function App() {
                                 transactions={visibleTransactions}
                                 supermarketItems={visibleSuperItems}
                                 freshItems={freshItems}
+                                plannerCategories={plannerCategories}
                                 currentDate={currentDate}
                                 privacyMode={privacyMode}
                                 isGlass={isGlass}

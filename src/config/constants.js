@@ -87,6 +87,7 @@ export const COLLECTIONS = {
     SUPERMARKET:      'supermarket_items',
     SERVICES:         'services',
     FRESH_PURCHASES:  'fresh_purchases',
+    PLANNER_CATEGORIES: 'planner_categories',
     CONTRIBUTIONS:    'contributions',
 };
 
@@ -97,6 +98,7 @@ export const CACHE_KEYS = {
     SUPER_ITEMS:  'superItems',
     SERVICES:     'services',
     FRESH_ITEMS:  'freshItems',
+    PLANNER_CATEGORIES: 'plannerCategories',
     WIDGET_ORDER: 'widget_order',
     GLASS_MODE:   'glass_mode',
 };

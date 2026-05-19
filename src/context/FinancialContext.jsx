@@ -28,6 +28,7 @@ export const FinancialProvider = ({ children }) => {
     const [superItems, setSuperItems] = useState(() => getCache(CACHE_KEYS.SUPER_ITEMS));
     const [services, setServices] = useState(() => getCache(CACHE_KEYS.SERVICES));
     const [freshItems, setFreshItems] = useState(() => getCache(CACHE_KEYS.FRESH_ITEMS));
+    const [plannerCategories, setPlannerCategories] = useState(() => getCache(CACHE_KEYS.PLANNER_CATEGORIES) || []);
 
     // Limpiar caches de versiones anteriores (solo corre una vez al montar)
     useEffect(() => { cleanOldCaches(); }, []);
@@ -103,6 +104,7 @@ export const FinancialProvider = ({ children }) => {
         const unsubSuper    = syncData(COLLECTIONS.SUPERMARKET,   setSuperItems,    CACHE_KEYS.SUPER_ITEMS);
         const unsubServices = syncData(COLLECTIONS.SERVICES,      setServices,      CACHE_KEYS.SERVICES);
         const unsubFresh    = syncData(COLLECTIONS.FRESH_PURCHASES, setFreshItems,  CACHE_KEYS.FRESH_ITEMS);
+        const unsubPlannerCat = syncData(COLLECTIONS.PLANNER_CATEGORIES, setPlannerCategories, CACHE_KEYS.PLANNER_CATEGORIES);
 
         return () => {
             unsubCards();
@@ -110,6 +112,7 @@ export const FinancialProvider = ({ children }) => {
             unsubSuper();
             unsubServices();
             unsubFresh();
+            unsubPlannerCat();
         };
     }, [user, userData]);
 
@@ -141,8 +144,9 @@ export const FinancialProvider = ({ children }) => {
         superItems,
         services,
         freshItems,
+        plannerCategories,
         addTransaction
-    }), [user, userData, householdMembers, loadingUser, cards, transactions, superItems, services, freshItems]);
+    }), [user, userData, householdMembers, loadingUser, cards, transactions, superItems, services, freshItems, plannerCategories]);
 
     return (
         <FinancialContext.Provider value={value}>

@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { db, auth } from '../../firebase';
 import { doc, getDoc, collection, query, where, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
-import { Scale, Users, ChevronLeft, CreditCard, ShoppingCart, Lightbulb, User, Leaf, Plus, X, CheckCircle, Clock, TrendingUp } from 'lucide-react';
+import { Scale, Users, ChevronLeft, CreditCard, ShoppingCart, Lightbulb, User, LayoutList, Plus, X, CheckCircle, Clock, TrendingUp } from 'lucide-react';
 import { formatMoney } from '../../utils';
 import { calcularProporciones, getLatestSalary } from '../../utils/salaryUtils';
 import { buildCardsWithDebt, formatMonthKey } from '../../utils/cardDebtUtils';
@@ -277,7 +277,7 @@ export default function SharedExpensesDashboard({
 
         const result = [...sharedServices, ...sharedCards];
         if (superTotal > 0) result.push({ id: 'super_total', name: 'Supermercado (Presupuesto)', amount: superTotal, day: 1, type: 'super', icon: <ShoppingCart size={16} className="text-purple-400" /> });
-        if (freshTotal > 0) result.push({ id: 'fresh_total', name: 'Mercado Fresco (Presupuesto/Gasto)', amount: freshTotal, day: 1, type: 'fresh', icon: <Leaf size={16} className="text-green-400" /> });
+        if (freshTotal > 0) result.push({ id: 'fresh_total', name: 'Planificador (Presupuesto/Gasto)', amount: freshTotal, day: 1, type: 'fresh', icon: <LayoutList size={16} className="text-indigo-400" /> });
 
         return result.sort((a, b) => a.day - b.day);
     }, [services, cards, transactions, supermarketItems, currentMonthKey, currentDate, freshItems]);
