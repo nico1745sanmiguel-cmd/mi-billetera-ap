@@ -1,5 +1,5 @@
 import React, { useMemo, useEffect, useState, memo } from 'react';
-import { Scale, Wallet, CreditCard, CalendarDays, PartyPopper, ExternalLink, Plus, ShoppingCart, Receipt, Users, LogOut, AlertCircle, BarChart3, Moon, LayoutList } from 'lucide-react';
+import { Scale, Wallet, CreditCard, CalendarDays, PartyPopper, ExternalLink, Plus, ShoppingCart, Receipt, Users, LogOut, AlertCircle, BarChart3, Moon, LayoutList, RefreshCw } from 'lucide-react';
 import { formatMoney } from '../../utils';
 import FinancialTarget from './FinancialTarget';
 import CardDetailModal from '../Cards/CardDetailModal';
@@ -27,6 +27,32 @@ const Home = memo(({ transactions, cards, supermarketItems = [], services = [], 
     const openCardModal = (card) => {
         setSelectedCardForModal(card);
         setIsModalOpen(true);
+    };
+
+    // --- FORZAR ACTUALIZACIÓN (BORRAR CACHÉ) ---
+    const handleCacheRefresh = async () => {
+        if ('serviceWorker' in navigator) {
+            try {
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                for (let registration of registrations) {
+                    await registration.unregister();
+                }
+            } catch (e) {
+                console.error("Error al desregistrar SW:", e);
+            }
+        }
+        if ('caches' in window) {
+            try {
+                const cacheNames = await caches.keys();
+                await Promise.all(
+                    cacheNames.map(cacheName => caches.delete(cacheName))
+                );
+            } catch (e) {
+                console.error("Error al vaciar cachés:", e);
+            }
+        }
+        // Recarga dura metiendo un parámetro aleatorio para evitar el caché del navegador
+        window.location.href = window.location.origin + window.location.pathname + '?t=' + Date.now();
     };
 
     // --- 1. CONFIGURACIÓN DRAG & DROP ---
@@ -413,6 +439,15 @@ const Home = memo(({ transactions, cards, supermarketItems = [], services = [], 
                 <span className="dark:hidden">Cambiar a Modo Noche</span>
                 <Moon size={16} className="hidden dark:block text-yellow-300" />
                 <span className="hidden dark:block">Volver a Modo Día</span>
+            </button>
+
+            {/* REFRESH CACHE BUTTON */}
+            <button
+                onClick={handleCacheRefresh}
+                className="w-full py-4 mt-3 rounded-full border border-gray-100 dark:border-white/10 text-gray-400 dark:text-white/40 text-xs font-bold uppercase tracking-widest hover:bg-gray-50 dark:hover:bg-white/5 hover:text-gray-600 dark:hover:text-white/80 transition-all flex items-center justify-center gap-2 group"
+            >
+                <RefreshCw size={16} className="group-hover:rotate-180 transition-transform duration-500 ease-out" />
+                <span>Actualizar Aplicación</span>
             </button>
 
             {/* --- MODAL PARA TARJETAS --- */}
