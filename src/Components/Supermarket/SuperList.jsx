@@ -244,15 +244,10 @@ export default function SuperList({ items = [], currentDate, isGlass, householdI
 
     const handlePriceBlur = async (item) => {
         if (!editingItemRef.current || editingItemRef.current.id !== item.id) return;
-        const { initialPrice, initialChecked } = editingItemRef.current;
+        const { initialPrice } = editingItemRef.current;
         const currentPrice = item.price;
 
-        if (!item.checked && currentPrice > 0) {
-            await toggleSuperChecked(item.id, true);
-            showToast('Marcado como comprado', async () => {
-                await updateSuperFields(item.id, { price: initialPrice, checked: initialChecked });
-            });
-        } else if (currentPrice !== initialPrice) {
+        if (currentPrice !== initialPrice) {
             showToast('Precio actualizado', async () => {
                 await updateSuperPrice(item.id, initialPrice);
             });
