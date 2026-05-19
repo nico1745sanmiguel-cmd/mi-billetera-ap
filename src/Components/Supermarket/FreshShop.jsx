@@ -323,7 +323,7 @@ function PlannerSection({ catData, trips, currentMonthKey, isGlass, householdId 
                         <div className="space-y-2">
                             <p className={`text-[10px] font-bold uppercase tracking-widest ${isGlass ? 'text-white/30' : 'text-gray-400'}`}>Pendiente / Presupuesto</p>
                             {budgetTrips.map(trip => (
-                                <TripCard key={trip.id} trip={trip} cfg={cfg} isGlass={isGlass} onDelete={handleDelete} onUpdateTotal={handleUpdateTotal} onToggleCompleted={toggleFreshCompleted} />
+                                <TripCard key={trip.id} trip={trip} cfg={cfg} isGlass={isGlass} onDelete={handleDelete} onUpdateTotal={updateFreshTotal} onToggleCompleted={toggleFreshCompleted} />
                             ))}
                         </div>
                     )}
@@ -332,7 +332,7 @@ function PlannerSection({ catData, trips, currentMonthKey, isGlass, householdId 
                         <div className="space-y-2">
                             <p className={`text-[10px] font-bold uppercase tracking-widest ${isGlass ? 'text-white/30' : 'text-gray-400'}`}>Completado / Historial</p>
                             {completedTrips.map(trip => (
-                                <TripCard key={trip.id} trip={trip} cfg={cfg} isGlass={isGlass} onDelete={handleDelete} onUpdateTotal={handleUpdateTotal} onToggleCompleted={toggleFreshCompleted} />
+                                <TripCard key={trip.id} trip={trip} cfg={cfg} isGlass={isGlass} onDelete={handleDelete} onUpdateTotal={updateFreshTotal} onToggleCompleted={toggleFreshCompleted} />
                             ))}
                         </div>
                     )}
