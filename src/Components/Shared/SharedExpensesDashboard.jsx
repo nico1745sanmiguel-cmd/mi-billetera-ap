@@ -91,13 +91,12 @@ function ContributionModal({ person, totalTarget, monthKey, householdId, isGlass
 
             {/* Panel deslizante desde abajo */}
             <div
-                className={`relative w-full max-w-lg rounded-t-3xl shadow-2xl overflow-hidden animate-slide-up ${
+                className={`relative w-full max-w-lg rounded-t-3xl shadow-2xl overflow-hidden animate-slide-up max-h-[90vh] overflow-y-auto ${
                     isGlass
                         ? 'bg-gray-900 text-white border-t border-white/10'
                         : 'bg-white text-gray-900'
                 }`}
                 onClick={e => e.stopPropagation()}
-                style={{ maxHeight: '90vh', overflowY: 'auto' }}
             >
                 {/* Tirador */}
                 <div className="flex justify-center pt-3 pb-1">

@@ -97,7 +97,7 @@ export const FinancialProvider = ({ children }) => {
                 const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
                 setState(data);
                 setCache(cacheKey, data); // cache robusto con versionado
-            }, (error) => console.log(`Offline/Error for ${collectionName}:`, error));
+            }, (error) => console.error(`Offline/Error for ${collectionName}:`, error));
         };
 
         const unsubCards    = syncData(COLLECTIONS.CARDS,        setCards,        CACHE_KEYS.CARDS);
@@ -114,7 +114,7 @@ export const FinancialProvider = ({ children }) => {
             unsubNotifications = onSnapshot(qNotif, (snap) => {
                 const data = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
                 setNotifications(data);
-            }, (error) => console.log('Offline/Error notifications:', error));
+            }, (error) => console.error('Offline/Error notifications:', error));
         }
 
         return () => {

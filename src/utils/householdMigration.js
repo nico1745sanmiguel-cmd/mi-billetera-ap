@@ -19,7 +19,6 @@ export const checkAndMigrateToHousehold = async (user) => {
             const hhRef = doc(db, 'households', existingId);
             const hhSnap = await getDoc(hhRef);
             if (hhSnap.exists()) {
-                console.log("User already in a household:", existingId);
                 return existingId;
             } else {
                 console.warn("User has householdId but doc is missing. Re-creating...");
@@ -27,7 +26,6 @@ export const checkAndMigrateToHousehold = async (user) => {
             }
         }
 
-        console.log("Migrating user to Household system...");
 
         // 2. Create a new Household
         const newHousehold = {
@@ -45,7 +43,6 @@ export const checkAndMigrateToHousehold = async (user) => {
         // 2. Create a new Household
         const householdRef = await addDoc(collection(db, 'households'), newHousehold);
         const householdId = householdRef.id;
-        console.log("Household created with ID:", householdId);
 
         // 3. Create/Update User Profile
         await setDoc(userRef, {
@@ -83,7 +80,6 @@ export const checkAndMigrateToHousehold = async (user) => {
         }
 
         await batch.commit();
-        console.log("Migration successful! Welcome to your new Household.");
 
         return householdId;
 
