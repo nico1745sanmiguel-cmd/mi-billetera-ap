@@ -423,18 +423,28 @@ export default function SharedExpensesDashboard({
                             </div>
 
                             {allHaveProportions && (
-                                <div className="grid grid-cols-2 gap-2 pt-2 border-t border-white/5">
-                                    {proporciones.map(p => {
+                                <div className="flex gap-1 pt-2 border-t border-white/5 w-full">
+                                    {proporciones.map((p, index) => {
                                         const aporteIndividual = Math.round(item.amount * p.proportion);
                                         const isMe = p.uid === currentUid;
+                                        
+                                        const isFirst = index === 0;
+                                        const isLast = index === proporciones.length - 1;
+                                        const radiusClass = proporciones.length > 1 
+                                            ? (isFirst ? "rounded-l-xl rounded-r-md" : isLast ? "rounded-r-xl rounded-l-md" : "rounded-md")
+                                            : "rounded-xl";
+
                                         return (
-                                            <div key={p.uid} className={`p-2 rounded-xl flex justify-between items-center ${
+                                            <div 
+                                                key={p.uid} 
+                                                style={{ width: `${p.proportion * 100}%` }}
+                                                className={`p-2 flex justify-between items-center overflow-hidden ${radiusClass} ${
                                                 isMe 
                                                 ? (isGlass ? 'bg-indigo-500/20 text-indigo-200' : 'bg-indigo-50 text-indigo-700')
                                                 : (isGlass ? 'bg-emerald-500/10 text-emerald-200' : 'bg-emerald-50 text-emerald-700')
                                             }`}>
-                                                <span className="text-[10px] font-bold uppercase opacity-70">{p.displayName?.split(' ')[0]}</span>
-                                                <span className="text-xs font-mono font-bold">{showMoney(aporteIndividual)}</span>
+                                                <span className="text-[10px] font-bold uppercase opacity-70 truncate mr-2">{p.displayName?.split(' ')[0]}</span>
+                                                <span className="text-xs font-mono font-bold whitespace-nowrap">{showMoney(aporteIndividual)}</span>
                                             </div>
                                         );
                                     })}
