@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { auth } from '../../firebase';
 import { ShoppingCart, Loader2, Camera, Check, Trash2, Copy, Plus } from 'lucide-react';
 import { formatMoney } from '../../utils';
@@ -22,6 +22,7 @@ export default function SuperList({ items = [], currentDate, isGlass, householdI
     const [activeLetter, setActiveLetter] = useState(null);
     const scrollTimeout = useRef(null);
     const itemsRefs = useRef({});
+    const abcBarRef = useRef(null);
 
     // TOAST STATE 🍞
     const [toast, setToast] = useState(null);
@@ -40,7 +41,7 @@ export default function SuperList({ items = [], currentDate, isGlass, householdI
         }
     };
 
-    // Detectar scroll global para mostrar la barra
+    // Detectar scroll global para mostrar la barra ABC
     useEffect(() => {
         const handleScroll = () => {
             setIsScrolling(true);
@@ -51,28 +52,40 @@ export default function SuperList({ items = [], currentDate, isGlass, householdI
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
-    const handleTouchMove = (e) => {
-        // Lógica para detectar qué letra está bajo el dedo
+    // ABC touch con listener NATIVO (passive:false) para poder hacer preventDefault
+    const handleTouchMoveNative = useCallback((e) => {
         const touch = e.touches[0];
         const element = document.elementFromPoint(touch.clientX, touch.clientY);
         if (element && element.dataset.letter) {
-            e.preventDefault(); // Evitar scroll de pantalla
+            e.preventDefault(); // Funciona porque el listener NO es pasivo
             const letter = element.dataset.letter;
             setActiveLetter(letter);
-
-            // Scrollear a la sección
             const target = monthlyList.find(i => i.name && i.name.toUpperCase().startsWith(letter) && !i.checked);
             if (target && itemsRefs.current[target.id]) {
-                itemsRefs.current[target.id].scrollIntoView({ behavior: 'auto', block: 'center' }); // Auto es más fluido para scrubbing
+                itemsRefs.current[target.id].scrollIntoView({ behavior: 'auto', block: 'center' });
             }
         }
-    };
+    }, [monthlyList]);
 
-    const handleTouchEnd = () => {
+    const handleTouchEndNative = useCallback(() => {
         setActiveLetter(null);
         if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
         scrollTimeout.current = setTimeout(() => setIsScrolling(false), 2000);
-    };
+    }, []);
+
+    useEffect(() => {
+        const node = abcBarRef.current;
+        if (!node) return;
+        const onStart = () => setIsScrolling(true);
+        node.addEventListener('touchstart', onStart, { passive: true });
+        node.addEventListener('touchmove', handleTouchMoveNative, { passive: false });
+        node.addEventListener('touchend', handleTouchEndNative, { passive: true });
+        return () => {
+            node.removeEventListener('touchstart', onStart);
+            node.removeEventListener('touchmove', handleTouchMoveNative);
+            node.removeEventListener('touchend', handleTouchEndNative);
+        };
+    }, [handleTouchMoveNative, handleTouchEndNative]);
 
     // 1. CLAVE DEL MES (MÁQUINA DEL TIEMPO ⏳)
     const currentMonthKey = useMemo(() => formatMonthKey(currentDate), [currentDate]);
@@ -228,6 +241,7 @@ export default function SuperList({ items = [], currentDate, isGlass, householdI
     // --- HANDLERS PRECIO Y CONFIRMACIÓN ---
     // Ref para guardar el estado original antes de editar (para Undo y lógica de cambios)
     const editingItemRef = useRef(null);
+    const [focusedItemId, setFocusedItemId] = useState(null);
 
     const handlePriceFocus = (item) => {
         editingItemRef.current = {
@@ -235,6 +249,7 @@ export default function SuperList({ items = [], currentDate, isGlass, householdI
             initialPrice: item.price,
             initialChecked: item.checked
         };
+        setFocusedItemId(item.id);
     };
 
     const handleUpdatePrice = async (item, rawValue) => {
@@ -246,6 +261,7 @@ export default function SuperList({ items = [], currentDate, isGlass, householdI
         if (!editingItemRef.current || editingItemRef.current.id !== item.id) return;
         const { initialPrice } = editingItemRef.current;
         const currentPrice = item.price;
+        setFocusedItemId(null);
 
         if (currentPrice !== initialPrice) {
             showToast('Precio actualizado', async () => {
@@ -287,7 +303,7 @@ export default function SuperList({ items = [], currentDate, isGlass, householdI
             </div>
 
             {/* HEADER STICKY (Siempre visible arriba) */}
-            <div className={`sticky top-0 z-30 pt-2 pb-3 mb-2 transition-all shadow-sm -mx-4 px-6 border-b ${isGlass ? 'bg-[#0f0c29]/95 border-white/10 text-white backdrop-blur-md' : 'bg-[#f3f4f6]/95 border-gray-200/50 text-gray-800 backdrop-blur-sm'}`}>
+            <div className={`sticky top-[57px] z-30 pt-2 pb-3 mb-2 transition-all shadow-sm -mx-4 px-6 border-b ${isGlass ? 'bg-[#0f0c29]/95 border-white/10 text-white backdrop-blur-md' : 'bg-[#f3f4f6]/95 border-gray-200/50 text-gray-800 backdrop-blur-sm'}`}>
                 <div className="flex justify-between items-end mb-2">
                     <div>
                         <div className="flex items-center gap-3">
@@ -372,13 +388,19 @@ export default function SuperList({ items = [], currentDate, isGlass, householdI
                                         <span className={`w-8 text-center text-sm font-bold ${isGlass ? 'text-white' : 'text-gray-700'}`}>{item.quantity}</span>
                                         <button onClick={() => handleUpdateQuantity(item, 1)} className={`w-8 h-full flex items-center justify-center rounded-r-2xl transition-colors text-lg font-bold ${isGlass ? 'text-white/50 hover:bg-white/10' : 'text-gray-500 hover:bg-gray-200'}`}>+</button>
                                     </div>
-                                    <div className={`flex-1 rounded-2xl flex items-center px-3 border transition-colors h-10 ${lastAddedId === item.id ? 'border-purple-400 ring-2 ring-purple-100 bg-white' : (isGlass ? 'bg-white/5 border-white/10' : 'bg-gray-50 border-gray-200')}`}>
+                                    <div className={`flex-1 rounded-2xl flex items-center px-3 border transition-all duration-150 h-10 ${
+                                        lastAddedId === item.id
+                                            ? 'border-purple-400 ring-2 ring-purple-100 bg-white'
+                                            : focusedItemId === item.id
+                                                ? (isGlass ? 'border-purple-400/60 ring-1 ring-purple-400/30 bg-purple-500/10' : 'border-purple-400 ring-2 ring-purple-100 bg-purple-50')
+                                                : (isGlass ? 'bg-white/5 border-white/10' : 'bg-gray-50 border-gray-200')
+                                    }`}>
                                         <input
                                             type="tel"
-                                            className={`w-full bg-transparent outline-none text-sm font-bold text-right ${item.checked ? 'text-purple-700' : (isGlass ? 'text-white' : 'text-gray-800')}`}
+                                            className={`w-full bg-transparent outline-none text-sm font-bold text-right transition-colors duration-150 ${item.checked ? 'text-purple-700' : (isGlass ? 'text-white' : 'text-gray-800')}`}
                                             value={item.price ? formatInputCurrency(item.price) : ''}
                                             onChange={(e) => handleUpdatePrice(item, e.target.value)}
-                                            onFocus={() => handlePriceFocus(item)}
+                                            onFocus={(e) => { handlePriceFocus(item); e.target.select(); }}
                                             onBlur={() => handlePriceBlur(item)}
                                             onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
                                             enterKeyHint="done"
@@ -418,10 +440,8 @@ export default function SuperList({ items = [], currentDate, isGlass, householdI
 
                 {/* BARRA LATERAL ALFABÉTICA DINÁMICA (TOUCH) */}
                 <div
-                    className={`w-8 flex flex-col items-center justify-center fixed right-0 top-32 bottom-24 z-40 transition-all duration-300 ${isScrolling || activeLetter ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-10 pointer-events-none'}`}
-                    onTouchStart={() => setIsScrolling(true)}
-                    onTouchMove={handleTouchMove}
-                    onTouchEnd={handleTouchEnd}
+                    ref={abcBarRef}
+                    className={`w-8 flex flex-col items-center justify-center fixed right-0 top-[120px] bottom-[88px] z-40 transition-all duration-300 ${isScrolling || activeLetter ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-10 pointer-events-none'}`}
                 >
                     <div className={`backdrop-blur-sm rounded-l-xl py-2 shadow-sm border-y border-l flex flex-col gap-0.5 max-h-full overflow-hidden w-6 ${isGlass ? 'bg-white/10 border-white/10' : 'bg-white/50 border-gray-100'}`}>
                         {[...new Set(monthlyList.filter(i => !i.checked && i.name).map(i => (i.name[0] || '?').toUpperCase()))].sort().map(letter => (
@@ -435,11 +455,10 @@ export default function SuperList({ items = [], currentDate, isGlass, householdI
                         ))}
                     </div>
                 </div>
-            </div >
+            </div>
 
-            {/* INPUT ADD FLOTANTE (Simplificado) */}
-            < div className={`fixed bottom-0 left-0 right-0 p-4 border-t md:relative md:border-0 md:bg-transparent md:p-0 z-20 ${isGlass ? 'bg-[#0f0c29] border-white/10' : 'bg-white border-gray-100'}`
-            }>
+            {/* INPUT ADD — STICKY BOTTOM */}
+            <div className={`sticky bottom-0 -mx-4 px-4 py-3 border-t z-20 ${isGlass ? 'bg-[#0f0c29]/95 border-white/10 backdrop-blur-md' : 'bg-white/95 border-gray-100 backdrop-blur-sm'}`}>
                 <form onSubmit={handleAdd} className="flex gap-2 max-w-5xl mx-auto">
                     <div className={`flex-1 rounded-[30px] flex items-center px-4 border focus-within:border-purple-500 transition-all shadow-sm ${isGlass ? 'bg-white/10 border-white/10 focus-within:bg-white/20' : 'bg-gray-100 border-transparent focus-within:bg-white'}`}>
                         <input
@@ -458,8 +477,8 @@ export default function SuperList({ items = [], currentDate, isGlass, householdI
                         <Plus size={24} />
                     </button>
                 </form>
-            </div >
+            </div>
 
-        </div >
+        </div>
     );
 }

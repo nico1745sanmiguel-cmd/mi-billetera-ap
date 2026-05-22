@@ -91,6 +91,14 @@ export default function App() {
     const visibleSuperItems   = useMemo(() => filterByHousehold(superItems),   [superItems, userData, user]);
     const visibleServices     = useMemo(() => filterByHousehold(services),     [services, userData, user]);
 
+    // Items del supermercado filtrados al mes actual (para el ReceiptScanner)
+    const currentMonthKey = useMemo(() => {
+        return `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
+    }, [currentDate]);
+    const visibleSuperItemsThisMonth = useMemo(() =>
+        visibleSuperItems.filter(i => i.month === currentMonthKey),
+    [visibleSuperItems, currentMonthKey]);
+
     const handleLogout = () => {
         if (window.confirm('¿Cerrar sesión?')) {
             signOut(auth);
@@ -284,7 +292,7 @@ export default function App() {
                         {view === 'scanner' && (
                             <ReceiptScanner
                                 isGlass={isGlass}
-                                items={visibleSuperItems}
+                                items={visibleSuperItemsThisMonth}
                                 onBack={() => setView('super')}
                             />
                         )}
