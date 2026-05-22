@@ -4,6 +4,7 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { collection, onSnapshot, query, where, doc, getDoc, addDoc } from 'firebase/firestore';
 import { checkAndMigrateToHousehold } from '../utils/householdMigration';
 import { getCache, setCache, cleanOldCaches } from '../utils/cache';
+import { getDolarBlue } from '../services/dolarApi';
 import { COLLECTIONS, CACHE_KEYS, SLOW_CONNECTION_TIMEOUT_MS, LOADING_DELAY_MS } from '../config/constants';
 
 const FinancialContext = createContext();
@@ -29,7 +30,18 @@ export const FinancialProvider = ({ children }) => {
     const [services, setServices] = useState(() => getCache(CACHE_KEYS.SERVICES));
     const [freshItems, setFreshItems] = useState(() => getCache(CACHE_KEYS.FRESH_ITEMS));
     const [plannerCategories, setPlannerCategories] = useState(() => getCache(CACHE_KEYS.PLANNER_CATEGORIES) || []);
+    const [savingsTransactions, setSavingsTransactions] = useState(() => getCache(CACHE_KEYS.SAVINGS_TRANSACTIONS) || []);
     const [notifications, setNotifications] = useState([]);
+    const [dolarBlue, setDolarBlue] = useState(null);
+
+    // Obtener cotización Dolar Blue
+    useEffect(() => {
+        getDolarBlue().then(data => {
+            if (data && data.venta) {
+                setDolarBlue(data.venta);
+            }
+        });
+    }, []);
 
     // Limpiar caches de versiones anteriores (solo corre una vez al montar)
     useEffect(() => { cleanOldCaches(); }, []);
@@ -106,6 +118,7 @@ export const FinancialProvider = ({ children }) => {
         const unsubServices = syncData(COLLECTIONS.SERVICES,      setServices,      CACHE_KEYS.SERVICES);
         const unsubFresh    = syncData(COLLECTIONS.FRESH_PURCHASES, setFreshItems,  CACHE_KEYS.FRESH_ITEMS);
         const unsubPlannerCat = syncData(COLLECTIONS.PLANNER_CATEGORIES, setPlannerCategories, CACHE_KEYS.PLANNER_CATEGORIES);
+        const unsubSavings  = syncData(COLLECTIONS.SAVINGS_TRANSACTIONS, setSavingsTransactions, CACHE_KEYS.SAVINGS_TRANSACTIONS);
 
         // Notificaciones (solo si hay household)
         let unsubNotifications = () => {};
@@ -124,6 +137,7 @@ export const FinancialProvider = ({ children }) => {
             unsubServices();
             unsubFresh();
             unsubPlannerCat();
+            unsubSavings();
             unsubNotifications();
         };
     }, [user, userData]);
@@ -146,6 +160,24 @@ export const FinancialProvider = ({ children }) => {
         }
     };
 
+    const addSavingsTransaction = async (t) => {
+        if (!user) return;
+        const payload = {
+            ...t,
+            userId: user.uid,
+            ownerId: user.uid,
+            householdId: userData?.householdId || null,
+            createdAt: new Date()
+        };
+
+        try {
+            await addDoc(collection(db, COLLECTIONS.SAVINGS_TRANSACTIONS), payload);
+        } catch (error) {
+            console.error("Error adding savings transaction:", error);
+            throw error;
+        }
+    };
+
     const value = useMemo(() => ({
         user,
         userData,
@@ -157,9 +189,12 @@ export const FinancialProvider = ({ children }) => {
         services,
         freshItems,
         plannerCategories,
+        savingsTransactions,
         notifications,
-        addTransaction
-    }), [user, userData, householdMembers, loadingUser, cards, transactions, superItems, services, freshItems, plannerCategories, notifications]);
+        dolarBlue,
+        addTransaction,
+        addSavingsTransaction
+    }), [user, userData, householdMembers, loadingUser, cards, transactions, superItems, services, freshItems, plannerCategories, savingsTransactions, notifications, dolarBlue]);
 
     return (
         <FinancialContext.Provider value={value}>

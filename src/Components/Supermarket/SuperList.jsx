@@ -17,12 +17,9 @@ export default function SuperList({ items = [], currentDate, isGlass, householdI
 
     // ESTADO PARA ENFOCAR EL NUEVO ÍTEM AUTOMÁTICAMENTE
     const [lastAddedId, setLastAddedId] = useState(null);
-    // ESTADO SCROLLBAR 📜
-    const [isScrolling, setIsScrolling] = useState(false);
+    // ESTADO LETRAS 📜
     const [activeLetter, setActiveLetter] = useState(null);
-    const scrollTimeout = useRef(null);
     const itemsRefs = useRef({});
-    const abcBarRef = useRef(null);
 
     // TOAST STATE 🍞
     const [toast, setToast] = useState(null);
@@ -61,53 +58,18 @@ export default function SuperList({ items = [], currentDate, isGlass, householdI
         });
     }, [items, currentMonthKey]);
 
-    // Detectar scroll global para mostrar la barra ABC
-    useEffect(() => {
-        const handleScroll = () => {
-            setIsScrolling(true);
-            if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
-            scrollTimeout.current = setTimeout(() => setIsScrolling(false), 2000);
-        };
-        window.addEventListener('scroll', handleScroll);
-        return () => window.removeEventListener('scroll', handleScroll);
-    }, []);
-
-    // ABC touch con listener NATIVO (passive:false) para poder hacer preventDefault
-    const handleTouchMoveNative = useCallback((e) => {
-        const touch = e.touches[0];
-        const element = document.elementFromPoint(touch.clientX, touch.clientY);
-        if (element && element.dataset.letter) {
-            e.preventDefault(); // Funciona porque el listener NO es pasivo
-            const letter = element.dataset.letter;
-            setActiveLetter(letter);
-            const target = monthlyList.find(i => i.name && i.name.toUpperCase().startsWith(letter) && !i.checked);
-            if (target && itemsRefs.current[target.id]) {
-                const element = itemsRefs.current[target.id];
-                const y = element.getBoundingClientRect().top + window.scrollY - 150; // offset para el header
-                window.scrollTo({ top: y, behavior: 'auto' });
-            }
+    // Navegación alfabética segura (click/touch directo)
+    const handleLetterClick = (letter) => {
+        setActiveLetter(letter);
+        const target = monthlyList.find(i => i.name && i.name.toUpperCase().startsWith(letter) && !i.checked);
+        if (target && itemsRefs.current[target.id]) {
+            const element = itemsRefs.current[target.id];
+            // 170px para compensar el header más grande (con el nuevo chip slider)
+            const y = element.getBoundingClientRect().top + window.scrollY - 170; 
+            window.scrollTo({ top: y, behavior: 'smooth' });
         }
-    }, [monthlyList]);
-
-    const handleTouchEndNative = useCallback(() => {
-        setActiveLetter(null);
-        if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
-        scrollTimeout.current = setTimeout(() => setIsScrolling(false), 2000);
-    }, []);
-
-    useEffect(() => {
-        const node = abcBarRef.current;
-        if (!node) return;
-        const onStart = () => setIsScrolling(true);
-        node.addEventListener('touchstart', onStart, { passive: true });
-        node.addEventListener('touchmove', handleTouchMoveNative, { passive: false });
-        node.addEventListener('touchend', handleTouchEndNative, { passive: true });
-        return () => {
-            node.removeEventListener('touchstart', onStart);
-            node.removeEventListener('touchmove', handleTouchMoveNative);
-            node.removeEventListener('touchend', handleTouchEndNative);
-        };
-    }, [handleTouchMoveNative, handleTouchEndNative]);
+        setTimeout(() => setActiveLetter(null), 1000);
+    };
 
     // 2.5 LISTA DEL MES ANTERIOR (PARA COPIAR AL NUEVO MES)
     const lastMonthItems = useMemo(() => {
@@ -322,11 +284,6 @@ export default function SuperList({ items = [], currentDate, isGlass, householdI
                 </div>
             </div>
 
-            {/* 2. LUPA DE LETRA GIGANTE (iOS Style) */}
-            <div className={`fixed right-12 top-1/2 -translate-y-1/2 w-16 h-16 backdrop-blur rounded-full flex items-center justify-center text-3xl font-bold shadow-xl z-50 transition-all duration-200 pointer-events-none ${activeLetter ? 'opacity-100 scale-100 translate-x-0' : 'opacity-0 scale-50 translate-x-4'} ${isGlass ? 'bg-white/10 text-white' : 'bg-gray-200/90 text-gray-800'}`}>
-                {activeLetter}
-            </div>
-
             {/* HEADER STICKY (Siempre visible arriba) */}
             <div className={`sticky top-[57px] z-30 pt-2 pb-3 mb-2 transition-all shadow-sm -mx-4 px-6 border-b ${isGlass ? 'bg-[#0f0c29]/95 border-white/10 text-white backdrop-blur-md' : 'bg-[#f3f4f6]/95 border-gray-200/50 text-gray-800 backdrop-blur-sm'}`}>
                 <div className="flex justify-between items-end mb-2">
@@ -371,6 +328,21 @@ export default function SuperList({ items = [], currentDate, isGlass, householdI
                         <div className="h-full bg-purple-500 transition-all duration-500" style={{ width: `${totals.estimated > 0 ? (totals.real / totals.estimated) * 100 : 0}%` }}></div>
                     </div>
                     <span className={`text-[9px] font-bold min-w-[50px] text-right ${isGlass ? 'text-white/50' : 'text-gray-400'}`}>{totals.checkedCount}/{totals.count}</span>
+                </div>
+
+                {/* ÍNDICE ALFABÉTICO (Chips horizontales seguros) */}
+                <style>{`.hide-scrollbar::-webkit-scrollbar { display: none; }`}</style>
+                <div className="flex gap-2 overflow-x-auto mt-4 pb-1 snap-x hide-scrollbar" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                    {[...new Set(monthlyList.filter(i => !i.checked && i.name).map(i => (i.name[0] || '?').toUpperCase()))].sort().map(letter => (
+                        <button
+                            key={letter}
+                            type="button"
+                            onClick={() => handleLetterClick(letter)}
+                            className={`snap-center flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-[12px] font-bold transition-all transform active:scale-90 ${activeLetter === letter ? 'bg-purple-500 text-white shadow-md shadow-purple-500/30' : (isGlass ? 'bg-white/10 text-white/80 hover:bg-white/20 border border-white/5' : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200/50')} `}
+                        >
+                            {letter}
+                        </button>
+                    ))}
                 </div>
             </div>
 
@@ -472,23 +444,7 @@ export default function SuperList({ items = [], currentDate, isGlass, householdI
                     )}
                 </div>
 
-                {/* BARRA LATERAL ALFABÉTICA DINÁMICA (TOUCH) */}
-                <div
-                    ref={abcBarRef}
-                    className={`w-8 flex flex-col items-center justify-center fixed right-0 top-[120px] bottom-[88px] z-40 transition-all duration-300 ${isScrolling || activeLetter ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-10 pointer-events-none'}`}
-                >
-                    <div className={`backdrop-blur-sm rounded-l-xl py-2 shadow-sm border-y border-l flex flex-col gap-0.5 max-h-full overflow-hidden w-6 ${isGlass ? 'bg-white/10 border-white/10' : 'bg-white/50 border-gray-100'}`}>
-                        {[...new Set(monthlyList.filter(i => !i.checked && i.name).map(i => (i.name[0] || '?').toUpperCase()))].sort().map(letter => (
-                            <div
-                                key={letter}
-                                data-letter={letter}
-                                className={`text-[9px] font-bold text-center h-[18px] flex items-center justify-center shrink-0 w-full select-none ${isGlass ? 'text-white/60' : 'text-gray-500'}`}
-                            >
-                                {letter}
-                            </div>
-                        ))}
-                    </div>
-                </div>
+
             </div>
 
             {/* INPUT ADD — STICKY BOTTOM */}

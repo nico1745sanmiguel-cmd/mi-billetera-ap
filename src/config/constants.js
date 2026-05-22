@@ -89,6 +89,7 @@ export const COLLECTIONS = {
     FRESH_PURCHASES:  'fresh_purchases',
     PLANNER_CATEGORIES: 'planner_categories',
     CONTRIBUTIONS:    'contributions',
+    SAVINGS_TRANSACTIONS: 'savings_transactions',
 };
 
 // ─── CACHE KEYS ───────────────────────────────────────────────────────────────
@@ -101,4 +102,5 @@ export const CACHE_KEYS = {
     PLANNER_CATEGORIES: 'plannerCategories',
     WIDGET_ORDER: 'widget_order',
     GLASS_MODE:   'glass_mode',
+    SAVINGS_TRANSACTIONS: 'savingsTransactions',
 };

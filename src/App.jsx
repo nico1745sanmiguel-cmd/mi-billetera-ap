@@ -22,6 +22,7 @@ const HouseholdManager = lazy(() => import('./Components/Household/HouseholdMana
 const ReconciliationDesk = lazy(() => import('./Components/Reconciliation/ReconciliationDesk'));
 const SharedExpensesDashboard = lazy(() => import('./Components/Shared/SharedExpensesDashboard'));
 const ReceiptScanner = lazy(() => import('./Components/ReceiptScanner/ReceiptScanner'));
+const SavingsDashboard = lazy(() => import('./Components/Savings/SavingsDashboard'));
 
 
 const LazyLoader = () => (
@@ -292,8 +293,17 @@ export default function App() {
                         {view === 'scanner' && (
                             <ReceiptScanner
                                 isGlass={isGlass}
-                                items={visibleSuperItemsThisMonth}
+                                items={visibleSuperItems}
                                 onBack={() => setView('super')}
+                            />
+                        )}
+
+                        {/* MÓDULO DE AHORRO / INVERSIONES */}
+                        {view === 'savings' && (
+                            <SavingsDashboard
+                                isGlass={isGlass}
+                                privacyMode={privacyMode}
+                                onBack={() => setView('dashboard')}
                             />
                         )}
 

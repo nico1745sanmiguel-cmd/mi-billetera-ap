@@ -1,10 +1,11 @@
 import React from 'react';
-import { BarChart3, Plus, CreditCard, Eye, EyeOff } from 'lucide-react';
+import { BarChart3, Plus, CreditCard, Eye, EyeOff, TrendingUp } from 'lucide-react';
 
 export default function Navbar({ currentView, setView, privacyMode, setPrivacyMode }) {
 
   const navItems = [
     { id: 'dashboard', label: 'Resumen Financiero', icon: <BarChart3 size={18} /> },
+    { id: 'savings', label: 'Ahorros', icon: <TrendingUp size={18} /> },
     { id: 'purchase', label: 'Nueva Compra', icon: <Plus size={18} /> },
   ];
 
