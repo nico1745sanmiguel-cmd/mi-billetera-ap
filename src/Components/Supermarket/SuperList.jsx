@@ -283,6 +283,29 @@ export default function SuperList({ items = [], currentDate, isGlass, householdI
         });
     };
 
+    const handleExportToAI = () => {
+        const checkedItems = monthlyList.filter(item => item.checked);
+        if (checkedItems.length === 0) {
+            showToast('No hay ítems comprados para exportar');
+            return;
+        }
+
+        let exportText = 'producto\tcantidad\tprecio\tsubtotal\ttotal\n';
+        
+        checkedItems.forEach(item => {
+            const subtotal = item.price * item.quantity;
+            exportText += `${item.name}\t${item.quantity}\t${item.price}\t${subtotal}\t\n`;
+        });
+        
+        exportText += `\t\t\tTOTAL\t${totals.real}`;
+
+        navigator.clipboard.writeText(exportText).then(() => {
+            showToast('¡Copiado para IA!');
+        }).catch(err => {
+            console.error('Error al copiar: ', err);
+            showToast('Error al copiar');
+        });
+    };
 
     return (
         <div className="animate-fade-in pb-32">
@@ -310,15 +333,24 @@ export default function SuperList({ items = [], currentDate, isGlass, householdI
                     <div>
                         <div className="flex items-center gap-3">
                             <h2 className={`text-xl font-bold ${isGlass ? 'text-white' : 'text-gray-800'}`}>Supermercado</h2>
-                            {setView && (
-                                <button 
-                                    onClick={() => setView('scanner')}
-                                    className={`px-3 py-1 text-[10px] font-bold rounded-full uppercase tracking-wider flex items-center gap-1 transition-all active:scale-95 shadow-sm ${isGlass ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' : 'bg-purple-100 text-purple-700 border border-purple-200'}`}
+                            <div className="flex flex-col gap-1 items-start">
+                                {setView && (
+                                    <button 
+                                        onClick={() => setView('scanner')}
+                                        className={`px-3 py-1 text-[10px] font-bold rounded-full uppercase tracking-wider flex items-center gap-1 transition-all active:scale-95 shadow-sm ${isGlass ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' : 'bg-purple-100 text-purple-700 border border-purple-200'}`}
+                                    >
+                                        <Camera size={12} />
+                                        Escanear
+                                    </button>
+                                )}
+                                <button
+                                    onClick={handleExportToAI}
+                                    className={`px-3 py-1 text-[10px] font-bold rounded-full uppercase tracking-wider flex items-center gap-1 transition-all active:scale-95 shadow-sm ${isGlass ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30' : 'bg-indigo-100 text-indigo-700 border border-indigo-200'}`}
                                 >
-                                    <Camera size={12} />
-                                    Escanear
+                                    <Copy size={12} />
+                                    Exportar a IA
                                 </button>
-                            )}
+                            </div>
                         </div>
                         <p className={`text-xs font-bold uppercase mt-1 ${isGlass ? 'text-purple-300' : 'text-purple-600'}`}>Lista de {currentDate.toLocaleString('es-AR', { month: 'long' })}</p>
                     </div>
