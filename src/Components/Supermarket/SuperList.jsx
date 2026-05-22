@@ -41,6 +41,26 @@ export default function SuperList({ items = [], currentDate, isGlass, householdI
         }
     };
 
+    // 1. CLAVE DEL MES (MÁQUINA DEL TIEMPO ⏳)
+    const currentMonthKey = useMemo(() => formatMonthKey(currentDate), [currentDate]);
+
+    // 2. LISTA FILTRADA Y ORDENADA
+    const monthlyList = useMemo(() => {
+        const list = items.filter(item => {
+            if (item.month) return item.month === currentMonthKey;
+            // Compatibilidad con items viejos (si no tienen mes, asumen el actual real)
+            const realNow = new Date();
+            const realKey = `${realNow.getFullYear()}-${String(realNow.getMonth() + 1).padStart(2, '0')}`;
+            return currentMonthKey === realKey;
+        });
+
+        // Orden: 1. Pendientes A-Z, 2. Comprados (Check) al fondo
+        return list.sort((a, b) => {
+            if (a.checked === b.checked) return (a.name || '').localeCompare(b.name || '');
+            return a.checked ? 1 : -1;
+        });
+    }, [items, currentMonthKey]);
+
     // Detectar scroll global para mostrar la barra ABC
     useEffect(() => {
         const handleScroll = () => {
@@ -86,26 +106,6 @@ export default function SuperList({ items = [], currentDate, isGlass, householdI
             node.removeEventListener('touchend', handleTouchEndNative);
         };
     }, [handleTouchMoveNative, handleTouchEndNative]);
-
-    // 1. CLAVE DEL MES (MÁQUINA DEL TIEMPO ⏳)
-    const currentMonthKey = useMemo(() => formatMonthKey(currentDate), [currentDate]);
-
-    // 2. LISTA FILTRADA Y ORDENADA
-    const monthlyList = useMemo(() => {
-        const list = items.filter(item => {
-            if (item.month) return item.month === currentMonthKey;
-            // Compatibilidad con items viejos (si no tienen mes, asumen el actual real)
-            const realNow = new Date();
-            const realKey = `${realNow.getFullYear()}-${String(realNow.getMonth() + 1).padStart(2, '0')}`;
-            return currentMonthKey === realKey;
-        });
-
-        // Orden: 1. Pendientes A-Z, 2. Comprados (Check) al fondo
-        return list.sort((a, b) => {
-            if (a.checked === b.checked) return (a.name || '').localeCompare(b.name || '');
-            return a.checked ? 1 : -1;
-        });
-    }, [items, currentMonthKey]);
 
     // 2.5 LISTA DEL MES ANTERIOR (PARA COPIAR AL NUEVO MES)
     const lastMonthItems = useMemo(() => {
