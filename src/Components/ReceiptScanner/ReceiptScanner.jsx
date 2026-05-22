@@ -93,7 +93,7 @@ export default function ReceiptScanner({ isGlass, items = [], onBack }) {
       setStep('RESULTS');
     } catch (err) {
       console.error(err);
-      setErrorMsg("Error al leer el ticket. Intentá enfocar mejor o revisar la conexión.");
+      setErrorMsg(`Error: ${err.message}. Intentá enfocar mejor o revisar la conexión.`);
       setStep('START');
     } finally {
       setIsScanning(false);

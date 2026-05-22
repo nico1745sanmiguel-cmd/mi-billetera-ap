@@ -82,7 +82,9 @@ export default function SuperList({ items = [], currentDate, isGlass, householdI
             setActiveLetter(letter);
             const target = monthlyList.find(i => i.name && i.name.toUpperCase().startsWith(letter) && !i.checked);
             if (target && itemsRefs.current[target.id]) {
-                itemsRefs.current[target.id].scrollIntoView({ behavior: 'auto', block: 'center' });
+                const element = itemsRefs.current[target.id];
+                const y = element.getBoundingClientRect().top + window.scrollY - 150; // offset para el header
+                window.scrollTo({ top: y, behavior: 'auto' });
             }
         }
     }, [monthlyList]);
