@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { auth } from '../../firebase';
 import { 
     Leaf, Beef, Plus, Trash2, ChevronDown, ChevronUp, Users, Lock, 
@@ -433,21 +433,37 @@ export default function PlannerDashboard({ items = [], plannerCategories = [], c
     const [newCatColor, setNewCatColor] = useState('blue');
     const [isSavingCat, setIsSavingCat] = useState(false);
 
+    const allCategories = useMemo(() => {
+        return [...DEFAULT_CATEGORIES, ...plannerCategories];
+    }, [plannerCategories]);
+
+    const activeItems = useMemo(() => {
+        const catIds = new Set(allCategories.map(c => c.id));
+        return items.filter(t => catIds.has(t.category));
+    }, [items, allCategories]);
+
+    // Limpieza automática de ítems huérfanos en la base de datos (de categorías eliminadas previamente)
+    useEffect(() => {
+        const catIds = new Set(allCategories.map(c => c.id));
+        const orphaned = items.filter(t => !catIds.has(t.category));
+        if (orphaned.length > 0) {
+            orphaned.forEach(item => {
+                deleteFreshItem(item.id).catch(err => console.error("Error al limpiar ítem huérfano:", err));
+            });
+        }
+    }, [items, allCategories]);
+
     const currentMonthKey = useMemo(() => {
         if (!currentDate) return '';
         return `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
     }, [currentDate]);
 
     const totals = useMemo(() => {
-        const monthItems = items.filter(t => t.month === currentMonthKey);
+        const monthItems = activeItems.filter(t => t.month === currentMonthKey);
         const spent = monthItems.filter(t => t.completed).reduce((acc, t) => acc + (t.total || 0), 0);
         const budget = monthItems.reduce((acc, t) => acc + (t.total || 0), 0);
         return { spent, budget };
-    }, [items, currentMonthKey]);
-
-    const allCategories = useMemo(() => {
-        return [...DEFAULT_CATEGORIES, ...plannerCategories];
-    }, [plannerCategories]);
+    }, [activeItems, currentMonthKey]);
 
     const handleCreateCategory = async (e) => {
         e.preventDefault();
@@ -499,7 +515,7 @@ export default function PlannerDashboard({ items = [], plannerCategories = [], c
                 <PlannerSection
                     key={cat.id}
                     catData={cat}
-                    trips={items}
+                    trips={activeItems}
                     currentMonthKey={currentMonthKey}
                     isGlass={isGlass}
                     householdId={householdId}
