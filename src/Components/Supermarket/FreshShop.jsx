@@ -271,7 +271,9 @@ function PlannerSection({ catData, trips, currentMonthKey, isGlass, householdId 
     };
 
     const handleDeleteCategory = async () => {
-        if (window.confirm(`¿Seguro que querés eliminar la categoría "${catData.label}"?`)) {
+        if (window.confirm(`¿Seguro que querés eliminar la categoría "${catData.label}" y todos sus gastos internos?`)) {
+            const itemsToDelete = trips.filter(t => t.category === catData.id);
+            await Promise.all(itemsToDelete.map(item => deleteFreshItem(item.id)));
             await deletePlannerCategory(catData.id);
         }
     };
