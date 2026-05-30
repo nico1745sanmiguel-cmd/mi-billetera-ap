@@ -19,7 +19,9 @@ export default function SavingsDashboard({ isGlass, privacyMode, onBack }) {
     }, []);
 
     const updateCustomQuote = (especie, value) => {
-        const updated = { ...customQuotes, [especie]: parseFloat(value) || 0 };
+        // Reemplazar coma por punto para evitar que parseFloat falle
+        const cleanValue = value.replace(',', '.');
+        const updated = { ...customQuotes, [especie]: cleanValue };
         setCustomQuotes(updated);
         localStorage.setItem('savings_custom_quotes', JSON.stringify(updated));
     };
@@ -80,7 +82,7 @@ export default function SavingsDashboard({ isGlass, privacyMode, onBack }) {
                     totalUSD += cant / rate;
                 } else {
                     // Usar cotización personalizada (se asume que la ingresan en USD para unificar)
-                    const userQuote = customQuotes[es] || 0;
+                    const userQuote = parseFloat(customQuotes[es]) || 0;
                     totalUSD += (cant * userQuote);
                     totalARS += (cant * userQuote * rate);
                 }
@@ -159,10 +161,11 @@ export default function SavingsDashboard({ isGlass, privacyMode, onBack }) {
                                 <div className="relative">
                                     <span className={`absolute left-2 top-1/2 -translate-y-1/2 text-sm ${isGlass ? 'text-white/50' : 'text-gray-400'}`}>$</span>
                                     <input 
-                                        type="number"
+                                        type="text"
+                                        inputMode="decimal"
                                         value={customQuotes[sp] || ''}
                                         onChange={(e) => updateCustomQuote(sp, e.target.value)}
-                                        placeholder="Ej: 150"
+                                        placeholder="Precio unitario ej: 1.50"
                                         className={`w-full pl-6 pr-2 py-1.5 rounded-lg text-sm transition-colors ${
                                             isGlass 
                                             ? 'bg-white/5 border border-white/10 text-white focus:border-green-400 outline-none' 

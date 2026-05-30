@@ -18,6 +18,7 @@ import { getCache, setCache } from '../../utils/cache';
 
 // Import new Widgets
 import SplitSummaryWidget from './Widgets/SplitSummaryWidget';
+import SavingsWidget from './Widgets/SavingsWidget';
 import CardsWidget from './Widgets/CardsWidget';
 import AgendaWidget from './Widgets/AgendaWidget';
 import SuperActionsWidget from './Widgets/SuperActionsWidget';
@@ -193,6 +194,7 @@ const Home = memo(({ transactions, cards, supermarketItems = [], services = [], 
                 {privacyMode && <div className="absolute inset-0 flex items-center justify-center font-bold text-gray-500 z-10">Vista Privada</div>}
             </div>
         ),
+        savings_summary: <SavingsWidget setView={setView} privacyMode={privacyMode} />,
         split_summary: <SplitSummaryWidget setView={setView} householdMembers={householdMembers} splitData={splitData} currentDate={currentDate} privacyMode={privacyMode} user={user} />,
         cards: <CardsWidget cards={cards} targetMonthKey={targetMonthKey} privacyMode={privacyMode} openCardModal={openCardModal} />,
         agenda: <AgendaWidget agenda={agenda} currentDate={currentDate} privacyMode={privacyMode} setView={setView} />,

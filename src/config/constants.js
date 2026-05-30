@@ -34,7 +34,7 @@ export const AGENDA_MAX_ITEMS = 3;
  * Orden por defecto de los widgets del dashboard.
  * El usuario puede reordenarlos con drag & drop, y su orden se guarda en localStorage.
  */
-export const DEFAULT_WIDGET_ORDER = ['target', 'split_summary', 'cards', 'agenda', 'super_actions'];
+export const DEFAULT_WIDGET_ORDER = ['target', 'savings_summary', 'split_summary', 'cards', 'agenda', 'super_actions'];
 
 /**
  * Día del mes a partir del cual un vencimiento se considera "urgente"

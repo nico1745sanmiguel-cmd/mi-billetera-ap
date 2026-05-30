@@ -1,10 +1,14 @@
 import React, { useMemo, useState } from 'react';
-import { Wallet, ChevronDown, ChevronUp, Clock } from 'lucide-react';
+import { Wallet, ChevronDown, ChevronUp, Clock, Edit2, Check, X } from 'lucide-react';
 import { useFinancial } from '../../context/FinancialContext';
 
 export default function SavingsCard({ cartera, items, isGlass, privacyMode, dolarBlue, customQuotes }) {
-    const { savingsTransactions } = useFinancial();
+    const { savingsTransactions, addSavingsTransaction } = useFinancial();
     const [showHistory, setShowHistory] = useState(false);
+    
+    // Estado para la edición inline
+    const [editingIdx, setEditingIdx] = useState(null);
+    const [editValue, setEditValue] = useState('');
 
     const formatAmount = (amount) => {
         if (privacyMode) return '****';
@@ -24,6 +28,38 @@ export default function SavingsCard({ cartera, items, isGlass, privacyMode, dola
             .slice(0, 5);
     }, [savingsTransactions, cartera]);
 
+    const handleSaveEdit = async (item) => {
+        const newValue = parseFloat(editValue.replace(',', '.'));
+        if (isNaN(newValue)) {
+            setEditingIdx(null);
+            return;
+        }
+
+        const difference = newValue - item.cantidad;
+        if (difference === 0) {
+            setEditingIdx(null);
+            return;
+        }
+
+        // Crear una transacción de ajuste para compensar la diferencia
+        const transaction = {
+            cartera: cartera,
+            especie: item.especie,
+            tipo: difference > 0 ? 'ingreso' : 'egreso',
+            cantidad: Math.abs(difference),
+            nota: 'Ajuste manual de saldo',
+            fecha: new Date().toISOString()
+        };
+
+        try {
+            await addSavingsTransaction(transaction);
+            setEditingIdx(null);
+        } catch (error) {
+            console.error("Error al ajustar saldo:", error);
+            alert("Hubo un error al actualizar el saldo.");
+        }
+    };
+
     return (
         <div className={`rounded-2xl overflow-hidden transition-all duration-300 ${bgClass}`}>
             <div className="p-5">
@@ -38,9 +74,49 @@ export default function SavingsCard({ cartera, items, isGlass, privacyMode, dola
                     {items.map((item, idx) => (
                         <div key={idx} className={`flex justify-between items-center p-3 rounded-xl ${isGlass ? 'bg-white/5' : 'bg-gray-50'}`}>
                             <span className={`font-semibold ${textColor}`}>{item.especie}</span>
-                            <span className={`font-bold ${textColor}`}>
-                                {formatAmount(item.cantidad)}
-                            </span>
+                            
+                            {editingIdx === idx ? (
+                                <div className="flex items-center gap-2">
+                                    <input 
+                                        type="text"
+                                        inputMode="decimal"
+                                        value={editValue}
+                                        onChange={(e) => setEditValue(e.target.value)}
+                                        className={`w-24 px-2 py-1 rounded text-right text-sm font-bold ${
+                                            isGlass ? 'bg-black/30 text-white outline-none border border-green-500/50' : 'bg-white border border-gray-300 text-gray-800 outline-none focus:border-green-500'
+                                        }`}
+                                        autoFocus
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') handleSaveEdit(item);
+                                            if (e.key === 'Escape') setEditingIdx(null);
+                                        }}
+                                    />
+                                    <button onClick={() => handleSaveEdit(item)} className="text-green-500 hover:text-green-600 transition-colors p-1 bg-green-500/10 rounded">
+                                        <Check size={16} strokeWidth={3} />
+                                    </button>
+                                    <button onClick={() => setEditingIdx(null)} className="text-gray-400 hover:text-red-500 transition-colors p-1">
+                                        <X size={16} strokeWidth={3} />
+                                    </button>
+                                </div>
+                            ) : (
+                                <div className="flex items-center gap-3">
+                                    <span className={`font-bold ${textColor}`}>
+                                        {formatAmount(item.cantidad)}
+                                    </span>
+                                    <button 
+                                        onClick={() => {
+                                            setEditValue(item.cantidad.toString());
+                                            setEditingIdx(idx);
+                                        }}
+                                        className={`p-1.5 rounded-lg opacity-50 hover:opacity-100 transition-all ${
+                                            isGlass ? 'hover:bg-white/10 text-white' : 'hover:bg-gray-200 text-gray-500'
+                                        }`}
+                                        title="Ajustar Saldo"
+                                    >
+                                        <Edit2 size={14} />
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     ))}
                 </div>
