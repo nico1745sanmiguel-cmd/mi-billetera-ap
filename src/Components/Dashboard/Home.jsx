@@ -103,16 +103,19 @@ const Home = memo(({ transactions, cards, supermarketItems = [], services = [], 
             return targetMonthKey === realKey;
         });
 
-        const totalBudget = monthlyItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+        const rawBudget = monthlyItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
         const realSpent = monthlyItems.filter(i => i.checked).reduce((acc, item) => acc + (item.price * item.quantity), 0);
         const hasStartedShopping = monthlyItems.some(i => i.checked);
+
+        // Ajuste: si ya empezamos a comprar (hay check), el presupuesto mensual se ajusta a lo gastado real
+        const totalBudget = hasStartedShopping ? realSpent : rawBudget;
 
         const showAmount = hasStartedShopping ? realSpent : totalBudget;
         const label = hasStartedShopping ? 'En Carrito (Gastado)' : 'Presupuesto Estimado';
         const statusColor = hasStartedShopping ? 'text-gray-900' : 'text-gray-400';
-        const percent = totalBudget > 0 ? (realSpent / totalBudget) * 100 : 0;
+        const percent = rawBudget > 0 ? (realSpent / rawBudget) * 100 : 0;
 
-        return { totalBudget, realSpent, percent, showAmount, label, statusColor };
+        return { totalBudget, realSpent, percent, showAmount, label, statusColor, rawBudget };
     }, [supermarketItems, targetMonthKey]);
 
     const agenda = useMemo(() => {
@@ -159,7 +162,13 @@ const Home = memo(({ transactions, cards, supermarketItems = [], services = [], 
 
         const sharedServicesTotal = services.filter(s => s.isShared !== false).reduce((acc, s) => acc + Number(s.amount || 0), 0);
         const sharedCardsTotal = cardsWithDebt.filter(c => c.isShared !== false).reduce((acc, c) => acc + Number(c.currentDebt || 0), 0);
-        const sharedSuperTotal = supermarketItems.filter(i => i.month === targetMonthKey && i.isShared !== false).reduce((acc, i) => acc + Number((i.price || 0) * (i.quantity || 1)), 0);
+        
+        const sharedSuperItems = supermarketItems.filter(i => i.month === targetMonthKey && i.isShared !== false);
+        const hasStartedSharedSuper = sharedSuperItems.some(i => i.checked);
+        const sharedSuperTotal = hasStartedSharedSuper 
+            ? sharedSuperItems.filter(i => i.checked).reduce((acc, i) => acc + Number((i.price || 0) * (i.quantity || 1)), 0)
+            : sharedSuperItems.reduce((acc, i) => acc + Number((i.price || 0) * (i.quantity || 1)), 0);
+
         const sharedFreshTotal = freshItems.filter(i => i.month === targetMonthKey && i.isShared !== false).reduce((acc, i) => acc + (Number(i.total) || 0), 0);
         
         const grandTotal = sharedServicesTotal + sharedCardsTotal + sharedSuperTotal + sharedFreshTotal;
