@@ -82,7 +82,11 @@ export default function SavingsDashboard({ isGlass, privacyMode, onBack }) {
                     totalUSD += cant / rate;
                 } else {
                     // Usar cotización personalizada (se asume que la ingresan en USD para unificar)
-                    const userQuote = parseFloat(customQuotes[es]) || 0;
+                    let userQuote = parseFloat(customQuotes[es]);
+                    if (isNaN(userQuote)) {
+                        // Por defecto, las stablecoins valen 1 USD. Otras criptos u activos, 0 si no se ingresa nada.
+                        userQuote = ['USDT', 'USDC', 'DAI', 'USDP'].includes(es) ? 1 : 0;
+                    }
                     totalUSD += (cant * userQuote);
                     totalARS += (cant * userQuote * rate);
                 }
@@ -150,34 +154,7 @@ export default function SavingsDashboard({ isGlass, privacyMode, onBack }) {
                 )}
             </div>
 
-            {/* COTIZACIONES MANUALES */}
-            {rareSpecies.length > 0 && (
-                <div className={`rounded-2xl p-4 ${cardBg}`}>
-                    <h3 className={`text-sm font-bold mb-3 ${textColor}`}>Tus cotizaciones (en USD)</h3>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                        {rareSpecies.map(sp => (
-                            <div key={sp} className="flex flex-col gap-1">
-                                <label className={`text-xs font-semibold ${isGlass ? 'text-white/70' : 'text-gray-600'}`}>{sp}</label>
-                                <div className="relative">
-                                    <span className={`absolute left-2 top-1/2 -translate-y-1/2 text-sm ${isGlass ? 'text-white/50' : 'text-gray-400'}`}>$</span>
-                                    <input 
-                                        type="text"
-                                        inputMode="decimal"
-                                        value={customQuotes[sp] || ''}
-                                        onChange={(e) => updateCustomQuote(sp, e.target.value)}
-                                        placeholder="Precio unitario ej: 1.50"
-                                        className={`w-full pl-6 pr-2 py-1.5 rounded-lg text-sm transition-colors ${
-                                            isGlass 
-                                            ? 'bg-white/5 border border-white/10 text-white focus:border-green-400 outline-none' 
-                                            : 'bg-gray-50 border border-gray-200 text-gray-800 focus:border-green-500 outline-none'
-                                        }`}
-                                    />
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
+            {/* COTIZACIONES MANUALES (Removido a petición del usuario) */}
 
             {/* CARTERAS LIST */}
             <div className="space-y-4">

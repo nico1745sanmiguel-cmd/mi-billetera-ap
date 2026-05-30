@@ -217,9 +217,7 @@ const Home = memo(({ transactions, cards, supermarketItems = [], services = [], 
                     <button onClick={() => setView('household')} className="bg-blue-50 text-blue-500 dark:bg-white/10 dark:text-white/70 p-2 rounded-full hover:bg-blue-100 dark:hover:bg-blue-500/20 dark:hover:text-blue-200 transition-colors dark:backdrop-blur-md dark:border dark:border-white/5">
                         <Users size={20} />
                     </button>
-                    <button onClick={() => setView('savings')} className="bg-amber-50 text-amber-600 dark:bg-white/10 dark:text-white/70 p-2 rounded-full hover:bg-amber-100 dark:hover:bg-amber-500/20 dark:hover:text-amber-200 transition-colors dark:backdrop-blur-md dark:border dark:border-white/5" title="Mis Ahorros">
-                        <TrendingUp size={20} />
-                    </button>
+
                     <button onClick={() => setIsNotificationsOpen(true)} className="relative bg-indigo-50 text-indigo-500 dark:bg-white/10 dark:text-white/70 p-2 rounded-full hover:bg-indigo-100 dark:hover:bg-indigo-500/20 dark:hover:text-indigo-200 transition-colors dark:backdrop-blur-md dark:border dark:border-white/5">
                         <Bell size={20} className={unreadNotifsCount > 0 ? "animate-pulse" : ""} />
                         {unreadNotifsCount > 0 && (

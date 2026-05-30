@@ -48,7 +48,12 @@ export default function SavingsWidget({ setView, privacyMode }) {
                     totalARS += cant;
                     totalUSD += cant / rate;
                 } else {
-                    const userQuote = customQuotes[es] || 0;
+                    let userQuote = customQuotes[es];
+                    if (userQuote === undefined || isNaN(parseFloat(userQuote))) {
+                        userQuote = ['USDT', 'USDC', 'DAI', 'USDP'].includes(es) ? 1 : 0;
+                    } else {
+                        userQuote = parseFloat(userQuote);
+                    }
                     totalUSD += (cant * userQuote);
                     totalARS += (cant * userQuote * rate);
                 }
@@ -70,20 +75,18 @@ export default function SavingsWidget({ setView, privacyMode }) {
     return (
         <div 
             onClick={() => setView('savings')}
-            className="bg-gradient-to-br from-green-50 to-emerald-100 dark:from-green-500/10 dark:to-emerald-500/5 rounded-3xl border border-green-100 dark:border-green-500/20 shadow-sm overflow-hidden mx-1 cursor-pointer hover:border-green-300 dark:hover:bg-white/5 transition-all dark:backdrop-blur-md group"
+            className="bg-white dark:bg-white/5 rounded-3xl border border-gray-100 dark:border-white/10 shadow-sm overflow-hidden mx-1 cursor-pointer hover:border-gray-300 dark:hover:bg-white/10 transition-all dark:backdrop-blur-md group"
         >
-            <div className="px-5 py-4 border-b border-green-100 dark:border-white/5 flex justify-between items-center">
-                <div>
-                    <h3 className="font-bold text-green-800 dark:text-green-300 text-sm flex items-center gap-2">
-                        <TrendingUp size={18} className="text-green-600 dark:text-green-400" /> Mis Ahorros
-                    </h3>
-                </div>
+            <div className="px-5 py-3 flex justify-between items-center border-b border-gray-50 dark:border-white/5">
+                <h3 className="font-bold text-gray-800 dark:text-white/90 text-sm flex items-center gap-2">
+                    <TrendingUp size={16} className="text-green-500" /> Mis Ahorros
+                </h3>
                 <button 
                     onClick={(e) => { 
                         e.stopPropagation(); 
                         setCurrencyView(prev => prev === 'ARS' ? 'USD' : 'ARS');
                     }} 
-                    className="flex items-center gap-1 text-[10px] font-bold text-green-700 dark:text-green-300 bg-white/50 dark:bg-white/10 hover:bg-white dark:hover:bg-white/20 px-2 py-1 rounded-full transition-colors shadow-sm dark:shadow-none border border-green-200 dark:border-white/10"
+                    className="flex items-center gap-1 text-[10px] font-bold text-gray-400 dark:text-white/40 bg-gray-50 dark:bg-white/5 hover:text-green-600 dark:hover:text-green-400 px-2 py-1 rounded-full transition-colors"
                     title={`Ver en ${currencyView === 'ARS' ? 'USD' : 'ARS'}`}
                 >
                     <ArrowRightLeft size={12} />
@@ -91,18 +94,23 @@ export default function SavingsWidget({ setView, privacyMode }) {
                 </button>
             </div>
 
-            <div className="p-5 flex flex-col items-center justify-center">
-                <p className="text-xs text-green-600/80 dark:text-green-200/50 uppercase tracking-widest font-bold mb-1">
-                    Total Acumulado
-                </p>
-                <div className={`text-3xl font-black ${privacyMode ? 'blur-sm' : ''} text-green-900 dark:text-white truncate max-w-full`}>
-                    {formatCurrency(total, currencyView)}
+            <div className="p-4 flex flex-col justify-center">
+                <div className="flex items-end justify-between">
+                    <div>
+                        <div className={`text-2xl font-black ${privacyMode ? 'blur-sm' : ''} text-gray-900 dark:text-white truncate`}>
+                            {formatCurrency(total, currencyView)}
+                        </div>
+                        <p className="text-[10px] text-gray-400 dark:text-white/40 uppercase tracking-wider font-bold mt-1">
+                            Total Acumulado
+                        </p>
+                    </div>
+                    {dolarBlue && currencyView === 'ARS' && (
+                        <div className="text-[10px] text-gray-400 dark:text-white/30 text-right">
+                            <span className="block">Dólar Blue</span>
+                            <span className="font-semibold">${dolarBlue}</span>
+                        </div>
+                    )}
                 </div>
-                {dolarBlue && currencyView === 'ARS' && (
-                    <p className="text-[10px] text-green-600/60 dark:text-green-200/40 mt-2">
-                        Dólar Blue: ${dolarBlue}
-                    </p>
-                )}
             </div>
         </div>
     );
