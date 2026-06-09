@@ -235,6 +235,9 @@ export default function App() {
                                 transactions={visibleTransactions}
                                 cards={visibleCards}
                                 services={visibleServices}
+                                supermarketItems={visibleSuperItems}
+                                freshItems={freshItems}
+                                plannerCategories={plannerCategories}
                                 privacyMode={privacyMode}
                                 currentDate={currentDate}
                                 isGlass={isGlass}
