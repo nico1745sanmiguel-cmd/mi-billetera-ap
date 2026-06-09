@@ -120,16 +120,6 @@ export const FinancialProvider = ({ children }) => {
         const unsubPlannerCat = syncData(COLLECTIONS.PLANNER_CATEGORIES, setPlannerCategories, CACHE_KEYS.PLANNER_CATEGORIES);
         const unsubSavings  = syncData(COLLECTIONS.SAVINGS_TRANSACTIONS, setSavingsTransactions, CACHE_KEYS.SAVINGS_TRANSACTIONS);
 
-        // Notificaciones (solo si hay household)
-        let unsubNotifications = () => {};
-        if (householdId) {
-            const qNotif = query(collection(db, 'households', householdId, 'notifications'));
-            unsubNotifications = onSnapshot(qNotif, (snap) => {
-                const data = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
-                setNotifications(data);
-            }, (error) => console.error('Offline/Error notifications:', error));
-        }
-
         return () => {
             unsubCards();
             unsubTrans();
@@ -138,9 +128,26 @@ export const FinancialProvider = ({ children }) => {
             unsubFresh();
             unsubPlannerCat();
             unsubSavings();
-            unsubNotifications();
         };
     }, [user, userData]);
+
+    // 3. Listener de Notificaciones (separado para que se re-monte cuando householdId llega)
+    useEffect(() => {
+        const householdId = userData?.householdId;
+        if (!user || !householdId) {
+            setNotifications([]);
+            return;
+        }
+        const qNotif = query(collection(db, 'households', householdId, 'notifications'));
+        const unsubNotifications = onSnapshot(qNotif, (snap) => {
+            const data = snap.docs
+                .map(d => ({ id: d.id, ...d.data() }))
+                .sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
+            setNotifications(data);
+        }, (error) => console.error('Offline/Error notifications:', error));
+
+        return () => unsubNotifications();
+    }, [user, userData?.householdId]);
 
     const addTransaction = async (t) => {
         if (!user) return;

@@ -203,6 +203,8 @@ export default function App() {
                                 privacyMode={privacyMode}
                                 isGlass={isGlass}
                                 householdId={userData?.householdId}
+                                freshItems={freshItems}
+                                plannerCategories={plannerCategories}
                             />
                         )}
 

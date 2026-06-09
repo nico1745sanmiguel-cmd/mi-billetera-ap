@@ -164,7 +164,7 @@ function RepartoPanel({ allItems, householdId, currentUid, isGlass, showMoney })
     );
 }
 
-export default function ServicesManager({ services = [], cards = [], transactions = [], currentDate, privacyMode, isGlass, householdId }) {
+export default function ServicesManager({ services = [], cards = [], transactions = [], currentDate, privacyMode, isGlass, householdId, freshItems = [], plannerCategories = [] }) {
     const [viewMode, setViewMode] = useState('list');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingService, setEditingService] = useState(null);
@@ -408,15 +408,55 @@ export default function ServicesManager({ services = [], cards = [], transaction
         return grid;
     }, [currentDate]);
 
+    // Mapa de colores de categorías del planificador
+    const PLANNER_COLOR_MAP = {
+        blue:   { bg: 'bg-blue-100',   text: 'text-blue-700',   border: 'border-blue-200',   glBg: 'bg-blue-500/20',   glText: 'text-blue-200',   glBorder: 'border-blue-500/30' },
+        purple: { bg: 'bg-purple-100', text: 'text-purple-700', border: 'border-purple-200', glBg: 'bg-purple-500/20', glText: 'text-purple-200', glBorder: 'border-purple-500/30' },
+        orange: { bg: 'bg-orange-100', text: 'text-orange-700', border: 'border-orange-200', glBg: 'bg-orange-500/20', glText: 'text-orange-200', glBorder: 'border-orange-500/30' },
+        pink:   { bg: 'bg-pink-100',   text: 'text-pink-700',   border: 'border-pink-200',   glBg: 'bg-pink-500/20',   glText: 'text-pink-200',   glBorder: 'border-pink-500/30' },
+        green:  { bg: 'bg-green-100',  text: 'text-green-700',  border: 'border-green-200',  glBg: 'bg-green-500/20',  glText: 'text-green-200',  glBorder: 'border-green-500/30' },
+        red:    { bg: 'bg-red-100',    text: 'text-red-700',    border: 'border-red-200',    glBg: 'bg-red-500/20',    glText: 'text-red-200',    glBorder: 'border-red-500/30' },
+    };
+    const DEFAULT_PLANNER_COLORS = { bg: 'bg-teal-100', text: 'text-teal-700', border: 'border-teal-200', glBg: 'bg-teal-500/20', glText: 'text-teal-200', glBorder: 'border-teal-500/30' };
+
+    // Mapa id de categoría → colorName
+    const allPlannerCats = useMemo(() => {
+        const defaults = [
+            { id: 'verduleria', colorName: 'green' },
+            { id: 'carniceria', colorName: 'red' },
+        ];
+        return [...defaults, ...plannerCategories];
+    }, [plannerCategories]);
+
+    const catColorMap = useMemo(() => {
+        const map = {};
+        allPlannerCats.forEach(c => { map[c.id] = c.colorName; });
+        return map;
+    }, [allPlannerCats]);
+
     const calendarItemsByDay = useMemo(() => {
         const map = {};
+        // Items de servicios/tarjetas (por día de vencimiento)
         allItems.forEach(item => {
             const d = parseInt(item.day);
             if (!map[d]) map[d] = [];
-            map[d].push(item);
+            map[d].push({ ...item, itemKind: 'payment' });
         });
+        // Items del planificador (por fecha exacta, solo del mes actual)
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth() + 1;
+        const monthKey = `${year}-${String(month).padStart(2, '0')}`;
+        freshItems
+            .filter(fi => fi.month === monthKey && fi.date)
+            .forEach(fi => {
+                const day = parseInt(fi.date.split('-')[2]);
+                if (!day || day < 1 || day > 31) return;
+                if (!map[day]) map[day] = [];
+                const colorName = catColorMap[fi.category] || 'green';
+                map[day].push({ ...fi, itemKind: 'planner', colorName });
+            });
         return map;
-    }, [allItems]);
+    }, [allItems, freshItems, currentDate, catColorMap]);
 
     const daysOfWeek = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
 
@@ -555,21 +595,41 @@ export default function ServicesManager({ services = [], cards = [], transaction
                                         {day}
                                     </div>
                                     <div className="flex-1 flex flex-col gap-1 overflow-y-auto no-scrollbar pb-1">
-                                        {dayItems.map(item => (
-                                            <div 
-                                                key={item.id} 
-                                                onClick={() => openModal(item)}
-                                                className={`text-[9px] md:text-[10px] px-1.5 py-1 rounded-lg cursor-pointer transition-transform active:scale-95 flex flex-col ${
-                                                    item.isPaid 
-                                                        ? (isGlass ? 'bg-green-500/10 text-green-400/50 line-through border border-green-500/20' : 'bg-green-50 text-green-600/60 line-through border border-green-100') 
-                                                        : (isGlass ? 'bg-indigo-500/30 text-indigo-100 border border-indigo-500/50 hover:bg-indigo-500/40' : 'bg-indigo-100 text-indigo-800 border border-indigo-200 hover:bg-indigo-200')
-                                                }`}
-                                                title={`${item.name} - ${showMoney(item.amount)}`}
-                                            >
-                                                <span className="truncate font-bold leading-tight">{item.name}</span>
-                                                <span className="font-mono text-[8px] opacity-80 mt-0.5">{showMoney(item.amount)}</span>
-                                            </div>
-                                        ))}
+                                        {dayItems.map(item => {
+                                            if (item.itemKind === 'planner') {
+                                                const pColors = PLANNER_COLOR_MAP[item.colorName] || DEFAULT_PLANNER_COLORS;
+                                                return (
+                                                    <div
+                                                        key={item.id}
+                                                        className={`text-[9px] md:text-[10px] px-1.5 py-1 rounded-lg flex flex-col border ${
+                                                            item.completed
+                                                                ? (isGlass ? 'bg-white/5 border-white/10 text-white/30 line-through' : 'bg-gray-50 border-gray-200 text-gray-400 line-through')
+                                                                : (isGlass ? `${pColors.glBg} ${pColors.glText} ${pColors.glBorder}` : `${pColors.bg} ${pColors.text} ${pColors.border}`)
+                                                        }`}
+                                                        title={`📋 ${item.note || 'Sin nota'}${item.total > 0 ? ' — ' + showMoney(item.total) : ''}`}
+                                                    >
+                                                        <span className="truncate font-bold leading-tight">📋 {item.note || 'Sin nota'}</span>
+                                                        {item.total > 0 && <span className="font-mono text-[8px] opacity-80 mt-0.5">{showMoney(item.total)}</span>}
+                                                    </div>
+                                                );
+                                            }
+                                            // Item de pago (servicio / tarjeta)
+                                            return (
+                                                <div
+                                                    key={item.id}
+                                                    onClick={() => openModal(item)}
+                                                    className={`text-[9px] md:text-[10px] px-1.5 py-1 rounded-lg cursor-pointer transition-transform active:scale-95 flex flex-col ${
+                                                        item.isPaid
+                                                            ? (isGlass ? 'bg-green-500/10 text-green-400/50 line-through border border-green-500/20' : 'bg-green-50 text-green-600/60 line-through border border-green-100')
+                                                            : (isGlass ? 'bg-indigo-500/30 text-indigo-100 border border-indigo-500/50 hover:bg-indigo-500/40' : 'bg-indigo-100 text-indigo-800 border border-indigo-200 hover:bg-indigo-200')
+                                                    }`}
+                                                    title={`${item.name} - ${showMoney(item.amount)}`}
+                                                >
+                                                    <span className="truncate font-bold leading-tight">{item.name}</span>
+                                                    <span className="font-mono text-[8px] opacity-80 mt-0.5">{showMoney(item.amount)}</span>
+                                                </div>
+                                            );
+                                        })}
                                     </div>
                                 </div>
                             );

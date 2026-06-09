@@ -1,5 +1,5 @@
 import React, { useMemo, useEffect, useState, memo } from 'react';
-import { Receipt, Users, LogOut, AlertCircle, BarChart3, Moon, RefreshCw, Bell, TrendingUp } from 'lucide-react';
+import { Users, LogOut, AlertCircle, BarChart3, Moon, RefreshCw, Bell, TrendingUp } from 'lucide-react';
 import { db } from '../../firebase';
 import { doc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { formatMoney } from '../../utils';
@@ -24,7 +24,7 @@ import AgendaWidget from './Widgets/AgendaWidget';
 import SuperActionsWidget from './Widgets/SuperActionsWidget';
 import NotificationsModal from './Widgets/NotificationsModal';
 
-const Home = memo(({ transactions, cards, supermarketItems = [], services = [], freshItems = [], privacyMode, setView, onLogout, currentDate, user, onToggleTheme, householdId, householdMembers = [], notifications = [] }) => {
+const Home = memo(({ transactions, cards, supermarketItems = [], services = [], freshItems = [], privacyMode, setView, onLogout, currentDate, user, onToggleTheme, householdId, householdMembers = [], notifications = [], plannerCategories = [] }) => {
 
     const [selectedCardForModal, setSelectedCardForModal] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -197,7 +197,7 @@ const Home = memo(({ transactions, cards, supermarketItems = [], services = [], 
         savings_summary: <SavingsWidget setView={setView} privacyMode={privacyMode} />,
         split_summary: <SplitSummaryWidget setView={setView} householdMembers={householdMembers} splitData={splitData} currentDate={currentDate} privacyMode={privacyMode} user={user} />,
         cards: <CardsWidget cards={cards} targetMonthKey={targetMonthKey} privacyMode={privacyMode} openCardModal={openCardModal} />,
-        agenda: <AgendaWidget agenda={agenda} currentDate={currentDate} privacyMode={privacyMode} setView={setView} />,
+        agenda: <AgendaWidget agenda={agenda} currentDate={currentDate} privacyMode={privacyMode} setView={setView} freshItems={freshItems} plannerCategories={plannerCategories} />,
         super_actions: <SuperActionsWidget superData={superData} privacyMode={privacyMode} setView={setView} />
     };
 
@@ -211,9 +211,6 @@ const Home = memo(({ transactions, cards, supermarketItems = [], services = [], 
                     </h1>
                 </div>
                 <div className="flex items-center gap-2">
-                    <button onClick={() => setView('reconcile')} className="bg-green-50 text-green-600 dark:bg-white/10 dark:text-white/70 p-2 rounded-full hover:bg-green-100 dark:hover:bg-green-500/20 dark:hover:text-green-200 transition-colors dark:backdrop-blur-md dark:border dark:border-white/5" title="Conciliar Consumos">
-                        <Receipt size={20} />
-                    </button>
                     <button onClick={() => setView('household')} className="bg-blue-50 text-blue-500 dark:bg-white/10 dark:text-white/70 p-2 rounded-full hover:bg-blue-100 dark:hover:bg-blue-500/20 dark:hover:text-blue-200 transition-colors dark:backdrop-blur-md dark:border dark:border-white/5">
                         <Users size={20} />
                     </button>

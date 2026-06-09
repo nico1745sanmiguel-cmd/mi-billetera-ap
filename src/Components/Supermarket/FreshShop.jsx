@@ -10,6 +10,7 @@ import {
     addFreshItem,
     deleteFreshItem,
     updateFreshTotal,
+    updateFreshDate,
     toggleFreshCompleted,
 } from '../../repositories/freshRepository';
 import { addPlannerCategory, deletePlannerCategory } from '../../repositories/plannerCategoriesRepository';
@@ -107,7 +108,9 @@ const DEFAULT_CATEGORIES = [
 function TripCard({ trip, cfg, isGlass, onDelete, onUpdateTotal, onToggleCompleted }) {
     const [editing, setEditing] = useState(false);
     const [inputVal, setInputVal] = useState('');
+    const [editingDate, setEditingDate] = useState(false);
     const inputRef = useRef(null);
+    const dateInputRef = useRef(null);
 
     const startEdit = () => {
         setInputVal(trip.total > 0 ? String(trip.total) : '');
@@ -119,6 +122,14 @@ function TripCard({ trip, cfg, isGlass, onDelete, onUpdateTotal, onToggleComplet
         const parsed = parseInputNumber(inputVal);
         await onUpdateTotal(trip.id, parsed);
         setEditing(false);
+    };
+
+    const handleDateChange = async (e) => {
+        const newDate = e.target.value;
+        if (newDate) {
+            await updateFreshDate(trip.id, newDate);
+        }
+        setEditingDate(false);
     };
 
     const dateLabel = trip.date
@@ -137,12 +148,31 @@ function TripCard({ trip, cfg, isGlass, onDelete, onUpdateTotal, onToggleComplet
                 {trip.completed ? <CheckCircle2 size={24} /> : <Circle size={24} />}
             </button>
 
-            <div className={`w-11 h-11 rounded-xl flex flex-col items-center justify-center flex-shrink-0 font-bold text-center ${
-                isGlass ? cfg.accentGlass : cfg.accentLight
-            }`}>
-                <span className="text-[10px] uppercase leading-none">{dateLabel.split(' ')[1]}</span>
-                <span className="text-base leading-none">{dateLabel.split(' ')[0]}</span>
-            </div>
+            {editingDate ? (
+                <input
+                    ref={dateInputRef}
+                    type="date"
+                    defaultValue={trip.date || ''}
+                    onChange={handleDateChange}
+                    onBlur={() => setEditingDate(false)}
+                    className={`w-11 h-11 rounded-xl flex-shrink-0 text-[8px] font-bold border outline-none cursor-pointer p-1 ${
+                        isGlass ? 'bg-black/40 border-white/20 text-white' : 'bg-white border-gray-300 text-gray-800'
+                    }`}
+                    style={{ colorScheme: isGlass ? 'dark' : 'light' }}
+                    autoFocus
+                />
+            ) : (
+                <button
+                    onClick={() => setEditingDate(true)}
+                    title="Tap para editar fecha"
+                    className={`w-11 h-11 rounded-xl flex flex-col items-center justify-center flex-shrink-0 font-bold text-center transition-opacity hover:opacity-70 active:scale-95 ${
+                        isGlass ? cfg.accentGlass : cfg.accentLight
+                    }`}
+                >
+                    <span className="text-[10px] uppercase leading-none">{dateLabel.split(' ')[1]}</span>
+                    <span className="text-base leading-none">{dateLabel.split(' ')[0]}</span>
+                </button>
+            )}
 
             <div className="flex-1 min-w-0">
                 <p className={`text-sm font-bold truncate ${isGlass ? 'text-white' : 'text-gray-800'} ${trip.completed ? 'line-through opacity-50' : ''}`}>

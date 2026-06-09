@@ -46,3 +46,11 @@ export const updateFreshTotal = (id, total) =>
  */
 export const toggleFreshCompleted = (id, completed) =>
     updateDoc(doc(db, COL, id), { completed });
+
+/**
+ * Actualiza la fecha de un ítem del planificador.
+ * @param {string} id
+ * @param {string} date - Formato "YYYY-MM-DD"
+ */
+export const updateFreshDate = (id, date) =>
+    updateDoc(doc(db, COL, id), { date });
