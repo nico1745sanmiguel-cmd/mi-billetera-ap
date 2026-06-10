@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { ArrowLeft, Car, Puzzle } from 'lucide-react';
 import { CACHE_KEYS } from '../../config/constants';
+import { getCache, setCache } from '../../utils/cache';
 
 // ─── Definición de módulos disponibles ────────────────────────────────────────
 // Para agregar un módulo nuevo, solo hay que añadir un objeto acá.
@@ -18,15 +19,12 @@ const AVAILABLE_MODULES = [
 ];
 
 const loadModules = () => {
-    try {
-        return JSON.parse(localStorage.getItem(CACHE_KEYS.ENABLED_MODULES) || '{}');
-    } catch {
-        return {};
-    }
+    // Usa getCache para respetar el prefijo v1_ y no ser borrado por cleanOldCaches
+    return getCache(CACHE_KEYS.ENABLED_MODULES, {});
 };
 
 const saveModules = (state) => {
-    localStorage.setItem(CACHE_KEYS.ENABLED_MODULES, JSON.stringify(state));
+    setCache(CACHE_KEYS.ENABLED_MODULES, state);
     // Notificar a App.jsx que los módulos cambiaron para forzar re-render
     window.dispatchEvent(new CustomEvent('modulesChanged'));
 };
