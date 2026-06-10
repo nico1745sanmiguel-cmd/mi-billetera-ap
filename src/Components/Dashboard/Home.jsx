@@ -23,6 +23,8 @@ import CardsWidget from './Widgets/CardsWidget';
 import AgendaWidget from './Widgets/AgendaWidget';
 import SuperActionsWidget from './Widgets/SuperActionsWidget';
 import NotificationsModal from './Widgets/NotificationsModal';
+import MobilityWidget from './Widgets/MobilityWidget';
+import { isModuleEnabled } from '../Settings/ModulesSettings';
 
 const Home = memo(({ transactions, cards, supermarketItems = [], services = [], freshItems = [], privacyMode, setView, onLogout, currentDate, user, onToggleTheme, householdId, householdMembers = [], notifications = [], plannerCategories = [] }) => {
 
@@ -195,6 +197,7 @@ const Home = memo(({ transactions, cards, supermarketItems = [], services = [], 
             </div>
         ),
         savings_summary: <SavingsWidget setView={setView} privacyMode={privacyMode} />,
+        ...(isModuleEnabled('mobility') ? { mobility: <MobilityWidget setView={setView} currentDate={currentDate} privacyMode={privacyMode} /> } : {}),
         split_summary: <SplitSummaryWidget setView={setView} householdMembers={householdMembers} splitData={splitData} currentDate={currentDate} privacyMode={privacyMode} user={user} />,
         cards: <CardsWidget cards={cards} targetMonthKey={targetMonthKey} privacyMode={privacyMode} openCardModal={openCardModal} />,
         agenda: <AgendaWidget agenda={agenda} currentDate={currentDate} privacyMode={privacyMode} setView={setView} freshItems={freshItems} plannerCategories={plannerCategories} />,
@@ -239,12 +242,15 @@ const Home = memo(({ transactions, cards, supermarketItems = [], services = [], 
             )}
 
             <div className="space-y-6">
-                {order.map((key) => (
-                    <div key={key} {...getDragProps(key)} className={`transition-all duration-300 ${draggingItem === key ? 'opacity-50 scale-95 cursor-grabbing' : 'cursor-grab'}`}>
-                        <div className="flex justify-center -mb-2 opacity-0 hover:opacity-100 transition-opacity"><div className="w-10 h-1 bg-gray-200 rounded-full"></div></div>
-                        {WIDGETS[key]}
-                    </div>
-                ))}
+                {order.map((key) => {
+                    if (!WIDGETS[key]) return null;
+                    return (
+                        <div key={key} {...getDragProps(key)} className={`transition-all duration-300 ${draggingItem === key ? 'opacity-50 scale-95 cursor-grabbing' : 'cursor-grab'}`}>
+                            <div className="flex justify-center -mb-2 opacity-0 hover:opacity-100 transition-opacity"><div className="w-10 h-1 bg-gray-200 rounded-full"></div></div>
+                            {WIDGETS[key]}
+                        </div>
+                    );
+                })}
             </div>
 
             <button onClick={() => setView('stats')} className="w-full h-20 mx-1 rounded-2xl relative overflow-hidden group shadow-lg shadow-indigo-200 active:scale-95 transition-all">
