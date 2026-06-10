@@ -1,25 +1,27 @@
 import React, { useState } from 'react';
-import { Car, Plus, List, BarChart2, Upload, ArrowLeft } from 'lucide-react';
+import { Plus, List, BarChart2, Upload, ArrowLeft, Zap } from 'lucide-react';
 import { MobilityProvider } from '../../context/MobilityContext';
 import MobilityForm from './MobilityForm';
 import MobilityHistory from './MobilityHistory';
 import MobilityStats from './MobilityStats';
 import MobilityImport from './MobilityImport';
+import MobilityExpenses from './MobilityExpenses';
 
 const TABS = [
-    { id: 'register', label: 'Registrar', icon: Plus },
+    { id: 'expenses', label: 'Gastos',    icon: Zap },
+    { id: 'register', label: 'Jornada',   icon: Plus },
     { id: 'history',  label: 'Historial', icon: List },
     { id: 'stats',    label: 'Análisis',  icon: BarChart2 },
     { id: 'import',   label: 'Importar',  icon: Upload },
 ];
 
 export default function MobilityDashboard({ isGlass, privacyMode, onBack }) {
-    const [tab, setTab] = useState('stats');
+    const [tab, setTab] = useState('expenses');
 
     return (
         <MobilityProvider>
             <div className="space-y-4">
-                {/* HEADER */}
+                {/* HEADER — sin ícono de auto, solo título y botón volver */}
                 <div className={`rounded-2xl p-5 ${isGlass
                     ? 'bg-white/10 backdrop-blur-md border border-white/10'
                     : 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-lg'
@@ -31,14 +33,9 @@ export default function MobilityDashboard({ isGlass, privacyMode, onBack }) {
                         >
                             <ArrowLeft size={18} />
                         </button>
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-                                <Car size={22} />
-                            </div>
-                            <div>
-                                <h2 className="text-lg font-bold leading-tight">Movilidad</h2>
-                                <p className="text-white/70 text-xs">Uber · Didi · Cabify · Otros</p>
-                            </div>
+                        <div>
+                            <h2 className="text-lg font-bold leading-tight">Movilidad</h2>
+                            <p className="text-white/70 text-xs">Uber · Didi · Cabify · Otros</p>
                         </div>
                     </div>
                 </div>
@@ -70,6 +67,7 @@ export default function MobilityDashboard({ isGlass, privacyMode, onBack }) {
 
                 {/* CONTENIDO */}
                 <div>
+                    {tab === 'expenses' && <MobilityExpenses isGlass={isGlass} />}
                     {tab === 'register' && <MobilityForm isGlass={isGlass} onSuccess={() => setTab('history')} />}
                     {tab === 'history'  && <MobilityHistory isGlass={isGlass} privacyMode={privacyMode} />}
                     {tab === 'stats'    && <MobilityStats isGlass={isGlass} privacyMode={privacyMode} />}

@@ -15,12 +15,20 @@ export const useMobility = () => {
 
 export const MobilityProvider = ({ children }) => {
     const { user } = useFinancial();
-    const [sessions, setSessions] = useState(() => getCache(CACHE_KEYS.MOBILITY_SESSIONS) || []);
-    const [loading, setLoading] = useState(true);
 
-    // Sincronizar en tiempo real con Firestore (igual que FinancialContext)
+    // ─── JORNADAS ─────────────────────────────────────────────────────────────
+    const [sessions, setSessions] = useState(() => getCache(CACHE_KEYS.MOBILITY_SESSIONS) || []);
+    const [loadingSessions, setLoadingSessions] = useState(true);
+
+    // ─── GASTOS DEL VEHÍCULO ──────────────────────────────────────────────────
+    const [expenses, setExpenses] = useState(() => getCache('mobility_expenses') || []);
+    const [loadingExpenses, setLoadingExpenses] = useState(true);
+
+    const loading = loadingSessions || loadingExpenses;
+
+    // ── Sync jornadas ─────────────────────────────────────────────────────────
     useEffect(() => {
-        if (!user) { setLoading(false); return; }
+        if (!user) { setLoadingSessions(false); return; }
 
         const q = query(
             collection(db, COLLECTIONS.MOBILITY_SESSIONS),
@@ -29,21 +37,42 @@ export const MobilityProvider = ({ children }) => {
 
         const unsub = onSnapshot(q, (snap) => {
             const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-            // Ordenar por fecha descendente
             data.sort((a, b) => b.date.localeCompare(a.date));
             setSessions(data);
             setCache(CACHE_KEYS.MOBILITY_SESSIONS, data);
-            setLoading(false);
+            setLoadingSessions(false);
         }, (error) => {
             console.error('Mobility sessions error:', error);
-            setLoading(false);
+            setLoadingSessions(false);
         });
 
         return () => unsub();
     }, [user]);
 
-    // ─── CALCULAR CAMPOS DERIVADOS ────────────────────────────────────────────
-    // Recibe los datos crudos y devuelve el objeto completo con totales calculados
+    // ── Sync gastos ───────────────────────────────────────────────────────────
+    useEffect(() => {
+        if (!user) { setLoadingExpenses(false); return; }
+
+        const q = query(
+            collection(db, 'mobility_expenses'),
+            where('userId', '==', user.uid)
+        );
+
+        const unsub = onSnapshot(q, (snap) => {
+            const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            data.sort((a, b) => b.date.localeCompare(a.date));
+            setExpenses(data);
+            setCache('mobility_expenses', data);
+            setLoadingExpenses(false);
+        }, (error) => {
+            console.error('Mobility expenses error:', error);
+            setLoadingExpenses(false);
+        });
+
+        return () => unsub();
+    }, [user]);
+
+    // ─── CAMPOS DERIVADOS (jornadas) ──────────────────────────────────────────
     const buildPayload = (formData) => {
         const uber    = parseFloat(formData.uber)    || 0;
         const didi    = parseFloat(formData.didi)    || 0;
@@ -70,11 +99,11 @@ export const MobilityProvider = ({ children }) => {
 
     const getDayOfWeek = (dateStr) => {
         const days = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
-        const d = new Date(dateStr + 'T12:00:00'); // T12 evita offset timezone
+        const d = new Date(dateStr + 'T12:00:00');
         return days[d.getDay()];
     };
 
-    // ─── CRUD ─────────────────────────────────────────────────────────────────
+    // ─── CRUD JORNADAS ────────────────────────────────────────────────────────
     const addSession = useCallback(async (formData) => {
         if (!user) return;
         const payload = {
@@ -103,7 +132,6 @@ export const MobilityProvider = ({ children }) => {
         }
     }, [user, sessions]);
 
-    // ─── IMPORTACIÓN MASIVA (para histórico CSV) ──────────────────────────────
     const importSessions = useCallback(async (rows) => {
         if (!user) return { ok: 0, errors: 0 };
         let ok = 0, errors = 0;
@@ -125,16 +153,48 @@ export const MobilityProvider = ({ children }) => {
         return { ok, errors };
     }, [user]);
 
+    // ─── CRUD GASTOS ──────────────────────────────────────────────────────────
+    const addExpense = useCallback(async ({ date, category, amount, notes = '' }) => {
+        if (!user) return;
+        await addDoc(collection(db, 'mobility_expenses'), {
+            date,
+            category,   // 'gnc' | 'nafta' | 'repuestos' | 'lavadero'
+            amount: parseFloat(amount) || 0,
+            notes,
+            userId: user.uid,
+            createdAt: serverTimestamp(),
+        });
+    }, [user]);
+
+    const updateExpense = useCallback(async (id, data) => {
+        if (!user) return;
+        await updateDoc(doc(db, 'mobility_expenses', id), {
+            date: data.date,
+            category: data.category,
+            amount: parseFloat(data.amount) || 0,
+            notes: data.notes || '',
+        });
+    }, [user]);
+
+    const deleteExpense = useCallback(async (id) => {
+        if (!user) return;
+        await deleteDoc(doc(db, 'mobility_expenses', id));
+    }, [user]);
+
     const value = useMemo(() => ({
         sessions,
+        expenses,
         loading,
         addSession,
         updateSession,
         deleteSession,
         deleteAllSessions,
         importSessions,
+        addExpense,
+        updateExpense,
+        deleteExpense,
         getDayOfWeek,
-    }), [sessions, loading, addSession, updateSession, deleteSession, deleteAllSessions, importSessions]);
+    }), [sessions, expenses, loading, addSession, updateSession, deleteSession, deleteAllSessions, importSessions, addExpense, updateExpense, deleteExpense]);
 
     return (
         <MobilityContext.Provider value={value}>

@@ -1,8 +1,9 @@
 import React, { useMemo, useState } from 'react';
-import { TrendingUp, Clock, Navigation, Star, ChevronLeft, ChevronRight } from 'lucide-react';
+import { TrendingUp, Clock, Navigation, Star, ChevronLeft, ChevronRight, Zap, Fuel, Wrench, Droplets } from 'lucide-react';
 import { useMobility } from '../../context/MobilityContext';
 
 const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
 const PLATFORM_COLORS = {
     uber:   { bg: '#1a1a1a', light: '#e5e5e5' },
     didi:   { bg: '#f97316', light: '#fff7ed' },
@@ -10,13 +11,20 @@ const PLATFORM_COLORS = {
     others: { bg: '#6b7280', light: '#f3f4f6' },
 };
 
+const EXPENSE_CATS = [
+    { key: 'gnc',       label: 'GNC',        icon: Zap,      color: '#06b6d4' },
+    { key: 'nafta',     label: 'Nafta',       icon: Fuel,     color: '#f59e0b' },
+    { key: 'repuestos', label: 'Repuestos',   icon: Wrench,   color: '#ef4444' },
+    { key: 'lavadero',  label: 'Lavadero',    icon: Droplets, color: '#14b8a6' },
+];
+
 const fmt = (n, prefix = '$') => `${prefix}${Number(n || 0).toLocaleString('es-AR', { maximumFractionDigits: 0 })}`;
 
 export default function MobilityStats({ isGlass, privacyMode }) {
-    const { sessions } = useMobility();
+    const { sessions, expenses } = useMobility();
 
     const now = new Date();
-    const [year, setYear]   = useState(now.getFullYear());
+    const [year,  setYear]  = useState(now.getFullYear());
     const [month, setMonth] = useState(now.getMonth());
 
     const changeMonth = (dir) => {
@@ -34,6 +42,11 @@ export default function MobilityStats({ isGlass, privacyMode }) {
         [sessions, monthKey]
     );
 
+    const filteredExpenses = useMemo(() =>
+        (expenses || []).filter(e => e.date?.startsWith(monthKey)),
+        [expenses, monthKey]
+    );
+
     // ─── KPIs ─────────────────────────────────────────────────────────────────
     const kpis = useMemo(() => {
         if (!filtered.length) return null;
@@ -44,29 +57,40 @@ export default function MobilityStats({ isGlass, privacyMode }) {
         const avgPerHour    = totalHours > 0 ? totalEarnings / totalHours : 0;
         const avgPerKm      = totalKm    > 0 ? totalEarnings / totalKm    : 0;
 
-        // Distribución por plataforma
         const platforms = ['uber', 'didi', 'cabify', 'others'].map(key => ({
             key,
             label: key === 'others' ? 'Otros' : key.charAt(0).toUpperCase() + key.slice(1),
             total: filtered.reduce((a, s) => a + (s[key] || 0), 0),
         })).filter(p => p.total > 0);
 
-        // Semanas del mes (para gráfico de barras)
         const weeks = [0, 1, 2, 3, 4].map(w => {
             const weekSessions = filtered.filter(s => {
                 const d = new Date(s.date + 'T12:00:00');
-                const dayOfMonth = d.getDate();
-                return Math.floor((dayOfMonth - 1) / 7) === w;
+                return Math.floor((d.getDate() - 1) / 7) === w;
+            });
+            const weekExpenses = filteredExpenses.filter(e => {
+                const d = new Date(e.date + 'T12:00:00');
+                return Math.floor((d.getDate() - 1) / 7) === w;
             });
             return {
                 label: `S${w + 1}`,
                 total: weekSessions.reduce((a, s) => a + (s.total || 0), 0),
-                days:  weekSessions.length,
+                gastos: weekExpenses.reduce((a, e) => a + (e.amount || 0), 0),
+                days:  weekSessions.length + weekExpenses.length,
             };
         }).filter(w => w.days > 0);
 
-        return { totalEarnings, totalHours, totalKm, bestDay, avgPerHour, avgPerKm, platforms, weeks };
-    }, [filtered]);
+        // Gastos del mes por categoría
+        const expenseByCategory = EXPENSE_CATS.map(cat => ({
+            ...cat,
+            total: filteredExpenses.filter(e => e.category === cat.key).reduce((a, e) => a + (e.amount || 0), 0),
+        })).filter(c => c.total > 0);
+
+        const totalExpenses = filteredExpenses.reduce((a, e) => a + (e.amount || 0), 0);
+        const netEarnings   = totalEarnings - totalExpenses;
+
+        return { totalEarnings, totalHours, totalKm, bestDay, avgPerHour, avgPerKm, platforms, weeks, expenseByCategory, totalExpenses, netEarnings };
+    }, [filtered, filteredExpenses]);
 
     // ─── Últimos 6 meses para tendencia ──────────────────────────────────────
     const trend6 = useMemo(() => {
@@ -79,9 +103,12 @@ export default function MobilityStats({ isGlass, privacyMode }) {
             const total = sessions
                 .filter(s => s.date?.startsWith(key))
                 .reduce((a, s) => a + (s.total || 0), 0);
-            return { label: MONTHS[m].slice(0, 3), total, key };
+            const gastos = (expenses || [])
+                .filter(e => e.date?.startsWith(key))
+                .reduce((a, e) => a + (e.amount || 0), 0);
+            return { label: MONTHS[m].slice(0, 3), total, gastos, key };
         });
-    }, [sessions, month, year]);
+    }, [sessions, expenses, month, year]);
 
     const maxTrend = Math.max(...trend6.map(t => t.total), 1);
 
@@ -114,7 +141,7 @@ export default function MobilityStats({ isGlass, privacyMode }) {
                     <div className="grid grid-cols-2 gap-3">
                         <KpiCard
                             icon={<TrendingUp size={18} />}
-                            label="Total del mes"
+                            label="Ingresos brutos"
                             value={privacyMode ? '••••' : fmt(kpis.totalEarnings)}
                             accent="violet"
                             isGlass={isGlass}
@@ -142,6 +169,33 @@ export default function MobilityStats({ isGlass, privacyMode }) {
                         />
                     </div>
 
+                    {/* BALANCE NETO (ingresos - gastos) */}
+                    {kpis.totalExpenses > 0 && (
+                        <div className={`${card}`}>
+                            <p className={`text-xs font-bold uppercase tracking-wide mb-3 ${sub}`}>Balance neto del mes</p>
+                            <div className="grid grid-cols-3 gap-3 text-center">
+                                <div>
+                                    <p className={`text-xs ${sub} mb-0.5`}>Ingresos</p>
+                                    <p className={`font-bold text-sm ${isGlass ? 'text-green-300' : 'text-green-600'}`}>
+                                        {privacyMode ? '••••' : fmt(kpis.totalEarnings)}
+                                    </p>
+                                </div>
+                                <div>
+                                    <p className={`text-xs ${sub} mb-0.5`}>Gastos</p>
+                                    <p className={`font-bold text-sm ${isGlass ? 'text-red-300' : 'text-red-500'}`}>
+                                        {privacyMode ? '••••' : fmt(kpis.totalExpenses)}
+                                    </p>
+                                </div>
+                                <div>
+                                    <p className={`text-xs ${sub} mb-0.5`}>Neto</p>
+                                    <p className={`font-bold text-sm ${kpis.netEarnings >= 0 ? (isGlass ? 'text-violet-300' : 'text-violet-600') : (isGlass ? 'text-red-300' : 'text-red-600')}`}>
+                                        {privacyMode ? '••••' : fmt(kpis.netEarnings)}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     {/* MEJOR DÍA */}
                     {kpis.bestDay && (
                         <div className={`${card} flex items-center gap-3`}>
@@ -157,6 +211,40 @@ export default function MobilityStats({ isGlass, privacyMode }) {
                                 <p className="text-amber-500 font-bold text-base">
                                     {privacyMode ? '••••' : fmt(kpis.bestDay.total)}
                                 </p>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* GASTOS POR CATEGORÍA */}
+                    {kpis.expenseByCategory.length > 0 && (
+                        <div className={card}>
+                            <p className={`text-xs font-bold uppercase tracking-wide mb-3 ${sub}`}>Gastos del vehículo</p>
+                            <div className="space-y-2.5">
+                                {kpis.expenseByCategory.map(cat => {
+                                    const Icon = cat.icon;
+                                    const pct = kpis.totalExpenses > 0
+                                        ? ((cat.total / kpis.totalExpenses) * 100).toFixed(1)
+                                        : 0;
+                                    return (
+                                        <div key={cat.key}>
+                                            <div className="flex justify-between mb-1">
+                                                <span className={`text-xs font-semibold flex items-center gap-1.5 ${text}`}>
+                                                    <Icon size={12} />
+                                                    {cat.label}
+                                                </span>
+                                                <span className={`text-xs ${sub}`}>
+                                                    {privacyMode ? '••••' : fmt(cat.total)} · {pct}%
+                                                </span>
+                                            </div>
+                                            <div className={`w-full h-2 rounded-full ${isGlass ? 'bg-white/10' : 'bg-gray-100'}`}>
+                                                <div
+                                                    className="h-2 rounded-full transition-all duration-700"
+                                                    style={{ width: `${pct}%`, backgroundColor: cat.color }}
+                                                />
+                                            </div>
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </div>
                     )}
@@ -192,58 +280,102 @@ export default function MobilityStats({ isGlass, privacyMode }) {
                         </div>
                     )}
 
-                    {/* TENDENCIA ÚLTIMOS 6 MESES */}
+                    {/* TENDENCIA ÚLTIMOS 6 MESES — RESPONSIVE FIX */}
                     <div className={card}>
                         <p className={`text-xs font-bold uppercase tracking-wide mb-4 ${sub}`}>Tendencia · últimos 6 meses</p>
-                        <div className="flex items-end gap-2 h-28">
-                            {trend6.map(({ label, total, key }) => {
-                                const height = maxTrend > 0 ? Math.max((total / maxTrend) * 100, total > 0 ? 4 : 0) : 0;
+                        {/* grid-cols-6 garantiza que siempre quepan exactamente 6 columnas sin overflow */}
+                        <div className="grid grid-cols-6 gap-1 items-end" style={{ height: '120px' }}>
+                            {trend6.map(({ label, total, gastos, key }) => {
+                                const heightPct = maxTrend > 0 ? Math.max((total / maxTrend) * 100, total > 0 ? 4 : 0) : 0;
+                                const gastosPct = maxTrend > 0 ? Math.max((gastos / maxTrend) * 100, gastos > 0 ? 4 : 0) : 0;
                                 const isCurrentMonth = key === monthKey;
                                 return (
-                                    <div key={key} className="flex-1 flex flex-col items-center gap-1">
-                                        <div className="w-full flex items-end justify-center" style={{ height: '96px' }}>
+                                    <div key={key} className="flex flex-col items-center gap-0.5 h-full justify-end">
+                                        {/* Barra de ingresos */}
+                                        <div className="w-full flex flex-col items-center justify-end" style={{ height: '82px' }}>
                                             <div
-                                                className={`w-full rounded-t-lg transition-all duration-700 ${
+                                                className={`w-full rounded-t-md transition-all duration-700 ${
                                                     isCurrentMonth
                                                         ? 'bg-gradient-to-t from-violet-600 to-indigo-400'
                                                         : isGlass
                                                             ? 'bg-white/20'
                                                             : 'bg-gray-200'
                                                 }`}
-                                                style={{ height: `${height}%` }}
+                                                style={{ height: `${heightPct}%` }}
+                                                title={fmt(total)}
                                             />
+                                            {/* Barra de gastos (roja, superpuesta debajo) */}
+                                            {gastosPct > 0 && (
+                                                <div
+                                                    className="w-full rounded-t-sm bg-red-400/60 -mt-0.5 transition-all duration-700"
+                                                    style={{ height: `${Math.min(gastosPct, heightPct * 0.8)}%` }}
+                                                    title={`Gastos: ${fmt(gastos)}`}
+                                                />
+                                            )}
                                         </div>
-                                        <span className={`text-xs font-medium ${isCurrentMonth ? (isGlass ? 'text-violet-300' : 'text-violet-600') : sub}`}>
+                                        {/* Label del mes */}
+                                        <span className={`text-[10px] font-medium leading-none mt-1 ${isCurrentMonth ? (isGlass ? 'text-violet-300' : 'text-violet-600') : sub}`}>
                                             {label}
                                         </span>
+                                        {/* Monto: solo en sm+ para no desbordar */}
                                         {!privacyMode && total > 0 && (
-                                            <span className={`text-xs ${sub}`}>{fmt(total)}</span>
+                                            <span className={`hidden sm:block text-[9px] ${sub} leading-none`}>{fmt(total)}</span>
                                         )}
                                     </div>
                                 );
                             })}
                         </div>
+                        {/* Leyenda */}
+                        <div className="flex items-center gap-3 mt-3">
+                            <div className="flex items-center gap-1.5">
+                                <div className="w-3 h-3 rounded-sm bg-gradient-to-t from-violet-600 to-indigo-400" />
+                                <span className={`text-[10px] ${sub}`}>Ingresos</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                                <div className="w-3 h-3 rounded-sm bg-red-400/60" />
+                                <span className={`text-[10px] ${sub}`}>Gastos</span>
+                            </div>
+                        </div>
                     </div>
 
-                    {/* DESGLOSE SEMANAL */}
-                    {kpis.weeks.length > 1 && (
+                    {/* DESGLOSE SEMANAL — RESPONSIVE FIX */}
+                    {kpis.weeks.length > 0 && (
                         <div className={card}>
                             <p className={`text-xs font-bold uppercase tracking-wide mb-3 ${sub}`}>Desglose semanal</p>
-                            <div className="space-y-2">
+                            <div className="space-y-2.5">
                                 {kpis.weeks.map(w => (
-                                    <div key={w.label} className="flex items-center justify-between">
-                                        <span className={`text-sm font-semibold w-8 ${text}`}>{w.label}</span>
-                                        <div className="flex-1 mx-3">
-                                            <div className={`h-2 rounded-full ${isGlass ? 'bg-white/10' : 'bg-gray-100'}`}>
-                                                <div
-                                                    className="h-2 rounded-full bg-gradient-to-r from-violet-500 to-indigo-400 transition-all duration-700"
-                                                    style={{ width: `${kpis.totalEarnings > 0 ? (w.total / kpis.totalEarnings) * 100 : 0}%` }}
-                                                />
+                                    <div key={w.label}>
+                                        <div className="flex items-center justify-between mb-1">
+                                            <span className={`text-xs font-bold w-6 flex-shrink-0 ${text}`}>{w.label}</span>
+                                            <div className="flex-1 mx-2 min-w-0">
+                                                {/* Barra de ingresos */}
+                                                <div className={`h-2 rounded-full mb-0.5 ${isGlass ? 'bg-white/10' : 'bg-gray-100'}`}>
+                                                    <div
+                                                        className="h-2 rounded-full bg-gradient-to-r from-violet-500 to-indigo-400 transition-all duration-700"
+                                                        style={{ width: `${kpis.totalEarnings > 0 ? (w.total / kpis.totalEarnings) * 100 : 0}%` }}
+                                                    />
+                                                </div>
+                                                {/* Barra de gastos */}
+                                                {w.gastos > 0 && (
+                                                    <div className={`h-1.5 rounded-full ${isGlass ? 'bg-white/10' : 'bg-gray-100'}`}>
+                                                        <div
+                                                            className="h-1.5 rounded-full bg-red-400/70 transition-all duration-700"
+                                                            style={{ width: `${kpis.totalEarnings > 0 ? (w.gastos / kpis.totalEarnings) * 100 : 0}%` }}
+                                                        />
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="text-right flex-shrink-0">
+                                                <p className={`text-xs font-bold ${text}`}>
+                                                    {privacyMode ? '••' : fmt(w.total)}
+                                                </p>
+                                                {w.gastos > 0 && (
+                                                    <p className={`text-[10px] ${isGlass ? 'text-red-300' : 'text-red-500'}`}>
+                                                        {privacyMode ? '••' : `-${fmt(w.gastos)}`}
+                                                    </p>
+                                                )}
                                             </div>
                                         </div>
-                                        <span className={`text-sm font-bold ${text} w-20 text-right`}>
-                                            {privacyMode ? '••••' : fmt(w.total)}
-                                        </span>
                                     </div>
                                 ))}
                             </div>
