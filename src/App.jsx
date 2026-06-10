@@ -9,7 +9,7 @@ import { auth } from './firebase';
 import { signOut } from 'firebase/auth';
 import { useFinancial } from './context/FinancialContext';
 import { useUI } from './context/UIContext';
-import { Home as HomeIcon, ChevronLeft, ChevronRight, Eye, EyeOff } from 'lucide-react';
+import { Home as HomeIcon, ChevronLeft, ChevronRight, Eye, EyeOff, Puzzle, Car } from 'lucide-react';
 import { ENABLE_HOUSEHOLD, SLOW_CONNECTION_TIMEOUT_MS } from './config/constants';
 import { isModuleEnabled } from './Components/Settings/ModulesSettings';
 
@@ -156,7 +156,7 @@ export default function App() {
                     </button>
 
                     {/* SELECTOR DE MES */}
-                    <div className={`flex-1 flex items-center justify-between rounded-xl p-1 max-w-[200px] transition-colors ${isGlass ? 'bg-white/10 border border-white/10 text-white' : 'bg-gray-50 text-gray-800'}`}>
+                    <div className={`flex-1 flex items-center justify-between rounded-xl p-1 max-w-[180px] transition-colors ${isGlass ? 'bg-white/10 border border-white/10 text-white' : 'bg-gray-50 text-gray-800'}`}>
                         <button onClick={() => changeMonth(-1)} className={`p-2 rounded-lg active:scale-95 transition-colors ${isGlass ? 'text-white/70 hover:bg-white/10' : 'text-gray-400 hover:bg-gray-200'}`}>
                             <ChevronLeft size={16} strokeWidth={2.5} />
                         </button>
@@ -166,10 +166,24 @@ export default function App() {
                         </button>
                     </div>
 
-                    {/* BOTÓN PRIVACIDAD */}
-                    <button onClick={() => setPrivacyMode(!privacyMode)} className={`p-2 rounded-xl transition-all active:scale-95 ${privacyMode ? 'bg-indigo-50 text-indigo-600' : 'bg-gray-100 text-gray-400'}`}>
-                        {privacyMode ? <EyeOff size={24} /> : <Eye size={24} />}
-                    </button>
+                    <div className="flex gap-1">
+                        {/* BOTÓN MOVILIDAD MÓVIL (Condicional) */}
+                        {isModuleEnabled('mobility') && (
+                            <button onClick={() => setView('mobility')} className={`p-2 rounded-xl transition-all active:scale-95 ${view === 'mobility' ? 'bg-violet-50 text-violet-600' : 'bg-transparent text-gray-400'}`}>
+                                <Car size={24} />
+                            </button>
+                        )}
+                        
+                        {/* BOTÓN MÓDULOS MÓVIL */}
+                        <button onClick={() => setView('settings_modules')} className={`p-2 rounded-xl transition-all active:scale-95 ${view === 'settings_modules' ? 'bg-violet-50 text-violet-600' : 'bg-transparent text-gray-400'}`}>
+                            <Puzzle size={24} />
+                        </button>
+
+                        {/* BOTÓN PRIVACIDAD */}
+                        <button onClick={() => setPrivacyMode(!privacyMode)} className={`p-2 rounded-xl transition-all active:scale-95 ${privacyMode ? 'bg-indigo-50 text-indigo-600' : 'bg-gray-100 text-gray-400'}`}>
+                            {privacyMode ? <EyeOff size={24} /> : <Eye size={24} />}
+                        </button>
+                    </div>
                 </div>
 
                 <main className="max-w-5xl mx-auto p-4 mt-2 pb-10 w-full flex-grow">

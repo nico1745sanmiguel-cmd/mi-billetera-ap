@@ -1,5 +1,5 @@
 import React, { useMemo, useEffect, useState, memo } from 'react';
-import { Users, LogOut, AlertCircle, BarChart3, Moon, RefreshCw, Bell, TrendingUp } from 'lucide-react';
+import { Users, LogOut, AlertCircle, BarChart3, Moon, RefreshCw, Bell, TrendingUp, Puzzle } from 'lucide-react';
 import { db } from '../../firebase';
 import { doc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { formatMoney } from '../../utils';
@@ -222,6 +222,9 @@ const Home = memo(({ transactions, cards, supermarketItems = [], services = [], 
                                 {unreadNotifsCount}
                             </span>
                         )}
+                    </button>
+                    <button onClick={() => setView('settings_modules')} className="bg-violet-50 text-violet-500 dark:bg-white/10 dark:text-white/70 p-2 rounded-full hover:bg-violet-100 dark:hover:bg-violet-500/20 dark:hover:text-violet-200 transition-colors dark:backdrop-blur-md dark:border dark:border-white/5">
+                        <Puzzle size={20} />
                     </button>
                     <button onClick={onLogout} className="bg-gray-50 text-gray-400 dark:bg-white/10 dark:text-white/70 p-2 rounded-full hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-500/20 dark:hover:text-red-200 transition-colors dark:backdrop-blur-md dark:border dark:border-white/5">
                         <LogOut size={20} />
