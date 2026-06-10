@@ -147,11 +147,11 @@ export default function MobilityForm({ isGlass, onSuccess, initialData = null, o
                     <p className={`text-xs font-semibold uppercase mb-3 ${isGlass ? 'text-violet-300' : 'text-violet-500'}`}>Vista previa</p>
                     <div className="grid grid-cols-3 gap-2 text-center">
                         <div>
-                            <p className={`text-lg font-bold ${isGlass ? 'text-white' : 'text-gray-800'}`}>${total.toLocaleString('es-AR')}</p>
+                            <p className={`text-lg font-bold ${isGlass ? 'text-white' : 'text-gray-800'}`}>${total.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</p>
                             <p className={`text-xs ${isGlass ? 'text-white/50' : 'text-gray-400'}`}>Total</p>
                         </div>
                         <div>
-                            <p className={`text-lg font-bold ${isGlass ? 'text-white' : 'text-gray-800'}`}>${perHour}</p>
+                            <p className={`text-lg font-bold ${isGlass ? 'text-white' : 'text-gray-800'}`}>${perHour !== '—' ? Number(perHour).toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) : '—'}</p>
                             <p className={`text-xs ${isGlass ? 'text-white/50' : 'text-gray-400'}`}>por hora</p>
                         </div>
                         <div>

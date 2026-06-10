@@ -146,7 +146,7 @@ export default function MobilityHistory({ isGlass, privacyMode }) {
                                         <div className={`flex gap-3 text-xs ${sub}`}>
                                             {session.hoursWorked > 0 && <span>⏱ {session.hoursWorked}h</span>}
                                             {session.kilometers  > 0 && <span>🛣 {session.kilometers}km</span>}
-                                            {session.earningsPerHour > 0 && <span>💵 {privacyMode ? '••' : `$${session.earningsPerHour}/hr`}</span>}
+                                            {session.earningsPerHour > 0 && <span>💵 {privacyMode ? '••' : `$${Number(session.earningsPerHour).toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}/hr`}</span>}
                                         </div>
                                     </div>
 

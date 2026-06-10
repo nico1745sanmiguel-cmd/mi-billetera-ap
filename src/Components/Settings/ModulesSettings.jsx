@@ -27,6 +27,8 @@ const loadModules = () => {
 
 const saveModules = (state) => {
     localStorage.setItem(CACHE_KEYS.ENABLED_MODULES, JSON.stringify(state));
+    // Notificar a App.jsx que los módulos cambiaron para forzar re-render
+    window.dispatchEvent(new CustomEvent('modulesChanged'));
 };
 
 export const isModuleEnabled = (moduleId) => {

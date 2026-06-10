@@ -198,7 +198,7 @@ export default function MobilityImport({ isGlass, onSuccess }) {
                             {preview.rows.slice(0, 3).map((r, i) => (
                                 <div key={i} className={`flex justify-between text-xs rounded-lg px-3 py-2 ${isGlass ? 'bg-white/5' : 'bg-gray-50'}`}>
                                     <span className={sub}>{r.date}</span>
-                                    <span className={text}>${(r.uber + r.didi + r.cabify + r.others).toLocaleString('es-AR')}</span>
+                                    <span className={text}>${(r.uber + r.didi + r.cabify + r.others).toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
                                     <span className={sub}>{r.hoursWorked}h · {r.kilometers}km</span>
                                 </div>
                             ))}

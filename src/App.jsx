@@ -65,8 +65,17 @@ export default function App() {
         hideToast,
     } = useUI();
 
-    // ─── ESTADO LOCAL (solo afecta a App.jsx, no necesita contexto) ─────────
+    // ─── ESTADO LOCAL (solo afecta a App.jsx, no necesita contexto) ─────
     const [showReload, setShowReload] = useState(false);
+    // Tick que se incrementa cuando el usuario activa/desactiva un módulo.
+    // Sirve para forzar re-render y que isModuleEnabled() lea el nuevo localStorage.
+    const [modulesTick, setModulesTick] = useState(0);
+
+    useEffect(() => {
+        const handler = () => setModulesTick(t => t + 1);
+        window.addEventListener('modulesChanged', handler);
+        return () => window.removeEventListener('modulesChanged', handler);
+    }, []);
 
     // Mostrar botón de recarga si tarda demasiado
     useEffect(() => {
