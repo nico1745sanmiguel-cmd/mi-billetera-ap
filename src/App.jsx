@@ -146,7 +146,7 @@ export default function App() {
             <div className={`absolute inset-0 z-0 bg-night-gradient transition-opacity duration-1000 ease-out pointer-events-none ${isGlass ? 'opacity-100' : 'opacity-0'}`}></div>
 
             {/* MAIN CONTENT WRAPPER */}
-            <div className={`relative z-10 min-h-screen transition-colors duration-700 ease-in-out flex flex-col ${isGlass ? 'text-white' : 'text-gray-800'}`}>
+            <div data-modules-tick={modulesTick} className={`relative z-10 min-h-screen transition-colors duration-700 ease-in-out flex flex-col ${isGlass ? 'text-white' : 'text-gray-800'}`}>
                 {toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
                 <InstallPrompt />
 
