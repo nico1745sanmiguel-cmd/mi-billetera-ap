@@ -49,21 +49,28 @@ const parseCSV = (text) => {
 
         const cleanNum = (idx) => {
             if (idx < 0 || !cols[idx]) return 0;
-            // Quitar el signo $, espacios, y los puntos (separador de miles en AR)
-            // Si hay comas para decimales, las cambiamos por punto para que parseFloat las entienda.
-            let val = cols[idx].replace(/[$\s.]/g, '');
+            // 1. Quitar el signo $, espacios.
+            // 2. Quitar los puntos (separador de miles en AR).
+            // 3. Cambiar comas por puntos (para decimales).
+            let val = cols[idx].replace(/[$\s]/g, '');
+            val = val.replace(/\./g, '');
             val = val.replace(',', '.');
             return parseFloat(val) || 0;
         };
+
+        const uber = cleanNum(iUber);
+        const didi = cleanNum(iDidi);
+        const cabify = cleanNum(iCabify);
+        const others = cleanNum(iOthers);
+
+        // EXCLUIR los días donde no hubo ningún ingreso
+        if (uber + didi + cabify + others === 0) continue;
 
         rows.push({
             date,
             hoursWorked: cleanNum(iHours),
             kilometers:  cleanNum(iKm),
-            uber:        cleanNum(iUber),
-            didi:        cleanNum(iDidi),
-            cabify:      cleanNum(iCabify),
-            others:      cleanNum(iOthers),
+            uber, didi, cabify, others
         });
     }
 
