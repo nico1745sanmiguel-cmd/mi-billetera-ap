@@ -180,24 +180,7 @@ export default function App() {
 
                     <div className="flex gap-1">
 
-                        {/* BOTÓN MOVILIDAD MÓVIL (Condicional) */}
-                        {isModuleEnabled('mobility') && (
-                            <button onClick={() => setView('mobility')} className={`p-2 rounded-xl transition-all active:scale-95 ${view === 'mobility' ? 'bg-violet-50 text-violet-600' : 'bg-transparent text-gray-400'}`}>
-                                <Car size={24} />
-                            </button>
-                        )}
 
-                        {/* BOTÓN TARJETAS MÓVIL (Condicional) */}
-                        {isModuleEnabled('cards') && (
-                            <button onClick={() => { setSelectedCard(null); setView('cards'); }} className={`p-2 rounded-xl transition-all active:scale-95 ${view === 'cards' ? 'bg-blue-50 text-blue-600' : 'bg-transparent text-gray-400'}`}>
-                                <CreditCardIcon size={24} />
-                            </button>
-                        )}
-
-                        {/* BOTÓN MÓDULOS MÓVIL */}
-                        <button onClick={() => setView('settings_modules')} className={`p-2 rounded-xl transition-all active:scale-95 ${view === 'settings_modules' ? 'bg-violet-50 text-violet-600' : 'bg-transparent text-gray-400'}`}>
-                            <Puzzle size={24} />
-                        </button>
 
                         {/* BOTÓN PRIVACIDAD */}
                         <button onClick={() => setPrivacyMode(!privacyMode)} className={`p-2 rounded-xl transition-all active:scale-95 ${privacyMode ? 'bg-indigo-50 text-indigo-600' : 'bg-gray-100 text-gray-400'}`}>
