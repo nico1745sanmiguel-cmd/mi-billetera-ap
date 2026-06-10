@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Car, Puzzle } from 'lucide-react';
+import { ArrowLeft, Car, Puzzle, ShoppingCart, CreditCard } from 'lucide-react';
 import { CACHE_KEYS } from '../../config/constants';
 import { getCache, setCache } from '../../utils/cache';
 
@@ -15,6 +15,26 @@ const AVAILABLE_MODULES = [
         iconBg: 'bg-violet-100',
         iconColor: 'text-violet-600',
         badge: 'Nuevo',
+    },
+    {
+        id: 'supermarket',
+        label: 'Supermercado',
+        description: 'Gestioná tu lista de compras, registrá gastos del super y escaneá tickets para llevar el historial mensual.',
+        icon: ShoppingCart,
+        color: 'from-emerald-500 to-teal-600',
+        iconBg: 'bg-emerald-100',
+        iconColor: 'text-emerald-600',
+        badge: null,
+    },
+    {
+        id: 'cards',
+        label: 'Tarjetas de Crédito',
+        description: 'Administrá tus tarjetas, cargá resúmenes del mes (con IA), marcá pagos y visualizá tus cuotas pendientes.',
+        icon: CreditCard,
+        color: 'from-blue-600 to-indigo-600',
+        iconBg: 'bg-blue-100',
+        iconColor: 'text-blue-600',
+        badge: null,
     },
 ];
 
@@ -79,13 +99,20 @@ export default function ModulesSettings({ isGlass, onBack }) {
             <div className="space-y-3">
                 {AVAILABLE_MODULES.map(({ id, label, description, icon: Icon, color, iconBg, iconColor, badge }) => {
                     const active = !!enabled[id];
+                    // Cada módulo tiene su propio color de highlight cuando está activo
+                    const glassActive = id === 'supermarket' ? 'border-emerald-400/40 bg-emerald-500/10'
+                        : id === 'cards' ? 'border-blue-400/40 bg-blue-500/10'
+                        : 'border-violet-400/40 bg-violet-500/10';
+                    const lightActive = id === 'supermarket' ? 'border-emerald-200 bg-emerald-50/50'
+                        : id === 'cards' ? 'border-blue-200 bg-blue-50/50'
+                        : 'border-violet-200 bg-violet-50/50';
                     return (
                         <div
                             key={id}
                             className={`${card} ${active
                                 ? isGlass
-                                    ? 'border-violet-400/40 bg-violet-500/10'
-                                    : 'border-violet-200 bg-violet-50/50'
+                                    ? glassActive
+                                    : lightActive
                                 : ''
                             }`}
                         >

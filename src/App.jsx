@@ -9,7 +9,7 @@ import { auth } from './firebase';
 import { signOut } from 'firebase/auth';
 import { useFinancial } from './context/FinancialContext';
 import { useUI } from './context/UIContext';
-import { Home as HomeIcon, ChevronLeft, ChevronRight, Eye, EyeOff, Puzzle, Car } from 'lucide-react';
+import { Home as HomeIcon, ChevronLeft, ChevronRight, Eye, EyeOff, Puzzle, Car, CreditCard as CreditCardIcon } from 'lucide-react';
 import { ENABLE_HOUSEHOLD, SLOW_CONNECTION_TIMEOUT_MS } from './config/constants';
 import { isModuleEnabled } from './Components/Settings/ModulesSettings';
 
@@ -25,6 +25,7 @@ const SharedExpensesDashboard = lazy(() => import('./Components/Shared/SharedExp
 const ReceiptScanner = lazy(() => import('./Components/ReceiptScanner/ReceiptScanner'));
 const SavingsDashboard = lazy(() => import('./Components/Savings/SavingsDashboard'));
 const MobilityDashboard = lazy(() => import('./Components/Mobility/MobilityDashboard'));
+const CardsDashboard    = lazy(() => import('./Components/Cards/CardsDashboard'));
 const ModulesSettings   = lazy(() => import('./Components/Settings/ModulesSettings'));
 
 
@@ -70,6 +71,8 @@ export default function App() {
     // Tick que se incrementa cuando el usuario activa/desactiva un módulo.
     // Sirve para forzar re-render y que isModuleEnabled() lea el nuevo localStorage.
     const [modulesTick, setModulesTick] = useState(0);
+    // Tarjeta pre-seleccionada al navegar desde el widget del dashboard
+    const [selectedCard, setSelectedCard] = useState(null);
 
     useEffect(() => {
         const handler = () => setModulesTick(t => t + 1);
@@ -176,13 +179,21 @@ export default function App() {
                     </div>
 
                     <div className="flex gap-1">
+
                         {/* BOTÓN MOVILIDAD MÓVIL (Condicional) */}
                         {isModuleEnabled('mobility') && (
                             <button onClick={() => setView('mobility')} className={`p-2 rounded-xl transition-all active:scale-95 ${view === 'mobility' ? 'bg-violet-50 text-violet-600' : 'bg-transparent text-gray-400'}`}>
                                 <Car size={24} />
                             </button>
                         )}
-                        
+
+                        {/* BOTÓN TARJETAS MÓVIL (Condicional) */}
+                        {isModuleEnabled('cards') && (
+                            <button onClick={() => { setSelectedCard(null); setView('cards'); }} className={`p-2 rounded-xl transition-all active:scale-95 ${view === 'cards' ? 'bg-blue-50 text-blue-600' : 'bg-transparent text-gray-400'}`}>
+                                <CreditCardIcon size={24} />
+                            </button>
+                        )}
+
                         {/* BOTÓN MÓDULOS MÓVIL */}
                         <button onClick={() => setView('settings_modules')} className={`p-2 rounded-xl transition-all active:scale-95 ${view === 'settings_modules' ? 'bg-violet-50 text-violet-600' : 'bg-transparent text-gray-400'}`}>
                             <Puzzle size={24} />
@@ -216,6 +227,7 @@ export default function App() {
                                 householdId={userData?.householdId}
                                 householdMembers={householdMembers}
                                 notifications={notifications}
+                                onCardClick={(card) => { setSelectedCard(card); setView('cards'); }}
                             />
                         )}
 
@@ -283,7 +295,7 @@ export default function App() {
                             />
                         )}
 
-                        {view === 'super' && (
+                        {view === 'super' && isModuleEnabled('supermarket') && (
                             <SuperList
                                 items={visibleSuperItems}
                                 currentDate={currentDate}
@@ -293,7 +305,7 @@ export default function App() {
                             />
                         )}
 
-                        {view === 'fresh' && (
+                        {view === 'fresh' && isModuleEnabled('supermarket') && (
                             <FreshShop
                                 items={freshItems}
                                 plannerCategories={plannerCategories}
@@ -321,7 +333,7 @@ export default function App() {
                             />
                         )}
 
-                        {view === 'scanner' && (
+                        {view === 'scanner' && isModuleEnabled('supermarket') && (
                             <ReceiptScanner
                                 isGlass={isGlass}
                                 items={visibleSuperItems}
@@ -335,6 +347,19 @@ export default function App() {
                                 isGlass={isGlass}
                                 privacyMode={privacyMode}
                                 onBack={() => setView('dashboard')}
+                            />
+                        )}
+
+                        {/* MÓDULO DE TARJETAS */}
+                        {view === 'cards' && isModuleEnabled('cards') && (
+                            <CardsDashboard
+                                cards={visibleCards}
+                                currentDate={currentDate}
+                                privacyMode={privacyMode}
+                                isGlass={isGlass}
+                                householdId={userData?.householdId}
+                                onBack={() => { setSelectedCard(null); setView('dashboard'); }}
+                                initialCard={selectedCard}
                             />
                         )}
 

@@ -4,7 +4,6 @@ import { db } from '../../firebase';
 import { doc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { formatMoney } from '../../utils';
 import FinancialTarget from './FinancialTarget';
-import CardDetailModal from '../Cards/CardDetailModal';
 import { useDragReorder } from '../../hooks/useDragReorder';
 import { calcularProporciones, getLatestSalary } from '../../utils/salaryUtils';
 import { buildCardsWithDebt, formatMonthKey } from '../../utils/cardDebtUtils';
@@ -26,10 +25,8 @@ import NotificationsModal from './Widgets/NotificationsModal';
 import MobilityWidget from './Widgets/MobilityWidget';
 import { isModuleEnabled } from '../Settings/ModulesSettings';
 
-const Home = memo(({ transactions, cards, supermarketItems = [], services = [], freshItems = [], privacyMode, setView, onLogout, currentDate, user, onToggleTheme, householdId, householdMembers = [], notifications = [], plannerCategories = [] }) => {
+const Home = memo(({ transactions, cards, supermarketItems = [], services = [], freshItems = [], privacyMode, setView, onLogout, currentDate, user, onToggleTheme, householdId, householdMembers = [], notifications = [], plannerCategories = [], onCardClick }) => {
 
-    const [selectedCardForModal, setSelectedCardForModal] = useState(null);
-    const [isModalOpen, setIsModalOpen] = useState(false);
     const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
 
     const unreadNotifsCount = useMemo(() => {
@@ -51,8 +48,7 @@ const Home = memo(({ transactions, cards, supermarketItems = [], services = [], 
     const targetMonthVal = useMemo(() => currentDate.getFullYear() * 12 + currentDate.getMonth(), [currentDate]);
 
     const openCardModal = (card) => {
-        setSelectedCardForModal(card);
-        setIsModalOpen(true);
+        if (onCardClick) onCardClick(card);
     };
 
     const handleCacheRefresh = async () => {
@@ -139,8 +135,9 @@ const Home = memo(({ transactions, cards, supermarketItems = [], services = [], 
             .slice(0, AGENDA_MAX_ITEMS);
     }, [services, cardsWithDebt, targetMonthKey]);
 
-    const totalNeed = services.reduce((acc, s) => acc + s.amount, 0) + cardsWithDebt.reduce((acc, c) => acc + c.currentDebt, 0) + superData.totalBudget;
-    const totalPaid = services.filter(s => s.paidPeriods?.includes(targetMonthKey)).reduce((acc, s) => acc + s.amount, 0) + cardsWithDebt.filter(c => c.paidPeriods?.includes(targetMonthKey)).reduce((acc, c) => acc + c.currentDebt, 0) + superData.realSpent;
+    const superEnabled = isModuleEnabled('supermarket');
+    const totalNeed = services.reduce((acc, s) => acc + s.amount, 0) + cardsWithDebt.reduce((acc, c) => acc + c.currentDebt, 0) + (superEnabled ? superData.totalBudget : 0);
+    const totalPaid = services.filter(s => s.paidPeriods?.includes(targetMonthKey)).reduce((acc, s) => acc + s.amount, 0) + cardsWithDebt.filter(c => c.paidPeriods?.includes(targetMonthKey)).reduce((acc, c) => acc + c.currentDebt, 0) + (superEnabled ? superData.realSpent : 0);
     const showMoney = (amount) => privacyMode ? '****' : formatMoney(amount);
 
     const criticalAlert = useMemo(() => {
@@ -199,9 +196,9 @@ const Home = memo(({ transactions, cards, supermarketItems = [], services = [], 
         savings_summary: <SavingsWidget setView={setView} privacyMode={privacyMode} />,
         ...(isModuleEnabled('mobility') ? { mobility: <MobilityWidget setView={setView} currentDate={currentDate} privacyMode={privacyMode} /> } : {}),
         split_summary: <SplitSummaryWidget setView={setView} householdMembers={householdMembers} splitData={splitData} currentDate={currentDate} privacyMode={privacyMode} user={user} />,
-        cards: <CardsWidget cards={cards} targetMonthKey={targetMonthKey} privacyMode={privacyMode} openCardModal={openCardModal} />,
+        ...(isModuleEnabled('cards') ? { cards: <CardsWidget cards={cards} targetMonthKey={targetMonthKey} privacyMode={privacyMode} onCardClick={openCardModal} /> } : {}),
         agenda: <AgendaWidget agenda={agenda} currentDate={currentDate} privacyMode={privacyMode} setView={setView} freshItems={freshItems} plannerCategories={plannerCategories} />,
-        super_actions: <SuperActionsWidget superData={superData} privacyMode={privacyMode} setView={setView} />
+        ...(isModuleEnabled('supermarket') ? { super_actions: <SuperActionsWidget superData={superData} privacyMode={privacyMode} setView={setView} /> } : {}),
     };
 
     return (

@@ -101,33 +101,37 @@ export default function MobilityExpenses({ isGlass }) {
                     </div>
                 </div>
 
-                <form onSubmit={handleGnc} className="flex gap-2">
-                    <input
-                        type="date"
-                        value={gncDate}
-                        onChange={e => setGncDate(e.target.value)}
-                        className={`${inputCls} w-36 flex-shrink-0`}
-                    />
-                    <div className="relative flex-1">
-                        <span className={`absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold ${isGlass ? 'text-white/40' : 'text-gray-300'}`}>$</span>
+                <form onSubmit={handleGnc} className="space-y-2">
+                    {/* Fila 1: fecha + monto */}
+                    <div className="flex gap-2">
                         <input
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            placeholder="Monto"
-                            value={gncAmount}
-                            onChange={e => setGncAmount(e.target.value)}
-                            className={`${inputCls} pl-7`}
-                            required
+                            type="date"
+                            value={gncDate}
+                            onChange={e => setGncDate(e.target.value)}
+                            className={`${inputCls} flex-1 min-w-0`}
                         />
+                        <div className="relative flex-1 min-w-0">
+                            <span className={`absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold ${isGlass ? 'text-white/40' : 'text-gray-300'}`}>$</span>
+                            <input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                placeholder="Monto"
+                                value={gncAmount}
+                                onChange={e => setGncAmount(e.target.value)}
+                                className={`${inputCls} pl-7`}
+                                required
+                            />
+                        </div>
                     </div>
+                    {/* Fila 2: botón ancho completo */}
                     <button
                         type="submit"
                         disabled={gncSaving}
-                        className="flex-shrink-0 px-4 py-3 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-400 hover:to-cyan-400 active:scale-95 transition-all shadow-md shadow-blue-500/30 flex items-center gap-1.5"
+                        className="w-full py-3 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-400 hover:to-cyan-400 active:scale-95 transition-all shadow-md shadow-blue-500/30 flex items-center justify-center gap-2"
                     >
                         {gncSaving ? <RefreshCw size={14} className="animate-spin" /> : <Plus size={14} />}
-                        <span className="hidden sm:inline">Agregar</span>
+                        Agregar GNC
                     </button>
                 </form>
             </div>
