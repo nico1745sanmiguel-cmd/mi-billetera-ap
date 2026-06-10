@@ -49,7 +49,11 @@ const parseCSV = (text) => {
 
         const cleanNum = (idx) => {
             if (idx < 0 || !cols[idx]) return 0;
-            return parseFloat(cols[idx].replace(/[$\s]/g, '')) || 0;
+            // Quitar el signo $, espacios, y los puntos (separador de miles en AR)
+            // Si hay comas para decimales, las cambiamos por punto para que parseFloat las entienda.
+            let val = cols[idx].replace(/[$\s.]/g, '');
+            val = val.replace(',', '.');
+            return parseFloat(val) || 0;
         };
 
         rows.push({
