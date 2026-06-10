@@ -281,14 +281,7 @@ const Home = memo(({ transactions, cards, supermarketItems = [], services = [], 
                 <span>Actualizar Aplicación</span>
             </button>
 
-            <CardDetailModal
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                card={selectedCardForModal}
-                privacyMode={privacyMode}
-                householdId={householdId}
-                currentDate={currentDate}
-            />
+
 
             {isNotificationsOpen && (
                 <NotificationsModal 
