@@ -96,6 +96,13 @@ export const MobilityProvider = ({ children }) => {
         await deleteDoc(doc(db, COLLECTIONS.MOBILITY_SESSIONS, id));
     }, [user]);
 
+    const deleteAllSessions = useCallback(async () => {
+        if (!user) return;
+        for (const session of sessions) {
+            await deleteDoc(doc(db, COLLECTIONS.MOBILITY_SESSIONS, session.id));
+        }
+    }, [user, sessions]);
+
     // ─── IMPORTACIÓN MASIVA (para histórico CSV) ──────────────────────────────
     const importSessions = useCallback(async (rows) => {
         if (!user) return { ok: 0, errors: 0 };
@@ -124,9 +131,10 @@ export const MobilityProvider = ({ children }) => {
         addSession,
         updateSession,
         deleteSession,
+        deleteAllSessions,
         importSessions,
         getDayOfWeek,
-    }), [sessions, loading, addSession, updateSession, deleteSession, importSessions]);
+    }), [sessions, loading, addSession, updateSession, deleteSession, deleteAllSessions, importSessions]);
 
     return (
         <MobilityContext.Provider value={value}>
