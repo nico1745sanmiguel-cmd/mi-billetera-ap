@@ -11,6 +11,7 @@ import { useFinancial } from './context/FinancialContext';
 import { useUI } from './context/UIContext';
 import { Home as HomeIcon, ChevronLeft, ChevronRight, Eye, EyeOff } from 'lucide-react';
 import { ENABLE_HOUSEHOLD, SLOW_CONNECTION_TIMEOUT_MS } from './config/constants';
+import { isModuleEnabled } from './Components/Settings/ModulesSettings';
 
 // --- LAZY IMPORTS ---
 const Stats = lazy(() => import('./Components/Dashboard/Stats'));
@@ -23,6 +24,8 @@ const ReconciliationDesk = lazy(() => import('./Components/Reconciliation/Reconc
 const SharedExpensesDashboard = lazy(() => import('./Components/Shared/SharedExpensesDashboard'));
 const ReceiptScanner = lazy(() => import('./Components/ReceiptScanner/ReceiptScanner'));
 const SavingsDashboard = lazy(() => import('./Components/Savings/SavingsDashboard'));
+const MobilityDashboard = lazy(() => import('./Components/Mobility/MobilityDashboard'));
+const ModulesSettings   = lazy(() => import('./Components/Settings/ModulesSettings'));
 
 
 const LazyLoader = () => (
@@ -308,6 +311,23 @@ export default function App() {
                             <SavingsDashboard
                                 isGlass={isGlass}
                                 privacyMode={privacyMode}
+                                onBack={() => setView('dashboard')}
+                            />
+                        )}
+
+                        {/* MÓDULO DE MOVILIDAD */}
+                        {view === 'mobility' && isModuleEnabled('mobility') && (
+                            <MobilityDashboard
+                                isGlass={isGlass}
+                                privacyMode={privacyMode}
+                                onBack={() => setView('dashboard')}
+                            />
+                        )}
+
+                        {/* CONFIGURACIÓN DE MÓDULOS */}
+                        {view === 'settings_modules' && (
+                            <ModulesSettings
+                                isGlass={isGlass}
                                 onBack={() => setView('dashboard')}
                             />
                         )}

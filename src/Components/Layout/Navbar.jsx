@@ -1,12 +1,24 @@
-import React from 'react';
-import { BarChart3, Plus, CreditCard, Eye, EyeOff, TrendingUp } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { BarChart3, Plus, CreditCard, Eye, EyeOff, TrendingUp, Car, Puzzle } from 'lucide-react';
+import { isModuleEnabled } from '../Settings/ModulesSettings';
 
 export default function Navbar({ currentView, setView, privacyMode, setPrivacyMode }) {
+  // Re-render cuando el usuario activa/desactiva módulos (localStorage puede cambiar)
+  const [, forceUpdate] = useState(0);
+  useEffect(() => {
+    const handler = () => forceUpdate(n => n + 1);
+    window.addEventListener('storage', handler);
+    return () => window.removeEventListener('storage', handler);
+  }, []);
+
+  const mobilityEnabled = isModuleEnabled('mobility');
 
   const navItems = [
-    { id: 'dashboard', label: 'Resumen Financiero', icon: <BarChart3 size={18} /> },
-    { id: 'savings', label: 'Ahorros', icon: <TrendingUp size={18} /> },
-    { id: 'purchase', label: 'Nueva Compra', icon: <Plus size={18} /> },
+    { id: 'dashboard',         label: 'Resumen Financiero', icon: <BarChart3 size={18} /> },
+    { id: 'savings',           label: 'Ahorros',            icon: <TrendingUp size={18} /> },
+    { id: 'purchase',          label: 'Nueva Compra',       icon: <Plus size={18} /> },
+    ...(mobilityEnabled ? [{ id: 'mobility', label: 'Movilidad', icon: <Car size={18} /> }] : []),
+    { id: 'settings_modules',  label: 'Módulos',           icon: <Puzzle size={18} /> },
   ];
 
   return (

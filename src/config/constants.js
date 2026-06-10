@@ -11,6 +11,12 @@
  */
 export const ENABLE_HOUSEHOLD = true;
 
+/**
+ * Activa el módulo de registro de ingresos por apps de movilidad.
+ * Por defecto desactivado — el usuario lo habilita desde Módulos.
+ */
+export const ENABLE_MOBILITY = false;
+
 // ─── TIMEOUTS ────────────────────────────────────────────────────────────────
 /**
  * Cuántos milisegundos esperar antes de mostrar el botón "Recargar"
@@ -90,6 +96,7 @@ export const COLLECTIONS = {
     PLANNER_CATEGORIES: 'planner_categories',
     CONTRIBUTIONS:    'contributions',
     SAVINGS_TRANSACTIONS: 'savings_transactions',
+    MOBILITY_SESSIONS:  'mobility_sessions',
 };
 
 // ─── CACHE KEYS ───────────────────────────────────────────────────────────────
@@ -103,4 +110,6 @@ export const CACHE_KEYS = {
     WIDGET_ORDER: 'widget_order',
     GLASS_MODE:   'glass_mode',
     SAVINGS_TRANSACTIONS: 'savingsTransactions',
+    MOBILITY_SESSIONS: 'mobilitySessions',
+    ENABLED_MODULES: 'enabled_modules',
 };
