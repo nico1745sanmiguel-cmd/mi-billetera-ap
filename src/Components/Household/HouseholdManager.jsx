@@ -9,7 +9,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useUI } from '../../context/UIContext';
 
 // Subcomponente para listar miembros con datos reales de Firestore
-const HouseholdMembersList = ({ memberIds }) => {
+const HouseholdMembersList = ({ memberIds, currentUserUid }) => {
     const { user } = useAuth();
     const { isGlass } = useUI();
     const [membersData, setMembersData] = useState([]);
