@@ -30,15 +30,28 @@ service cloud.firestore {
 
     // Regla general para colecciones que comparten el campo householdId:
     // transactions, cards, supermarket_items, fresh_purchases, services, 
-    // planner_categories, contributions, savings_transactions, mobility_sessions
+    // planner_categories, contributions, savings_transactions
     match /{collection}/{document} {
       allow read, write: if isAuthenticated() && 
                             // Aseguramos que solo afecte a las colecciones con aislamiento por familia
-                            collection in ['transactions', 'cards', 'supermarket_items', 'fresh_purchases', 'services', 'planner_categories', 'contributions', 'savings_transactions', 'mobility_sessions'] &&
+                            collection in ['transactions', 'cards', 'supermarket_items', 'fresh_purchases', 'services', 'planner_categories', 'contributions', 'savings_transactions'] &&
                             // Validamos que el recurso existente o el nuevo dato que se guarda tenga el mismo householdId que el usuario
                             (
                               (resource == null && request.resource.data.householdId == getUserHouseholdId()) || 
                               (resource != null && resource.data.householdId == getUserHouseholdId())
+                            );
+    }
+
+    // Regla general para colecciones que son personales (solo requieren coincidir el userId)
+    // mobility_sessions, mobility_expenses
+    match /{collection}/{document} {
+      allow read, write: if isAuthenticated() && 
+                            // Aseguramos que solo afecte a colecciones personales
+                            collection in ['mobility_sessions', 'mobility_expenses'] &&
+                            // Validamos que el recurso pertenezca al usuario
+                            (
+                              (resource == null && request.resource.data.userId == request.auth.uid) || 
+                              (resource != null && resource.data.userId == request.auth.uid)
                             );
     }
   }
