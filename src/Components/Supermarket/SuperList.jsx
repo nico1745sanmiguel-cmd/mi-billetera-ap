@@ -456,6 +456,7 @@ export default function SuperList() {
 
 
             </div>
+            </div>
 
             {/* INPUT ADD — FIXED BOTTOM */}
             <div className={`fixed bottom-[64px] left-0 right-0 px-4 py-3 border-t z-40 ${isGlass ? 'bg-[#0f0c29]/95 border-white/10 backdrop-blur-md' : 'bg-white/95 border-gray-100 backdrop-blur-sm'}`}>
