@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Upload, FileText, CheckCircle2, AlertCircle, RefreshCw, Info } from 'lucide-react';
-import { useMobility } from '../../context/MobilityContext';
+import { useMobilityDispatch } from '../../context/MobilityContext';
 
 // Columnas esperadas del CSV (case-insensitive, se mapean por posición también)
 // Formato: Fecha,Dia,Uber ($),Didi ($),Otros ($),Cabify ($),Total,Horas Trabajadas,Kilómetros (KM),...
@@ -78,7 +78,7 @@ const parseCSV = (text) => {
 };
 
 export default function MobilityImport({ isGlass, onSuccess }) {
-    const { importSessions } = useMobility();
+    const { importSessions } = useMobilityDispatch();
     const fileRef = useRef();
     const [preview, setPreview] = useState(null);   // { rows, errors }
     const [result,  setResult]  = useState(null);   // { ok, errors }

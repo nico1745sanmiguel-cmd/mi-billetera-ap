@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Fuel, Wrench, Car, Droplets, Plus, Trash2, RefreshCw, ChevronDown, ChevronUp, Zap } from 'lucide-react';
-import { useMobility } from '../../context/MobilityContext';
+import { useMobilityState, useMobilityDispatch } from '../../context/MobilityContext';
 
 const today = () => new Date().toISOString().slice(0, 10);
 
@@ -16,7 +16,8 @@ const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto
 const fmt = (n) => `$${Number(n || 0).toLocaleString('es-AR', { maximumFractionDigits: 0 })}`;
 
 export default function MobilityExpenses({ isGlass }) {
-    const { expenses, addExpense, deleteExpense } = useMobility();
+    const { expenses } = useMobilityState();
+    const { addExpense, deleteExpense } = useMobilityDispatch();
 
     // ─── GNC: carga rápida ────────────────────────────────────────────────────
     const [gncAmount, setGncAmount] = useState('');

@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { TrendingUp, Clock, Navigation, Star, ChevronLeft, ChevronRight, Zap, Fuel, Wrench, Droplets } from 'lucide-react';
-import { useMobility } from '../../context/MobilityContext';
+import { useMobilityState } from '../../context/MobilityContext';
 
 const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 
@@ -21,7 +21,7 @@ const EXPENSE_CATS = [
 const fmt = (n, prefix = '$') => `${prefix}${Number(n || 0).toLocaleString('es-AR', { maximumFractionDigits: 0 })}`;
 
 export default function MobilityStats({ isGlass, privacyMode }) {
-    const { sessions, expenses } = useMobility();
+    const { sessions, expenses } = useMobilityState();
 
     const now = new Date();
     const [year,  setYear]  = useState(now.getFullYear());

@@ -1,9 +1,9 @@
 import React, { useMemo } from 'react';
 import { Car, TrendingUp, ChevronRight } from 'lucide-react';
-import { useMobility, MobilityProvider } from '../../../context/MobilityContext';
+import { useMobilityState, MobilityProvider } from '../../../context/MobilityContext';
 
 function MobilityWidgetInner({ setView, currentDate, privacyMode }) {
-    const { sessions, loading } = useMobility();
+    const { sessions, loading } = useMobilityState();
     const monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
     
     const filtered = useMemo(() =>

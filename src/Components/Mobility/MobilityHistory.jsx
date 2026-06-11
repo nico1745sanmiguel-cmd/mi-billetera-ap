@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Trash2, Pencil, ChevronLeft, ChevronRight, X, Check, AlertTriangle } from 'lucide-react';
-import { useMobility } from '../../context/MobilityContext';
+import { useMobilityState, useMobilityDispatch } from '../../context/MobilityContext';
 import MobilityForm from './MobilityForm';
 
 const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
@@ -8,7 +8,8 @@ const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto
 const fmt = (n) => `$${Number(n || 0).toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
 
 export default function MobilityHistory({ isGlass, privacyMode }) {
-    const { sessions, deleteSession, deleteAllSessions } = useMobility();
+    const { sessions } = useMobilityState();
+    const { deleteSession, deleteAllSessions } = useMobilityDispatch();
     const [editingId, setEditingId] = useState(null);
     const [confirmDelete, setConfirmDelete] = useState(null);
     const [showDeleteAll, setShowDeleteAll] = useState(false);

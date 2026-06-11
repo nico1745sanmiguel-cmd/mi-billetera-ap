@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Save, RefreshCw } from 'lucide-react';
-import { useMobility } from '../../context/MobilityContext';
+import { useMobilityDispatch } from '../../context/MobilityContext';
 
 const today = () => new Date().toISOString().slice(0, 10);
 
@@ -22,7 +22,7 @@ const emptyForm = {
 };
 
 export default function MobilityForm({ isGlass, onSuccess, initialData = null, onCancel = null }) {
-    const { addSession, updateSession } = useMobility();
+    const { addSession, updateSession } = useMobilityDispatch();
     const [form, setForm] = useState(initialData || emptyForm);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
