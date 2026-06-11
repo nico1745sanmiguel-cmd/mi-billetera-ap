@@ -3,7 +3,7 @@ import { Wallet, ChevronDown, ChevronUp, Clock, Edit2, Check, X } from 'lucide-r
 import { useSavings } from '../../context/SavingsContext';
 
 export default function SavingsCard({ cartera, items, isGlass, privacyMode, dolarBlue, customQuotes }) {
-    const { addSavingsTransaction } = useSavings();
+    const { addSavingsTransaction, savingsTransactions } = useSavings();
     const [showHistory, setShowHistory] = useState(false);
     
     // Estado para la edición inline

@@ -1,9 +1,11 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { TrendingUp, ArrowRightLeft } from 'lucide-react';
 import { useFinancial } from '../../../context/FinancialContext';
+import { useSavings } from '../../../context/SavingsContext';
 
 export default function SavingsWidget({ setView, privacyMode }) {
-    const { savingsTransactions, dolarBlue } = useFinancial();
+    const { dolarBlue } = useFinancial();
+    const { savingsTransactions } = useSavings();
     const [currencyView, setCurrencyView] = useState('ARS');
     const [customQuotes, setCustomQuotes] = useState({});
 

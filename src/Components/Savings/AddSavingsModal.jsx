@@ -3,7 +3,7 @@ import { X, Save, TrendingUp, TrendingDown } from 'lucide-react';
 import { useSavings } from '../../context/SavingsContext';
 
 export default function AddSavingsModal({ onClose, isGlass }) {
-    const { addSavingsTransaction } = useSavings();
+    const { addSavingsTransaction, savingsTransactions } = useSavings();
     const [loading, setLoading] = useState(false);
 
     const [formData, setFormData] = useState({
