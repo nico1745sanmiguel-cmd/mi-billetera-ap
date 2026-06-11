@@ -215,7 +215,7 @@ export default function App() {
                         )}
 
                         {/* SERVICIOS */}
-                        {view === 'services_manager' && (
+                        {view === 'services_manager' && (isModuleEnabled('agenda') || isModuleEnabled('planner')) && (
                             <ServicesManager
                                 services={visibleServices}
                                 cards={visibleCards}
@@ -242,7 +242,7 @@ export default function App() {
                         )}
 
                         {/* GRUPO FAMILIAR */}
-                        {view === 'household' && (
+                        {view === 'household' && isModuleEnabled('household') && (
                             <HouseholdManager
                                 user={user}
                                 householdId={userData?.householdId}
@@ -251,7 +251,7 @@ export default function App() {
                             />
                         )}
 
-                        {view === 'stats' && (
+                        {view === 'stats' && isModuleEnabled('stats') && (
                             <Stats
                                 transactions={visibleTransactions}
                                 cards={visibleCards}
@@ -299,7 +299,7 @@ export default function App() {
                         )}
 
                         {/* REPARTO DEL MES */}
-                        {view === 'reparto' && (
+                        {view === 'reparto' && isModuleEnabled('household') && (
                             <SharedExpensesDashboard
                                 services={visibleServices}
                                 cards={visibleCards}
@@ -325,7 +325,7 @@ export default function App() {
                         )}
 
                         {/* MÓDULO DE AHORRO / INVERSIONES */}
-                        {view === 'savings' && (
+                        {view === 'savings' && isModuleEnabled('savings') && (
                             <SavingsDashboard
                                 isGlass={isGlass}
                                 privacyMode={privacyMode}

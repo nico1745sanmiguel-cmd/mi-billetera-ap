@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Car, Puzzle, ShoppingCart, CreditCard } from 'lucide-react';
+import { ArrowLeft, Car, Puzzle, ShoppingCart, CreditCard, TrendingUp, Users, CalendarDays, ListTodo, PieChart } from 'lucide-react';
 import { CACHE_KEYS } from '../../config/constants';
 import { getCache, setCache } from '../../utils/cache';
 
@@ -34,6 +34,56 @@ const AVAILABLE_MODULES = [
         color: 'from-blue-600 to-indigo-600',
         iconBg: 'bg-blue-100',
         iconColor: 'text-blue-600',
+        badge: null,
+    },
+    {
+        id: 'savings',
+        label: 'Ahorros e Inversiones',
+        description: 'Gestioná tus metas de ahorro, registrá tus saldos y seguí el rendimiento de tus inversiones.',
+        icon: TrendingUp,
+        color: 'from-amber-500 to-orange-600',
+        iconBg: 'bg-amber-100',
+        iconColor: 'text-amber-600',
+        badge: null,
+    },
+    {
+        id: 'household',
+        label: 'Grupo Familiar y Reparto',
+        description: 'Gestioná los miembros de tu hogar, sus sueldos y calculá el reparto proporcional de los gastos compartidos.',
+        icon: Users,
+        color: 'from-pink-500 to-rose-600',
+        iconBg: 'bg-pink-100',
+        iconColor: 'text-pink-600',
+        badge: null,
+    },
+    {
+        id: 'agenda',
+        label: 'Agenda de Vencimientos',
+        description: 'Calendario de servicios fijos, tarjetas de crédito y recordatorios de pagos.',
+        icon: CalendarDays,
+        color: 'from-cyan-500 to-blue-600',
+        iconBg: 'bg-cyan-100',
+        iconColor: 'text-cyan-600',
+        badge: null,
+    },
+    {
+        id: 'planner',
+        label: 'Planificador Financiero',
+        description: 'Organizá tu presupuesto mensual, definí objetivos y planificá tus compras (ferias, etc.).',
+        icon: ListTodo,
+        color: 'from-fuchsia-500 to-purple-600',
+        iconBg: 'bg-fuchsia-100',
+        iconColor: 'text-fuchsia-600',
+        badge: null,
+    },
+    {
+        id: 'stats',
+        label: 'Estadísticas y Análisis',
+        description: 'Visualizá gráficos detallados de tus finanzas y proyecciones a futuro.',
+        icon: PieChart,
+        color: 'from-indigo-500 to-blue-600',
+        iconBg: 'bg-indigo-100',
+        iconColor: 'text-indigo-600',
         badge: null,
     },
 ];
@@ -102,9 +152,19 @@ export default function ModulesSettings({ isGlass, onBack }) {
                     // Cada módulo tiene su propio color de highlight cuando está activo
                     const glassActive = id === 'supermarket' ? 'border-emerald-400/40 bg-emerald-500/10'
                         : id === 'cards' ? 'border-blue-400/40 bg-blue-500/10'
+                        : id === 'savings' ? 'border-amber-400/40 bg-amber-500/10'
+                        : id === 'household' ? 'border-pink-400/40 bg-pink-500/10'
+                        : id === 'agenda' ? 'border-cyan-400/40 bg-cyan-500/10'
+                        : id === 'planner' ? 'border-fuchsia-400/40 bg-fuchsia-500/10'
+                        : id === 'stats' ? 'border-indigo-400/40 bg-indigo-500/10'
                         : 'border-violet-400/40 bg-violet-500/10';
                     const lightActive = id === 'supermarket' ? 'border-emerald-200 bg-emerald-50/50'
                         : id === 'cards' ? 'border-blue-200 bg-blue-50/50'
+                        : id === 'savings' ? 'border-amber-200 bg-amber-50/50'
+                        : id === 'household' ? 'border-pink-200 bg-pink-50/50'
+                        : id === 'agenda' ? 'border-cyan-200 bg-cyan-50/50'
+                        : id === 'planner' ? 'border-fuchsia-200 bg-fuchsia-50/50'
+                        : id === 'stats' ? 'border-indigo-200 bg-indigo-50/50'
                         : 'border-violet-200 bg-violet-50/50';
                     return (
                         <div

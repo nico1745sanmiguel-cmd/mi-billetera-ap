@@ -187,17 +187,17 @@ const Home = memo(({ transactions, cards, supermarketItems = [], services = [], 
     }, [householdMembers, services, cardsWithDebt, supermarketItems, freshItems, targetMonthKey]);
 
     const WIDGETS = {
-        target: (
+        ...(isModuleEnabled('planner') ? { target: (
             <div className={`transition-all duration-300 ${privacyMode ? 'opacity-50 blur-sm pointer-events-none select-none' : 'opacity-100'}`}>
                 <FinancialTarget totalNeed={totalNeed} totalPaid={totalPaid} privacyMode={privacyMode} />
                 {privacyMode && <div className="absolute inset-0 flex items-center justify-center font-bold text-gray-500 z-10">Vista Privada</div>}
             </div>
-        ),
-        savings_summary: <SavingsWidget setView={setView} privacyMode={privacyMode} />,
+        ) } : {}),
+        ...(isModuleEnabled('savings') ? { savings_summary: <SavingsWidget setView={setView} privacyMode={privacyMode} /> } : {}),
         ...(isModuleEnabled('mobility') ? { mobility: <MobilityWidget setView={setView} currentDate={currentDate} privacyMode={privacyMode} /> } : {}),
-        split_summary: <SplitSummaryWidget setView={setView} householdMembers={householdMembers} splitData={splitData} currentDate={currentDate} privacyMode={privacyMode} user={user} />,
+        ...(isModuleEnabled('household') ? { split_summary: <SplitSummaryWidget setView={setView} householdMembers={householdMembers} splitData={splitData} currentDate={currentDate} privacyMode={privacyMode} user={user} /> } : {}),
         ...(isModuleEnabled('cards') ? { cards: <CardsWidget cards={cards} targetMonthKey={targetMonthKey} privacyMode={privacyMode} onCardClick={openCardModal} /> } : {}),
-        agenda: <AgendaWidget agenda={agenda} currentDate={currentDate} privacyMode={privacyMode} setView={setView} freshItems={freshItems} plannerCategories={plannerCategories} />,
+        ...(isModuleEnabled('agenda') ? { agenda: <AgendaWidget agenda={agenda} currentDate={currentDate} privacyMode={privacyMode} setView={setView} freshItems={freshItems} plannerCategories={plannerCategories} /> } : {}),
         ...(isModuleEnabled('supermarket') ? { super_actions: <SuperActionsWidget superData={superData} privacyMode={privacyMode} setView={setView} /> } : {}),
     };
 
@@ -211,9 +211,11 @@ const Home = memo(({ transactions, cards, supermarketItems = [], services = [], 
                     </h1>
                 </div>
                 <div className="flex items-center gap-2">
-                    <button onClick={() => setView('household')} className="bg-blue-50 text-blue-500 dark:bg-white/10 dark:text-white/70 p-2 rounded-full hover:bg-blue-100 dark:hover:bg-blue-500/20 dark:hover:text-blue-200 transition-colors dark:backdrop-blur-md dark:border dark:border-white/5">
-                        <Users size={20} />
-                    </button>
+                    {isModuleEnabled('household') && (
+                        <button onClick={() => setView('household')} className="bg-blue-50 text-blue-500 dark:bg-white/10 dark:text-white/70 p-2 rounded-full hover:bg-blue-100 dark:hover:bg-blue-500/20 dark:hover:text-blue-200 transition-colors dark:backdrop-blur-md dark:border dark:border-white/5">
+                            <Users size={20} />
+                        </button>
+                    )}
 
                     <button onClick={() => setIsNotificationsOpen(true)} className="relative bg-indigo-50 text-indigo-500 dark:bg-white/10 dark:text-white/70 p-2 rounded-full hover:bg-indigo-100 dark:hover:bg-indigo-500/20 dark:hover:text-indigo-200 transition-colors dark:backdrop-blur-md dark:border dark:border-white/5">
                         <Bell size={20} className={unreadNotifsCount > 0 ? "animate-pulse" : ""} />
@@ -250,18 +252,20 @@ const Home = memo(({ transactions, cards, supermarketItems = [], services = [], 
                 })}
             </div>
 
-            <button onClick={() => setView('stats')} className="w-full h-20 mx-1 rounded-2xl relative overflow-hidden group shadow-lg shadow-indigo-200 active:scale-95 transition-all">
-                <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 bg-[length:200%_auto] animate-gradient-x opacity-90 group-hover:opacity-100 transition-opacity"></div>
-                <div className="relative z-10 flex flex-col items-center justify-center h-full text-white gap-1">
-                    <div className="flex items-center gap-2">
-                        <div className="bg-white/20 p-1.5 rounded-full backdrop-blur-sm">
-                            <BarChart3 size={16} />
+            {isModuleEnabled('stats') && (
+                <button onClick={() => setView('stats')} className="w-full h-20 mx-1 rounded-2xl relative overflow-hidden group shadow-lg shadow-indigo-200 active:scale-95 transition-all">
+                    <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 bg-[length:200%_auto] animate-gradient-x opacity-90 group-hover:opacity-100 transition-opacity"></div>
+                    <div className="relative z-10 flex flex-col items-center justify-center h-full text-white gap-1">
+                        <div className="flex items-center gap-2">
+                            <div className="bg-white/20 p-1.5 rounded-full backdrop-blur-sm">
+                                <BarChart3 size={16} />
+                            </div>
+                            <span className="font-bold text-base tracking-wide">Ver Análisis Completo</span>
                         </div>
-                        <span className="font-bold text-base tracking-wide">Ver Análisis Completo</span>
+                        <span className="text-[10px] opacity-80 uppercase tracking-widest font-medium">Estadísticas & Proyecciones</span>
                     </div>
-                    <span className="text-[10px] opacity-80 uppercase tracking-widest font-medium">Estadísticas & Proyecciones</span>
-                </div>
-            </button>
+                </button>
+            )}
 
             <button
                 onClick={onToggleTheme}

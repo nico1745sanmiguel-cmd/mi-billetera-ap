@@ -4,6 +4,7 @@ import { collection, addDoc, deleteDoc, doc, updateDoc, setDoc, arrayUnion, arra
 import { Star, Pencil, CalendarDays, User, Split, ChevronDown, ChevronUp } from 'lucide-react';
 import { formatMoney, formatInputNumber, parseInputNumber } from '../../utils';
 import { calcularProporciones, getLatestSalary } from '../../utils/salaryUtils';
+import { isModuleEnabled } from '../Settings/ModulesSettings';
 
 // ─────────────────────────────────────────────────────
 // Subcomponente: Panel de Reparto del Mes
@@ -249,6 +250,7 @@ export default function ServicesManager({ services = [], cards = [], transaction
 
     // 4. UNIFICAR Y ORDENAR
     const allItems = useMemo(() => {
+        if (!isModuleEnabled('agenda')) return [];
         const activeServices = services.filter(s => {
             if (!s.frequency || s.frequency === 'Mensual') return true;
             if (!s.firstDueMonth) return true;
@@ -437,24 +439,28 @@ export default function ServicesManager({ services = [], cards = [], transaction
     const calendarItemsByDay = useMemo(() => {
         const map = {};
         // Items de servicios/tarjetas (por día de vencimiento)
-        allItems.forEach(item => {
-            const d = parseInt(item.day);
-            if (!map[d]) map[d] = [];
-            map[d].push({ ...item, itemKind: 'payment' });
-        });
-        // Items del planificador (por fecha exacta, solo del mes actual)
-        const year = currentDate.getFullYear();
-        const month = currentDate.getMonth() + 1;
-        const monthKey = `${year}-${String(month).padStart(2, '0')}`;
-        freshItems
-            .filter(fi => fi.month === monthKey && fi.date)
-            .forEach(fi => {
-                const day = parseInt(fi.date.split('-')[2]);
-                if (!day || day < 1 || day > 31) return;
-                if (!map[day]) map[day] = [];
-                const colorName = catColorMap[fi.category] || 'green';
-                map[day].push({ ...fi, itemKind: 'planner', colorName });
+        if (isModuleEnabled('agenda')) {
+            allItems.forEach(item => {
+                const d = parseInt(item.day);
+                if (!map[d]) map[d] = [];
+                map[d].push({ ...item, itemKind: 'payment' });
             });
+        }
+        // Items del planificador (por fecha exacta, solo del mes actual)
+        if (isModuleEnabled('planner')) {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth() + 1;
+            const monthKey = `${year}-${String(month).padStart(2, '0')}`;
+            freshItems
+                .filter(fi => fi.month === monthKey && fi.date)
+                .forEach(fi => {
+                    const day = parseInt(fi.date.split('-')[2]);
+                    if (!day || day < 1 || day > 31) return;
+                    if (!map[day]) map[day] = [];
+                    const colorName = catColorMap[fi.category] || 'green';
+                    map[day].push({ ...fi, itemKind: 'planner', colorName });
+                });
+        }
         return map;
     }, [allItems, freshItems, currentDate, catColorMap]);
 
@@ -480,16 +486,19 @@ export default function ServicesManager({ services = [], cards = [], transaction
             </div>
 
             {/* PANEL DE REPARTO */}
-            <RepartoPanel
-                allItems={allItems}
-                householdId={householdId}
-                currentUid={currentUid}
-                isGlass={isGlass}
-                showMoney={showMoney}
-            />
+            {isModuleEnabled('household') && (
+                <RepartoPanel
+                    allItems={allItems}
+                    householdId={householdId}
+                    currentUid={currentUid}
+                    isGlass={isGlass}
+                    showMoney={showMoney}
+                />
+            )}
 
-            {/* GRÁFICO MAREA */}
-            <div className={`p-6 rounded-[30px] text-white shadow-lg border relative overflow-hidden ${isGlass ? 'bg-white/5 border-white/10' : 'bg-[#0f172a] border-gray-800'}`}>
+            {/* GRÁFICO MAREA (Solo si agenda está activo) */}
+            {isModuleEnabled('agenda') && (
+                <div className={`p-6 rounded-[30px] text-white shadow-lg border relative overflow-hidden ${isGlass ? 'bg-white/5 border-white/10' : 'bg-[#0f172a] border-gray-800'}`}>
                 <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500 rounded-full blur-[60px] opacity-10 pointer-events-none"></div>
                 <div className="flex justify-between items-center mb-8 relative z-10">
                     <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">Marea Semanal</p>
@@ -506,6 +515,7 @@ export default function ServicesManager({ services = [], cards = [], transaction
                     ))}
                 </div>
             </div>
+            )}
 
             {/* VISTAS: LISTA O CALENDARIO */}
             {viewMode === 'list' ? (

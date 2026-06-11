@@ -13,10 +13,11 @@ export default function Navbar({ currentView, setView, privacyMode, setPrivacyMo
 
   const mobilityEnabled = isModuleEnabled('mobility');
   const cardsEnabled    = isModuleEnabled('cards');
+  const savingsEnabled  = isModuleEnabled('savings');
 
   const navItems = [
     { id: 'dashboard',         label: 'Resumen Financiero', icon: <BarChart3 size={18} /> },
-    { id: 'savings',           label: 'Ahorros',            icon: <TrendingUp size={18} /> },
+    ...(savingsEnabled  ? [{ id: 'savings',           label: 'Ahorros',            icon: <TrendingUp size={18} /> }] : []),
     { id: 'purchase',          label: 'Nueva Compra',       icon: <Plus size={18} /> },
     ...(mobilityEnabled ? [{ id: 'mobility', label: 'Movilidad', icon: <Car size={18} /> }] : []),
     ...(cardsEnabled    ? [{ id: 'cards',    label: 'Tarjetas',   icon: <CreditCard size={18} /> }] : []),
