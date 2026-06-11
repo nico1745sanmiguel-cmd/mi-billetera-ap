@@ -1,10 +1,15 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { db, auth } from '../../firebase';
+import { useAuth } from '../../context/AuthContext';
+import { useCards } from '../../context/CardsContext';
+import { useSupermarket } from '../../context/SupermarketContext';
+import { useServices } from '../../context/ServicesContext';
 import { collection, addDoc, deleteDoc, doc, updateDoc, setDoc, arrayUnion, arrayRemove, getDoc } from 'firebase/firestore';
 import { Star, Pencil, CalendarDays, User, Split, ChevronDown, ChevronUp } from 'lucide-react';
 import { formatMoney, formatInputNumber, parseInputNumber } from '../../utils';
 import { calcularProporciones, getLatestSalary } from '../../utils/salaryUtils';
 import { isModuleEnabled } from '../Settings/ModulesSettings';
+import { useUI } from '../../context/UIContext';
 
 // ─────────────────────────────────────────────────────
 // Subcomponente: Panel de Reparto del Mes
@@ -165,7 +170,14 @@ function RepartoPanel({ allItems, householdId, currentUid, isGlass, showMoney })
     );
 }
 
-export default function ServicesManager({ services = [], cards = [], transactions = [], currentDate, privacyMode, isGlass, householdId, freshItems = [], plannerCategories = [] }) {
+export default function ServicesManager() {
+    const { currentDate, privacyMode, isGlass } = useUI();
+    const { userData } = useAuth();
+    const householdId = userData?.householdId;
+    const { cards, transactions } = useCards();
+    const { services } = useServices();
+    const { freshItems, plannerCategories } = useSupermarket();
+    
     const [viewMode, setViewMode] = useState('list');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingService, setEditingService] = useState(null);

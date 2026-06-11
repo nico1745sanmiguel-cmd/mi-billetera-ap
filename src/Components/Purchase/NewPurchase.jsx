@@ -3,8 +3,13 @@ import { useFinancialProjections } from '../../hooks/useFinancialProjections';
 import { formatInputNumber, parseInputNumber } from '../../utils';
 import { Banknote, CreditCard } from 'lucide-react';
 import { useUI } from '../../context/UIContext';
+import { useAuth } from '../../context/AuthContext';
+import { useCards } from '../../context/CardsContext';
 
-export default function NewPurchase({ cards, onSave, transactions, privacyMode, currentDate, isGlass, householdId, setView }) {
+export default function NewPurchase({ onSave }) {
+    const { cards, transactions, addTransaction } = useCards();
+    const { userData } = useAuth();
+    const householdId = userData?.householdId;
     const [amount, setAmount] = useState('');
     const [description, setDescription] = useState('');
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
@@ -14,7 +19,7 @@ export default function NewPurchase({ cards, onSave, transactions, privacyMode, 
     const [category, setCategory] = useState('varios');
     const [isShared, setIsShared] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
-    const { showToast } = useUI();
+    const { showToast, currentDate, isGlass, privacyMode } = useUI();
 
     // --- PROJECTIONS HOOK ---
     const projections = useFinancialProjections(
@@ -85,9 +90,10 @@ export default function NewPurchase({ cards, onSave, transactions, privacyMode, 
         }
 
         try {
-            await onSave(transactionData);
+            await addTransaction(transactionData);
+            if (onSave) onSave(); // Para cerrar la vista o volver al dashboard
             showToast('¡Gasto guardado con éxito!');
-            if (setView) setView('dashboard');
+
         } catch (error) {
             console.error("Error al guardar gasto:", error);
             showToast('Hubo un error al guardar el gasto.', 'error');

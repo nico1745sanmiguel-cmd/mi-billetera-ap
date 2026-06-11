@@ -5,7 +5,11 @@ import {
     Home, BookOpen, Package, BarChart3, CreditCard, Banknote, CalendarDays, 
     ChevronDown, Apple, Wallet, ChevronRight, CheckCircle2, Circle
 } from 'lucide-react';
+import { useCards } from '../../context/CardsContext';
+import { useServices } from '../../context/ServicesContext';
+import { useSupermarket } from '../../context/SupermarketContext';
 import { formatMoney } from '../../utils';
+import { useUI } from '../../context/UIContext';
 
 const CAT_LABELS = {
     'supermarket': 'Supermercado',
@@ -42,17 +46,11 @@ const renderActiveShape = (props) => {
     );
 };
 
-export default function Stats({ 
-    transactions = [], 
-    cards = [], 
-    services = [], 
-    supermarketItems = [],
-    freshItems = [],
-    plannerCategories = [],
-    privacyMode, 
-    currentDate, 
-    isGlass 
-}) {
+export default function Stats() {
+    const { currentDate, privacyMode, isGlass } = useUI();
+    const { transactions, cards } = useCards();
+    const { services } = useServices();
+    const { superItems: supermarketItems, freshItems } = useSupermarket();
     const [activeIndex, setActiveIndex] = useState(0);
     const [filter, setFilter] = useState('all'); // 'all', 'super_fresh', 'cards_services', 'manual'
     const [expandedItemId, setExpandedItemId] = useState(null);

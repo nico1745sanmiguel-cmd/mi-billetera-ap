@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ArrowLeft, Car, Puzzle, ShoppingCart, CreditCard, TrendingUp, Users, CalendarDays, ListTodo, PieChart } from 'lucide-react';
 import { CACHE_KEYS } from '../../config/constants';
 import { getCache, setCache } from '../../utils/cache';
+import { useUI } from '../../context/UIContext';
 
 // ─── Definición de módulos disponibles ────────────────────────────────────────
 // Para agregar un módulo nuevo, solo hay que añadir un objeto acá.
@@ -103,7 +104,8 @@ export const isModuleEnabled = (moduleId) => {
     return loadModules()[moduleId] === true;
 };
 
-export default function ModulesSettings({ isGlass, onBack }) {
+export default function ModulesSettings({ onBack }) {
+    const { isGlass } = useUI();
     const [enabled, setEnabled] = useState(loadModules);
 
     const toggle = (id) => {

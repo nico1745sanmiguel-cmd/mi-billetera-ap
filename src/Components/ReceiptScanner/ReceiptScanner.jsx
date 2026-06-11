@@ -1,7 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { analyzeReceipt } from '../../services/groqService';
+import { useUI } from '../../context/UIContext';
 
-export default function ReceiptScanner({ isGlass, items = [], onBack }) {
+export default function ReceiptScanner({ items = [], onBack }) {
+  const { isGlass } = useUI();
   const [step, setStep] = useState('START'); // START, CAMERA, RESULTS
   const [isScanning, setIsScanning] = useState(false);
   const [results, setResults] = useState([]);

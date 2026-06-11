@@ -14,6 +14,11 @@ import {
     CACHE_KEYS,
 } from '../../config/constants';
 import { getCache, setCache } from '../../utils/cache';
+import { useUI } from '../../context/UIContext';
+import { useAuth } from '../../context/AuthContext';
+import { useCards } from '../../context/CardsContext';
+import { useSupermarket } from '../../context/SupermarketContext';
+import { useServices } from '../../context/ServicesContext';
 
 // Import new Widgets
 import SplitSummaryWidget from './Widgets/SplitSummaryWidget';
@@ -25,8 +30,15 @@ import NotificationsModal from './Widgets/NotificationsModal';
 import MobilityWidget from './Widgets/MobilityWidget';
 import { isModuleEnabled } from '../Settings/ModulesSettings';
 
-const Home = memo(({ transactions, cards, supermarketItems = [], services = [], freshItems = [], privacyMode, setView, onLogout, currentDate, user, onToggleTheme, householdId, householdMembers = [], notifications = [], plannerCategories = [], onCardClick }) => {
-
+const Home = memo(({ onLogout, notifications = [], onCardClick }) => {
+    const { privacyMode, currentDate, isGlass, setIsGlass } = useUI();
+    const navigate = useNavigate();
+    const { user, userData, householdMembers } = useAuth();
+    const householdId = userData?.householdId;
+    const { cards, transactions } = useCards();
+    const { superItems: supermarketItems, freshItems, plannerCategories } = useSupermarket();
+    const { services } = useServices();
+    const onToggleTheme = () => setIsGlass(!isGlass);
     const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
 
     const unreadNotifsCount = useMemo(() => {
@@ -193,12 +205,12 @@ const Home = memo(({ transactions, cards, supermarketItems = [], services = [], 
                 {privacyMode && <div className="absolute inset-0 flex items-center justify-center font-bold text-gray-500 z-10">Vista Privada</div>}
             </div>
         ) } : {}),
-        ...(isModuleEnabled('savings') ? { savings_summary: <SavingsWidget setView={setView} privacyMode={privacyMode} /> } : {}),
-        ...(isModuleEnabled('mobility') ? { mobility: <MobilityWidget setView={setView} currentDate={currentDate} privacyMode={privacyMode} /> } : {}),
-        ...(isModuleEnabled('household') ? { split_summary: <SplitSummaryWidget setView={setView} householdMembers={householdMembers} splitData={splitData} currentDate={currentDate} privacyMode={privacyMode} user={user} /> } : {}),
+        ...(isModuleEnabled('savings') ? { savings_summary: <SavingsWidget setView={(path) => navigate(`/${path}`)} privacyMode={privacyMode} /> } : {}),
+        ...(isModuleEnabled('mobility') ? { mobility: <MobilityWidget setView={(path) => navigate(`/${path}`)} currentDate={currentDate} privacyMode={privacyMode} /> } : {}),
+        ...(isModuleEnabled('household') ? { split_summary: <SplitSummaryWidget setView={(path) => navigate(`/${path}`)} householdMembers={householdMembers} splitData={splitData} currentDate={currentDate} privacyMode={privacyMode} user={user} /> } : {}),
         ...(isModuleEnabled('cards') ? { cards: <CardsWidget cards={cards} targetMonthKey={targetMonthKey} privacyMode={privacyMode} onCardClick={openCardModal} /> } : {}),
-        ...(isModuleEnabled('agenda') ? { agenda: <AgendaWidget agenda={agenda} currentDate={currentDate} privacyMode={privacyMode} setView={setView} freshItems={freshItems} plannerCategories={plannerCategories} /> } : {}),
-        ...(isModuleEnabled('supermarket') ? { super_actions: <SuperActionsWidget superData={superData} privacyMode={privacyMode} setView={setView} /> } : {}),
+        ...(isModuleEnabled('agenda') ? { agenda: <AgendaWidget agenda={agenda} currentDate={currentDate} privacyMode={privacyMode} setView={(path) => navigate(`/${path}`)} freshItems={freshItems} plannerCategories={plannerCategories} /> } : {}),
+        ...(isModuleEnabled('supermarket') ? { super_actions: <SuperActionsWidget superData={superData} privacyMode={privacyMode} setView={(path) => navigate(`/${path}`)} /> } : {}),
     };
 
     return (
@@ -212,7 +224,7 @@ const Home = memo(({ transactions, cards, supermarketItems = [], services = [], 
                 </div>
                 <div className="flex items-center gap-2">
                     {isModuleEnabled('household') && (
-                        <button onClick={() => setView('household')} className="bg-blue-50 text-blue-500 dark:bg-white/10 dark:text-white/70 p-2 rounded-full hover:bg-blue-100 dark:hover:bg-blue-500/20 dark:hover:text-blue-200 transition-colors dark:backdrop-blur-md dark:border dark:border-white/5">
+                        <button onClick={() => navigate('/household')} className="bg-blue-50 text-blue-500 dark:bg-white/10 dark:text-white/70 p-2 rounded-full hover:bg-blue-100 dark:hover:bg-blue-500/20 dark:hover:text-blue-200 transition-colors dark:backdrop-blur-md dark:border dark:border-white/5">
                             <Users size={20} />
                         </button>
                     )}
@@ -225,7 +237,7 @@ const Home = memo(({ transactions, cards, supermarketItems = [], services = [], 
                             </span>
                         )}
                     </button>
-                    <button onClick={() => setView('settings_modules')} className="bg-violet-50 text-violet-500 dark:bg-white/10 dark:text-white/70 p-2 rounded-full hover:bg-violet-100 dark:hover:bg-violet-500/20 dark:hover:text-violet-200 transition-colors dark:backdrop-blur-md dark:border dark:border-white/5">
+                    <button onClick={() => navigate('/settings_modules')} className="bg-violet-50 text-violet-500 dark:bg-white/10 dark:text-white/70 p-2 rounded-full hover:bg-violet-100 dark:hover:bg-violet-500/20 dark:hover:text-violet-200 transition-colors dark:backdrop-blur-md dark:border dark:border-white/5">
                         <Puzzle size={20} />
                     </button>
                     <button onClick={onLogout} className="bg-gray-50 text-gray-400 dark:bg-white/10 dark:text-white/70 p-2 rounded-full hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-500/20 dark:hover:text-red-200 transition-colors dark:backdrop-blur-md dark:border dark:border-white/5">
@@ -236,7 +248,7 @@ const Home = memo(({ transactions, cards, supermarketItems = [], services = [], 
 
             {criticalAlert.active && (
                 <div className="bg-red-50 dark:bg-red-500/10 border border-red-100 dark:border-red-500/30 p-4 rounded-xl flex items-center justify-between mx-1 animate-pulse dark:shadow-lg dark:shadow-red-900/10">
-                    <div className="flex items-center gap-3"><div className="bg-red-100 dark:bg-red-500/20 p-2 rounded-full text-red-600 dark:text-red-200 dark:border dark:border-red-500/30"><AlertCircle size={20} /></div><div><p className="text-sm font-bold text-red-800 dark:text-red-100">{criticalAlert.msg}</p><p className="text-xs text-red-600 dark:text-red-300/80 font-medium cursor-pointer underline dark:decoration-red-300/50" onClick={() => setView('services_manager')}>Ir a pagar ahora</p></div></div><p className="font-bold text-red-800 dark:text-red-100">{showMoney(criticalAlert.amount)}</p>
+                    <div className="flex items-center gap-3"><div className="bg-red-100 dark:bg-red-500/20 p-2 rounded-full text-red-600 dark:text-red-200 dark:border dark:border-red-500/30"><AlertCircle size={20} /></div><div><p className="text-sm font-bold text-red-800 dark:text-red-100">{criticalAlert.msg}</p><p className="text-xs text-red-600 dark:text-red-300/80 font-medium cursor-pointer underline dark:decoration-red-300/50" onClick={() => navigate('/services_manager')}>Ir a pagar ahora</p></div></div><p className="font-bold text-red-800 dark:text-red-100">{showMoney(criticalAlert.amount)}</p>
                 </div>
             )}
 
@@ -253,7 +265,7 @@ const Home = memo(({ transactions, cards, supermarketItems = [], services = [], 
             </div>
 
             {isModuleEnabled('stats') && (
-                <button onClick={() => setView('stats')} className="w-full h-20 mx-1 rounded-2xl relative overflow-hidden group shadow-lg shadow-indigo-200 active:scale-95 transition-all">
+                <button onClick={() => navigate('/stats')} className="w-full h-20 mx-1 rounded-2xl relative overflow-hidden group shadow-lg shadow-indigo-200 active:scale-95 transition-all">
                     <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 bg-[length:200%_auto] animate-gradient-x opacity-90 group-hover:opacity-100 transition-opacity"></div>
                     <div className="relative z-10 flex flex-col items-center justify-center h-full text-white gap-1">
                         <div className="flex items-center gap-2">

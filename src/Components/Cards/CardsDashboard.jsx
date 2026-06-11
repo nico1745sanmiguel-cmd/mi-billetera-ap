@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { db, auth } from '../../firebase';
+import { useNavigate } from 'react-router-dom';
 import { doc, deleteDoc, updateDoc, setDoc } from 'firebase/firestore';
 import { formatInputNumber, parseInputNumber, formatMoney } from '../../utils';
 import StatementUploader from './StatementUploader';
@@ -7,6 +8,9 @@ import StatementReviewer from './StatementReviewer';
 import StatementDashboard from './StatementDashboard';
 import { Sparkles, ArrowLeft, Plus, CreditCard as CreditCardIcon, ChevronRight } from 'lucide-react';
 import { CARD_LOGO_MAP } from '../../config/constants';
+import { useCards } from '../../context/CardsContext';
+import { useAuth } from '../../context/AuthContext';
+import { useUI } from '../../context/UIContext';
 
 const PRESET_COLORS = [
     '#1a1a1a', '#005f73', '#0a9396', '#ae2012',
@@ -497,7 +501,12 @@ function CardDetail({ card, isNewCard, currentDate, privacyMode, isGlass, househ
 }
 
 // ── Componente principal ──────────────────────────────────────────────────────
-export default function CardsDashboard({ cards, currentDate, privacyMode, isGlass, householdId, onBack, initialCard }) {
+export default function CardsDashboard({ initialCard }) {
+    const { isGlass, privacyMode, currentDate } = useUI();
+    const navigate = useNavigate();
+    const { userData } = useAuth();
+    const householdId = userData?.householdId;
+    const { cards } = useCards();
     const [selectedCard, setSelectedCard] = useState(null);
     const [isNew, setIsNew] = useState(false);
 
@@ -533,7 +542,7 @@ export default function CardsDashboard({ cards, currentDate, privacyMode, isGlas
             isGlass={isGlass}
             onSelectCard={(card) => { setSelectedCard(card); setIsNew(false); }}
             onNewCard={() => { setSelectedCard(null); setIsNew(true); }}
-            onBack={onBack}
+            onBack={() => { setSelectedCard(null); navigate('/dashboard'); }}
         />
     );
 }

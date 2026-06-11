@@ -4,16 +4,19 @@ import { parseBankText } from '../../utils/bankParser';
 import { extractTextFromPDF } from '../../utils/pdfParser';
 import { useAliases } from '../../hooks/useAliases';
 import { collection, addDoc } from 'firebase/firestore';
+import { doc, setDoc } from 'firebase/firestore';
+import { useAuth } from '../../context/AuthContext';
+import { useCards } from '../../context/CardsContext';
+import { useUI } from '../../context/UIContext';
 import { db } from '../../firebase';
 
 const ReconciliationDesk = ({
-    user,
-    householdId,
-    onBack,
-    isGlass,
-    cards,
-    existingTransactions // Pasarle las transactions reales para cotejar
+    onBack
 }) => {
+    const { isGlass, privacyMode } = useUI();
+    const { user, userData } = useAuth();
+    const householdId = userData?.householdId;
+    const { cards, transactions: existingTransactions } = useCards();
     const [inputText, setInputText] = useState('');
     const [parsedItems, setParsedItems] = useState([]);
     const [step, setStep] = useState('input'); // input, review

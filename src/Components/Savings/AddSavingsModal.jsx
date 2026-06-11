@@ -1,9 +1,9 @@
 import React, { useState, useMemo } from 'react';
 import { X, Save, TrendingUp, TrendingDown } from 'lucide-react';
-import { useFinancial } from '../../context/FinancialContext';
+import { useSavings } from '../../context/SavingsContext';
 
 export default function AddSavingsModal({ onClose, isGlass }) {
-    const { savingsTransactions, addSavingsTransaction } = useFinancial();
+    const { addSavingsTransaction } = useSavings();
     const [loading, setLoading] = useState(false);
 
     const [formData, setFormData] = useState({

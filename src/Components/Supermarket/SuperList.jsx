@@ -1,8 +1,11 @@
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { auth } from '../../firebase';
+import { useNavigate } from 'react-router-dom';
 import { ShoppingCart, Loader2, Camera, Check, Trash2, Copy, Plus } from 'lucide-react';
 import { formatMoney } from '../../utils';
 import { formatMonthKey } from '../../utils/cardDebtUtils';
+import { useSupermarket } from '../../context/SupermarketContext';
+import { useAuth } from '../../context/AuthContext';
 import {
     addSuperItem,
     deleteSuperItem,
@@ -11,8 +14,14 @@ import {
     toggleSuperChecked,
     updateSuperFields,
 } from '../../repositories/supermarketRepository';
+import { useUI } from '../../context/UIContext';
 
-export default function SuperList({ items = [], currentDate, isGlass, householdId, setView }) {
+export default function SuperList() {
+    const { currentDate, isGlass } = useUI();
+    const navigate = useNavigate();
+    const { userData } = useAuth();
+    const householdId = userData?.householdId;
+    const { superItems: items } = useSupermarket();
     const [newItem, setNewItem] = useState('');
 
     // ESTADO PARA ENFOCAR EL NUEVO ÍTEM AUTOMÁTICAMENTE
@@ -291,15 +300,13 @@ export default function SuperList({ items = [], currentDate, isGlass, householdI
                         <div className="flex items-center gap-3">
                             <h2 className={`text-xl font-bold ${isGlass ? 'text-white' : 'text-gray-800'}`}>Supermercado</h2>
                             <div className="flex flex-col gap-1 items-start">
-                                {setView && (
                                     <button 
-                                        onClick={() => setView('scanner')}
+                                        onClick={() => navigate('/scanner')}
                                         className={`px-3 py-1 text-[10px] font-bold rounded-full uppercase tracking-wider flex items-center gap-1 transition-all active:scale-95 shadow-sm ${isGlass ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' : 'bg-purple-100 text-purple-700 border border-purple-200'}`}
                                     >
                                         <Camera size={12} />
                                         Escanear
                                     </button>
-                                )}
                                 <button
                                     onClick={handleExportToAI}
                                     className={`px-3 py-1 text-[10px] font-bold rounded-full uppercase tracking-wider flex items-center gap-1 transition-all active:scale-95 shadow-sm ${isGlass ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30' : 'bg-indigo-100 text-indigo-700 border border-indigo-200'}`}

@@ -1,7 +1,13 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { db, auth } from '../../firebase';
 import { doc, getDoc, collection, query, where, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
 import { Scale, Users, ChevronLeft, CreditCard, ShoppingCart, Lightbulb, User, LayoutList, Plus, X, CheckCircle, Clock, TrendingUp } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+import { useCards } from '../../context/CardsContext';
+import { useSupermarket } from '../../context/SupermarketContext';
+import { useServices } from '../../context/ServicesContext';
+import { useUI } from '../../context/UIContext';
 import { formatMoney } from '../../utils';
 import { calcularProporciones, getLatestSalary } from '../../utils/salaryUtils';
 import { buildCardsWithDebt, formatMonthKey } from '../../utils/cardDebtUtils';
@@ -228,19 +234,14 @@ function ContributionModal({ person, totalTarget, monthKey, householdId, isGlass
 }
 
 // ── COMPONENTE PRINCIPAL ──────────────────────────────────────────────────────
-export default function SharedExpensesDashboard({ 
-    services = [], 
-    cards = [], 
-    transactions = [], 
-    supermarketItems = [], 
-    freshItems = [],
-    currentDate, 
-    privacyMode, 
-    isGlass, 
-    householdId,
-    onBack,
-    setView 
-}) {
+export default function SharedExpensesDashboard({ onBack }) {
+    const { currentDate, privacyMode, isGlass } = useUI();
+    const navigate = useNavigate();
+    const { userData } = useAuth();
+    const householdId = userData?.householdId;
+    const { cards, transactions } = useCards();
+    const { superItems: supermarketItems, freshItems } = useSupermarket();
+    const { services } = useServices();
     const [proporciones, setProporciones] = useState([]);
     const [loadingProps, setLoadingProps] = useState(false);
     const [selectedPerson, setSelectedPerson] = useState(null); // { uid, displayName, proportion }
@@ -461,7 +462,7 @@ export default function SharedExpensesDashboard({
                             </div>
                             <div className="text-right">
                                 <p className="text-[10px] text-gray-400 font-medium">Dividido por sueldos netos</p>
-                                <button onClick={() => setView('household')} className="text-[10px] font-bold text-indigo-500 underline mt-1 block">Configurar Sueldos</button>
+                                <button onClick={() => navigate('/household')} className="text-[10px] font-bold text-indigo-500 underline mt-1 block">Configurar Sueldos</button>
                             </div>
                         </div>
                     </div>
@@ -473,7 +474,7 @@ export default function SharedExpensesDashboard({
                     <Users size={48} className="mx-auto mb-4 opacity-20" />
                     <h3 className="font-bold mb-2">Faltan datos de sueldos</h3>
                     <p className="text-sm opacity-60 mb-6">Para calcular el reparto proporcional, ambos miembros deben cargar su sueldo neto en Grupo Familiar.</p>
-                    <button onClick={() => setView('household')} className="px-6 py-3 bg-indigo-600 text-white rounded-xl font-bold active:scale-95 transition-transform">
+                    <button onClick={() => navigate('/household')} className="px-6 py-3 bg-indigo-600 text-white rounded-xl font-bold active:scale-95 transition-transform">
                         Configurar Sueldos Ahora
                     </button>
                 </div>

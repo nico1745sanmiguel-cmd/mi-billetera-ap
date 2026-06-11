@@ -1,11 +1,15 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { useSavings } from '../../context/SavingsContext';
 import { useFinancial } from '../../context/FinancialContext';
 import { Plus, Wallet, ArrowRightLeft, TrendingUp } from 'lucide-react';
 import SavingsCard from './SavingsCard';
 import AddSavingsModal from './AddSavingsModal';
+import { useUI } from '../../context/UIContext';
 
-export default function SavingsDashboard({ isGlass, privacyMode, onBack }) {
-    const { savingsTransactions, dolarBlue } = useFinancial();
+export default function SavingsDashboard({ onBack }) {
+    const { isGlass, privacyMode } = useUI();
+    const { savingsTransactions } = useSavings();
+    const { dolarBlue } = useFinancial();
     const [showAddModal, setShowAddModal] = useState(false);
     const [currencyView, setCurrencyView] = useState('ARS'); // 'ARS' or 'USD'
     const [customQuotes, setCustomQuotes] = useState({});

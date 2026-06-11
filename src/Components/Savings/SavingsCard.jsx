@@ -1,9 +1,9 @@
 import React, { useMemo, useState } from 'react';
 import { Wallet, ChevronDown, ChevronUp, Clock, Edit2, Check, X } from 'lucide-react';
-import { useFinancial } from '../../context/FinancialContext';
+import { useSavings } from '../../context/SavingsContext';
 
 export default function SavingsCard({ cartera, items, isGlass, privacyMode, dolarBlue, customQuotes }) {
-    const { savingsTransactions, addSavingsTransaction } = useFinancial();
+    const { addSavingsTransaction } = useSavings();
     const [showHistory, setShowHistory] = useState(false);
     
     // Estado para la edición inline

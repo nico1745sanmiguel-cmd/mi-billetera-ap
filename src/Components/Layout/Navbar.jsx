@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { BarChart3, Plus, CreditCard, Eye, EyeOff, TrendingUp, Car, Puzzle } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { isModuleEnabled } from '../Settings/ModulesSettings';
 
-export default function Navbar({ currentView, setView, privacyMode, setPrivacyMode }) {
+export default function Navbar({ privacyMode, setPrivacyMode }) {
   // Re-render cuando el usuario activa/desactiva módulos (localStorage puede cambiar)
   const [, forceUpdate] = useState(0);
   useEffect(() => {
@@ -10,6 +11,9 @@ export default function Navbar({ currentView, setView, privacyMode, setPrivacyMo
     window.addEventListener('storage', handler);
     return () => window.removeEventListener('storage', handler);
   }, []);
+
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const mobilityEnabled = isModuleEnabled('mobility');
   const cardsEnabled    = isModuleEnabled('cards');
@@ -57,10 +61,10 @@ export default function Navbar({ currentView, setView, privacyMode, setPrivacyMo
             {navItems.map((item) => (
               <button
                 key={item.id}
-                onClick={() => setView(item.id)}
+                onClick={() => navigate(`/${item.id}`)}
                 className={`
                         flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all
-                        ${currentView === item.id
+                        ${location.pathname === `/${item.id}` || (item.id === 'dashboard' && location.pathname === '/')
                     ? 'bg-gray-900 text-white shadow-md transform scale-105'
                     : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'}
                     `}

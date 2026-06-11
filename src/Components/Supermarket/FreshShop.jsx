@@ -14,6 +14,9 @@ import {
     toggleFreshCompleted,
 } from '../../repositories/freshRepository';
 import { addPlannerCategory, deletePlannerCategory } from '../../repositories/plannerCategoriesRepository';
+import { useSupermarket } from '../../context/SupermarketContext';
+import { useAuth } from '../../context/AuthContext';
+import { useUI } from '../../context/UIContext';
 
 // ────────────────────────────────────────────────────────────────
 // Íconos y Colores disponibles para nuevas categorías
@@ -265,7 +268,8 @@ function PlannerSection({ catData, trips, currentMonthKey, isGlass, householdId 
 
     const handleAdd = async (e) => {
         e.preventDefault();
-        if (!auth.currentUser) return;
+        const { currentUser } = require('../../firebase').auth;
+        if (!currentUser) return;
         if (!addingNote.trim() && !addingTotal) return;
 
         setAdding(true);
@@ -277,10 +281,10 @@ function PlannerSection({ catData, trips, currentMonthKey, isGlass, householdId 
                 date: addingDate,
                 month: currentMonthKey,
                 completed: false,
-                userId: auth.currentUser.uid,
+                userId: currentUser.uid,
                 ...(householdId && {
                     householdId,
-                    ownerId: auth.currentUser.uid,
+                    ownerId: currentUser.uid,
                     isShared,
                 })
             });
@@ -456,7 +460,11 @@ function PlannerSection({ catData, trips, currentMonthKey, isGlass, householdId 
 // ────────────────────────────────────────────────────────────────
 // Componente principal: Planificador
 // ────────────────────────────────────────────────────────────────
-export default function PlannerDashboard({ items = [], plannerCategories = [], currentDate, isGlass, householdId }) {
+export default function FreshShop() {
+    const { isGlass, currentDate } = useUI();
+    const { userData } = useAuth();
+    const householdId = userData?.householdId;
+    const { freshItems: items, plannerCategories } = useSupermarket();
     const [showNewCatForm, setShowNewCatForm] = useState(false);
     const [newCatLabel, setNewCatLabel] = useState('');
     const [newCatIcon, setNewCatIcon] = useState('Folder');

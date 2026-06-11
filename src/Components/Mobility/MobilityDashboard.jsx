@@ -6,6 +6,7 @@ import MobilityHistory from './MobilityHistory';
 import MobilityStats from './MobilityStats';
 import MobilityImport from './MobilityImport';
 import MobilityExpenses from './MobilityExpenses';
+import { useUI } from '../../context/UIContext';
 
 const TABS = [
     { id: 'expenses', label: 'Gastos',    icon: Zap },
@@ -15,7 +16,8 @@ const TABS = [
     { id: 'import',   label: 'Importar',  icon: Upload },
 ];
 
-export default function MobilityDashboard({ isGlass, privacyMode, onBack }) {
+export default function MobilityDashboard({ onBack }) {
+    const { isGlass, privacyMode } = useUI();
     const [tab, setTab] = useState('expenses');
 
     return (

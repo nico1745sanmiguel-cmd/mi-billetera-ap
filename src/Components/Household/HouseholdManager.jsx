@@ -1,13 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Pencil, Wallet, CreditCard, ShoppingCart, Lightbulb } from 'lucide-react';
+import { Pencil, Wallet, CreditCard, ShoppingCart, Lightbulb, Users, Mail, UserPlus, Check, X, Shield, ArrowLeft, LogOut, Copy } from 'lucide-react';
 import { db, auth } from '../../firebase';
 import { doc, getDoc, updateDoc, collection, query, where, getDocs, writeBatch } from 'firebase/firestore';
 import { checkAndMigrateToHousehold } from '../../utils/householdMigration';
 import { getLatestSalary, calcularProporciones } from '../../utils/salaryUtils';
 import { formatMoney, formatInputNumber, parseInputNumber } from '../../utils';
+import { useAuth } from '../../context/AuthContext';
+import { useUI } from '../../context/UIContext';
 
 // Subcomponente para listar miembros con datos reales de Firestore
-const HouseholdMembersList = ({ memberIds, currentUserUid, isGlass }) => {
+const HouseholdMembersList = ({ memberIds }) => {
+    const { user } = useAuth();
+    const { isGlass } = useUI();
     const [membersData, setMembersData] = useState([]);
     const [loadingMembers, setLoadingMembers] = useState(true);
 
@@ -234,7 +238,10 @@ const SalarySection = ({ memberIds, currentUserUid, isGlass }) => {
     );
 };
 
-export default function HouseholdManager({ user, householdId, onBack, isGlass }) {
+export default function HouseholdManager({ onBack }) {
+    const { isGlass } = useUI();
+    const { user, userData } = useAuth();
+    const householdId = userData?.householdId;
     const [household, setHousehold] = useState(null);
     const [loading, setLoading] = useState(true);
     const [copyFeedback, setCopyFeedback] = useState("");
