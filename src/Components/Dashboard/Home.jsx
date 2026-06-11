@@ -1,5 +1,6 @@
 import React, { useMemo, useEffect, useState, memo } from 'react';
 import { Users, LogOut, AlertCircle, BarChart3, Moon, RefreshCw, Bell, TrendingUp, Puzzle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { db } from '../../firebase';
 import { doc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { formatMoney } from '../../utils';
