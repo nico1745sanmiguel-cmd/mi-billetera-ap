@@ -15,40 +15,49 @@
  *   const { view, setView, isGlass } = useUI();
  */
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import { THEME_COLOR_GLASS, THEME_COLOR_LIGHT, CACHE_KEYS } from '../config/constants';
 import { getCache, setCache } from '../utils/cache';
 
-const UIContext = createContext(null);
+const UIStateContext = createContext(null);
+const UIDispatchContext = createContext(null);
 
-export const useUI = () => {
-    const ctx = useContext(UIContext);
-    if (!ctx) throw new Error('useUI debe usarse dentro de <UIProvider>');
+export const useUIState = () => {
+    const ctx = useContext(UIStateContext);
+    if (!ctx) throw new Error('useUIState debe usarse dentro de <UIProvider>');
     return ctx;
+};
+
+export const useUIDispatch = () => {
+    const ctx = useContext(UIDispatchContext);
+    if (!ctx) throw new Error('useUIDispatch debe usarse dentro de <UIProvider>');
+    return ctx;
+};
+
+// Hook retro-compatible para componentes que aún no fueron migrados
+export const useUI = () => {
+    return { ...useUIState(), ...useUIDispatch() };
 };
 
 export const UIProvider = ({ children }) => {
     const [view, setViewRaw] = useState('dashboard');
     const [privacyMode, setPrivacyMode] = useState(false);
     const [currentDate, setCurrentDate] = useState(new Date());
-    const [toast, setToast] = useState(null); // { message, type }
+    const [toast, setToast] = useState(null);
 
-    // Inicializar isGlass desde cache (con compatibilidad al key viejo de localStorage)
     const [isGlass, setIsGlassRaw] = useState(() => {
         const cached = getCache(CACHE_KEYS.GLASS_MODE, null);
         if (cached !== null) return cached === true;
         return localStorage.getItem('glass_mode') === 'true';
     });
 
-    // Sincronizar isGlass → meta theme-color, cache y Tailwind .dark class
     useEffect(() => {
         setCache(CACHE_KEYS.GLASS_MODE, isGlass);
-        localStorage.setItem('glass_mode', isGlass); // compatibilidad legacy
+        localStorage.setItem('glass_mode', isGlass);
         const metaThemeColor = document.querySelector("meta[name='theme-color']");
         if (metaThemeColor) {
             metaThemeColor.setAttribute('content', isGlass ? THEME_COLOR_GLASS : THEME_COLOR_LIGHT);
         }
-        // Aplicar clase dark al HTML para Tailwind
         if (isGlass) {
             document.documentElement.classList.add('dark');
         } else {
@@ -56,7 +65,6 @@ export const UIProvider = ({ children }) => {
         }
     }, [isGlass]);
 
-    // Sincronizar cambios de view → historial del browser (back button mobile)
     useEffect(() => {
         if (view !== 'dashboard') {
             window.history.pushState({ page: view }, '', '');
@@ -66,47 +74,55 @@ export const UIProvider = ({ children }) => {
         return () => window.removeEventListener('popstate', handleBackButton);
     }, [view]);
 
-    // Wrapper de setView para asegurar que siempre sea un string válido
-    const setView = (newView) => {
+    // Dispatch methods
+    const setView = useCallback((newView) => {
         if (typeof newView === 'string') setViewRaw(newView);
-    };
+    }, []);
 
-    const setIsGlass = (val) => setIsGlassRaw(val);
+    const setIsGlass = useCallback((val) => setIsGlassRaw(val), []);
 
-    // Helpers de navegación
-    const goBack = () => setView('dashboard');
+    const goBack = useCallback(() => setView('dashboard'), [setView]);
 
-    const changeMonth = (offset) => {
+    const changeMonth = useCallback((offset) => {
         setCurrentDate(prev => {
             const d = new Date(prev);
             d.setMonth(d.getMonth() + offset);
             return d;
         });
-    };
+    }, []);
 
-    const showToast = (message, type = 'success') => {
+    const showToast = useCallback((message, type = 'success') => {
         setToast({ message, type });
-    };
+    }, []);
 
-    const hideToast = () => {
+    const hideToast = useCallback(() => {
         setToast(null);
-    };
+    }, []);
 
-    const value = {
+    const stateValue = useMemo(() => ({
         view,
+        privacyMode,
+        isGlass,
+        currentDate,
+        toast,
+    }), [view, privacyMode, isGlass, currentDate, toast]);
+
+    const dispatchValue = useMemo(() => ({
         setView,
         goBack,
-        privacyMode,
         setPrivacyMode,
-        isGlass,
         setIsGlass,
-        currentDate,
         setCurrentDate,
         changeMonth,
-        toast,
         showToast,
         hideToast,
-    };
+    }), [setView, goBack, setIsGlass, changeMonth, showToast, hideToast]);
 
-    return <UIContext.Provider value={value}>{children}</UIContext.Provider>;
+    return (
+        <UIDispatchContext.Provider value={dispatchValue}>
+            <UIStateContext.Provider value={stateValue}>
+                {children}
+            </UIStateContext.Provider>
+        </UIDispatchContext.Provider>
+    );
 };

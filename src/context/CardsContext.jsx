@@ -1,18 +1,28 @@
-import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import { db } from '../firebase';
 import { collection, onSnapshot, query, where, addDoc } from 'firebase/firestore';
 import { useAuth } from './AuthContext';
 import { getCache, setCache } from '../utils/cache';
 import { COLLECTIONS, CACHE_KEYS } from '../config/constants';
 
-const CardsContext = createContext();
+const CardsStateContext = createContext(null);
+const CardsDispatchContext = createContext(null);
 
-export const useCards = () => {
-    const context = useContext(CardsContext);
-    if (!context) {
-        throw new Error('useCards must be used within a CardsProvider');
-    }
+export const useCardsState = () => {
+    const context = useContext(CardsStateContext);
+    if (!context) throw new Error('useCardsState must be used within a CardsProvider');
     return context;
+};
+
+export const useCardsDispatch = () => {
+    const context = useContext(CardsDispatchContext);
+    if (!context) throw new Error('useCardsDispatch must be used within a CardsProvider');
+    return context;
+};
+
+// Retro-compatibilidad
+export const useCards = () => {
+    return { ...useCardsState(), ...useCardsDispatch() };
 };
 
 export const CardsProvider = ({ children }) => {
@@ -46,7 +56,7 @@ export const CardsProvider = ({ children }) => {
         };
     }, [user, userData]);
 
-    const ENABLE_HOUSEHOLD = true; // Mantener la misma constante de App.jsx
+    const ENABLE_HOUSEHOLD = true;
 
     const visibleCards = useMemo(() => {
         if (!ENABLE_HOUSEHOLD || !userData?.householdId) return cards;
@@ -58,7 +68,7 @@ export const CardsProvider = ({ children }) => {
         return transactions.filter(item => !item.ownerId || item.isShared === true || item.ownerId === user?.uid);
     }, [transactions, userData, user]);
 
-    const addTransaction = async (t) => {
+    const addTransaction = useCallback(async (t) => {
         if (!user) return;
         const payload = { 
             ...t, 
@@ -74,17 +84,22 @@ export const CardsProvider = ({ children }) => {
             console.error("Error adding transaction:", error);
             throw error;
         }
-    };
+    }, [user, userData]);
 
-    const value = useMemo(() => ({
+    const stateValue = useMemo(() => ({
         cards: visibleCards,
         transactions: visibleTransactions,
-        addTransaction
     }), [visibleCards, visibleTransactions]);
 
+    const dispatchValue = useMemo(() => ({
+        addTransaction
+    }), [addTransaction]);
+
     return (
-        <CardsContext.Provider value={value}>
-            {children}
-        </CardsContext.Provider>
+        <CardsDispatchContext.Provider value={dispatchValue}>
+            <CardsStateContext.Provider value={stateValue}>
+                {children}
+            </CardsStateContext.Provider>
+        </CardsDispatchContext.Provider>
     );
 };

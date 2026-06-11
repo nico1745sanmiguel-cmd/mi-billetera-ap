@@ -5,12 +5,24 @@ import { getCache, setCache } from '../utils/cache';
 import { COLLECTIONS, CACHE_KEYS } from '../config/constants';
 import { useFinancial } from './FinancialContext';
 
-const MobilityContext = createContext();
+const MobilityStateContext = createContext(null);
+const MobilityDispatchContext = createContext(null);
 
-export const useMobility = () => {
-    const context = useContext(MobilityContext);
-    if (!context) throw new Error('useMobility must be used within a MobilityProvider');
+export const useMobilityState = () => {
+    const context = useContext(MobilityStateContext);
+    if (!context) throw new Error('useMobilityState must be used within a MobilityProvider');
     return context;
+};
+
+export const useMobilityDispatch = () => {
+    const context = useContext(MobilityDispatchContext);
+    if (!context) throw new Error('useMobilityDispatch must be used within a MobilityProvider');
+    return context;
+};
+
+// Retro-compatibilidad
+export const useMobility = () => {
+    return { ...useMobilityState(), ...useMobilityDispatch() };
 };
 
 export const MobilityProvider = ({ children }) => {
@@ -73,7 +85,7 @@ export const MobilityProvider = ({ children }) => {
     }, [user]);
 
     // ─── CAMPOS DERIVADOS (jornadas) ──────────────────────────────────────────
-    const buildPayload = (formData) => {
+    const buildPayload = useCallback((formData) => {
         const uber    = parseFloat(formData.uber)    || 0;
         const didi    = parseFloat(formData.didi)    || 0;
         const cabify  = parseFloat(formData.cabify)  || 0;
@@ -95,13 +107,13 @@ export const MobilityProvider = ({ children }) => {
             earningsPerHour: hours > 0 ? parseFloat((total / hours).toFixed(2)) : 0,
             earningsPerKm:   km    > 0 ? parseFloat((total / km).toFixed(2))    : 0,
         };
-    };
+    }, []);
 
-    const getDayOfWeek = (dateStr) => {
+    const getDayOfWeek = useCallback((dateStr) => {
         const days = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
         const d = new Date(dateStr + 'T12:00:00');
         return days[d.getDay()];
-    };
+    }, []);
 
     // ─── CRUD JORNADAS ────────────────────────────────────────────────────────
     const addSession = useCallback(async (formData) => {
@@ -112,13 +124,13 @@ export const MobilityProvider = ({ children }) => {
             createdAt: serverTimestamp(),
         };
         await addDoc(collection(db, COLLECTIONS.MOBILITY_SESSIONS), payload);
-    }, [user]);
+    }, [user, buildPayload]);
 
     const updateSession = useCallback(async (id, formData) => {
         if (!user) return;
         const payload = buildPayload(formData);
         await updateDoc(doc(db, COLLECTIONS.MOBILITY_SESSIONS, id), payload);
-    }, [user]);
+    }, [user, buildPayload]);
 
     const deleteSession = useCallback(async (id) => {
         if (!user) return;
@@ -151,14 +163,14 @@ export const MobilityProvider = ({ children }) => {
             }
         }
         return { ok, errors };
-    }, [user]);
+    }, [user, buildPayload]);
 
     // ─── CRUD GASTOS ──────────────────────────────────────────────────────────
     const addExpense = useCallback(async ({ date, category, amount, notes = '' }) => {
         if (!user) return;
         await addDoc(collection(db, 'mobility_expenses'), {
             date,
-            category,   // 'gnc' | 'nafta' | 'repuestos' | 'lavadero'
+            category,
             amount: parseFloat(amount) || 0,
             notes,
             userId: user.uid,
@@ -181,10 +193,13 @@ export const MobilityProvider = ({ children }) => {
         await deleteDoc(doc(db, 'mobility_expenses', id));
     }, [user]);
 
-    const value = useMemo(() => ({
+    const stateValue = useMemo(() => ({
         sessions,
         expenses,
         loading,
+    }), [sessions, expenses, loading]);
+
+    const dispatchValue = useMemo(() => ({
         addSession,
         updateSession,
         deleteSession,
@@ -194,11 +209,13 @@ export const MobilityProvider = ({ children }) => {
         updateExpense,
         deleteExpense,
         getDayOfWeek,
-    }), [sessions, expenses, loading, addSession, updateSession, deleteSession, deleteAllSessions, importSessions, addExpense, updateExpense, deleteExpense]);
+    }), [addSession, updateSession, deleteSession, deleteAllSessions, importSessions, addExpense, updateExpense, deleteExpense, getDayOfWeek]);
 
     return (
-        <MobilityContext.Provider value={value}>
-            {children}
-        </MobilityContext.Provider>
+        <MobilityDispatchContext.Provider value={dispatchValue}>
+            <MobilityStateContext.Provider value={stateValue}>
+                {children}
+            </MobilityStateContext.Provider>
+        </MobilityDispatchContext.Provider>
     );
 };
