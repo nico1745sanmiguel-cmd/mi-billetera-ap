@@ -74,7 +74,7 @@ export default function FreshShop() {
     };
 
     return (
-        <div className="animate-fade-in space-y-4 pb-32">
+        <>
             <div className={`fixed top-[64px] left-0 right-0 z-40 pt-4 pb-4 transition-all shadow-sm px-6 border-b ${
                 isGlass ? 'bg-[#0f0c29]/95 border-white/10 text-white backdrop-blur-md' : 'bg-[#f3f4f6]/95 border-gray-200/50 text-gray-800 backdrop-blur-sm'
             }`}>
@@ -97,8 +97,9 @@ export default function FreshShop() {
                 </div>
             </div>
 
-            {/* ESPACIADOR */}
-            <div className="h-[95px]"></div>
+            <div className="animate-fade-in space-y-4 pb-32">
+                {/* ESPACIADOR */}
+                <div className="h-[95px]"></div>
 
             {allCategories.map(cat => (
                 <PlannerSection key={cat.id} catData={cat} trips={activeItems} currentMonthKey={currentMonthKey} isGlass={isGlass} householdId={householdId} />
@@ -176,6 +177,7 @@ export default function FreshShop() {
                     </button>
                 </form>
             )}
-        </div>
+            </div>
+        </>
     );
 }

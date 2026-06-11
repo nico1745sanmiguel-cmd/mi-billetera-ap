@@ -279,8 +279,7 @@ export default function SuperList() {
     };
 
     return (
-        <div className="animate-fade-in pb-32">
-
+        <>
             {/* 1. TOAST GLOBAL (Portal-like, arriba de todo) */}
             <div className={`fixed top-4 left-0 right-0 flex justify-center transition-all duration-300 z-[100] pointer-events-none ${toast ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'}`}>
                 <div className={`shadow-2xl backdrop-blur-md px-6 py-3 rounded-full flex items-center gap-3 text-sm font-bold pointer-events-auto border ${isGlass ? 'bg-black/40 text-white border-white/20' : 'bg-gray-900 text-white border-gray-700/50'}`}>
@@ -353,11 +352,12 @@ export default function SuperList() {
                 </div>
             </div>
 
-            {/* ESPACIADOR PARA EL HEADER FIXED */}
-            <div className="h-[180px]"></div>
+            <div className="animate-fade-in pb-32">
+                {/* ESPACIADOR PARA EL HEADER FIXED */}
+                <div className="h-[180px]"></div>
 
-            {/* LISTA DE ITEMS CON SCROLLBAR 📜 */}
-            <div className="flex relative">
+                {/* LISTA DE ITEMS CON SCROLLBAR 📜 */}
+                <div className="flex relative">
                 <div className="flex-1 space-y-3 pb-40">
                     {monthlyList.map((item) => {
                         const history = getPriceHistory(item.name, item.price);
@@ -478,7 +478,6 @@ export default function SuperList() {
                     </button>
                 </form>
             </div>
-
-        </div>
+        </>
     );
 }

@@ -191,12 +191,12 @@ export default function App() {
 
                                     <Route path="/super" element={
                                         isModuleEnabled('supermarket') ? 
-                                        <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.2 }}><SuperList /></motion.div> : <Navigate to="/dashboard" replace />
+                                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}><SuperList /></motion.div> : <Navigate to="/dashboard" replace />
                                     } />
 
                                     <Route path="/fresh" element={
                                         isModuleEnabled('supermarket') ? 
-                                        <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.2 }}><FreshShop /></motion.div> : <Navigate to="/dashboard" replace />
+                                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}><FreshShop /></motion.div> : <Navigate to="/dashboard" replace />
                                     } />
 
                                     <Route path="/reparto" element={
