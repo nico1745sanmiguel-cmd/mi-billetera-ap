@@ -1,243 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import { Pencil, Wallet, CreditCard, ShoppingCart, Lightbulb, Users, Mail, UserPlus, Check, X, Shield, ArrowLeft, LogOut, Copy } from 'lucide-react';
-import { db, auth } from '../../firebase';
+import { Wallet, CreditCard, ShoppingCart, Lightbulb } from 'lucide-react';
+import { db } from '../../firebase';
 import { doc, getDoc, updateDoc, collection, query, where, getDocs, writeBatch } from 'firebase/firestore';
 import { checkAndMigrateToHousehold } from '../../utils/householdMigration';
-import { getLatestSalary, calcularProporciones } from '../../utils/salaryUtils';
-import { formatMoney, formatInputNumber, parseInputNumber } from '../../utils';
 import { useAuth } from '../../context/AuthContext';
 import { useUI } from '../../context/UIContext';
+import LoadingState from '../UI/LoadingState';
 
-// Subcomponente para listar miembros con datos reales de Firestore
-const HouseholdMembersList = ({ memberIds, currentUserUid }) => {
-    const { user } = useAuth();
-    const { isGlass } = useUI();
-    const [membersData, setMembersData] = useState([]);
-    const [loadingMembers, setLoadingMembers] = useState(true);
+import HouseholdMembersList from './HouseholdMembersList';
+import SalarySection from './SalarySection';
+import HouseholdJoinOrCreate from './HouseholdJoinOrCreate';
 
-    useEffect(() => {
-        const fetchMembers = async () => {
-            if (!memberIds || memberIds.length === 0) return;
-            try {
-                // Opción 1: Fetch individual (más simple para un array de IDs)
-                const promises = memberIds.map(uid => getDoc(doc(db, 'users', uid)));
-                const snapshots = await Promise.all(promises);
-                const data = snapshots.map(snap => {
-                    if (snap.exists()) return { id: snap.id, ...snap.data() };
-                    return { id: snap.id, displayName: 'Usuario Desconocido', photoURL: null };
-                });
-                setMembersData(data);
-            } catch (err) {
-                console.error("Error fetching members:", err);
-            } finally {
-                setLoadingMembers(false);
-            }
-        };
-        fetchMembers();
-    }, [memberIds]);
-
-    if (loadingMembers) return <div className="text-sm text-gray-500 animate-pulse">Cargando miembros...</div>;
-
-    return (
-        <>
-            {membersData.map((member, index) => {
-                const isMe = member.id === currentUserUid;
-                // Avatar fallback if photoURL is missing
-                const initial = member.displayName ? member.displayName.charAt(0).toUpperCase() : '?';
-
-                return (
-                    <div key={member.id} className={`flex items-center justify-between p-3 rounded-2xl border transition-colors ${isGlass ? 'bg-white/5 border-white/5 hover:bg-white/10' : 'bg-white border-gray-100 shadow-sm'}`}>
-                        <div className="flex items-center gap-3">
-                            {member.photoURL ? (
-                                <img src={member.photoURL} alt={member.displayName} className="w-10 h-10 rounded-full object-cover border border-white/10" />
-                            ) : (
-                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center font-bold text-lg text-white shadow-lg">
-                                    {initial}
-                                </div>
-                            )}
-                            <div>
-                                <p className={`font-semibold text-sm ${isGlass ? 'text-white' : 'text-gray-800'}`}>
-                                    {member.displayName}
-                                    {isMe && <span className="ml-2 text-[10px] bg-blue-500/20 text-blue-500 px-1.5 py-0.5 rounded border border-blue-500/30">TÚ</span>}
-                                </p>
-                                <p className={`text-xs text-ellipsis overflow-hidden max-w-[150px] ${isGlass ? 'text-gray-400' : 'text-gray-500'}`}>{member.email}</p>
-                            </div>
-                        </div>
-                        <div className={`w-3 h-3 rounded-full ${isMe ? 'bg-green-400 shadow-[0_0_10px_rgba(74,222,128,0.5)]' : 'bg-gray-500'}`}></div>
-                    </div>
-                );
-            })}
-        </>
-    );
-};
-
-// --- SECCIÓN DE SUELDOS ---
-const SalarySection = ({ memberIds, currentUserUid, isGlass }) => {
-    const [membersData, setMembersData] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [editingUid, setEditingUid] = useState(null);
-    const [inputValue, setInputValue] = useState('');
-    const [saving, setSaving] = useState(false);
-
-    const fetchMembers = async () => {
-        if (!memberIds || memberIds.length === 0) return;
-        try {
-            const promises = memberIds.map(uid => getDoc(doc(db, 'users', uid)));
-            const snapshots = await Promise.all(promises);
-            const data = snapshots.map(snap => {
-                if (snap.exists()) return { id: snap.id, ...snap.data() };
-                return { id: snap.id, displayName: 'Desconocido', photoURL: null, salaryHistory: [] };
-            });
-            setMembersData(data);
-        } catch (err) {
-            console.error('Error fetching salary data:', err);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => { fetchMembers(); }, [memberIds]);
-
-    const handleStartEdit = (member) => {
-        const currentSalary = getLatestSalary(member.salaryHistory);
-        setInputValue(currentSalary > 0 ? String(currentSalary) : '');
-        setEditingUid(member.id);
-    };
-
-    const handleSaveSalary = async (uid) => {
-        const amount = parseInputNumber(inputValue);
-        if (!amount || amount <= 0) {
-            setEditingUid(null);
-            return;
-        }
-        setSaving(true);
-        try {
-            const userRef = doc(db, 'users', uid);
-            const userSnap = await getDoc(userRef);
-            const existing = userSnap.exists() ? (userSnap.data().salaryHistory || []) : [];
-            const newEntry = { amount, date: new Date().toISOString() };
-            const updated = [newEntry, ...existing];
-            await updateDoc(userRef, { salaryHistory: updated });
-            setEditingUid(null);
-            // Refetch para actualizar la UI
-            await fetchMembers();
-        } catch (err) {
-            console.error('Error saving salary:', err);
-        } finally {
-            setSaving(false);
-        }
-    };
-
-    if (loading) return <div className="text-sm text-gray-500 animate-pulse">Cargando sueldos...</div>;
-
-    const proporciones = calcularProporciones(membersData.map(m => ({
-        uid: m.id,
-        displayName: m.displayName,
-        salaryHistory: m.salaryHistory || []
-    })));
-
-    const allHaveSalary = membersData.every(m => getLatestSalary(m.salaryHistory) > 0);
-
-    return (
-        <div className="space-y-3">
-            {membersData.map((member) => {
-                const isMe = member.id === currentUserUid;
-                const salary = getLatestSalary(member.salaryHistory);
-                const prop = proporciones.find(p => p.uid === member.id);
-                const initial = member.displayName ? member.displayName.charAt(0).toUpperCase() : '?';
-
-                return (
-                    <div key={member.id} className={`p-4 rounded-2xl border transition-colors ${isGlass ? 'bg-white/5 border-white/10' : 'bg-gray-50 border-gray-100'}`}>
-                        {/* Cabecera miembro */}
-                        <div className="flex items-center gap-3 mb-3">
-                            {member.photoURL ? (
-                                <img src={member.photoURL} alt={member.displayName} className="w-9 h-9 rounded-full object-cover" />
-                            ) : (
-                                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center font-bold text-white">{initial}</div>
-                            )}
-                            <div className="flex-1">
-                                <p className={`font-semibold text-sm ${isGlass ? 'text-white' : 'text-gray-800'}`}>
-                                    {member.displayName}
-                                    {isMe && <span className="ml-2 text-[10px] bg-blue-500/20 text-blue-500 px-1.5 py-0.5 rounded border border-blue-500/30">VOS</span>}
-                                </p>
-                                {allHaveSalary && prop && (
-                                    <p className={`text-xs font-bold ${isGlass ? 'text-indigo-300' : 'text-indigo-500'}`}>{prop.percentage}% del ingreso familiar</p>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Sueldo */}
-                        {isMe ? (
-                            editingUid === member.id ? (
-                                <div className="flex gap-2">
-                                    <input
-                                        type="text"
-                                        inputMode="numeric"
-                                        placeholder="Ej: 500.000"
-                                        value={formatInputNumber(inputValue)}
-                                        onChange={(e) => setInputValue(parseInputNumber(e.target.value))}
-                                        autoFocus
-                                        className={`flex-1 px-3 py-2 rounded-xl text-sm border focus:outline-none focus:border-indigo-500 ${isGlass ? 'bg-black/40 border-white/10 text-white' : 'bg-white border-gray-200 text-gray-800'}`}
-                                    />
-                                    <button
-                                        onClick={() => handleSaveSalary(member.id)}
-                                        disabled={saving}
-                                        className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold rounded-xl disabled:opacity-50 transition-colors"
-                                    >
-                                        {saving ? '...' : 'Guardar'}
-                                    </button>
-                                    <button
-                                        onClick={() => setEditingUid(null)}
-                                        className={`px-3 py-2 rounded-xl text-sm font-bold transition-colors ${isGlass ? 'bg-white/10 text-gray-300' : 'bg-gray-100 text-gray-500'}`}
-                                    >
-                                        ✕
-                                    </button>
-                                </div>
-                            ) : (
-                                <button
-                                    onClick={() => handleStartEdit(member)}
-                                    className={`w-full flex items-center justify-between p-3 rounded-xl border-dashed border-2 transition-colors group ${
-                                        salary > 0
-                                            ? (isGlass ? 'border-indigo-500/40 hover:border-indigo-400' : 'border-indigo-200 hover:border-indigo-400')
-                                            : (isGlass ? 'border-white/20 hover:border-white/40' : 'border-gray-200 hover:border-gray-400')
-                                    }`}
-                                >
-                                    <div className="text-left">
-                                        <p className={`text-[10px] font-bold uppercase tracking-wider mb-0.5 ${ isGlass ? 'text-gray-400' : 'text-gray-400'}`}>Sueldo mensual neto</p>
-                                        <p className={`text-lg font-bold font-mono ${ salary > 0 ? (isGlass ? 'text-white' : 'text-gray-900') : (isGlass ? 'text-gray-500' : 'text-gray-400')}`}>
-                                            {salary > 0 ? formatMoney(salary) : 'Cargar sueldo'}
-                                        </p>
-                                    </div>
-                                    <span className={`text-xs font-bold px-3 py-1 rounded-full transition-colors flex items-center gap-1 ${ isGlass ? 'bg-white/10 text-gray-300 group-hover:bg-indigo-500/30 group-hover:text-indigo-200' : 'bg-gray-100 text-gray-500 group-hover:bg-indigo-100 group-hover:text-indigo-600'}`}><Pencil size={12} /> Editar</span>
-                                </button>
-                            )
-                        ) : (
-                            // Sueldo del otro miembro — solo lectura
-                            <div className={`flex items-center justify-between p-3 rounded-xl ${isGlass ? 'bg-white/5' : 'bg-white'}`}>
-                                <div>
-                                    <p className={`text-[10px] font-bold uppercase tracking-wider mb-0.5 ${isGlass ? 'text-gray-400' : 'text-gray-400'}`}>Sueldo mensual neto</p>
-                                    <p className={`text-lg font-bold font-mono ${salary > 0 ? (isGlass ? 'text-white' : 'text-gray-900') : (isGlass ? 'text-gray-500' : 'text-gray-400')}`}>
-                                        {salary > 0 ? formatMoney(salary) : 'No cargado aún'}
-                                    </p>
-                                </div>
-                                {salary > 0 && (
-                                    <div className={`text-xs px-2 py-1 rounded-full font-bold ${isGlass ? 'bg-green-500/20 text-green-300' : 'bg-green-50 text-green-600'}`}>✓</div>
-                                )}
-                            </div>
-                        )}
-                    </div>
-                );
-            })}
-
-            {!allHaveSalary && (
-                <p className={`text-xs text-center pt-1 ${isGlass ? 'text-gray-500' : 'text-gray-400'}`}>
-                    Cuando ambos carguen su sueldo, verás el porcentaje de aporte de cada uno.
-                </p>
-            )}
-        </div>
-    );
-};
-
+/**
+ * Componente principal para la gestión del hogar (Household).
+ * Permite crear un hogar, unirse a uno existente mediante código de invitación,
+ * gestionar los sueldos de los miembros y las preferencias de visibilidad.
+ * 
+ * @param {Object} props
+ * @param {Function} props.onBack - Función callback para regresar a la vista anterior.
+ * @returns {JSX.Element}
+ */
 export default function HouseholdManager({ onBack }) {
     const { isGlass } = useUI();
     const { user, userData } = useAuth();
@@ -246,48 +28,23 @@ export default function HouseholdManager({ onBack }) {
     const [loading, setLoading] = useState(true);
     const [copyFeedback, setCopyFeedback] = useState("");
     const [createStatus, setCreateStatus] = useState("idle");
+    const [joinCode, setJoinCode] = useState("");
+    const [joinStatus, setJoinStatus] = useState("");
 
-    // SETTINGS DE COMPARTIR
-    const [sharePreferences, setSharePreferences] = useState({
-        shareCards: true,
-        shareSupermarket: true,
-        shareServices: true
-    });
+    const [sharePreferences, setSharePreferences] = useState({ shareCards: true, shareSupermarket: true, shareServices: true });
     const [savingPrefs, setSavingPrefs] = useState(false);
 
     useEffect(() => {
-        // Cargar preferencias actuales si existen en el objeto user (o buscarlas de la DB si user no está actualizado en realtime)
         if (user) {
             const fetchPrefs = async () => {
                 const userDoc = await getDoc(doc(db, 'users', user.uid));
-                if (userDoc.exists()) {
-                    const data = userDoc.data();
-                    if (data.sharePreferences) {
-                        setSharePreferences(data.sharePreferences);
-                    }
+                if (userDoc.exists() && userDoc.data().sharePreferences) {
+                    setSharePreferences(userDoc.data().sharePreferences);
                 }
             };
             fetchPrefs();
         }
     }, [user]);
-
-    const handleToggleShare = async (key) => {
-        const newPrefs = { ...sharePreferences, [key]: !sharePreferences[key] };
-        setSharePreferences(newPrefs);
-        setSavingPrefs(true);
-        try {
-            const userRef = doc(db, 'users', user.uid);
-            await updateDoc(userRef, { sharePreferences: newPrefs });
-        } catch (error) {
-            console.error("Error updating share prefs:", error);
-        } finally {
-            setTimeout(() => setSavingPrefs(false), 800);
-        }
-    };
-
-    /* --- JOIN LOGIC --- */
-    const [joinCode, setJoinCode] = useState("");
-    const [joinStatus, setJoinStatus] = useState(""); // idle, searching, success, error
 
     useEffect(() => {
         if (!householdId) {
@@ -296,13 +53,8 @@ export default function HouseholdManager({ onBack }) {
         }
         const fetchHousehold = async () => {
             try {
-                const ref = doc(db, 'households', householdId);
-                const snap = await getDoc(ref);
-                if (snap.exists()) {
-                    setHousehold(snap.data());
-                } else {
-                    console.error("Household document does not exist");
-                }
+                const snap = await getDoc(doc(db, 'households', householdId));
+                if (snap.exists()) setHousehold(snap.data());
             } catch (error) {
                 console.error("Error fetching household:", error);
             } finally {
@@ -311,6 +63,19 @@ export default function HouseholdManager({ onBack }) {
         };
         fetchHousehold();
     }, [householdId]);
+
+    const handleToggleShare = async (key) => {
+        const newPrefs = { ...sharePreferences, [key]: !sharePreferences[key] };
+        setSharePreferences(newPrefs);
+        setSavingPrefs(true);
+        try {
+            await updateDoc(doc(db, 'users', user.uid), { sharePreferences: newPrefs });
+        } catch (error) {
+            console.error("Error updating share prefs:", error);
+        } finally {
+            setTimeout(() => setSavingPrefs(false), 800);
+        }
+    };
 
     const copyCode = () => {
         if (household?.inviteCode) {
@@ -323,48 +88,28 @@ export default function HouseholdManager({ onBack }) {
     const handleJoin = async () => {
         if (joinCode.length < 6) return;
         setJoinStatus("searching");
-
         try {
-            // 1. Buscar hogar por código
-            // NOTA: Esto requiere un índice o query scan. Para MVP query scan sobre 'households' es aceptable si son pocos, 
-            // pero lo ideal es un `where("inviteCode", "==", joinCode)`.
             const q = query(collection(db, 'households'), where("inviteCode", "==", joinCode));
             const querySnapshot = await getDocs(q);
-
-            if (querySnapshot.empty) {
-                setJoinStatus("error_not_found");
-                return;
-            }
+            if (querySnapshot.empty) return setJoinStatus("error_not_found");
 
             const targetHouseholdDoc = querySnapshot.docs[0];
             const targetHouseholdId = targetHouseholdDoc.id;
             const targetHouseholdData = targetHouseholdDoc.data();
 
-            // 2. Unirse
-            const userRef = doc(db, 'users', user.uid);
-            await updateDoc(userRef, { householdId: targetHouseholdId });
-
-            // 3. Añadir a lista de miembros
+            await updateDoc(doc(db, 'users', user.uid), { householdId: targetHouseholdId });
             const newMembers = [...(targetHouseholdData.members || []), user.uid];
-            const householdRef = doc(db, 'households', targetHouseholdId);
-            await updateDoc(householdRef, { members: newMembers });
+            await updateDoc(doc(db, 'households', targetHouseholdId), { members: newMembers });
 
-            // 4. Migrar mis datos (si tenía un hogar 'temporal' o datos sueltos)
-            // Simplemente actualizamos mis items para que apunten al nuevo hogar
             const batch = writeBatch(db);
-            const collectionsToMigrate = ['cards', 'transactions', 'supermarket_items', 'services'];
-            for (const collName of collectionsToMigrate) {
-                const myDataQ = query(collection(db, collName), where("ownerId", "==", user.uid));
-                const snap = await getDocs(myDataQ);
-                snap.forEach(docSnap => {
-                    batch.update(docSnap.ref, { householdId: targetHouseholdId });
-                });
+            for (const collName of ['cards', 'transactions', 'supermarket_items', 'services']) {
+                const snap = await getDocs(query(collection(db, collName), where("ownerId", "==", user.uid)));
+                snap.forEach(docSnap => batch.update(docSnap.ref, { householdId: targetHouseholdId }));
             }
             await batch.commit();
 
             setJoinStatus("success");
-            setTimeout(() => window.location.reload(), 2000); // Recargar para limpiar estados
-
+            setTimeout(() => window.location.reload(), 2000);
         } catch (error) {
             console.error(error);
             setJoinStatus("error");
@@ -375,24 +120,12 @@ export default function HouseholdManager({ onBack }) {
         setCreateStatus("creating");
         try {
             const newId = await checkAndMigrateToHousehold(user);
-
-            if (!newId) {
-                console.error("Migration returned no ID.");
-                setCreateStatus("error");
-                return;
-            }
-
-            // Inmediatamente buscar la data para mostrarla sin recargar
-            const ref = doc(db, 'households', newId);
-            const snap = await getDoc(ref);
-            if (snap.exists()) {
-                setHousehold(snap.data());
-            }
+            if (!newId) return setCreateStatus("error");
+            const snap = await getDoc(doc(db, 'households', newId));
+            if (snap.exists()) setHousehold(snap.data());
             setCreateStatus("success");
-
-            // Importante: No recargamos la página para no sacar al usuario de la pantalla.
         } catch (error) {
-            console.error("Error creating household:", error);
+            console.error(error);
             setCreateStatus("error");
         }
     };
@@ -401,34 +134,23 @@ export default function HouseholdManager({ onBack }) {
         if (!window.confirm("¿Seguro que querés salir de este grupo? Volverás a ver solo tus datos individuales.")) return;
         setLoading(true);
         try {
-            // 1. Quitar householdId del usuario
-            const userRef = doc(db, 'users', user.uid);
-            await updateDoc(userRef, { householdId: null });
-
-            // 2. Quitar usuario de la lista de miembros del household
+            await updateDoc(doc(db, 'users', user.uid), { householdId: null });
             if (householdId && household) {
-                const hhRef = doc(db, 'households', householdId);
-                const currentMembers = household.members || [];
-                const newMembers = currentMembers.filter(id => id !== user.uid);
-                await updateDoc(hhRef, { members: newMembers });
+                const newMembers = (household.members || []).filter(id => id !== user.uid);
+                await updateDoc(doc(db, 'households', householdId), { members: newMembers });
             }
-
-            // 3. Recargar
             window.location.reload();
-
         } catch (error) {
-            console.error("Error leaving household:", error);
+            console.error(error);
             alert("Hubo un error al salir del grupo.");
             setLoading(false);
         }
     };
 
-    if (loading) return <div className={`p-8 text-center ${isGlass ? 'text-white' : 'text-gray-800'}`}>Cargando tu hogar...</div>;
+    if (loading) return <LoadingState message="Cargando tu hogar..." fullScreen={true} />;
 
     return (
         <div className={`min-h-screen p-4 font-sans pb-20 ${isGlass ? 'bg-[#0f0c29] text-white' : 'bg-[#f3f4f6] text-gray-800'}`}>
-
-            {/* Header */}
             <div className="flex items-center gap-4 mb-8">
                 <button onClick={onBack} className={`p-2 rounded-xl transition-colors ${isGlass ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-white shadow-sm text-gray-600 hover:bg-gray-100'}`}>
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
@@ -445,18 +167,14 @@ export default function HouseholdManager({ onBack }) {
             </div>
 
             <div className="max-w-md mx-auto space-y-8">
-
-                {/* Card: Código de Invitación y Miembros (SOLO SI TIENE HOGAR) */}
                 {household ? (
                     <>
                         <div className={`backdrop-blur-lg border p-6 rounded-3xl relative overflow-hidden ${isGlass ? 'bg-white/10 border-white/10' : 'bg-white border-blue-100 shadow-md'}`}>
                             <div className="absolute top-0 right-0 p-4 opacity-10">
                                 <svg className={`w-24 h-24 ${isGlass ? 'text-white' : 'text-blue-500'}`} fill="currentColor" viewBox="0 0 20 20"><path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" /></svg>
                             </div>
-
                             <h2 className={`text-lg mb-2 ${isGlass ? 'text-gray-300' : 'text-gray-600 font-bold'}`}>Código de Invitación</h2>
                             <p className={`text-sm mb-4 ${isGlass ? 'text-gray-400' : 'text-gray-500'}`}>Compartí este código con tu pareja para unirse a este hogar.</p>
-
                             <div className="flex items-center gap-3">
                                 <div className={`flex-1 p-4 rounded-2xl text-center text-3xl font-mono tracking-widest shadow-inner border ${isGlass ? 'bg-black/30 text-blue-300 border-white/5' : 'bg-gray-50 text-blue-600 border-gray-200'}`}>
                                     {household.inviteCode}
@@ -470,43 +188,31 @@ export default function HouseholdManager({ onBack }) {
 
                         <div className={`border p-6 rounded-3xl ${isGlass ? 'bg-white/5 border-white/10' : 'bg-white border-gray-100 shadow-sm'}`}>
                             <h3 className={`text-xl font-bold mb-4 flex items-center gap-2 ${isGlass ? 'text-white' : 'text-gray-800'}`}>
-                                <span className="w-2 h-8 bg-purple-500 rounded-full"></span>
-                                Miembros del Hogar
+                                <span className="w-2 h-8 bg-purple-500 rounded-full"></span>Miembros del Hogar
                             </h3>
                             <div className="space-y-3">
                                 <HouseholdMembersList memberIds={household.members || []} currentUserUid={user.uid} isGlass={isGlass} />
                             </div>
                         </div>
 
-                        {/* SECCIÓN DE SUELDOS */}
                         <div className={`border p-6 rounded-3xl ${isGlass ? 'bg-white/5 border-white/10' : 'bg-white border-gray-100 shadow-sm'}`}>
                             <div className="mb-4">
                                 <h3 className={`text-lg font-bold flex items-center gap-2 mb-1 ${isGlass ? 'text-white' : 'text-gray-800'}`}>
-                                    <span className="w-2 h-6 bg-green-500 rounded-full"></span>
-                                    <Wallet size={20} className="text-green-500" /> Sueldos del Hogar
+                                    <span className="w-2 h-6 bg-green-500 rounded-full"></span><Wallet size={20} className="text-green-500" /> Sueldos del Hogar
                                 </h3>
-                                <p className={`text-xs ${isGlass ? 'text-gray-400' : 'text-gray-500'}`}>
-                                    Usamos los sueldos para calcular cuánto aporta cada uno a los gastos compartidos.
-                                </p>
+                                <p className={`text-xs ${isGlass ? 'text-gray-400' : 'text-gray-500'}`}>Usamos los sueldos para calcular cuánto aporta cada uno.</p>
                             </div>
-                            <SalarySection
-                                memberIds={household.members || []}
-                                currentUserUid={user.uid}
-                                isGlass={isGlass}
-                            />
+                            <SalarySection memberIds={household.members || []} currentUserUid={user.uid} isGlass={isGlass} />
                         </div>
 
-                        {/* CONFIGURACIÓN DE COMPARTIR (Granularidad) */}
                         <div className={`border p-6 rounded-3xl ${isGlass ? 'bg-white/5 border-white/10' : 'bg-white border-gray-100 shadow-sm'}`}>
                             <div className="flex justify-between items-center mb-4">
                                 <h3 className={`text-lg font-bold flex items-center gap-2 ${isGlass ? 'text-white' : 'text-gray-800'}`}>
-                                    <span className="w-2 h-6 bg-blue-500 rounded-full"></span>
-                                    ¿Qué comparto?
+                                    <span className="w-2 h-6 bg-blue-500 rounded-full"></span>¿Qué comparto?
                                 </h3>
                                 {savingPrefs && <span className="text-xs text-green-500 font-bold animate-pulse">Guardando...</span>}
                             </div>
                             <p className={`text-xs mb-6 ${isGlass ? 'text-gray-400' : 'text-gray-500'}`}>Elegí qué información querés que vean los otros miembros del hogar.</p>
-
                             <div className="space-y-4">
                                 <div className={`flex items-center justify-between p-3 rounded-2xl transition-colors ${isGlass ? 'bg-white/5 hover:bg-white/10' : 'bg-gray-50 hover:bg-gray-100 text-gray-700'}`}>
                                     <span className="text-sm font-bold flex items-center gap-2"><CreditCard size={18} className="text-indigo-400" /> Mis Tarjetas y Gastos</span>
@@ -529,7 +235,6 @@ export default function HouseholdManager({ onBack }) {
                             </div>
                         </div>
 
-                        {/* BOTÓN SALIR */}
                         <div className="pt-4">
                             <button onClick={handleLeave} className="w-full py-4 text-red-500 font-bold text-sm tracking-widest hover:bg-red-50 rounded-2xl transition-colors border border-transparent hover:border-red-100">
                                 Salir del Grupo de Hogar
@@ -537,49 +242,7 @@ export default function HouseholdManager({ onBack }) {
                         </div>
                     </>
                 ) : (
-                    <div className="space-y-8 animate-fade-in">
-                        <div className="p-6 bg-yellow-500/10 border border-yellow-500/20 rounded-3xl text-center space-y-4">
-                            <div>
-                                <p className={`font-bold mb-2 ${isGlass ? 'text-yellow-200' : 'text-yellow-700'}`}>¡Sin Hogar Asignado!</p>
-                                <p className={`text-sm ${isGlass ? 'text-yellow-100/70' : 'text-yellow-800/70'}`}>Es necesario activar tu hogar para generar un código y compartir gastos.</p>
-                            </div>
-                            <button
-                                onClick={handleCreate}
-                                disabled={createStatus === 'creating'}
-                                className="w-full py-3 bg-yellow-500 hover:bg-yellow-400 text-black font-bold rounded-xl transition-colors disabled:opacity-50"
-                            >
-                                {createStatus === 'creating' ? 'Creando...' : 'Crear Mi Hogar (Código Random)'}
-                            </button>
-                        </div>
-
-                        {/* Card: UNIRSE A OTRO HOGAR */}
-                        <div className={`p-6 rounded-3xl border ${isGlass ? 'bg-gradient-to-br from-indigo-900/40 to-black border-indigo-500/30' : 'bg-white border-indigo-100 shadow-lg'}`}>
-                            <h3 className={`text-lg font-bold mb-2 ${isGlass ? 'text-indigo-200' : 'text-indigo-600'}`}>¿Te invitaron?</h3>
-                            <p className={`text-sm mb-4 ${isGlass ? 'text-gray-400' : 'text-gray-500'}`}>Si tu pareja creó el hogar, ingresá su código aquí para unirte.</p>
-
-                            <div className="flex flex-col md:flex-row gap-3">
-                                <input
-                                    type="text"
-                                    placeholder="000-000"
-                                    maxLength={6}
-                                    value={joinCode}
-                                    onChange={(e) => setJoinCode(e.target.value)}
-                                    className={`w-full border rounded-2xl px-4 py-4 text-center tracking-widest font-mono text-lg transition-colors focus:outline-none focus:border-indigo-500 ${isGlass ? 'bg-black/50 border-white/10 text-white' : 'bg-gray-50 border-gray-200 text-gray-800'}`}
-                                />
-                                <button
-                                    onClick={handleJoin}
-                                    disabled={joinStatus === 'searching' || joinCode.length < 6}
-                                    className="w-full md:w-auto bg-indigo-600 text-white px-8 py-4 rounded-2xl font-bold disabled:opacity-50 hover:bg-indigo-500 transition-all active:scale-95 shadow-lg shadow-indigo-900/50"
-                                >
-                                    Confirmar y Unirme
-                                </button>
-                            </div>
-                            {joinStatus === 'searching' && <p className="text-indigo-400 text-sm mt-2 text-center animate-pulse">Buscando hogar...</p>}
-                            {joinStatus === 'success' && <p className="text-green-500 text-sm mt-2 text-center font-bold">¡Éxito! Recargando...</p>}
-                            {joinStatus === 'error_not_found' && <p className="text-red-400 text-sm mt-2 text-center">Código incorrecto.</p>}
-                            {joinStatus === 'error' && <p className="text-red-400 text-sm mt-2 text-center">Ocurrió un error.</p>}
-                        </div>
-                    </div>
+                    <HouseholdJoinOrCreate isGlass={isGlass} handleCreate={handleCreate} createStatus={createStatus} joinCode={joinCode} setJoinCode={setJoinCode} handleJoin={handleJoin} joinStatus={joinStatus} />
                 )}
             </div>
         </div>

@@ -5,12 +5,12 @@ import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { getFunctions } from "firebase/functions";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAFzHdpU0KAZIXAnbILOK3b5RUb_VA8-ls",
-  authDomain: "billetera-app-b1e69.firebaseapp.com",
-  projectId: "billetera-app-b1e69",
-  storageBucket: "billetera-app-b1e69.firebasestorage.app",
-  messagingSenderId: "914092911326",
-  appId: "1:914092911326:web:e72fc362c389a1cb94f04f"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
 
 const app = initializeApp(firebaseConfig);
