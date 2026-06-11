@@ -75,7 +75,7 @@ export default function FreshShop() {
 
     return (
         <div className="animate-fade-in space-y-4 pb-32">
-            <div className={`sticky top-[57px] z-30 pt-2 pb-3 mb-2 transition-all shadow-sm -mx-4 px-6 border-b ${
+            <div className={`fixed top-[64px] left-0 right-0 z-40 pt-4 pb-4 transition-all shadow-sm px-6 border-b ${
                 isGlass ? 'bg-[#0f0c29]/95 border-white/10 text-white backdrop-blur-md' : 'bg-[#f3f4f6]/95 border-gray-200/50 text-gray-800 backdrop-blur-sm'
             }`}>
                 <div className="flex justify-between items-end">
@@ -96,6 +96,9 @@ export default function FreshShop() {
                     </div>
                 </div>
             </div>
+
+            {/* ESPACIADOR */}
+            <div className="h-[95px]"></div>
 
             {allCategories.map(cat => (
                 <PlannerSection key={cat.id} catData={cat} trips={activeItems} currentMonthKey={currentMonthKey} isGlass={isGlass} householdId={householdId} />

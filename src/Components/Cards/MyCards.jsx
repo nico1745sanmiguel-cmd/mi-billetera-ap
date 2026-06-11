@@ -94,7 +94,7 @@ export default function MyCards({ cards, privacyMode, currentDate }) {
           </div>
           <div className="flex justify-end gap-3 mt-6 pt-4 border-t">
             <button type="button" onClick={() => setIsEditing(false)} className="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded">Cancelar</button>
-            <button type="submit" className="px-6 py-2 text-sm font-medium bg-blue-600 text-white rounded hover:bg-blue-700 shadow">Guardar</button>
+            <button type="submit" className="px-6 py-2 text-sm font-medium bg-brand-primary text-white rounded hover:bg-blue-700 shadow">Guardar</button>
           </div>
         </form>
       </div>
@@ -105,20 +105,20 @@ export default function MyCards({ cards, privacyMode, currentDate }) {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-medium text-gray-900">Mis Tarjetas</h2>
-        <button onClick={() => openForm()} className="bg-[#3483fa] text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-[#2968c8] shadow-sm transition-colors">+ Agregar Tarjeta</button>
+        <button onClick={() => openForm()} className="bg-brand-primary text-surface-light px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 shadow-sm transition-colors">+ Agregar Tarjeta</button>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {cards.map((card) => {
           const stmt = card.monthlyStatements?.[monthKey];
           return (
-            <div key={card.id} className="group relative w-full aspect-[1.58/1] rounded-xl shadow-lg text-white overflow-hidden transition-all duration-300 hover:shadow-2xl hover:-translate-y-1" style={{ background: `linear-gradient(135deg, ${card.color} 0%, ${card.color}DD 100%)` }}>
-              <div className="absolute -top-[50%] -left-[50%] w-[200%] h-[200%] bg-gradient-to-br from-white/20 to-transparent rotate-45 pointer-events-none"></div>
+            <div key={card.id} className="group relative w-full aspect-[1.58/1] rounded-xl shadow-sm text-white overflow-hidden transition-all duration-300 hover:shadow-md hover:-translate-y-1" style={{ backgroundColor: card.color || 'var(--card-color)' }}>
+              <div className="absolute -top-[50%] -start-[50%] w-[200%] h-[200%] bg-gradient-to-br from-white/20 to-transparent rotate-45 pointer-events-none"></div>
               <div className="absolute inset-0 p-5 flex flex-col justify-between z-10">
                 <div className="flex justify-between items-start">
-                  <span className="font-bold tracking-wider text-sm uppercase drop-shadow-md opacity-90">{card.bank}</span>
+                  <span className="font-bold tracking-wider text-sm uppercase drop-shadow-sm opacity-90">{card.bank}</span>
                   <div className="opacity-100">{getBrandLogo(card.name)}</div>
                 </div>
-                <div className="flex items-center gap-3 pl-1">
+                <div className="flex items-center gap-3 ps-1">
                   <ChipIcon />
                 </div>
                 <div className="pt-2">
@@ -143,11 +143,11 @@ export default function MyCards({ cards, privacyMode, currentDate }) {
                   )}
                 </div>
               </div>
-              <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-20">
-                <button onClick={() => openForm(card)} className="bg-white/20 hover:bg-white/40 backdrop-blur-md text-white p-2 rounded-full shadow-lg" title="Editar">
+              <div className="absolute top-3 end-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-20">
+                <button aria-label="Editar" onClick={() => openForm(card)} className="bg-white/20 hover:bg-white/40 backdrop-blur-md text-white p-2 rounded-full shadow-lg" title="Editar">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                 </button>
-                <button onClick={() => handleDelete(card.id)} className="bg-red-500/80 hover:bg-red-600 backdrop-blur-md text-white p-2 rounded-full shadow-lg" title="Borrar">
+                <button aria-label="Borrar" onClick={() => handleDelete(card.id)} className="bg-status-danger hover:bg-red-600 backdrop-blur-md text-white p-2 rounded-full shadow-lg" title="Borrar">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                 </button>
               </div>

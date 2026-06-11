@@ -111,7 +111,7 @@ export default function MobilityExpenses({ isGlass }) {
                             className={`${inputCls} flex-1 min-w-0`}
                         />
                         <div className="relative flex-1 min-w-0">
-                            <span className={`absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold ${isGlass ? 'text-white/40' : 'text-gray-300'}`}>$</span>
+                            <span className={`absolute start-3 top-1/2 -translate-y-1/2 text-sm font-bold ${isGlass ? 'text-white/40' : 'text-gray-300'}`}>$</span>
                             <input
                                 type="number"
                                 step="0.01"
@@ -119,7 +119,7 @@ export default function MobilityExpenses({ isGlass }) {
                                 placeholder="Monto"
                                 value={gncAmount}
                                 onChange={e => setGncAmount(e.target.value)}
-                                className={`${inputCls} pl-7`}
+                                className={`${inputCls} ps-7`}
                                 required
                             />
                         </div>
@@ -201,7 +201,7 @@ export default function MobilityExpenses({ isGlass }) {
                             <div>
                                 <label className={labelCls}>Monto</label>
                                 <div className="relative">
-                                    <span className={`absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold ${isGlass ? 'text-white/40' : 'text-gray-300'}`}>$</span>
+                                    <span className={`absolute start-3 top-1/2 -translate-y-1/2 text-sm font-bold ${isGlass ? 'text-white/40' : 'text-gray-300'}`}>$</span>
                                     <input
                                         type="number"
                                         step="0.01"
@@ -209,7 +209,7 @@ export default function MobilityExpenses({ isGlass }) {
                                         placeholder="0"
                                         value={fullForm.amount}
                                         onChange={e => setFullForm(f => ({ ...f, amount: e.target.value }))}
-                                        className={`${inputCls} pl-7`}
+                                        className={`${inputCls} ps-7`}
                                         required
                                     />
                                 </div>

@@ -27,19 +27,19 @@ export default function BottomNav({ currentView, setView }) {
   };
 
   return (
-    <div className="fixed bottom-0 left-0 w-full z-50">
+    <div className="fixed bottom-0 start-0 w-full z-50">
       
       {/* 1. EL BOTÓN FLOTANTE (CENTRAL) */}
       {/* Lo sacamos del flujo normal para que "flote" de verdad sobre el borde */}
-      <div className="absolute left-1/2 -translate-x-1/2 -top-6">
+      <div className="absolute start-1/2 -translate-x-1/2 rtl:translate-x-1/2 -top-6">
         <button 
             onClick={handleCentralClick}
             className="
                 w-14 h-14 rounded-full 
-                bg-[#3483fa] text-white 
-                shadow-lg shadow-blue-500/30 
+                bg-brand-primary text-surface-light 
+                shadow-lg shadow-brand-primary/30 
                 flex items-center justify-center 
-                border-4 border-[#f3f4f6] 
+                border-4 border-surface-DEFAULT 
                 transition-transform active:scale-90
             "
         >
@@ -51,7 +51,7 @@ export default function BottomNav({ currentView, setView }) {
       <div className="h-16 bg-white shadow-[0_-5px_20px_rgba(0,0,0,0.05)] border-t border-gray-100 flex justify-between items-center px-2">
         
         {/* LADO IZQUIERDO */}
-        <div className="flex-1 flex justify-around pr-8">
+        <div className="flex-1 flex justify-around pe-8">
             <NavItem 
                 id="dashboard" 
                 label="Inicio" 
@@ -68,7 +68,7 @@ export default function BottomNav({ currentView, setView }) {
         <div className="w-12"></div>
 
         {/* LADO DERECHO */}
-        <div className="flex-1 flex justify-around pl-8">
+        <div className="flex-1 flex justify-around ps-8">
             <NavItem 
                 id="super" 
                 label="Super" 

@@ -37,16 +37,16 @@ function CardVisual({ card, monthKey, privacyMode, onClick, isSelected }) {
     return (
         <div
             onClick={onClick}
-            className={`cursor-pointer flex-shrink-0 w-[82%] max-w-[280px] h-48 rounded-[28px] shadow-lg p-5 text-white relative overflow-hidden snap-center transition-all duration-200 active:scale-95 group ${isSelected ? 'ring-2 ring-white ring-offset-2 ring-offset-transparent scale-[1.02]' : 'hover:scale-[1.01]'}`}
-            style={{ background: `linear-gradient(135deg, ${card.color || '#1f2937'} 0%, ${card.color || '#111827'}CC 100%)` }}
+            className={`cursor-pointer flex-shrink-0 w-[82%] max-w-[280px] h-48 rounded-[28px] shadow-sm p-5 text-white flex flex-col relative overflow-hidden snap-center transition-all duration-200 active:scale-95 group ${isSelected ? 'ring-2 ring-white ring-offset-2 ring-offset-transparent scale-[1.02]' : 'hover:scale-[1.01]'}`}
+            style={{ backgroundColor: card.color || 'var(--card-color)' }}
         >
             {/* Glow */}
-            <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full -mr-10 -mt-10 blur-xl pointer-events-none" />
+            <div className="absolute top-0 end-0 w-32 h-32 bg-white/5 rounded-full -me-10 -mt-10 blur-xl pointer-events-none" />
 
             {/* Header */}
-            <div className="flex justify-between items-start mb-4 relative z-10">
+            <div className="flex justify-between items-start mb-auto relative z-10">
                 {logo ? (
-                    <img src={logo} alt={card.name} className="h-6 object-contain filter brightness-200 contrast-200 drop-shadow-md" loading="lazy" />
+                    <img src={logo} alt={`Logo de ${card.name}`} className="h-6 object-contain filter brightness-200 contrast-200 drop-shadow-sm" loading="lazy" />
                 ) : (
                     <span className="font-bold text-sm tracking-wider uppercase opacity-90">{card.name}</span>
                 )}
@@ -66,7 +66,7 @@ function CardVisual({ card, monthKey, privacyMode, onClick, isSelected }) {
             </div>
 
             {/* Footer */}
-            <div className="absolute bottom-4 left-5 right-5 z-10 border-t border-white/20 pt-2 flex justify-between items-end">
+            <div className="z-10 border-t border-white/20 pt-2 flex justify-between items-end">
                 <div>
                     <p className="text-[9px] opacity-70 uppercase mb-0.5 font-medium tracking-wide">Total a pagar</p>
                     <p className="font-mono text-xl font-bold tracking-tight">
@@ -136,7 +136,7 @@ function CardsList({ cards, monthKey, privacyMode, isGlass, onSelectCard, onNewC
             {/* Botón nueva tarjeta */}
             <button
                 onClick={onNewCard}
-                className={`w-full py-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all active:scale-95 ${isGlass ? 'bg-white/10 border border-white/10 text-white hover:bg-white/20' : 'bg-blue-600 text-white shadow-lg shadow-blue-200 hover:bg-blue-700'}`}
+                className={`w-full py-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all active:scale-95 ${isGlass ? 'bg-surface-glass border border-white/10 text-white hover:bg-white/20' : 'bg-brand-primary text-surface-light hover:bg-blue-700'}`}
             >
                 <Plus size={18} />
                 Agregar Tarjeta
@@ -286,8 +286,8 @@ function CardDetail({ card, isNewCard, currentDate, privacyMode, isGlass, househ
         } catch (error) { console.error(error); alert('Error al guardar los datos de la IA.'); }
     };
 
-    const inputClass = `w-full p-3 rounded-xl outline-none font-medium transition-colors ${isGlass ? 'bg-white/5 border border-white/10 text-white placeholder-white/30 focus:bg-white/10 focus:border-white/30' : 'bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-500'}`;
-    const labelClass = `block text-xs font-bold mb-1 ml-1 ${isGlass ? 'text-white/70' : 'text-gray-700'}`;
+    const inputClass = `w-full p-3 rounded-xl outline-none font-medium transition-colors ${isGlass ? 'bg-surface-glass border border-white/10 text-white placeholder-white/30 focus:bg-white/10 focus:border-white/30' : 'bg-surface-DEFAULT border border-gray-200 focus:border-brand-primary focus:ring-1 focus:ring-brand-primary'}`;
+    const labelClass = `block text-xs font-bold mb-1 ms-1 ${isGlass ? 'text-white/70' : 'text-gray-700'}`;
     const text = isGlass ? 'text-white' : 'text-gray-800';
 
     return (
@@ -331,19 +331,19 @@ function CardDetail({ card, isNewCard, currentDate, privacyMode, isGlass, househ
             {activeTab === 'card' && (
                 <div className={`rounded-2xl p-5 space-y-4 ${isGlass ? 'bg-white/5 border border-white/10' : 'bg-white border border-gray-100 shadow-sm'}`}>
                     {/* Preview */}
-                    <div className="rounded-2xl p-4 text-white shadow-lg relative overflow-hidden" style={{ background: `linear-gradient(135deg, ${form.color} 0%, ${form.color}CC 100%)` }}>
-                        <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent pointer-events-none" />
-                        <div className="flex justify-between items-start mb-4 relative z-10">
+                    <div className="rounded-2xl p-4 text-white shadow-sm flex flex-col min-h-[160px] relative overflow-hidden" style={{ backgroundColor: form.color }}>
+                        <div className="absolute inset-0 bg-white/5 pointer-events-none" />
+                        <div className="flex justify-between items-start mb-auto relative z-10">
                             <span className="text-xs font-bold uppercase tracking-wider opacity-90">{form.bank || 'BANCO'}</span>
                             <span className="font-bold">{form.name || 'TARJETA'}</span>
                         </div>
-                        <div className="relative z-10 text-right">
+                        <div className="relative z-10 text-end">
                             <p className="text-[10px] opacity-70 uppercase tracking-widest">Cierre · Vencimiento</p>
                             <p className="font-mono text-sm font-bold">{form.closeDay || '--'} · {form.dueDay || '--'}</p>
                         </div>
                         {householdId && (
-                            <div className="absolute bottom-2 left-2 flex items-center gap-1 bg-black/20 px-2 py-0.5 rounded-md">
-                                <span className={`w-2 h-2 rounded-full ${form.isShared ? 'bg-green-400 shadow-[0_0_5px_rgba(74,222,128,0.8)]' : 'bg-red-400'}`} />
+                            <div className="z-10 mt-2 flex items-center gap-1 bg-black/20 px-2 py-0.5 rounded-md self-start">
+                                <span className={`w-2 h-2 rounded-full ${form.isShared ? 'bg-status-success' : 'bg-status-danger'}`} />
                                 <span className="text-[8px] uppercase tracking-wide opacity-80">{form.isShared ? 'Compartida' : 'Privada'}</span>
                             </div>
                         )}
@@ -356,8 +356,8 @@ function CardDetail({ card, isNewCard, currentDate, privacyMode, isGlass, househ
                                     <p className={`text-sm font-bold ${text}`}>Compartir en Hogar</p>
                                     <p className={`text-xs ${isGlass ? 'text-white/50' : 'text-gray-500'}`}>Visible para tu pareja</p>
                                 </div>
-                                <button type="button" onClick={() => setForm(f => ({ ...f, isShared: !f.isShared }))} className={`w-12 h-7 rounded-full transition-colors relative ${form.isShared ? 'bg-blue-600' : 'bg-gray-400'}`}>
-                                    <div className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full transition-transform ${form.isShared ? 'translate-x-5' : 'translate-x-0'}`} />
+                                <button type="button" aria-label="Alternar tarjeta compartida" onClick={() => setForm(f => ({ ...f, isShared: !f.isShared }))} className={`w-12 h-7 rounded-full transition-colors relative ${form.isShared ? 'bg-brand-primary' : 'bg-gray-400'}`}>
+                                    <div className={`absolute top-1 start-1 w-5 h-5 bg-white rounded-full transition-transform ${form.isShared ? 'translate-x-5 rtl:-translate-x-5' : 'translate-x-0'}`} />
                                 </button>
                             </div>
                         )}
@@ -390,9 +390,9 @@ function CardDetail({ card, isNewCard, currentDate, privacyMode, isGlass, househ
                         </div>
                         <div className="flex gap-3 pt-2">
                             {card && (
-                                <button type="button" onClick={handleDelete} className={`flex-1 py-3 rounded-xl font-bold text-sm transition-colors ${isGlass ? 'text-red-300 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20' : 'text-red-500 bg-red-50 hover:bg-red-100'}`}>Eliminar</button>
+                                <button type="button" onClick={handleDelete} className={`flex-1 py-3 rounded-xl font-bold text-sm transition-colors border ${isGlass ? 'text-status-danger bg-status-danger/10 hover:bg-status-danger/20 border-status-danger/20' : 'text-status-danger bg-surface-light hover:bg-red-50 border-red-200'}`}>Eliminar</button>
                             )}
-                            <button type="submit" className={`flex-[2] py-3 rounded-xl font-bold text-sm transition-all shadow-lg ${isGlass ? 'bg-white text-black hover:bg-gray-100' : 'bg-blue-600 text-white hover:bg-blue-700'}`}>Guardar</button>
+                            <button type="submit" className={`flex-[2] py-3 rounded-xl font-bold text-sm transition-all ${isGlass ? 'bg-surface-light text-brand-dark hover:bg-gray-200' : 'bg-brand-primary text-surface-light hover:bg-blue-700'}`}>Guardar</button>
                         </div>
                     </form>
                 </div>
@@ -445,10 +445,11 @@ function CardDetail({ card, isNewCard, currentDate, privacyMode, isGlass, househ
                                     </div>
                                     <button
                                         type="button"
+                                        aria-label="Marcar como pagado"
                                         onClick={() => setStatement(s => ({ ...s, isPaid: !s.isPaid }))}
-                                        className={`w-12 h-7 rounded-full transition-all relative ${statement.isPaid ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.3)]' : 'bg-white/10'}`}
+                                        className={`w-12 h-7 rounded-full transition-all relative ${statement.isPaid ? 'bg-status-success' : 'bg-white/10 border border-gray-300'}`}
                                     >
-                                        <div className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full transition-transform duration-300 shadow-sm ${statement.isPaid ? 'translate-x-5' : 'translate-x-0'}`} />
+                                        <div className={`absolute top-1 start-1 w-5 h-5 bg-white rounded-full transition-transform duration-300 ${statement.isPaid ? 'translate-x-5 rtl:-translate-x-5' : 'translate-x-0'}`} />
                                     </button>
                                 </div>
 
@@ -482,7 +483,7 @@ function CardDetail({ card, isNewCard, currentDate, privacyMode, isGlass, househ
                                     </div>
                                 </div>
 
-                                <button type="submit" className={`w-full py-3 rounded-xl font-bold text-sm transition-all shadow-lg ${isGlass ? 'bg-white text-black hover:bg-gray-100' : 'bg-blue-600 text-white hover:bg-blue-700'}`}>
+                                <button type="submit" className={`w-full py-3 rounded-xl font-bold text-sm transition-all ${isGlass ? 'bg-surface-light text-brand-dark hover:bg-gray-200' : 'bg-brand-primary text-surface-light hover:bg-blue-700'}`}>
                                     Guardar Resumen
                                 </button>
                             </form>

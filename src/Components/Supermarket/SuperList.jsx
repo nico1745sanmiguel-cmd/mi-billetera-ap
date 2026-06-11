@@ -293,8 +293,8 @@ export default function SuperList() {
                 </div>
             </div>
 
-            {/* HEADER STICKY (Siempre visible arriba) */}
-            <div className={`sticky top-[57px] z-30 pt-2 pb-3 mb-2 transition-all shadow-sm -mx-4 px-6 border-b ${isGlass ? 'bg-[#0f0c29]/95 border-white/10 text-white backdrop-blur-md' : 'bg-[#f3f4f6]/95 border-gray-200/50 text-gray-800 backdrop-blur-sm'}`}>
+            {/* HEADER FIXED (Siempre visible arriba) */}
+            <div className={`fixed top-[64px] left-0 right-0 z-40 pt-4 pb-4 mb-2 transition-all shadow-sm px-6 border-b ${isGlass ? 'bg-[#0f0c29]/95 border-white/10 text-white backdrop-blur-md' : 'bg-[#f3f4f6]/95 border-gray-200/50 text-gray-800 backdrop-blur-sm'}`}>
                 <div className="flex justify-between items-end mb-2">
                     <div>
                         <div className="flex items-center gap-3">
@@ -353,9 +353,12 @@ export default function SuperList() {
                 </div>
             </div>
 
+            {/* ESPACIADOR PARA EL HEADER FIXED */}
+            <div className="h-[180px]"></div>
+
             {/* LISTA DE ITEMS CON SCROLLBAR 📜 */}
             <div className="flex relative">
-                <div className="flex-1 space-y-3 pb-32">
+                <div className="flex-1 space-y-3 pb-40">
                     {monthlyList.map((item) => {
                         const history = getPriceHistory(item.name, item.price);
                         const subtotal = item.price * item.quantity;
@@ -454,8 +457,8 @@ export default function SuperList() {
 
             </div>
 
-            {/* INPUT ADD — STICKY BOTTOM */}
-            <div className={`sticky bottom-0 -mx-4 px-4 py-3 border-t z-20 ${isGlass ? 'bg-[#0f0c29]/95 border-white/10 backdrop-blur-md' : 'bg-white/95 border-gray-100 backdrop-blur-sm'}`}>
+            {/* INPUT ADD — FIXED BOTTOM */}
+            <div className={`fixed bottom-[64px] left-0 right-0 px-4 py-3 border-t z-40 ${isGlass ? 'bg-[#0f0c29]/95 border-white/10 backdrop-blur-md' : 'bg-white/95 border-gray-100 backdrop-blur-sm'}`}>
                 <form onSubmit={handleAdd} className="flex gap-2 max-w-5xl mx-auto">
                     <div className={`flex-1 rounded-[30px] flex items-center px-4 border focus-within:border-purple-500 transition-all shadow-sm ${isGlass ? 'bg-white/10 border-white/10 focus-within:bg-white/20' : 'bg-gray-100 border-transparent focus-within:bg-white'}`}>
                         <input

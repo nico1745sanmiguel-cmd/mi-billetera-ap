@@ -125,7 +125,7 @@ export default function MobilityForm({ isGlass, onSuccess, initialData = null, o
                         <div key={key}>
                             <label className={labelCls}>{emoji} {label}</label>
                             <div className="relative">
-                                <span className={`absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold ${isGlass ? 'text-white/40' : 'text-gray-300'}`}>$</span>
+                                <span className={`absolute start-3 top-1/2 -translate-y-1/2 text-sm font-bold ${isGlass ? 'text-white/40' : 'text-gray-300'}`}>$</span>
                                 <input
                                     type="number"
                                     step="0.01"
@@ -133,7 +133,7 @@ export default function MobilityForm({ isGlass, onSuccess, initialData = null, o
                                     placeholder="0"
                                     value={form[key]}
                                     onChange={e => set(key, e.target.value)}
-                                    className={`${inputCls} pl-7`}
+                                    className={`${inputCls} ps-7`}
                                 />
                             </div>
                         </div>
