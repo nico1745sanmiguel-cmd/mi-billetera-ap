@@ -1,0 +1,45 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Función auxiliar: verifica que el usuario haya iniciado sesión
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Función auxiliar: obtiene el householdId del usuario actual leyendo su documento en "users"
+    function getUserHouseholdId() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.householdId;
+    }
+
+    // Colección de Usuarios: 
+    // Un usuario puede leer/escribir su propio documento
+    // O puede leer el documento de otra persona si comparten el mismo householdId
+    match /users/{userId} {
+      allow read: if isAuthenticated() && (request.auth.uid == userId || resource.data.householdId == getUserHouseholdId());
+      allow write: if isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Colección de Hogares (Households)
+    match /households/{householdId} {
+      allow create: if isAuthenticated();
+      // Solo pueden leer/escribir si el ID del hogar coincide con el del usuario
+      allow read, update, delete: if isAuthenticated() && householdId == getUserHouseholdId();
+    }
+
+    // Regla general para colecciones que comparten el campo householdId:
+    // transactions, cards, supermarket_items, fresh_purchases, services, 
+    // planner_categories, contributions, savings_transactions, mobility_sessions
+    match /{collection}/{document} {
+      allow read, write: if isAuthenticated() && 
+                            // Aseguramos que solo afecte a las colecciones con aislamiento por familia
+                            collection in ['transactions', 'cards', 'supermarket_items', 'fresh_purchases', 'services', 'planner_categories', 'contributions', 'savings_transactions', 'mobility_sessions'] &&
+                            // Validamos que el recurso existente o el nuevo dato que se guarda tenga el mismo householdId que el usuario
+                            (
+                              (resource == null && request.resource.data.householdId == getUserHouseholdId()) || 
+                              (resource != null && resource.data.householdId == getUserHouseholdId())
+                            );
+    }
+  }
+}
