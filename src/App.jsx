@@ -38,7 +38,7 @@ const LazyLoader = () => (
 
 export default function App() {
     // ─── DATOS FINANCIEROS ───────────────────────────────────────────────────
-    const { loadingUser, notifications } = useFinancial();
+    const { user, loadingUser, notifications } = useFinancial();
 
     // ─── ESTADO DE UI (viene de UIContext) ───────────────────────────────────
     const {
@@ -101,10 +101,13 @@ export default function App() {
         );
     }
 
+    if (!user) {
+        return <Login />;
+    }
+
     return (
         <div className={`app-container min-h-screen transition-colors duration-700 ease-in-out ${isGlass ? 'glass-mode bg-[#0f0c29]' : 'light-mode bg-gray-50'}`}>
             <div className="relative z-10 min-h-screen flex flex-col">
-                <Login />
                 
                 <div data-modules-tick={modulesTick} className={`relative z-10 min-h-screen transition-colors duration-700 ease-in-out flex flex-col ${isGlass ? 'text-white' : 'text-gray-800'}`}>
                     {toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}

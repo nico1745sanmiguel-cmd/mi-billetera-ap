@@ -56,6 +56,10 @@ export const AuthProvider = ({ children }) => {
                     }).catch(e => console.error('Error loading household members:', e));
                 }
             } else {
+                setUserData(null);
+                setHouseholdMembers([]);
+                setCache('userData', null);
+                setCache('householdMembers', []);
                 setLoadingUser(false);
             }
         });
