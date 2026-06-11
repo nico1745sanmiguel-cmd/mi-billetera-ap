@@ -2,8 +2,10 @@ import React, { createContext, useContext, useState, useEffect, useMemo, useCall
 import { db } from '../firebase';
 import { collection, onSnapshot, query, where, addDoc } from 'firebase/firestore';
 import { useAuth } from './AuthContext';
+import { useUIDispatch } from './UIContext';
 import { getCache, setCache } from '../utils/cache';
 import { COLLECTIONS, CACHE_KEYS } from '../config/constants';
+import { sanitizeFinancialData } from '../utils/security';
 
 const CardsStateContext = createContext(null);
 const CardsDispatchContext = createContext(null);
@@ -27,6 +29,7 @@ export const useCards = () => {
 
 export const CardsProvider = ({ children }) => {
     const { user, userData } = useAuth();
+    const { showToast } = useUIDispatch();
     
     const [cards, setCards] = useState(() => getCache(CACHE_KEYS.CARDS, []));
     const [transactions, setTransactions] = useState(() => getCache(CACHE_KEYS.TRANSACTIONS, []));
@@ -44,7 +47,10 @@ export const CardsProvider = ({ children }) => {
                 const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
                 setState(data);
                 setCache(cacheKey, data);
-            }, (error) => console.error(`Offline/Error for ${collectionName}:`, error));
+            }, (error) => {
+                console.error(`Offline/Error for ${collectionName}:`, error);
+                showToast(`Error de conexión al sincronizar ${collectionName}. Verifique su internet.`, 'error');
+            });
         };
 
         const unsubCards = syncData(COLLECTIONS.CARDS, setCards, CACHE_KEYS.CARDS);
@@ -54,7 +60,7 @@ export const CardsProvider = ({ children }) => {
             unsubCards();
             unsubTrans();
         };
-    }, [user, userData]);
+    }, [user, userData, showToast]);
 
     const ENABLE_HOUSEHOLD = true;
 
@@ -70,21 +76,26 @@ export const CardsProvider = ({ children }) => {
 
     const addTransaction = useCallback(async (t) => {
         if (!user) return;
+
+        // Validamos y saneamos los datos antes de enviarlos (evitar negativos, NaN)
+        const safeData = sanitizeFinancialData(t, ['amount', 'installments'], false);
+
         const payload = { 
-            ...t, 
+            ...safeData, 
             userId: user.uid,
             ownerId: user.uid,
             householdId: userData?.householdId || null,
-            isShared: t.isShared !== undefined ? t.isShared : true
+            isShared: safeData.isShared !== undefined ? safeData.isShared : true
         };
 
         try {
             await addDoc(collection(db, COLLECTIONS.TRANSACTIONS), payload);
         } catch (error) {
             console.error("Error adding transaction:", error);
+            showToast("Hubo un error al guardar la transacción.", 'error');
             throw error;
         }
-    }, [user, userData]);
+    }, [user, userData, showToast]);
 
     const stateValue = useMemo(() => ({
         cards: visibleCards,

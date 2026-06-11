@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useMemo } from '
 import { db, auth } from '../firebase';
 import { collection, onSnapshot, query, where, addDoc } from 'firebase/firestore';
 import { useAuth } from './AuthContext';
+import { useUIDispatch } from './UIContext';
 import { getCache, setCache, cleanOldCaches } from '../utils/cache';
 import { getDolarBlue } from '../services/dolarApi';
 import { COLLECTIONS, CACHE_KEYS, SLOW_CONNECTION_TIMEOUT_MS, LOADING_DELAY_MS } from '../config/constants';
@@ -18,6 +19,7 @@ export const useFinancial = () => {
 
 export const FinancialProvider = ({ children }) => {
     const { user, userData, householdMembers, loadingUser } = useAuth();
+    const { showToast } = useUIDispatch();
 
     const [notifications, setNotifications] = useState([]);
     const [dolarBlue, setDolarBlue] = useState(null);
@@ -37,22 +39,8 @@ export const FinancialProvider = ({ children }) => {
     // 2. Firebase Sync
     useEffect(() => {
         if (!user) return;
-
-        const householdId = userData?.householdId;
-        const queryField = householdId ? "householdId" : "userId";
-        const queryValue = householdId ? householdId : user.uid;
-
-        const syncData = (collectionName, setState, cacheKey) => {
-            const q = query(collection(db, collectionName), where(queryField, "==", queryValue));
-            return onSnapshot(q, (snap) => {
-                const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                setState(data);
-                setCache(cacheKey, data); // cache robusto con versionado
-            }, (error) => console.error(`Offline/Error for ${collectionName}:`, error));
-        };
-
-        return () => {
-        };
+        // El código de sincronización general fue movido a sus respectivos contextos 
+        // (CardsContext, SupermarketContext, etc.)
     }, [user, userData]);
 
     // 3. Listener de Notificaciones (separado para que se re-monte cuando householdId llega)
@@ -68,10 +56,13 @@ export const FinancialProvider = ({ children }) => {
                 .map(d => ({ id: d.id, ...d.data() }))
                 .sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
             setNotifications(data);
-        }, (error) => console.error('Offline/Error notifications:', error));
+        }, (error) => {
+            console.error('Offline/Error notifications:', error);
+            showToast('Error de conexión al sincronizar notificaciones.', 'error');
+        });
 
         return () => unsubNotifications();
-    }, [user, userData?.householdId]);
+    }, [user, userData?.householdId, showToast]);
 
     const value = useMemo(() => ({
         user,

@@ -15,23 +15,23 @@ import './index.css' // <--- ¡ESTA ES LA LÍNEA MÁGICA!
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <AuthProvider>
-      <CardsProvider>
-        <SupermarketProvider>
-          <ServicesProvider>
-            <SavingsProvider>
-              <FinancialProvider>
-                <UIProvider>
+      <UIProvider>
+        <CardsProvider>
+          <SupermarketProvider>
+            <ServicesProvider>
+              <SavingsProvider>
+                <FinancialProvider>
                   <BrowserRouter>
                     <ErrorBoundary>
                       <App />
                     </ErrorBoundary>
                   </BrowserRouter>
-                </UIProvider>
-              </FinancialProvider>
-            </SavingsProvider>
-          </ServicesProvider>
-        </SupermarketProvider>
-      </CardsProvider>
+                </FinancialProvider>
+              </SavingsProvider>
+            </ServicesProvider>
+          </SupermarketProvider>
+        </CardsProvider>
+      </UIProvider>
     </AuthProvider>
   </React.StrictMode>,
 )
