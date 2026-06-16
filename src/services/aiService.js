@@ -10,6 +10,9 @@ export const analyzeStatement = async (rawText) => {
         const analyzeStatementFn = httpsCallable(functions, 'analyzeStatement');
         const response = await analyzeStatementFn({ rawText });
         
+        console.log("=== RAW RESPONSE DESDE CLOUD FUNCTION ===", response);
+        console.log("=== response.data ===", response.data);
+
         return response.data;
     } catch (error) {
         console.error("Error al comunicarse con Cloud Function (analyzeStatement):", error);

@@ -10,6 +10,7 @@ const CATEGORIES = [
 
 const StatementReviewer = ({ data, onConfirm, onCancel }) => {
     // Estado local para permitir ediciones rápidas antes de guardar
+    console.log("=== DATA RECIBIDA EN STATEMENT REVIEWER ===", data);
     const [transactions, setTransactions] = useState(data.transactions || []);
     const [summary, setSummary] = useState(data.summary || {});
 
