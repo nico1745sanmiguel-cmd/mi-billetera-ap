@@ -112,13 +112,54 @@ const MODELS_TO_TRY = [
     'mixtral-8x7b-32768'         // Arquitectura diferente (Fallback 2)
 ];
 
-const SYSTEM_PROMPT = `Sos un experto extrayendo datos financieros en formato JSON puro. ...`; 
-// Reconstruiremos los prompts localmente o los copiaremos.
-// Como el prompt de aiService.js estaba importado, los pegaré aquí directo.
-const buildUserPrompt = (rawText) => `Analizá el siguiente extracto y extrae la lista de gastos en formato JSON.
-TEXTO DEL RESUMEN:
+const SYSTEM_PROMPT = `Eres un experto en extracción de datos financieros de resúmenes de tarjetas de crédito.
+
+Tu ÚNICA tarea es extraer datos estructurados del texto. NO des consejos ni opiniones.
+
+REGLAS CRÍTICAS:
+1. SIEMPRE responde en JSON válido.
+2. NUNCA inventes datos. Si no encontrás un campo, usá null.
+3. TODOS los montos son números POSITIVOS.
+4. TODAS las fechas en formato YYYY-MM-DD.
+5. No incluyas datos personales completos (nros de tarjeta, CUIT).`;
+
+const buildUserPrompt = (text) => `Extraé los datos financieros del siguiente texto de un resumen de tarjeta de crédito.
+
+═══ REGLAS DE EXTRACCIÓN ═══
+- Extraer Resumen (banco, cierre, vencimiento, total consumos, pago mínimo).
+- Extraer Lista de Transacciones (fecha, nombre de comercio limpio, monto, si es cuota y qué número, categoría sugerida).
+- Categorías válidas: Supermercado, Servicios, Servicios Digitales, Transporte, Indumentaria, Entretenimiento, Gastronomía, Salud, Automotor, Hogar, Impuestos y Comisiones, Pago, Varios.
+- Si dice "SU PAGO", es un pago (isPayment: true). Las cuotas son compras, no pagos.
+- Los montos son individuales de esa cuota o compra.
+
+═══ FORMATO JSON DE SALIDA ESPERADO ═══
+{
+  "summary": {
+    "bankName": "String",
+    "closingDate": "YYYY-MM-DD",
+    "dueDate": "YYYY-MM-DD",
+    "totalConsumption": Number,
+    "minPayment": Number
+  },
+  "transactions": [
+    {
+      "date": "YYYY-MM-DD",
+      "originalDescription": "String",
+      "cleanName": "String",
+      "category": "String",
+      "amount": Number,
+      "isInstallment": Boolean,
+      "installmentCurrent": Number | null,
+      "installmentTotal": Number | null,
+      "isPayment": Boolean,
+      "isTax": Boolean
+    }
+  ]
+}
+
+═══ TEXTO DEL DOCUMENTO ═══
 """
-${rawText}
+${text}
 """`;
 
 exports.analyzeStatement = functions.https.onCall(async (data, context) => {
@@ -136,17 +177,13 @@ exports.analyzeStatement = functions.https.onCall(async (data, context) => {
         throw new functions.https.HttpsError('invalid-argument', 'Falta el texto a analizar');
     }
 
-    // Limpieza de inputs
-    const cleanText = rawText.replace(/[^\x20-\x7E\n]/g, '').substring(0, 20000);
-
-    const actualSystemPrompt = `Eres un procesador de datos financieros. Tu ÚNICO propósito es recibir el texto de un resumen de tarjeta de crédito y devolver un JSON puro que contenga los consumos individuales.
-NO incluyas ninguna explicación, ni saludo, ni markdown, ni comillas extrañas. Solo devuelve un objeto JSON con una propiedad "gastos" que sea un array de objetos.
-Cada objeto del array debe tener estrictamente las siguientes propiedades:
-1. "fecha": (string) en formato "DD/MM"
-2. "descripcion": (string) el nombre comercio
-3. "cuota": (string) formato "X/Y" o null si es en un pago
-4. "montoARS": (number) o null si es en dólares
-5. "montoUSD": (number) o null si es en pesos`;
+    // Limpieza de inputs (sin romper caracteres especiales)
+    const cleanText = rawText
+      .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')
+      .replace(/[\u200B-\u200D\uFEFF]/g, '')
+      .replace(/\[SYSTEM\]/gi, '(SYSTEM)')
+      .replace(/\[INST\]/gi, '(INST)')
+      .substring(0, 20000);
 
     let lastError = null;
 
@@ -162,7 +199,7 @@ Cada objeto del array debe tener estrictamente las siguientes propiedades:
                 body: JSON.stringify({
                     model: modelName,
                     messages: [
-                        { role: "system", content: actualSystemPrompt },
+                        { role: "system", content: SYSTEM_PROMPT },
                         { role: "user", content: buildUserPrompt(cleanText) }
                     ],
                     temperature: 0.1,
