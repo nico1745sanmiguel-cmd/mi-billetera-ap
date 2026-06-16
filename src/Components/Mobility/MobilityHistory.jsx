@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Trash2, Pencil, ChevronLeft, ChevronRight, X, Check, AlertTriangle } from 'lucide-react';
+import { Trash2, Pencil, ChevronLeft, ChevronRight, X, Check } from 'lucide-react';
 import { useMobilityState, useMobilityDispatch } from '../../context/MobilityContext';
 import MobilityForm from './MobilityForm';
 
@@ -9,11 +9,9 @@ const fmt = (n) => `$${Number(n || 0).toLocaleString('es-AR', { minimumFractionD
 
 export default function MobilityHistory({ isGlass, privacyMode }) {
     const { sessions } = useMobilityState();
-    const { deleteSession, deleteAllSessions } = useMobilityDispatch();
+    const { deleteSession } = useMobilityDispatch();
     const [editingId, setEditingId] = useState(null);
     const [confirmDelete, setConfirmDelete] = useState(null);
-    const [showDeleteAll, setShowDeleteAll] = useState(false);
-    const [deletingAll, setDeletingAll] = useState(false);
 
     // Selector de mes
     const now = new Date();
@@ -48,13 +46,6 @@ export default function MobilityHistory({ isGlass, privacyMode }) {
     const text = isGlass ? 'text-white' : 'text-gray-800';
     const sub  = isGlass ? 'text-white/50' : 'text-gray-400';
 
-    const handleDeleteAll = async () => {
-        setDeletingAll(true);
-        await deleteAllSessions();
-        setDeletingAll(false);
-        setShowDeleteAll(false);
-    };
-
     if (editingId) {
         const session = sessions.find(s => s.id === editingId);
         return (
@@ -77,7 +68,7 @@ export default function MobilityHistory({ isGlass, privacyMode }) {
 
     return (
         <div className="space-y-4">
-            {/* SELECTOR MES + BORRAR TODO */}
+            {/* SELECTOR MES */}
             <div className={`${card} flex items-center justify-between`}>
                 <button onClick={() => changeMonth(-1)} className={`p-2 rounded-xl transition-all ${isGlass ? 'bg-white/10 hover:bg-white/20' : 'bg-gray-100 hover:bg-gray-200'}`}>
                     <ChevronLeft size={16} />
@@ -87,47 +78,6 @@ export default function MobilityHistory({ isGlass, privacyMode }) {
                     <ChevronRight size={16} />
                 </button>
             </div>
-
-            {/* BOTÓN BORRAR TODO */}
-            {sessions.length > 0 && !showDeleteAll && (
-                <button
-                    onClick={() => setShowDeleteAll(true)}
-                    className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-2xl text-xs font-semibold transition-all ${isGlass ? 'bg-red-500/20 text-red-300 hover:bg-red-500/30 border border-red-500/20' : 'bg-red-50 text-red-500 hover:bg-red-100 border border-red-100'}`}
-                >
-                    <Trash2 size={13} />
-                    Borrar todo el historial ({sessions.length} registros)
-                </button>
-            )}
-
-            {/* CONFIRMACIÓN BORRAR TODO */}
-            {showDeleteAll && (
-                <div className={`rounded-2xl p-4 border ${isGlass ? 'bg-red-500/10 border-red-400/30' : 'bg-red-50 border-red-200'}`}>
-                    <div className="flex items-start gap-3 mb-3">
-                        <AlertTriangle size={18} className="text-red-500 shrink-0 mt-0.5" />
-                        <div>
-                            <p className="font-bold text-sm text-red-600">¿Borrar {sessions.length} registros?</p>
-                            <p className={`text-xs mt-0.5 ${isGlass ? 'text-red-300' : 'text-red-500'}`}>Esta acción no se puede deshacer. Después podés reimportar el CSV.</p>
-                        </div>
-                    </div>
-                    <div className="flex gap-2">
-                        <button
-                            onClick={() => setShowDeleteAll(false)}
-                            className={`flex-1 py-2.5 rounded-xl text-xs font-semibold transition-all ${isGlass ? 'bg-white/10 text-white/70 hover:bg-white/20' : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'}`}
-                        >
-                            Cancelar
-                        </button>
-                        <button
-                            onClick={handleDeleteAll}
-                            disabled={deletingAll}
-                            className="flex-1 py-2.5 rounded-xl text-xs font-bold text-white bg-red-500 hover:bg-red-600 transition-all disabled:opacity-50"
-                        >
-                            {deletingAll ? 'Borrando...' : 'Sí, borrar todo'}
-                        </button>
-                    </div>
-                </div>
-            )}
-
-
             {/* RESUMEN DEL MES */}
             {filtered.length > 0 && (
                 <div className={`${card} grid grid-cols-4 gap-2 text-center`}>

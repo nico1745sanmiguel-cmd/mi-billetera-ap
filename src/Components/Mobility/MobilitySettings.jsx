@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { Settings, Save, Plus, Trash2, X } from 'lucide-react';
+import { Settings, Save, Plus, Trash2, X, AlertTriangle } from 'lucide-react';
 import { useMobility } from '../../context/MobilityContext';
 import { useUI } from '../../context/UIContext';
 
 export default function MobilitySettings({ isGlass, onBack }) {
-    const { settings, updateSettings } = useMobility();
+    const { settings, updateSettings, sessions, deleteAllSessions } = useMobility();
     const { showToast } = useUI();
 
     const [weekStartDay, setWeekStartDay] = useState(settings.weekStartDay);
@@ -13,6 +13,10 @@ export default function MobilitySettings({ isGlass, onBack }) {
     const [defaultTab, setDefaultTab] = useState(settings.defaultTab);
 
     const [newCategory, setNewCategory] = useState('');
+    
+    // Estados para borrar historial
+    const [showDeleteAll, setShowDeleteAll] = useState(false);
+    const [deletingAll, setDeletingAll] = useState(false);
 
     const handleSave = () => {
         updateSettings({
@@ -49,6 +53,14 @@ export default function MobilitySettings({ isGlass, onBack }) {
             { id, label: newCategory.trim(), iconName: 'Tag', color: '#6366f1', active: true }
         ]);
         setNewCategory('');
+    };
+
+    const handleDeleteAll = async () => {
+        setDeletingAll(true);
+        await deleteAllSessions();
+        setDeletingAll(false);
+        setShowDeleteAll(false);
+        showToast('Historial borrado correctamente', 'success');
     };
 
     const card = `rounded-2xl p-4 ${isGlass ? 'bg-white/10 border border-white/10' : 'bg-white shadow-sm border border-gray-100'}`;
@@ -167,6 +179,48 @@ export default function MobilitySettings({ isGlass, onBack }) {
                             </button>
                         </div>
                     </div>
+                </div>
+
+                {/* Zona de Peligro: Borrar Historial */}
+                <div className="mt-8 pt-6 border-t border-gray-200 dark:border-white/10">
+                    <p className={`text-xs font-bold uppercase tracking-wide mb-3 text-red-500`}>Zona de Peligro</p>
+                    
+                    {sessions.length > 0 && !showDeleteAll && (
+                        <button
+                            onClick={() => setShowDeleteAll(true)}
+                            className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-semibold transition-all ${isGlass ? 'bg-red-500/20 text-red-300 hover:bg-red-500/30 border border-red-500/20' : 'bg-red-50 text-red-500 hover:bg-red-100 border border-red-100'}`}
+                        >
+                            <Trash2 size={13} />
+                            Borrar todo el historial ({sessions.length} registros)
+                        </button>
+                    )}
+
+                    {showDeleteAll && (
+                        <div className={`rounded-xl p-4 border ${isGlass ? 'bg-red-500/10 border-red-400/30' : 'bg-red-50 border-red-200'}`}>
+                            <div className="flex items-start gap-3 mb-3">
+                                <AlertTriangle size={18} className="text-red-500 shrink-0 mt-0.5" />
+                                <div>
+                                    <p className="font-bold text-sm text-red-600">¿Borrar {sessions.length} registros?</p>
+                                    <p className={`text-xs mt-0.5 ${isGlass ? 'text-red-300' : 'text-red-500'}`}>Esta acción no se puede deshacer.</p>
+                                </div>
+                            </div>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => setShowDeleteAll(false)}
+                                    className={`flex-1 py-2.5 rounded-xl text-xs font-semibold transition-all ${isGlass ? 'bg-white/10 text-white/70 hover:bg-white/20' : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'}`}
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    onClick={handleDeleteAll}
+                                    disabled={deletingAll}
+                                    className="flex-1 py-2.5 rounded-xl text-xs font-bold text-white bg-red-500 hover:bg-red-600 transition-all disabled:opacity-50"
+                                >
+                                    {deletingAll ? 'Borrando...' : 'Sí, borrar todo'}
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 <button 

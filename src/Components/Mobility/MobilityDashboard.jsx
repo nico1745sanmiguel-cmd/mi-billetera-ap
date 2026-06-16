@@ -36,33 +36,30 @@ function DashboardContent({ onBack }) {
                 ? 'bg-white/10 backdrop-blur-md border border-white/10'
                 : 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-lg'
             }`}>
-                <div className="flex items-center gap-3">
-                    <button
-                        onClick={onBack}
-                        className="p-2 rounded-xl bg-white/20 hover:bg-white/30 transition-all active:scale-95"
-                    >
-                        <ArrowLeft size={18} />
-                    </button>
-                    <div>
-                        <h2 className="text-lg font-bold leading-tight">Movilidad</h2>
-                        <p className="text-white/70 text-xs">Uber · Didi · Cabify · Otros</p>
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={onBack}
+                            className="p-2 rounded-xl bg-white/20 hover:bg-white/30 transition-all active:scale-95 text-white"
+                        >
+                            <ArrowLeft size={18} />
+                        </button>
+                        <div>
+                            <h2 className="text-lg font-bold leading-tight text-white">Movilidad</h2>
+                            <p className="text-white/70 text-xs">Uber · Didi · Cabify · Otros</p>
+                        </div>
                     </div>
+                    <button 
+                        onClick={() => setTab('settings')}
+                        className={`p-2 rounded-xl transition-all active:scale-95 text-white ${
+                            tab === 'settings' 
+                            ? 'bg-white/30 shadow-inner' 
+                            : 'bg-white/10 hover:bg-white/20 shadow-sm'
+                        }`}
+                    >
+                        <Settings size={18} />
+                    </button>
                 </div>
-            </div>
-
-            {/* BOTÓN SETTINGS Y TABS EN LA MISMA LÍNEA (o Settings como fila nueva) */}
-            <div className="flex items-center justify-end">
-                <button 
-                    onClick={() => setTab('settings')}
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                        tab === 'settings' 
-                        ? (isGlass ? 'bg-violet-500 text-white' : 'bg-violet-600 text-white')
-                        : (isGlass ? 'bg-white/10 text-white hover:bg-white/20' : 'bg-gray-100 text-gray-700 hover:bg-gray-200')
-                    }`}
-                >
-                    <Settings size={14} />
-                    Ajustes
-                </button>
             </div>
 
             {/* TABS */}
