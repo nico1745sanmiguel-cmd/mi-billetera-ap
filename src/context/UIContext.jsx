@@ -42,6 +42,7 @@ export const useUI = () => {
 export const UIProvider = ({ children }) => {
     const [view, setViewRaw] = useState('dashboard');
     const [privacyMode, setPrivacyMode] = useState(false);
+    const [expenseScope, setExpenseScope] = useState('all'); // 'all', 'family', 'personal'
     const [currentDate, setCurrentDate] = useState(new Date());
     const [toast, setToast] = useState(null);
 
@@ -102,21 +103,23 @@ export const UIProvider = ({ children }) => {
     const stateValue = useMemo(() => ({
         view,
         privacyMode,
+        expenseScope,
         isGlass,
         currentDate,
         toast,
-    }), [view, privacyMode, isGlass, currentDate, toast]);
+    }), [view, privacyMode, expenseScope, isGlass, currentDate, toast]);
 
     const dispatchValue = useMemo(() => ({
         setView,
         goBack,
         setPrivacyMode,
+        setExpenseScope,
         setIsGlass,
         setCurrentDate,
         changeMonth,
         showToast,
         hideToast,
-    }), [setView, goBack, setIsGlass, changeMonth, showToast, hideToast]);
+    }), [setView, goBack, setPrivacyMode, setExpenseScope, setIsGlass, changeMonth, showToast, hideToast]);
 
     return (
         <UIDispatchContext.Provider value={dispatchValue}>

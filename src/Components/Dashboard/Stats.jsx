@@ -47,13 +47,20 @@ const renderActiveShape = (props) => {
 };
 
 export default function Stats() {
-    const { currentDate, privacyMode, isGlass } = useUI();
+    const { currentDate, privacyMode, isGlass, expenseScope, setExpenseScope } = useUI();
     const { transactions, cards } = useCards();
     const { services } = useServices();
     const { superItems: supermarketItems, freshItems } = useSupermarket();
     const [activeIndex, setActiveIndex] = useState(0);
     const [filter, setFilter] = useState('all'); // 'all', 'super_fresh', 'cards_services', 'manual'
     const [expandedItemId, setExpandedItemId] = useState(null);
+
+    const filterByScope = (item) => {
+        if (expenseScope === 'all') return true;
+        if (expenseScope === 'family') return item.isShared !== false;
+        if (expenseScope === 'personal') return item.isShared === false;
+        return true;
+    };
 
     // 1. CLAVE DEL MES
     const currentMonthKey = useMemo(() => {
@@ -69,7 +76,7 @@ export default function Stats() {
 
     // A. Transacciones del Mes
     const monthlyTransactions = useMemo(() => {
-        return transactions.filter(t => {
+        return transactions.filter(filterByScope).filter(t => {
             const tDate = new Date(t.date);
             const tLocal = new Date(tDate.valueOf() + tDate.getTimezoneOffset() * 60000);
             if (t.type === 'cash') {
@@ -82,14 +89,14 @@ export default function Stats() {
             ...t,
             displayAmount: t.type === 'cash' ? t.amount : t.monthlyInstallment
         }));
-    }, [transactions, currentDate, targetMonthVal]);
+    }, [transactions, currentDate, targetMonthVal, expenseScope]);
 
     const cashTransactions = useMemo(() => monthlyTransactions.filter(t => t.type === 'cash'), [monthlyTransactions]);
     const cashSpent = cashTransactions.reduce((acc, t) => acc + t.displayAmount, 0);
 
     // B. Tarjetas
     const cardsStatus = useMemo(() => {
-        return cards.map(c => {
+        return cards.filter(filterByScope).map(c => {
             let debt = 0;
             let cardTransactions = [];
             const manualDebt = c.monthlyStatements?.[currentMonthKey]?.totalDue ?? c.adjustments?.[currentMonthKey];
@@ -103,21 +110,24 @@ export default function Stats() {
             }
             return { ...c, currentMonthDebt: debt, details: cardTransactions };
         }).filter(c => c.currentMonthDebt > 0).sort((a, b) => b.currentMonthDebt - a.currentMonthDebt);
-    }, [cards, monthlyTransactions, currentMonthKey]);
+    }, [cards, monthlyTransactions, currentMonthKey, expenseScope]);
     
     const cardsTotalDebt = cardsStatus.reduce((acc, c) => acc + c.currentMonthDebt, 0);
 
     // C. Servicios
-    const servicesTotal = services.reduce((acc, s) => acc + Number(s.amount || 0), 0);
+    const scopedServices = useMemo(() => services.filter(filterByScope), [services, expenseScope]);
+    const servicesTotal = scopedServices.reduce((acc, s) => acc + Number(s.amount || 0), 0);
 
     // D. Supermercado
-    const monthlySuper = supermarketItems.filter(i => i.month === currentMonthKey);
+    const scopedSuperItems = useMemo(() => expenseScope === 'personal' ? [] : supermarketItems, [supermarketItems, expenseScope]);
+    const monthlySuper = scopedSuperItems.filter(i => i.month === currentMonthKey);
     const superSpent = monthlySuper.filter(i => i.checked).reduce((acc, i) => acc + (i.price * i.quantity), 0);
     const superProjected = monthlySuper.reduce((acc, i) => acc + (i.price * i.quantity), 0);
     const superEffective = monthlySuper.some(i => i.checked) ? superSpent : superProjected;
 
     // E. Feria & Frescos
-    const monthlyFresh = freshItems.filter(i => i.month === currentMonthKey);
+    const scopedFreshItems = useMemo(() => expenseScope === 'personal' ? [] : freshItems, [freshItems, expenseScope]);
+    const monthlyFresh = scopedFreshItems.filter(i => i.month === currentMonthKey);
     const freshSpent = monthlyFresh.filter(i => i.checked).reduce((acc, i) => acc + (Number(i.total) || 0), 0);
     const freshProjected = monthlyFresh.reduce((acc, i) => acc + (Number(i.total) || 0), 0);
     const freshEffective = monthlyFresh.some(i => i.checked) ? freshSpent : freshProjected;
@@ -133,7 +143,7 @@ export default function Stats() {
         const nextMonthKey = `${nextMonth.getFullYear()}-${String(nextMonth.getMonth() + 1).padStart(2, '0')}`;
 
         let total = 0;
-        cards.forEach(c => {
+        cards.filter(filterByScope).forEach(c => {
             const manualNextValue = c.monthlyStatements?.[nextMonthKey]?.totalDue ?? c.adjustments?.[nextMonthKey];
             if (manualNextValue !== undefined) {
                 total += manualNextValue;
@@ -150,7 +160,7 @@ export default function Stats() {
             }
         });
         return total + servicesTotal;
-    }, [transactions, currentDate, cards, servicesTotal]);
+    }, [transactions, currentDate, cards, servicesTotal, expenseScope]);
 
 
     // =================================================================
@@ -188,7 +198,7 @@ export default function Stats() {
                 const COLORS = ['#8b5cf6', '#a855f7', '#d946ef', '#6366f1'];
                 data.push({ name: c.name, value: c.currentMonthDebt, color: COLORS[idx % COLORS.length], icon: CreditCard });
             });
-            services.forEach((s, idx) => {
+            scopedServices.forEach((s, idx) => {
                 const COLORS = ['#f59e0b', '#fbbf24', '#fcd34d'];
                 data.push({ name: s.name, value: Number(s.amount), color: COLORS[idx % COLORS.length], icon: Lightbulb });
             });
@@ -213,7 +223,7 @@ export default function Stats() {
             }).sort((a, b) => b.value - a.value);
         }
         return [];
-    }, [filter, superEffective, freshEffective, servicesTotal, cardsTotalDebt, cashSpent, monthlySuper, monthlyFresh, cardsStatus, services, cashTransactions]);
+    }, [filter, superEffective, freshEffective, servicesTotal, cardsTotalDebt, cashSpent, monthlySuper, monthlyFresh, cardsStatus, scopedServices, cashTransactions]);
 
     const activeChartItem = chartData[activeIndex];
     const currentChartTotal = chartData.reduce((acc, i) => acc + i.value, 0);
@@ -227,6 +237,29 @@ export default function Stats() {
 
     return (
         <div className="space-y-6 animate-fade-in pb-24">
+
+            {/* 0. TOGGLE DE ALCANCE (SCOPE) */}
+            <div className="flex justify-center -mb-2">
+                <div className={`flex items-center p-1 rounded-full ${isGlass ? 'bg-white/10 border border-white/10 backdrop-blur-md' : 'bg-gray-100'}`}>
+                    {[
+                        { id: 'all', label: 'Todos' },
+                        { id: 'family', label: 'Familiar' },
+                        { id: 'personal', label: 'Personal' }
+                    ].map(s => (
+                        <button
+                            key={s.id}
+                            onClick={() => setExpenseScope(s.id)}
+                            className={`px-5 py-1.5 rounded-full text-xs font-bold transition-all ${
+                                expenseScope === s.id 
+                                ? (isGlass ? 'bg-white text-indigo-900 shadow-sm' : 'bg-white text-indigo-600 shadow-sm')
+                                : (isGlass ? 'text-white/60 hover:text-white hover:bg-white/5' : 'text-gray-500 hover:text-gray-800 hover:bg-black/5')
+                            }`}
+                        >
+                            {s.label}
+                        </button>
+                    ))}
+                </div>
+            </div>
 
             {/* 1. HERO CARD - GLOBAL STATUS */}
             <div className={`relative overflow-hidden rounded-[32px] p-6 shadow-xl ${isGlass ? 'bg-gradient-to-br from-indigo-900/40 to-purple-900/40 border border-white/10' : 'bg-gradient-to-br from-indigo-600 to-purple-700 text-white'}`}>
@@ -379,7 +412,7 @@ export default function Stats() {
                         <div className={`p-4 rounded-2xl border shadow-sm ${glassClass}`}>
                             <p className="text-xs font-bold uppercase opacity-50 mb-3">Servicios Fijos</p>
                             <div className="space-y-3">
-                                {services.map(s => {
+                                {scopedServices.map(s => {
                                     const isPaid = s.paidPeriods?.includes(currentMonthKey);
                                     return (
                                         <div key={s.id} className="flex justify-between items-center text-sm">
@@ -399,7 +432,7 @@ export default function Stats() {
                 {/* VIEW: MANUAL */}
                 {filter === 'manual' && (
                     <div className={`p-4 rounded-2xl border shadow-sm ${glassClass}`}>
-                        <div className="space-y-4">
+                        <div className="space-y-4 mb-6">
                             {chartData.map((cat) => (
                                 <div key={cat.name}>
                                     <div className="flex justify-between items-center mb-2">
@@ -414,6 +447,25 @@ export default function Stats() {
                                     </div>
                                 </div>
                             ))}
+                        </div>
+
+                        {/* Listado de Movimientos Manuales */}
+                        <div className={`pt-4 border-t ${isGlass ? 'border-white/10' : 'border-gray-200'}`}>
+                            <h4 className={`text-xs font-bold uppercase opacity-50 mb-3 ${glassTextPrimary}`}>Movimientos Registrados</h4>
+                            <div className="space-y-3">
+                                {cashTransactions.map(t => (
+                                    <div key={t.id} className="flex justify-between items-center text-sm">
+                                        <div className="flex flex-col">
+                                            <span className={`font-bold ${glassTextPrimary}`}>{t.description || 'Gasto General'}</span>
+                                            <span className={`text-[10px] ${glassTextSecondary}`}>
+                                                {t.date} • {CAT_LABELS[t.category] || t.category || 'Varios'}
+                                            </span>
+                                        </div>
+                                        <span className={`font-mono font-bold ${glassTextPrimary}`}>{showMoney(t.amount)}</span>
+                                    </div>
+                                ))}
+                                {cashTransactions.length === 0 && <p className={`text-xs ${glassTextSecondary}`}>Sin movimientos este mes</p>}
+                            </div>
                         </div>
                     </div>
                 )}

@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db, auth } from '../../firebase';
 import { doc, getDoc, collection, query, where, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
-import { Scale, Users, ChevronLeft, CreditCard, ShoppingCart, Lightbulb, User, LayoutList, Plus, X, CheckCircle, Clock, TrendingUp } from 'lucide-react';
+import { Scale, Users, ChevronLeft, CreditCard, ShoppingCart, Lightbulb, User, LayoutList, Plus, X, CheckCircle, Clock, TrendingUp, Wallet } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useCards } from '../../context/CardsContext';
 import { useSupermarket } from '../../context/SupermarketContext';
@@ -278,6 +278,15 @@ export default function SharedExpensesDashboard({ onBack }) {
         const result = [...sharedServices, ...sharedCards];
         if (superTotal > 0) result.push({ id: 'super_total', name: 'Supermercado (Presupuesto)', amount: superTotal, day: 1, type: 'super', icon: <ShoppingCart size={16} className="text-purple-400" /> });
         if (freshTotal > 0) result.push({ id: 'fresh_total', name: 'Planificador (Presupuesto/Gasto)', amount: freshTotal, day: 1, type: 'fresh', icon: <LayoutList size={16} className="text-indigo-400" /> });
+
+        // Añadir Gastos Manuales compartidos
+        const sharedCash = transactions.filter(t => 
+            t.type === 'cash' && 
+            t.date && t.date.substring(0, 7) === currentMonthKey && 
+            t.isShared !== false
+        );
+        const cashTotal = sharedCash.reduce((acc, t) => acc + (Number(t.amount) || 0), 0);
+        if (cashTotal > 0) result.push({ id: 'cash_total', name: 'Gastos Manuales', amount: cashTotal, day: 1, type: 'cash', icon: <Wallet size={16} className="text-pink-400" /> });
 
         return result.sort((a, b) => a.day - b.day);
     }, [services, cards, transactions, supermarketItems, currentMonthKey, currentDate, freshItems]);
