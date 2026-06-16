@@ -21,7 +21,7 @@ const EXPENSE_CATS = [
 const fmt = (n, prefix = '$') => `${prefix}${Number(n || 0).toLocaleString('es-AR', { maximumFractionDigits: 0 })}`;
 
 export default function MobilityStats({ isGlass, privacyMode }) {
-    const { sessions, expenses } = useMobilityState();
+    const { sessions, expenses, settings } = useMobilityState();
 
     const now = new Date();
     const [year,  setYear]  = useState(now.getFullYear());
