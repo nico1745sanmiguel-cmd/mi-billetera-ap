@@ -66,6 +66,7 @@ export const FinancialProvider = ({ children }) => {
 
     const value = useMemo(() => ({
         user,
+        loadingUser,
         notifications,
         dolarBlue
     }), [user, userData, householdMembers, loadingUser, notifications, dolarBlue]);
