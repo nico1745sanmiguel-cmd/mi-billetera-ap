@@ -49,7 +49,7 @@ export default function MobilityStats({ isGlass, privacyMode }) {
 
     // ─── KPIs ─────────────────────────────────────────────────────────────────
     const kpis = useMemo(() => {
-        if (!filtered.length) return null;
+        if (!filtered.length && !filteredExpenses.length) return null;
         const totalEarnings = filtered.reduce((a, s) => a + (s.total || 0), 0);
         const totalHours    = filtered.reduce((a, s) => a + (s.hoursWorked || 0), 0);
         const totalKm       = filtered.reduce((a, s) => a + (s.kilometers || 0), 0);
@@ -57,40 +57,57 @@ export default function MobilityStats({ isGlass, privacyMode }) {
         const avgPerHour    = totalHours > 0 ? totalEarnings / totalHours : 0;
         const avgPerKm      = totalKm    > 0 ? totalEarnings / totalKm    : 0;
 
-        const platforms = ['uber', 'didi', 'cabify', 'others'].map(key => ({
+        const activePlats = Object.keys(settings?.activePlatforms || { uber: true, didi: true, cabify: true, others: true }).filter(k => settings?.activePlatforms[k]);
+        const platforms = activePlats.map(key => ({
             key,
             label: key === 'others' ? 'Otros' : key.charAt(0).toUpperCase() + key.slice(1),
             total: filtered.reduce((a, s) => a + (s[key] || 0), 0),
         })).filter(p => p.total > 0);
 
-        const weeks = [0, 1, 2, 3, 4].map(w => {
-            const weekSessions = filtered.filter(s => {
-                const d = new Date(s.date + 'T12:00:00');
-                return Math.floor((d.getDate() - 1) / 7) === w;
-            });
-            const weekExpenses = filteredExpenses.filter(e => {
-                const d = new Date(e.date + 'T12:00:00');
-                return Math.floor((d.getDate() - 1) / 7) === w;
-            });
-            return {
-                label: `S${w + 1}`,
-                total: weekSessions.reduce((a, s) => a + (s.total || 0), 0),
-                gastos: weekExpenses.reduce((a, e) => a + (e.amount || 0), 0),
-                days:  weekSessions.length + weekExpenses.length,
-            };
-        }).filter(w => w.days > 0);
+        const getWeekOfMonth = (dateStr) => {
+            const startDay = settings?.weekStartDay ?? 1; // Default a Lunes
+            const d = new Date(dateStr + 'T12:00:00');
+            const firstDay = new Date(d.getFullYear(), d.getMonth(), 1);
+            const offset = (firstDay.getDay() - startDay + 7) % 7;
+            return Math.floor((d.getDate() - 1 + offset) / 7);
+        };
 
-        // Gastos del mes por categoría
-        const expenseByCategory = EXPENSE_CATS.map(cat => ({
+        const weeksMap = new Map();
+        
+        filtered.forEach(s => {
+            const w = getWeekOfMonth(s.date);
+            if (!weeksMap.has(w)) weeksMap.set(w, { total: 0, gastos: 0, days: 0 });
+            weeksMap.get(w).total += (s.total || 0);
+            weeksMap.get(w).days += 1;
+        });
+
+        filteredExpenses.forEach(e => {
+            const w = getWeekOfMonth(e.date);
+            if (!weeksMap.has(w)) weeksMap.set(w, { total: 0, gastos: 0, days: 0 });
+            weeksMap.get(w).gastos += (e.amount || 0);
+            weeksMap.get(w).days += 1;
+        });
+
+        const weeks = Array.from(weeksMap.entries())
+            .sort((a, b) => a[0] - b[0])
+            .map(([w, data], i) => ({
+                label: `S${i + 1}`,
+                ...data
+            }));
+
+        // Gastos del mes por categoría (usando las de settings)
+        const cats = settings?.expenseCategories || [];
+        const expenseByCategory = cats.map(cat => ({
             ...cat,
-            total: filteredExpenses.filter(e => e.category === cat.key).reduce((a, e) => a + (e.amount || 0), 0),
+            icon: cat.iconName === 'Zap' ? Zap : cat.iconName === 'Fuel' ? Fuel : cat.iconName === 'Wrench' ? Wrench : cat.iconName === 'Droplets' ? Droplets : Zap,
+            total: filteredExpenses.filter(e => e.category === cat.id).reduce((a, e) => a + (e.amount || 0), 0),
         })).filter(c => c.total > 0);
 
         const totalExpenses = filteredExpenses.reduce((a, e) => a + (e.amount || 0), 0);
         const netEarnings   = totalEarnings - totalExpenses;
 
         return { totalEarnings, totalHours, totalKm, bestDay, avgPerHour, avgPerKm, platforms, weeks, expenseByCategory, totalExpenses, netEarnings };
-    }, [filtered, filteredExpenses]);
+    }, [filtered, filteredExpenses, settings]);
 
     // ─── Últimos 6 meses para tendencia ──────────────────────────────────────
     const trend6 = useMemo(() => {

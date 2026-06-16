@@ -39,6 +39,29 @@ export const MobilityProvider = ({ children }) => {
     const [expenses, setExpenses] = useState(() => getCache('mobility_expenses') || []);
     const [loadingExpenses, setLoadingExpenses] = useState(true);
 
+    // ─── AJUSTES ──────────────────────────────────────────────────────────────
+    const DEFAULT_SETTINGS = {
+        weekStartDay: 1, // 0 = Domingo, 1 = Lunes, etc.
+        activePlatforms: { uber: true, didi: true, cabify: true, others: true },
+        expenseCategories: [
+            { id: 'gnc', label: 'GNC', iconName: 'Zap', color: '#06b6d4', active: true },
+            { id: 'nafta', label: 'Nafta', iconName: 'Fuel', color: '#f59e0b', active: true },
+            { id: 'repuestos', label: 'Repuestos', iconName: 'Wrench', color: '#ef4444', active: true },
+            { id: 'lavadero', label: 'Lavadero', iconName: 'Droplets', color: '#14b8a6', active: true },
+        ],
+        defaultTab: 'expenses'
+    };
+    
+    const [settings, setSettings] = useState(() => getCache('mobility_settings') || DEFAULT_SETTINGS);
+
+    const updateSettings = useCallback((newSettings) => {
+        setSettings(prev => {
+            const updated = { ...prev, ...newSettings };
+            setCache('mobility_settings', updated);
+            return updated;
+        });
+    }, []);
+
     const loading = loadingSessions || loadingExpenses;
 
     // ── Sync jornadas ─────────────────────────────────────────────────────────
@@ -249,7 +272,8 @@ export const MobilityProvider = ({ children }) => {
         sessions,
         expenses,
         loading,
-    }), [sessions, expenses, loading]);
+        settings,
+    }), [sessions, expenses, loading, settings]);
 
     const dispatchValue = useMemo(() => ({
         addSession,
@@ -261,7 +285,8 @@ export const MobilityProvider = ({ children }) => {
         updateExpense,
         deleteExpense,
         getDayOfWeek,
-    }), [addSession, updateSession, deleteSession, deleteAllSessions, importSessions, addExpense, updateExpense, deleteExpense, getDayOfWeek]);
+        updateSettings,
+    }), [addSession, updateSession, deleteSession, deleteAllSessions, importSessions, addExpense, updateExpense, deleteExpense, getDayOfWeek, updateSettings]);
 
     return (
         <MobilityDispatchContext.Provider value={dispatchValue}>

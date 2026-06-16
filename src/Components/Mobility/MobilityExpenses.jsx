@@ -1,32 +1,43 @@
 import React, { useState, useMemo } from 'react';
-import { Fuel, Wrench, Car, Droplets, Plus, Trash2, RefreshCw, ChevronDown, ChevronUp, Zap } from 'lucide-react';
+import { Fuel, Wrench, Car, Droplets, Plus, Trash2, RefreshCw, ChevronDown, ChevronUp, Zap, Tag } from 'lucide-react';
 import { useMobilityState, useMobilityDispatch } from '../../context/MobilityContext';
 
 const today = () => new Date().toISOString().slice(0, 10);
 
-// ─── Categorías de gasto ───────────────────────────────────────────────────
-const CATEGORIES = [
-    { key: 'gnc',       label: 'GNC',        icon: Zap,      color: 'from-blue-500 to-cyan-400',   bg: 'bg-blue-50',   text: 'text-blue-700',   ring: 'ring-blue-300' },
-    { key: 'nafta',     label: 'Nafta',       icon: Fuel,     color: 'from-amber-500 to-orange-400', bg: 'bg-amber-50',  text: 'text-amber-700',  ring: 'ring-amber-300' },
-    { key: 'repuestos', label: 'Repuestos',   icon: Wrench,   color: 'from-red-500 to-rose-400',    bg: 'bg-red-50',    text: 'text-red-700',    ring: 'ring-red-300' },
-    { key: 'lavadero',  label: 'Lavadero/Mec', icon: Droplets, color: 'from-teal-500 to-emerald-400', bg: 'bg-teal-50', text: 'text-teal-700',   ring: 'ring-teal-300' },
-];
-
 const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 const fmt = (n) => `$${Number(n || 0).toLocaleString('es-AR', { maximumFractionDigits: 0 })}`;
 
+const ICONS = { Zap, Fuel, Wrench, Droplets, Tag };
+
 export default function MobilityExpenses({ isGlass }) {
-    const { expenses } = useMobilityState();
+    const { expenses, settings } = useMobilityState();
     const { addExpense, deleteExpense } = useMobilityDispatch();
 
-    // ─── GNC: carga rápida ────────────────────────────────────────────────────
+    const activeCategories = useMemo(() => {
+        return (settings?.expenseCategories || []).filter(c => c.active).map(c => ({
+            key: c.id,
+            label: c.label,
+            icon: ICONS[c.iconName] || Tag,
+            color: c.id === 'gnc' ? 'from-blue-500 to-cyan-400' : 
+                   c.id === 'nafta' ? 'from-amber-500 to-orange-400' :
+                   c.id === 'repuestos' ? 'from-red-500 to-rose-400' :
+                   c.id === 'lavadero' ? 'from-teal-500 to-emerald-400' :
+                   'from-indigo-500 to-violet-500', // Default para nuevos
+            bg: 'bg-gray-50',
+            text: 'text-gray-700',
+            ring: 'ring-gray-300'
+        }));
+    }, [settings?.expenseCategories]);
+
+    // ─── GNC: carga rápida (se usa el primero o uno específico si existe) ──
+    const hasGnc = activeCategories.find(c => c.key === 'gnc');
     const [gncAmount, setGncAmount] = useState('');
     const [gncDate,   setGncDate]   = useState(today());
     const [gncSaving, setGncSaving] = useState(false);
 
     // ─── Formulario completo (otros gastos) ────────────────────────────────────
-    const [showFull,    setShowFull]    = useState(false);
-    const [fullForm,    setFullForm]    = useState({ date: today(), category: 'nafta', amount: '', notes: '' });
+    const [showFull,    setShowFull]    = useState(!hasGnc);
+    const [fullForm,    setFullForm]    = useState({ date: today(), category: activeCategories[0]?.key || 'otro', amount: '', notes: '' });
     const [fullSaving,  setFullSaving]  = useState(false);
 
     // ─── Mes visible ──────────────────────────────────────────────────────────
@@ -43,13 +54,26 @@ export default function MobilityExpenses({ isGlass }) {
         [monthExpenses]
     );
 
-    const byCategory = useMemo(() =>
-        CATEGORIES.map(cat => ({
+    const byCategory = useMemo(() => {
+        // Incluir categorías activas y también las que tengan gastos en el mes aunque ya no estén activas
+        const cats = [...activeCategories];
+        monthExpenses.forEach(exp => {
+            if (!cats.find(c => c.key === exp.category)) {
+                const oldCat = (settings?.expenseCategories || []).find(c => c.id === exp.category);
+                cats.push({
+                    key: exp.category,
+                    label: oldCat ? oldCat.label : exp.category,
+                    icon: oldCat ? (ICONS[oldCat.iconName] || Tag) : Tag,
+                    color: 'from-gray-500 to-gray-600',
+                    bg: 'bg-gray-50', text: 'text-gray-700', ring: 'ring-gray-300'
+                });
+            }
+        });
+        return cats.map(cat => ({
             ...cat,
             total: monthExpenses.filter(e => e.category === cat.key).reduce((a, e) => a + (e.amount || 0), 0),
-        })),
-        [monthExpenses]
-    );
+        }));
+    }, [monthExpenses, activeCategories, settings?.expenseCategories]);
 
     // ─── Handlers ─────────────────────────────────────────────────────────────
     const handleGnc = async (e) => {
@@ -161,7 +185,7 @@ export default function MobilityExpenses({ isGlass }) {
                         <div>
                             <p className={labelCls}>Categoría</p>
                             <div className="grid grid-cols-3 gap-2">
-                                {CATEGORIES.filter(c => c.key !== 'gnc').map(cat => {
+                                {activeCategories.filter(c => c.key !== 'gnc').map(cat => {
                                     const Icon = cat.icon;
                                     const active = fullForm.category === cat.key;
                                     return (
@@ -280,7 +304,7 @@ export default function MobilityExpenses({ isGlass }) {
                     <div className="space-y-1.5">
                         <p className={`text-xs font-bold uppercase tracking-wide mb-2 ${sub}`}>Últimos registros</p>
                         {monthExpenses.slice(0, 10).map(exp => {
-                            const cat = CATEGORIES.find(c => c.key === exp.category) || CATEGORIES[0];
+                            const cat = byCategory.find(c => c.key === exp.category) || { label: exp.category, icon: Tag, color: 'from-gray-500 to-gray-600' };
                             const Icon = cat.icon;
                             return (
                                 <div key={exp.id} className={`flex items-center gap-3 py-2 px-3 rounded-xl ${isGlass ? 'bg-white/5 hover:bg-white/10' : 'bg-gray-50 hover:bg-gray-100'} transition-colors group`}>

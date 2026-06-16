@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Save, RefreshCw } from 'lucide-react';
-import { useMobilityDispatch } from '../../context/MobilityContext';
+import { useMobility } from '../../context/MobilityContext';
 
 const today = () => new Date().toISOString().slice(0, 10);
 
@@ -22,7 +22,7 @@ const emptyForm = {
 };
 
 export default function MobilityForm({ isGlass, onSuccess, initialData = null, onCancel = null }) {
-    const { addSession, updateSession } = useMobilityDispatch();
+    const { addSession, updateSession, settings } = useMobility();
     const [form, setForm] = useState(initialData || emptyForm);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
@@ -121,7 +121,7 @@ export default function MobilityForm({ isGlass, onSuccess, initialData = null, o
             <div className={`rounded-2xl p-4 space-y-3 ${isGlass ? 'bg-white/10 border border-white/10' : 'bg-white shadow-sm border border-gray-100'}`}>
                 <h3 className={`font-bold text-sm ${isGlass ? 'text-white' : 'text-gray-700'}`}>💰 Ingresos por plataforma</h3>
                 <div className="grid grid-cols-2 gap-3">
-                    {PLATFORMS.map(({ key, label, emoji }) => (
+                    {PLATFORMS.filter(p => settings?.activePlatforms?.[p.key]).map(({ key, label, emoji }) => (
                         <div key={key}>
                             <label className={labelCls}>{emoji} {label}</label>
                             <div className="relative">

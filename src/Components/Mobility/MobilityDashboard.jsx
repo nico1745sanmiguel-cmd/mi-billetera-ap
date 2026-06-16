@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
-import { Plus, List, BarChart2, Upload, ArrowLeft, Zap } from 'lucide-react';
-import { MobilityProvider } from '../../context/MobilityContext';
+import React, { useState, useEffect } from 'react';
+import { Plus, List, BarChart2, Upload, ArrowLeft, Zap, Settings } from 'lucide-react';
+import { MobilityProvider, useMobility } from '../../context/MobilityContext';
 import MobilityForm from './MobilityForm';
 import MobilityHistory from './MobilityHistory';
 import MobilityStats from './MobilityStats';
 import MobilityImport from './MobilityImport';
 import MobilityExpenses from './MobilityExpenses';
+import MobilitySettings from './MobilitySettings';
 import { useUI } from '../../context/UIContext';
 
 const TABS = [
@@ -16,33 +17,56 @@ const TABS = [
     { id: 'import',   label: 'Importar',  icon: Upload },
 ];
 
-export default function MobilityDashboard({ onBack }) {
+function DashboardContent({ onBack }) {
     const { isGlass, privacyMode } = useUI();
-    const [tab, setTab] = useState('expenses');
+    const { settings } = useMobility();
+    const [tab, setTab] = useState(settings?.defaultTab || 'expenses');
+
+    // Mantenemos sincronizado si el usuario cambia el defaultTab
+    useEffect(() => {
+        if (settings?.defaultTab && tab === 'settings') {
+            // si volvemos de settings que se quede donde estaba o vaya al default si no habia nada
+        }
+    }, [settings?.defaultTab]);
 
     return (
-        <MobilityProvider>
-            <div className="space-y-4">
-                {/* HEADER — sin ícono de auto, solo título y botón volver */}
-                <div className={`rounded-2xl p-5 ${isGlass
-                    ? 'bg-white/10 backdrop-blur-md border border-white/10'
-                    : 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-lg'
-                }`}>
-                    <div className="flex items-center gap-3">
-                        <button
-                            onClick={onBack}
-                            className="p-2 rounded-xl bg-white/20 hover:bg-white/30 transition-all active:scale-95"
-                        >
-                            <ArrowLeft size={18} />
-                        </button>
-                        <div>
-                            <h2 className="text-lg font-bold leading-tight">Movilidad</h2>
-                            <p className="text-white/70 text-xs">Uber · Didi · Cabify · Otros</p>
-                        </div>
+        <div className="space-y-4">
+            {/* HEADER */}
+            <div className={`rounded-2xl p-5 ${isGlass
+                ? 'bg-white/10 backdrop-blur-md border border-white/10'
+                : 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-lg'
+            }`}>
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={onBack}
+                        className="p-2 rounded-xl bg-white/20 hover:bg-white/30 transition-all active:scale-95"
+                    >
+                        <ArrowLeft size={18} />
+                    </button>
+                    <div>
+                        <h2 className="text-lg font-bold leading-tight">Movilidad</h2>
+                        <p className="text-white/70 text-xs">Uber · Didi · Cabify · Otros</p>
                     </div>
                 </div>
+            </div>
 
-                {/* TABS */}
+            {/* BOTÓN SETTINGS Y TABS EN LA MISMA LÍNEA (o Settings como fila nueva) */}
+            <div className="flex items-center justify-end">
+                <button 
+                    onClick={() => setTab('settings')}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                        tab === 'settings' 
+                        ? (isGlass ? 'bg-violet-500 text-white' : 'bg-violet-600 text-white')
+                        : (isGlass ? 'bg-white/10 text-white hover:bg-white/20' : 'bg-gray-100 text-gray-700 hover:bg-gray-200')
+                    }`}
+                >
+                    <Settings size={14} />
+                    Ajustes
+                </button>
+            </div>
+
+            {/* TABS */}
+            {tab !== 'settings' && (
                 <div className={`flex rounded-2xl p-1.5 gap-1 ${isGlass
                     ? 'bg-white/10 border border-white/10'
                     : 'bg-gray-100'
@@ -66,16 +90,25 @@ export default function MobilityDashboard({ onBack }) {
                         </button>
                     ))}
                 </div>
+            )}
 
-                {/* CONTENIDO */}
-                <div>
-                    {tab === 'expenses' && <MobilityExpenses isGlass={isGlass} />}
-                    {tab === 'register' && <MobilityForm isGlass={isGlass} onSuccess={() => setTab('history')} />}
-                    {tab === 'history'  && <MobilityHistory isGlass={isGlass} privacyMode={privacyMode} />}
-                    {tab === 'stats'    && <MobilityStats isGlass={isGlass} privacyMode={privacyMode} />}
-                    {tab === 'import'   && <MobilityImport isGlass={isGlass} onSuccess={() => setTab('history')} />}
-                </div>
+            {/* CONTENIDO */}
+            <div>
+                {tab === 'settings' && <MobilitySettings isGlass={isGlass} onBack={() => setTab(settings?.defaultTab || 'expenses')} />}
+                {tab === 'expenses' && <MobilityExpenses isGlass={isGlass} />}
+                {tab === 'register' && <MobilityForm isGlass={isGlass} onSuccess={() => setTab('history')} />}
+                {tab === 'history'  && <MobilityHistory isGlass={isGlass} privacyMode={privacyMode} />}
+                {tab === 'stats'    && <MobilityStats isGlass={isGlass} privacyMode={privacyMode} />}
+                {tab === 'import'   && <MobilityImport isGlass={isGlass} onSuccess={() => setTab('history')} />}
             </div>
+        </div>
+    );
+}
+
+export default function MobilityDashboard({ onBack }) {
+    return (
+        <MobilityProvider>
+            <DashboardContent onBack={onBack} />
         </MobilityProvider>
     );
 }
