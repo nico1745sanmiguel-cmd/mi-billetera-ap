@@ -52,7 +52,18 @@ export const MobilityProvider = ({ children }) => {
         defaultTab: 'expenses'
     };
     
-    const [settings, setSettings] = useState(() => getCache('mobility_settings') || DEFAULT_SETTINGS);
+    const [settings, setSettings] = useState(() => {
+        const cached = getCache('mobility_settings');
+        if (!cached) return DEFAULT_SETTINGS;
+        return {
+            ...DEFAULT_SETTINGS,
+            ...cached,
+            activePlatforms: cached.activePlatforms || DEFAULT_SETTINGS.activePlatforms,
+            expenseCategories: cached.expenseCategories || DEFAULT_SETTINGS.expenseCategories,
+            weekStartDay: cached.weekStartDay !== undefined ? cached.weekStartDay : DEFAULT_SETTINGS.weekStartDay,
+            defaultTab: cached.defaultTab || DEFAULT_SETTINGS.defaultTab
+        };
+    });
 
     const updateSettings = useCallback((newSettings) => {
         setSettings(prev => {
