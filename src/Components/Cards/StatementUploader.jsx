@@ -1,7 +1,83 @@
 import React, { useState, useCallback } from 'react';
-import { UploadCloud, FileText, Lock, AlertCircle, Loader2 } from 'lucide-react';
+import { UploadCloud, FileText, Lock, AlertCircle, Loader2, ExternalLink, ChevronDown, ChevronUp, Download, MousePointer, ArrowRight } from 'lucide-react';
 import { extractTextFromPDF } from '../../utils/pdfExtractor';
 import { analyzeStatement } from '../../services/aiService';
+
+const VISA_URL = 'https://mycards.prismamediosdepago.com/';
+
+const VisaDownloadGuide = () => {
+    const [isOpen, setIsOpen] = useState(true);
+
+    const steps = [
+        { icon: ExternalLink, label: 'Abrí el sitio de Visa', detail: 'Tocá el botón de abajo' },
+        { icon: Lock, label: 'Ingresá con tu usuario', detail: 'Usuario y contraseña de Prisma' },
+        { icon: Download, label: 'Descargá el PDF', detail: 'Buscá tu resumen y descargalo' },
+        { icon: MousePointer, label: 'Volvé aquí y subí el PDF', detail: 'Usá el botón de abajo' },
+    ];
+
+    return (
+        <div className="w-full max-w-xl mx-auto mb-4 rounded-2xl border border-blue-200 dark:border-blue-800/60 bg-blue-50 dark:bg-blue-950/30 overflow-hidden shadow-sm">
+            {/* Header */}
+            <button
+                onClick={() => setIsOpen(v => !v)}
+                className="w-full flex items-center justify-between px-5 py-3.5 text-left"
+            >
+                <div className="flex items-center gap-2.5">
+                    <span className="text-lg">💳</span>
+                    <span className="text-sm font-semibold text-blue-800 dark:text-blue-300">
+                        ¿Cómo bajo mi resumen de Visa?
+                    </span>
+                </div>
+                {isOpen
+                    ? <ChevronUp className="w-4 h-4 text-blue-500 shrink-0" />
+                    : <ChevronDown className="w-4 h-4 text-blue-500 shrink-0" />
+                }
+            </button>
+
+            {/* Body */}
+            {isOpen && (
+                <div className="px-5 pb-5 pt-1 animate-in fade-in slide-in-from-top-2 duration-200">
+                    {/* Steps */}
+                    <ol className="space-y-2.5 mb-4">
+                        {steps.map((step, i) => (
+                            <li key={i} className="flex items-center gap-3">
+                                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-600 text-white text-xs font-bold flex items-center justify-center shadow">
+                                    {i + 1}
+                                </span>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-medium text-slate-800 dark:text-slate-100 leading-tight">
+                                        {step.label}
+                                    </p>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                                        {step.detail}
+                                    </p>
+                                </div>
+                                {i < steps.length - 1 && (
+                                    <ArrowRight className="w-3.5 h-3.5 text-blue-300 shrink-0 hidden sm:block" />
+                                )}
+                            </li>
+                        ))}
+                    </ol>
+
+                    {/* CTA Button */}
+                    <a
+                        href={VISA_URL}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center gap-2 w-full py-3 px-4 bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white rounded-xl font-semibold text-sm transition-all shadow-md hover:shadow-blue-500/30 hover:-translate-y-0.5 active:translate-y-0"
+                    >
+                        <ExternalLink className="w-4 h-4" />
+                        Ir al sitio de Visa / Prisma
+                    </a>
+
+                    <p className="text-center text-xs text-slate-400 dark:text-slate-500 mt-2.5">
+                        Se abre en una nueva pestaña. Volvé aquí cuando hayas descargado el PDF.
+                    </p>
+                </div>
+            )}
+        </div>
+    );
+};
 
 const StatementUploader = ({ onAnalysisComplete }) => {
     const [isDragging, setIsDragging] = useState(false);
@@ -92,6 +168,8 @@ const StatementUploader = ({ onAnalysisComplete }) => {
 
     return (
         <div className="w-full max-w-xl mx-auto my-6">
+            <VisaDownloadGuide />
+
             {error && !needsPassword && (
                 <div className="mb-4 p-4 bg-red-100 dark:bg-red-900/30 border border-red-500/50 rounded-xl flex items-center gap-3 text-red-600 dark:text-red-400 shadow-sm">
                     <AlertCircle className="w-5 h-5 shrink-0" />
