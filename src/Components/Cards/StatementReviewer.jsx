@@ -85,7 +85,63 @@ const StatementReviewer = ({ data, onConfirm, onCancel }) => {
                     </div>
                 </div>
 
-                <div className="overflow-x-auto max-h-[500px] overflow-y-auto custom-scrollbar">
+                {/* ── VISTA MOBILE: tarjetas apiladas ── */}
+                <div className="md:hidden max-h-[60vh] overflow-y-auto custom-scrollbar divide-y divide-slate-100 dark:divide-slate-800/50">
+                    {transactions.map((tx, idx) => (
+                        <div key={idx} className="p-4 flex flex-col gap-3">
+                            {/* Fila 1: fecha + monto + eliminar */}
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs text-slate-400 dark:text-slate-500 font-mono">
+                                    {tx.date || '-'}
+                                </span>
+                                <div className="flex items-center gap-2">
+                                    <span className={`text-base font-black ${tx.isPayment ? 'text-emerald-500' : 'text-slate-800 dark:text-slate-200'}`}>
+                                        ${(tx.amount || 0).toLocaleString()}
+                                    </span>
+                                    <button
+                                        onClick={() => handleDelete(idx)}
+                                        className="p-1.5 text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                        title="Eliminar gasto"
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            </div>
+                            {/* Fila 2: nombre comercio */}
+                            <div>
+                                <p className="text-sm font-bold text-slate-800 dark:text-slate-200 leading-tight">
+                                    {tx.cleanName || tx.originalDescription}
+                                </p>
+                                <p className="text-[10px] text-slate-400 dark:text-slate-500 font-mono mt-0.5 truncate" title={tx.originalDescription}>
+                                    {tx.originalDescription}
+                                </p>
+                            </div>
+                            {/* Fila 3: cuota + categoría */}
+                            <div className="flex items-center gap-2">
+                                {tx.isInstallment && tx.installmentTotal > 1 && (
+                                    <span className="px-2.5 py-1 bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-400 text-xs font-bold rounded-lg whitespace-nowrap shadow-sm flex-shrink-0">
+                                        {tx.installmentCurrent}/{tx.installmentTotal}
+                                    </span>
+                                )}
+                                <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800/50 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 flex-1 focus-within:border-emerald-500 focus-within:ring-1 focus-within:ring-emerald-500">
+                                    <Tag className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
+                                    <select
+                                        value={tx.category || 'Varios'}
+                                        onChange={(e) => handleCategoryChange(idx, e.target.value)}
+                                        className="bg-transparent text-xs font-bold text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-0 cursor-pointer w-full"
+                                    >
+                                        {CATEGORIES.map(c => (
+                                            <option key={c} value={c} className="text-slate-800 bg-white dark:bg-slate-800">{c}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                {/* ── VISTA DESKTOP: tabla original ── */}
+                <div className="hidden md:block overflow-x-auto max-h-[500px] overflow-y-auto custom-scrollbar">
                     <table className="w-full text-left border-collapse">
                         <thead className="sticky top-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md z-10 shadow-sm">
                             <tr className="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400">
