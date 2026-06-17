@@ -249,13 +249,30 @@ function CardDetail({ card, isNewCard, currentDate, privacyMode, isGlass, househ
 
     const handleAIConfirm = async (confirmedData) => {
         if (!auth.currentUser || !card?.id) return;
-        const newTotalDue = confirmedData.summary.totalConsumption || confirmedData.summary.currentBalance || 0;
-        const newDueDate = confirmedData.summary.dueDate || statement.dueDate;
-        setStatement(s => ({ ...s, totalDue: newTotalDue, dueDate: newDueDate, nextCloseDate: confirmedData.summary.nextClosingDate || s.nextCloseDate }));
+
+        // Calculamos el total desde las transacciones (más confiable que el campo de la IA)
+        // La IA puede devolver el campo con distintos nombres o nulo
+        const totalFromTransactions = (confirmedData.transactions || [])
+            .filter(t => !t.isPayment)
+            .reduce((acc, tx) => acc + (Number(tx.amount) || 0), 0);
+
+        const newTotalDue = 
+            Number(confirmedData.summary?.totalConsumption) ||
+            Number(confirmedData.summary?.currentBalance) ||
+            Number(confirmedData.summary?.totalDue) ||
+            totalFromTransactions ||
+            0;
+
+        console.log('[AI Confirm] summary recibido:', confirmedData.summary);
+        console.log('[AI Confirm] totalDue calculado:', newTotalDue);
+        console.log('[AI Confirm] transacciones:', confirmedData.transactions?.length);
+
+        const newDueDate = confirmedData.summary?.dueDate || statement.dueDate;
+        setStatement(s => ({ ...s, totalDue: newTotalDue, dueDate: newDueDate, nextCloseDate: confirmedData.summary?.nextClosingDate || s.nextCloseDate }));
         const statementData = {
-            totalDue: Number(newTotalDue) || 0,
+            totalDue: newTotalDue,
             dueDate: newDueDate,
-            nextCloseDate: confirmedData.summary.nextClosingDate || statement.nextCloseDate,
+            nextCloseDate: confirmedData.summary?.nextClosingDate || statement.nextCloseDate,
             nextDueDate: statement.nextDueDate,
             transactions: confirmedData.transactions
         };

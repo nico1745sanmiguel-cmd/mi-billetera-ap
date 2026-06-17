@@ -95,7 +95,7 @@ Cada objeto del array debe tener:
         }
 
         const parsedContent = JSON.parse(content);
-        return { data: parsedContent };
+        return parsedContent;
 
     } catch (error) {
         console.error("Error en analyzeReceipt:", error);
@@ -213,7 +213,7 @@ exports.analyzeStatement = functions.https.onCall(async (data, context) => {
             if (!textResponse) continue;
 
             const parsedResult = JSON.parse(textResponse);
-            return { data: parsedResult };
+            return parsedResult;
 
         } catch (error) {
             console.warn(`Falló el modelo ${modelName}:`, error.message);
