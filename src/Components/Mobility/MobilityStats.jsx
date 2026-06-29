@@ -64,32 +64,36 @@ export default function MobilityStats({ isGlass, privacyMode }) {
             total: filtered.reduce((a, s) => a + (s[key] || 0), 0),
         })).filter(p => p.total > 0);
 
-        const getWeekOfMonth = (dateStr) => {
-            const startDay = settings?.weekStartDay ?? 1; // Default a Lunes
+        // Calcula la fecha del inicio real de la semana (YYYY-MM-DD) según el día configurado.
+        // Ej: si startDay=2 (martes) y la fecha es un jueves, retorna el martes anterior.
+        const getWeekKey = (dateStr) => {
+            const startDay = settings?.weekStartDay ?? 1;
             const d = new Date(dateStr + 'T12:00:00');
-            const firstDay = new Date(d.getFullYear(), d.getMonth(), 1);
-            const offset = (firstDay.getDay() - startDay + 7) % 7;
-            return Math.floor((d.getDate() - 1 + offset) / 7);
+            const dayOfWeek = d.getDay(); // 0=Dom, 1=Lun...
+            const daysFromStart = (dayOfWeek - startDay + 7) % 7;
+            const weekStart = new Date(d);
+            weekStart.setDate(d.getDate() - daysFromStart);
+            return weekStart.toISOString().slice(0, 10); // clave tipo '2026-06-23'
         };
 
         const weeksMap = new Map();
         
         filtered.forEach(s => {
-            const w = getWeekOfMonth(s.date);
+            const w = getWeekKey(s.date);
             if (!weeksMap.has(w)) weeksMap.set(w, { total: 0, gastos: 0, days: 0 });
             weeksMap.get(w).total += (s.total || 0);
             weeksMap.get(w).days += 1;
         });
 
         filteredExpenses.forEach(e => {
-            const w = getWeekOfMonth(e.date);
+            const w = getWeekKey(e.date);
             if (!weeksMap.has(w)) weeksMap.set(w, { total: 0, gastos: 0, days: 0 });
             weeksMap.get(w).gastos += (e.amount || 0);
             weeksMap.get(w).days += 1;
         });
 
         const weeks = Array.from(weeksMap.entries())
-            .sort((a, b) => a[0] - b[0])
+            .sort((a, b) => a[0].localeCompare(b[0])) // strings YYYY-MM-DD ordenan correctamente
             .map(([w, data], i) => ({
                 label: `S${i + 1}`,
                 ...data
