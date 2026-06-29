@@ -29,6 +29,7 @@ import AgendaWidget from './Widgets/AgendaWidget';
 import SuperActionsWidget from './Widgets/SuperActionsWidget';
 import NotificationsModal from './Widgets/NotificationsModal';
 import MobilityWidget from './Widgets/MobilityWidget';
+import SalaryWidget from './Widgets/SalaryWidget';
 import { isModuleEnabled } from '../Settings/ModulesSettings';
 
 const Home = memo(({ onLogout, notifications = [], onCardClick }) => {
@@ -208,6 +209,7 @@ const Home = memo(({ onLogout, notifications = [], onCardClick }) => {
         ) } : {}),
         ...(isModuleEnabled('savings') ? { savings_summary: <SavingsWidget setView={(path) => navigate(`/${path}`)} privacyMode={privacyMode} /> } : {}),
         ...(isModuleEnabled('mobility') ? { mobility: <MobilityWidget setView={(path) => navigate(`/${path}`)} currentDate={currentDate} privacyMode={privacyMode} /> } : {}),
+        ...(isModuleEnabled('salary') ? { salary: <SalaryWidget setView={(path) => navigate(`/${path}`)} privacyMode={privacyMode} /> } : {}),
         ...(isModuleEnabled('household') ? { split_summary: <SplitSummaryWidget setView={(path) => navigate(`/${path}`)} householdMembers={householdMembers} splitData={splitData} currentDate={currentDate} privacyMode={privacyMode} user={user} /> } : {}),
         ...(isModuleEnabled('cards') ? { cards: <CardsWidget cards={cards} targetMonthKey={targetMonthKey} privacyMode={privacyMode} onCardClick={openCardModal} /> } : {}),
         ...(isModuleEnabled('agenda') ? { agenda: <AgendaWidget agenda={agenda} currentDate={currentDate} privacyMode={privacyMode} setView={(path) => navigate(`/${path}`)} freshItems={freshItems} plannerCategories={plannerCategories} /> } : {}),

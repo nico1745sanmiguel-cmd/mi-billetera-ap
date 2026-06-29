@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Car, Puzzle, ShoppingCart, CreditCard, TrendingUp, Users, CalendarDays, ListTodo, PieChart } from 'lucide-react';
+import { ArrowLeft, Briefcase, Car, Puzzle, ShoppingCart, CreditCard, TrendingUp, Users, CalendarDays, ListTodo, PieChart } from 'lucide-react';
 import { CACHE_KEYS } from '../../config/constants';
 import { getCache, setCache } from '../../utils/cache';
 import { useUI } from '../../context/UIContext';
@@ -46,6 +46,16 @@ const AVAILABLE_MODULES = [
         iconBg: 'bg-amber-100',
         iconColor: 'text-amber-600',
         badge: null,
+    },
+    {
+        id: 'salary',
+        label: 'Sueldo Mensual',
+        description: 'Planificá cómo distribuir tu sueldo mes a mes. Configurá fuentes de ingreso, creá sobres por categoría y conectá tus gastos familiares.',
+        icon: Briefcase,
+        color: 'from-violet-600 to-indigo-600',
+        iconBg: 'bg-violet-100',
+        iconColor: 'text-violet-600',
+        badge: 'Nuevo',
     },
     {
         id: 'household',

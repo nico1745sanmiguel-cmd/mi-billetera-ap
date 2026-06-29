@@ -27,6 +27,7 @@ const SharedExpensesDashboard = lazy(() => import('./Components/Shared/SharedExp
 const ReceiptScanner = lazy(() => import('./Components/ReceiptScanner/ReceiptScanner'));
 const SavingsDashboard = lazy(() => import('./Components/Savings/SavingsDashboard'));
 const MobilityDashboard = lazy(() => import('./Components/Mobility/MobilityDashboard'));
+const SalaryDashboard   = lazy(() => import('./Components/Salary/SalaryDashboard'));
 const CardsDashboard    = lazy(() => import('./Components/Cards/CardsDashboard'));
 const ModulesSettings   = lazy(() => import('./Components/Settings/ModulesSettings'));
 
@@ -222,6 +223,11 @@ export default function App() {
                                     <Route path="/mobility" element={
                                         isModuleEnabled('mobility') ? 
                                         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.2 }}><MobilityDashboard onBack={() => navigate('/dashboard')} /></motion.div> : <Navigate to="/dashboard" replace />
+                                    } />
+
+                                    <Route path="/salary" element={
+                                        isModuleEnabled('salary') ?
+                                        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.2 }}><SalaryDashboard onBack={() => navigate('/dashboard')} /></motion.div> : <Navigate to="/dashboard" replace />
                                     } />
 
                                     <Route path="/settings_modules" element={

@@ -19,6 +19,11 @@ service cloud.firestore {
     match /users/{userId} {
       allow read: if isAuthenticated() && (request.auth.uid == userId || resource.data.householdId == getUserHouseholdId());
       allow write: if isAuthenticated() && request.auth.uid == userId;
+
+      // Subcolección privada: plan de sueldo mensual (solo el propio usuario)
+      match /salary_config/{monthKey} {
+        allow read, write: if isAuthenticated() && request.auth.uid == userId;
+      }
     }
 
     // Colección de Hogares (Households)
