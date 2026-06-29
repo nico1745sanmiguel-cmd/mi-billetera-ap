@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Save, RefreshCw, CheckCircle2 } from 'lucide-react';
 import { useMobility } from '../../context/MobilityContext';
+import CurrencyInput from '../Shared/CurrencyInput';
 
 const today = () => new Date().toISOString().slice(0, 10);
 
@@ -165,26 +166,21 @@ export default function MobilityForm({ isGlass, onSuccess, initialData = null, o
                     </div>
                     <div>
                         <label className={labelCls}>Horas</label>
-                        <input
-                            type="number"
-                            step="0.5"
-                            min="0"
-                            max="24"
-                            placeholder="8"
+                        <CurrencyInput
                             value={form.hoursWorked}
-                            onChange={e => set('hoursWorked', e.target.value)}
+                            onChange={val => set('hoursWorked', val)}
+                            placeholder="8"
+                            allowDecimals={true}
                             className={inputCls}
                         />
                     </div>
                     <div>
                         <label className={labelCls}>KM</label>
-                        <input
-                            type="number"
-                            step="1"
-                            min="0"
-                            placeholder="120"
+                        <CurrencyInput
                             value={form.kilometers}
-                            onChange={e => set('kilometers', e.target.value)}
+                            onChange={val => set('kilometers', val)}
+                            placeholder="120"
+                            allowDecimals={false}
                             className={inputCls}
                         />
                     </div>
@@ -232,13 +228,10 @@ export default function MobilityForm({ isGlass, onSuccess, initialData = null, o
                                 {/* Input */}
                                 <div className="relative flex-1 min-w-0">
                                     <span className={`absolute start-3 top-1/2 -translate-y-1/2 text-sm font-bold ${isGlass ? 'text-white/40' : 'text-gray-300'}`}>$</span>
-                                    <input
-                                        type="number"
-                                        step="0.01"
-                                        min="0"
-                                        placeholder="0"
+                                    <CurrencyInput
                                         value={form[key]}
-                                        onChange={e => set(key, e.target.value)}
+                                        onChange={val => set(key, val)}
+                                        placeholder="0"
                                         className={`w-full rounded-lg px-3 py-2 ps-7 text-sm font-medium outline-none transition-all ${
                                             isGlass
                                                 ? 'bg-white/10 border border-white/20 text-white placeholder-white/30 focus:border-violet-400'

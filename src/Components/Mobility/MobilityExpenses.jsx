@@ -1,6 +1,7 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Fuel, Wrench, Car, Droplets, Plus, Trash2, RefreshCw, ChevronDown, ChevronUp, Zap, Tag } from 'lucide-react';
 import { useMobilityState, useMobilityDispatch } from '../../context/MobilityContext';
+import CurrencyInput from '../Shared/CurrencyInput';
 
 const today = () => new Date().toISOString().slice(0, 10);
 
@@ -18,27 +19,44 @@ export default function MobilityExpenses({ isGlass }) {
             key: c.id,
             label: c.label,
             icon: ICONS[c.iconName] || Tag,
-            color: c.id === 'gnc' ? 'from-blue-500 to-cyan-400' : 
-                   c.id === 'nafta' ? 'from-amber-500 to-orange-400' :
+            color: c.id === 'gnc'       ? 'from-blue-500 to-cyan-400' :
+                   c.id === 'nafta'     ? 'from-amber-500 to-orange-400' :
                    c.id === 'repuestos' ? 'from-red-500 to-rose-400' :
                    c.id === 'lavadero' ? 'from-teal-500 to-emerald-400' :
-                   'from-indigo-500 to-violet-500', // Default para nuevos
+                   'from-indigo-500 to-violet-500',
             bg: 'bg-gray-50',
             text: 'text-gray-700',
             ring: 'ring-gray-300'
         }));
     }, [settings?.expenseCategories]);
 
-    // ─── GNC: carga rápida (se usa el primero o uno específico si existe) ──
+    // La primera categoría non-gnc, para usarla como default
+    const firstNonGnc = useMemo(
+        () => activeCategories.find(c => c.key !== 'gnc')?.key || '',
+        [activeCategories]
+    );
+
+    // ─── GNC: carga rápida ──────────────────────────────────────────────────────
     const hasGnc = activeCategories.find(c => c.key === 'gnc');
     const [gncAmount, setGncAmount] = useState('');
     const [gncDate,   setGncDate]   = useState(today());
     const [gncSaving, setGncSaving] = useState(false);
 
     // ─── Formulario completo (otros gastos) ────────────────────────────────────
-    const [showFull,    setShowFull]    = useState(!hasGnc);
-    const [fullForm,    setFullForm]    = useState({ date: today(), category: activeCategories[0]?.key || 'otro', amount: '', notes: '' });
-    const [fullSaving,  setFullSaving]  = useState(false);
+    const [showFull,   setShowFull]   = useState(!hasGnc);
+    const [fullForm,   setFullForm]   = useState({ date: today(), category: firstNonGnc, amount: '', notes: '' });
+    const [fullSaving, setFullSaving] = useState(false);
+
+    // Si las categorías cambian (ej: el usuario agrega una nueva), resincronizar
+    // la categoría seleccionada si la actual ya no existe o es inválida.
+    useEffect(() => {
+        const valid = activeCategories.filter(c => c.key !== 'gnc');
+        if (valid.length === 0) return;
+        const currentOk = valid.find(c => c.key === fullForm.category);
+        if (!currentOk) {
+            setFullForm(f => ({ ...f, category: valid[0].key }));
+        }
+    }, [activeCategories]); // eslint-disable-line react-hooks/exhaustive-deps
 
     // ─── Mes visible ──────────────────────────────────────────────────────────
     const now = new Date();
@@ -55,7 +73,6 @@ export default function MobilityExpenses({ isGlass }) {
     );
 
     const byCategory = useMemo(() => {
-        // Incluir categorías activas y también las que tengan gastos en el mes aunque ya no estén activas
         const cats = [...activeCategories];
         monthExpenses.forEach(exp => {
             if (!cats.find(c => c.key === exp.category)) {
@@ -94,7 +111,8 @@ export default function MobilityExpenses({ isGlass }) {
         setFullSaving(true);
         try {
             await addExpense(fullForm);
-            setFullForm({ date: today(), category: 'nafta', amount: '', notes: '' });
+            // Reset: usar la primera categoría no-gnc disponible, no hardcodear 'nafta'
+            setFullForm({ date: today(), category: firstNonGnc, amount: '', notes: '' });
             setShowFull(false);
         } finally {
             setFullSaving(false);
@@ -115,51 +133,47 @@ export default function MobilityExpenses({ isGlass }) {
         <div className="space-y-4">
 
             {/* ─── CARGA RÁPIDA GNC ─── */}
-            <div className={`${card}`}>
-                <div className="flex items-center gap-2 mb-3">
-                    <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center shadow-sm">
-                        <Zap size={16} className="text-white" />
-                    </div>
-                    <div>
-                        <p className={`text-sm font-bold ${text}`}>Cargar GNC</p>
-                        <p className={`text-xs ${sub}`}>Carga rápida del día</p>
-                    </div>
-                </div>
-
-                <form onSubmit={handleGnc} className="space-y-2">
-                    {/* Fila 1: fecha + monto */}
-                    <div className="flex gap-2">
-                        <input
-                            type="date"
-                            value={gncDate}
-                            onChange={e => setGncDate(e.target.value)}
-                            className={`${inputCls} flex-1 min-w-0`}
-                        />
-                        <div className="relative flex-1 min-w-0">
-                            <span className={`absolute start-3 top-1/2 -translate-y-1/2 text-sm font-bold ${isGlass ? 'text-white/40' : 'text-gray-300'}`}>$</span>
-                            <input
-                                type="number"
-                                step="0.01"
-                                min="0"
-                                placeholder="Monto"
-                                value={gncAmount}
-                                onChange={e => setGncAmount(e.target.value)}
-                                className={`${inputCls} ps-7`}
-                                required
-                            />
+            {hasGnc && (
+                <div className={`${card}`}>
+                    <div className="flex items-center gap-2 mb-3">
+                        <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center shadow-sm">
+                            <Zap size={16} className="text-white" />
+                        </div>
+                        <div>
+                            <p className={`text-sm font-bold ${text}`}>Cargar GNC</p>
+                            <p className={`text-xs ${sub}`}>Carga rápida del día</p>
                         </div>
                     </div>
-                    {/* Fila 2: botón ancho completo */}
-                    <button
-                        type="submit"
-                        disabled={gncSaving}
-                        className="w-full py-3 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-400 hover:to-cyan-400 active:scale-95 transition-all shadow-md shadow-blue-500/30 flex items-center justify-center gap-2"
-                    >
-                        {gncSaving ? <RefreshCw size={14} className="animate-spin" /> : <Plus size={14} />}
-                        Agregar GNC
-                    </button>
-                </form>
-            </div>
+
+                    <form onSubmit={handleGnc} className="space-y-2">
+                        <div className="flex gap-2">
+                            <input
+                                type="date"
+                                value={gncDate}
+                                onChange={e => setGncDate(e.target.value)}
+                                className={`${inputCls} flex-1 min-w-0`}
+                            />
+                            <div className="relative flex-1 min-w-0">
+                                <span className={`absolute start-3 top-1/2 -translate-y-1/2 text-sm font-bold ${isGlass ? 'text-white/40' : 'text-gray-300'}`}>$</span>
+                                <CurrencyInput
+                                    value={gncAmount}
+                                    onChange={setGncAmount}
+                                    placeholder="Monto"
+                                    className={`${inputCls} ps-7`}
+                                />
+                            </div>
+                        </div>
+                        <button
+                            type="submit"
+                            disabled={gncSaving}
+                            className="w-full py-3 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-400 hover:to-cyan-400 active:scale-95 transition-all shadow-md shadow-blue-500/30 flex items-center justify-center gap-2"
+                        >
+                            {gncSaving ? <RefreshCw size={14} className="animate-spin" /> : <Plus size={14} />}
+                            Agregar GNC
+                        </button>
+                    </form>
+                </div>
+            )}
 
             {/* ─── OTROS GASTOS (colapsable) ─── */}
             <div className={card}>
@@ -173,7 +187,9 @@ export default function MobilityExpenses({ isGlass }) {
                         </div>
                         <div className="text-left">
                             <p className={`text-sm font-bold ${text}`}>Otros gastos</p>
-                            <p className={`text-xs ${sub}`}>Nafta · Repuestos · Lavadero</p>
+                            <p className={`text-xs ${sub}`}>
+                                {activeCategories.filter(c => c.key !== 'gnc').map(c => c.label).join(' · ') || 'Sin categorías activas'}
+                            </p>
                         </div>
                     </div>
                     {showFull ? <ChevronUp size={18} className={sub} /> : <ChevronDown size={18} className={sub} />}
@@ -184,31 +200,37 @@ export default function MobilityExpenses({ isGlass }) {
                         {/* Categoría */}
                         <div>
                             <p className={labelCls}>Categoría</p>
-                            <div className="grid grid-cols-3 gap-2">
-                                {activeCategories.filter(c => c.key !== 'gnc').map(cat => {
-                                    const Icon = cat.icon;
-                                    const active = fullForm.category === cat.key;
-                                    return (
-                                        <button
-                                            key={cat.key}
-                                            type="button"
-                                            onClick={() => setFullForm(f => ({ ...f, category: cat.key }))}
-                                            className={`flex flex-col items-center gap-1 py-2.5 rounded-xl text-xs font-semibold transition-all ${
-                                                active
-                                                    ? isGlass
-                                                        ? `bg-gradient-to-br ${cat.color} text-white shadow-md`
-                                                        : `${cat.bg} ${cat.text} ring-2 ${cat.ring}`
-                                                    : isGlass
-                                                        ? 'bg-white/10 text-white/50 hover:bg-white/20'
-                                                        : 'bg-gray-50 text-gray-400 hover:bg-gray-100'
-                                            }`}
-                                        >
-                                            <Icon size={16} />
-                                            {cat.label}
-                                        </button>
-                                    );
-                                })}
-                            </div>
+                            {activeCategories.filter(c => c.key !== 'gnc').length === 0 ? (
+                                <p className={`text-xs ${sub} text-center py-3`}>
+                                    No hay categorías activas. Activalas en ⚙️ Configuración.
+                                </p>
+                            ) : (
+                                <div className="grid grid-cols-3 gap-2">
+                                    {activeCategories.filter(c => c.key !== 'gnc').map(cat => {
+                                        const Icon = cat.icon;
+                                        const active = fullForm.category === cat.key;
+                                        return (
+                                            <button
+                                                key={cat.key}
+                                                type="button"
+                                                onClick={() => setFullForm(f => ({ ...f, category: cat.key }))}
+                                                className={`flex flex-col items-center gap-1 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                                                    active
+                                                        ? isGlass
+                                                            ? `bg-gradient-to-br ${cat.color} text-white shadow-md`
+                                                            : `${cat.bg} ${cat.text} ring-2 ${cat.ring}`
+                                                        : isGlass
+                                                            ? 'bg-white/10 text-white/50 hover:bg-white/20'
+                                                            : 'bg-gray-50 text-gray-400 hover:bg-gray-100'
+                                                }`}
+                                            >
+                                                <Icon size={16} />
+                                                {cat.label}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            )}
                         </div>
 
                         {/* Fecha + Monto */}
@@ -227,15 +249,11 @@ export default function MobilityExpenses({ isGlass }) {
                                 <label className={labelCls}>Monto</label>
                                 <div className="relative">
                                     <span className={`absolute start-3 top-1/2 -translate-y-1/2 text-sm font-bold ${isGlass ? 'text-white/40' : 'text-gray-300'}`}>$</span>
-                                    <input
-                                        type="number"
-                                        step="0.01"
-                                        min="0"
-                                        placeholder="0"
+                                    <CurrencyInput
                                         value={fullForm.amount}
-                                        onChange={e => setFullForm(f => ({ ...f, amount: e.target.value }))}
+                                        onChange={val => setFullForm(f => ({ ...f, amount: val }))}
+                                        placeholder="0"
                                         className={`${inputCls} ps-7`}
-                                        required
                                     />
                                 </div>
                             </div>
@@ -255,8 +273,8 @@ export default function MobilityExpenses({ isGlass }) {
 
                         <button
                             type="submit"
-                            disabled={fullSaving}
-                            className="w-full py-3 rounded-2xl font-bold text-sm text-white bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 active:scale-98 transition-all shadow-lg shadow-violet-500/30 flex items-center justify-center gap-2"
+                            disabled={fullSaving || !fullForm.category}
+                            className="w-full py-3 rounded-2xl font-bold text-sm text-white bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 active:scale-98 transition-all shadow-lg shadow-violet-500/30 flex items-center justify-center gap-2 disabled:opacity-50"
                         >
                             {fullSaving ? <RefreshCw size={15} className="animate-spin" /> : <Plus size={15} />}
                             Registrar gasto
