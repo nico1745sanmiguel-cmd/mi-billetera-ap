@@ -1,8 +1,8 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { auth } from '../../firebase';
 import { Plus, LayoutList } from 'lucide-react';
 import { formatMoney } from '../../utils';
-import { deleteFreshItem } from '../../repositories/freshRepository';
+import { deleteFreshItem, copyItemsToMonth } from '../../repositories/freshRepository';
 import { addPlannerCategory } from '../../repositories/plannerCategoriesRepository';
 import { useSupermarket } from '../../context/SupermarketContext';
 import { useAuth } from '../../context/AuthContext';
@@ -44,6 +44,58 @@ export default function FreshShop() {
         if (!currentDate) return '';
         return `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
     }, [currentDate]);
+
+    // Ref para evitar que la herencia de presupuesto se dispare múltiples veces
+    // mientras Firestore está sincronizando los ítems recién copiados.
+    const inheritanceRunRef = useRef(new Set());
+
+    useEffect(() => {
+        // Esperamos a tener un mes válido y ítems cargados
+        if (!currentMonthKey || !auth.currentUser) return;
+
+        allCategories.forEach(cat => {
+            const key = `${currentMonthKey}::${cat.id}`;
+
+            // Si ya procesamos esta combinación mes+categoría en esta sesión, saltar
+            if (inheritanceRunRef.current.has(key)) return;
+
+            // Ítems del mes actual para esta categoría
+            const currentItems = activeItems.filter(
+                t => t.month === currentMonthKey && t.category === cat.id
+            );
+
+            // Si ya hay ítems este mes, marcar como procesado y saltar
+            if (currentItems.length > 0) {
+                inheritanceRunRef.current.add(key);
+                return;
+            }
+
+            // Buscar todos los meses pasados que tienen ítems de esta categoría
+            const pastMonths = [...new Set(
+                activeItems
+                    .filter(t => t.category === cat.id && t.month < currentMonthKey)
+                    .map(t => t.month)
+            )].sort().reverse(); // más reciente primero
+
+            if (pastMonths.length === 0) {
+                // Sin historial: marcar igualmente para no reintentar en cada render
+                inheritanceRunRef.current.add(key);
+                return;
+            }
+
+            // Tomar ítems del mes más reciente
+            const sourceMonth = pastMonths[0];
+            const sourceItems = activeItems.filter(
+                t => t.month === sourceMonth && t.category === cat.id
+            );
+
+            // Marcar ANTES de copiar para evitar doble ejecución
+            inheritanceRunRef.current.add(key);
+
+            copyItemsToMonth(sourceItems, currentMonthKey)
+                .catch(err => console.error('Error al heredar presupuesto:', err));
+        });
+    }, [currentMonthKey, activeItems, allCategories]);
 
     const totals = useMemo(() => {
         const monthItems = activeItems.filter(t => t.month === currentMonthKey);

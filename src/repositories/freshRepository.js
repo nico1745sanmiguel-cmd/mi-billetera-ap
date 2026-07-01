@@ -54,3 +54,27 @@ export const toggleFreshCompleted = (id, completed) =>
  */
 export const updateFreshDate = (id, date) =>
     updateDoc(doc(db, COL, id), { date });
+
+/**
+ * Copia una lista de ítems a un mes nuevo (herencia de presupuesto).
+ * Se omiten id, createdAt y completed (se resetea a false).
+ * @param {Array} items - Ítems del mes origen a copiar
+ * @param {string} newMonthKey - Mes destino en formato "YYYY-MM"
+ * @returns {Promise<void>}
+ */
+export const copyItemsToMonth = (items, newMonthKey) => {
+    const promises = items.map(({ id, createdAt, completed, date, ...rest }) => {
+        // Ajustamos la fecha al primer día del mes destino para mantener coherencia
+        const [year, month] = newMonthKey.split('-');
+        const newDate = `${year}-${month}-01`;
+        return addDoc(collection(db, COL), {
+            ...rest,
+            month: newMonthKey,
+            date: newDate,
+            completed: false,
+            createdAt: new Date().toISOString(),
+        });
+    });
+    return Promise.all(promises);
+};
+
