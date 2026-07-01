@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { auth } from '../../firebase';
 import { useNavigate } from 'react-router-dom';
-import { ShoppingCart, Loader2, Camera, Check, Trash2, Copy, Plus } from 'lucide-react';
+import { ShoppingCart, Loader2, Camera, Check, Trash2, Copy, Plus, Sparkles } from 'lucide-react';
 import { formatMoney } from '../../utils';
 import { formatMonthKey } from '../../utils/cardDebtUtils';
 import { useSupermarket } from '../../context/SupermarketContext';
@@ -15,6 +15,7 @@ import {
     updateSuperFields,
 } from '../../repositories/supermarketRepository';
 import { useUI } from '../../context/UIContext';
+import { analyzePurchaseFrequency } from '../../utils/purchasePrediction';
 
 export default function SuperList() {
     const { currentDate, isGlass } = useUI();
@@ -80,36 +81,64 @@ export default function SuperList() {
         setTimeout(() => setActiveLetter(null), 1000);
     };
 
-    // 2.5 LISTA DEL MES ANTERIOR (PARA COPIAR AL NUEVO MES)
-    const lastMonthItems = useMemo(() => {
-        if (!items || items.length === 0) return [];
-        // Buscar meses anteriores al actual
-        const pastMonths = [...new Set(items.map(i => i.month).filter(m => m && m < currentMonthKey))].sort().reverse();
-        if (pastMonths.length === 0) return [];
-        
-        const lastM = pastMonths[0]; // El mes más reciente con items
-        const pastItems = items.filter(i => i.month === lastM);
-        
-        // Evitar duplicados por nombre
-        const uniqueNames = new Set();
-        const toCopy = [];
-        for (const item of pastItems) {
-            const normalized = (item.name || '').trim().toLowerCase();
-            if (!uniqueNames.has(normalized)) {
-                uniqueNames.add(normalized);
-                toCopy.push(item);
-            }
-        }
-        return toCopy.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+    // 2.5 PREDICCIÓN INTELIGENTE DE COMPRAS
+    const prediction = useMemo(() => {
+        if (!items || items.length === 0 || !currentMonthKey) return { auto: [], suggestions: [] };
+        return analyzePurchaseFrequency(items, currentMonthKey);
     }, [items, currentMonthKey]);
 
-    const [isCopying, setIsCopying] = useState(false);
+    // Ref para que el auto-add solo se ejecute una vez por mes
+    const autoAddRunRef = useRef(new Set());
 
-    const handleCopyPreviousMonth = async () => {
-        if (!lastMonthItems.length || !auth.currentUser) return;
-        setIsCopying(true);
+    // Auto-agregar ítems de frecuencia mensual cuando el carrito está vacío
+    useEffect(() => {
+        if (!currentMonthKey || !auth.currentUser) return;
+        if (monthlyList.length > 0) return;          // ya hay ítems este mes
+        if (prediction.auto.length === 0) return;    // sin predicciones automáticas
+        if (autoAddRunRef.current.has(currentMonthKey)) return; // ya corrió
+
+        autoAddRunRef.current.add(currentMonthKey);
+
+        const promises = prediction.auto.map(item =>
+            addSuperItem({
+                name: item.name,
+                price: item.price || 0,
+                quantity: item.quantity || 1,
+                checked: false,
+                userId: auth.currentUser.uid,
+                month: currentMonthKey,
+                ...(householdId && {
+                    householdId,
+                    ownerId: auth.currentUser.uid,
+                    isShared: true,
+                }),
+            })
+        );
+        Promise.all(promises)
+            .then(() => showToast(`🛒 ${prediction.auto.length} ítems agregados automáticamente`))
+            .catch(err => console.error('Error en auto-add:', err));
+    }, [currentMonthKey, monthlyList.length, prediction.auto]);
+
+    // Estado para la tarjeta de sugerencias
+    const [selectedSuggestions, setSelectedSuggestions] = useState({});
+    const [showSuggestions, setShowSuggestions] = useState(true);
+    const [isAddingSuggestions, setIsAddingSuggestions] = useState(false);
+
+    // Resetear selección cuando cambia el mes o aparecen nuevas sugerencias
+    useEffect(() => {
+        const initial = {};
+        prediction.suggestions.forEach(s => { initial[s.name.toLowerCase()] = true; });
+        setSelectedSuggestions(initial);
+        setShowSuggestions(true);
+    }, [currentMonthKey, prediction.suggestions.length]);
+
+    const handleConfirmSuggestions = async () => {
+        if (!auth.currentUser) return;
+        const toAdd = prediction.suggestions.filter(s => selectedSuggestions[s.name.toLowerCase()]);
+        if (toAdd.length === 0) { setShowSuggestions(false); return; }
+        setIsAddingSuggestions(true);
         try {
-            const promises = lastMonthItems.map(item =>
+            await Promise.all(toAdd.map(item =>
                 addSuperItem({
                     name: item.name,
                     price: item.price || 0,
@@ -120,17 +149,16 @@ export default function SuperList() {
                     ...(householdId && {
                         householdId,
                         ownerId: auth.currentUser.uid,
-                        isShared: true
-                    })
+                        isShared: true,
+                    }),
                 })
-            );
-            await Promise.all(promises);
-            showToast(`¡Lista copiada! (${promises.length} ítems)`);
-        } catch (error) {
-            console.error(error);
-            showToast('Error al copiar');
+            ));
+            showToast(`✅ ${toAdd.length} sugerencias agregadas`);
+        } catch (err) {
+            console.error(err);
         } finally {
-            setIsCopying(false);
+            setIsAddingSuggestions(false);
+            setShowSuggestions(false);
         }
     };
 
@@ -428,28 +456,74 @@ export default function SuperList() {
                         );
                     })}
 
-                    {monthlyList.length === 0 && (
+                    {monthlyList.length === 0 && prediction.auto.length === 0 && (
                         <div className={`text-center py-10 ${isGlass ? 'text-white' : 'text-gray-800'} animate-fade-in`}>
                             <ShoppingCart size={48} className={`mx-auto mb-4 ${isGlass ? 'opacity-50' : 'opacity-70'}`} />
                             <p className={`text-lg font-bold ${isGlass ? 'opacity-90' : 'opacity-100'}`}>Carrito vacío</p>
                             <p className={`text-sm mt-1 mb-6 ${isGlass ? 'text-white/60' : 'text-gray-500'}`}>Aún no hay compras para {currentDate.toLocaleString('es-AR', { month: 'long' })}</p>
-                            
-                            {lastMonthItems.length > 0 ? (
-                                <button 
-                                    onClick={handleCopyPreviousMonth}
-                                    disabled={isCopying}
-                                    className={`mx-auto flex items-center justify-center gap-2 px-6 py-3 rounded-full font-bold shadow-lg transition-all transform active:scale-95 ${isGlass ? 'bg-white text-purple-900 border border-white/20 hover:bg-gray-100' : 'bg-purple-600 text-white hover:bg-purple-700'}`}
+                            <p className={`text-xs ${isGlass ? 'text-white/50' : 'text-gray-400'}`}>Agregá cosas usando la barra de abajo</p>
+                        </div>
+                    )}
+
+                    {/* TARJETA DE SUGERENCIAS INTELIGENTES */}
+                    {showSuggestions && prediction.suggestions.length > 0 && (
+                        <div className={`rounded-3xl border p-4 animate-fade-in ${
+                            isGlass ? 'bg-purple-900/20 border-purple-500/30' : 'bg-purple-50 border-purple-200'
+                        }`}>
+                            <div className="flex items-center gap-2 mb-3">
+                                <Sparkles size={16} className={isGlass ? 'text-purple-400' : 'text-purple-600'} />
+                                <p className={`font-bold text-sm ${isGlass ? 'text-purple-300' : 'text-purple-700'}`}>Sugerencias inteligentes</p>
+                                <span className={`ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                                    isGlass ? 'bg-purple-500/20 text-purple-300' : 'bg-purple-100 text-purple-600'
+                                }`}>Comprás cada tanto</span>
+                            </div>
+                            <div className="space-y-2 mb-4">
+                                {prediction.suggestions.map(s => {
+                                    const key = s.name.toLowerCase();
+                                    const isSelected = selectedSuggestions[key] ?? true;
+                                    return (
+                                        <button
+                                            key={key}
+                                            type="button"
+                                            onClick={() => setSelectedSuggestions(prev => ({ ...prev, [key]: !prev[key] }))}
+                                            className={`w-full flex items-center gap-3 p-2.5 rounded-2xl border transition-all ${
+                                                isSelected
+                                                    ? (isGlass ? 'bg-purple-500/20 border-purple-500/40' : 'bg-white border-purple-300 shadow-sm')
+                                                    : (isGlass ? 'bg-white/5 border-white/10 opacity-50' : 'bg-gray-50 border-gray-200 opacity-50')
+                                            }`}
+                                        >
+                                            <div className={`w-5 h-5 rounded-lg border-2 flex-shrink-0 flex items-center justify-center transition-colors ${
+                                                isSelected ? 'bg-purple-500 border-purple-500' : (isGlass ? 'border-white/30' : 'border-gray-300')
+                                            }`}>
+                                                {isSelected && <Check size={12} className="text-white" strokeWidth={3} />}
+                                            </div>
+                                            <span className={`flex-1 text-sm font-bold text-left ${isGlass ? 'text-white' : 'text-gray-800'}`}>{s.name}</span>
+                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                                                isGlass ? 'bg-white/10 text-white/50' : 'bg-gray-100 text-gray-500'
+                                            }`}>c/{s.avgFrequency} meses</span>
+                                            {s.price > 0 && <span className={`text-xs font-mono font-bold ${isGlass ? 'text-purple-300' : 'text-purple-600'}`}>{formatMoney(s.price)}</span>}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => setShowSuggestions(false)}
+                                    className={`flex-1 py-2.5 rounded-2xl text-sm font-bold border transition-all ${
+                                        isGlass ? 'border-white/10 text-white/50 hover:bg-white/5' : 'border-gray-200 text-gray-500 hover:bg-gray-50'
+                                    }`}
+                                >Ignorar</button>
+                                <button
+                                    onClick={handleConfirmSuggestions}
+                                    disabled={isAddingSuggestions}
+                                    className={`flex-2 px-6 py-2.5 rounded-2xl text-sm font-bold text-white shadow-md transition-all active:scale-95 disabled:opacity-50 flex items-center gap-2 ${
+                                        isGlass ? 'bg-purple-500 hover:bg-purple-400' : 'bg-purple-600 hover:bg-purple-700'
+                                    }`}
                                 >
-                                    {isCopying ? (
-                                        <Loader2 size={20} className="animate-spin flex-shrink-0" />
-                                    ) : (
-                                        <Copy size={20} className="flex-shrink-0" />
-                                    )}
-                                    {isCopying ? 'Armando carrito...' : `Traer ${lastMonthItems.length} ítems del último carrito`}
+                                    {isAddingSuggestions ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
+                                    {isAddingSuggestions ? 'Agregando...' : `Agregar ${Object.values(selectedSuggestions).filter(Boolean).length} seleccionados`}
                                 </button>
-                            ) : (
-                                <p className={`text-xs ${isGlass ? 'text-white/50' : 'text-gray-400'}`}>Agregá cosas usando la barra de abajo</p>
-                            )}
+                            </div>
                         </div>
                     )}
                 </div>
