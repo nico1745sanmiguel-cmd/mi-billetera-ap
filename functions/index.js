@@ -127,6 +127,7 @@ const buildUserPrompt = (text) => `Extraé los datos financieros del siguiente t
 
 ═══ REGLAS DE EXTRACCIÓN ═══
 - Extraer Resumen (banco, cierre, vencimiento, total consumos, pago mínimo).
+- IMPORTANTE: Buscar y extraer las fechas del PRÓXIMO período (próximo cierre y próximo vencimiento). Suelen aparecer como "Próximo cierre", "Próximo vencimiento", "Fecha de cierre siguiente", etc.
 - Extraer Lista de Transacciones (fecha, nombre de comercio limpio, monto, si es cuota y qué número, categoría sugerida).
 - Categorías válidas: Supermercado, Servicios, Servicios Digitales, Transporte, Indumentaria, Entretenimiento, Gastronomía, Salud, Automotor, Hogar, Impuestos y Comisiones, Pago, Varios.
 - Si dice "SU PAGO", es un pago (isPayment: true). Las cuotas son compras, no pagos.
@@ -138,6 +139,8 @@ const buildUserPrompt = (text) => `Extraé los datos financieros del siguiente t
     "bankName": "String",
     "closingDate": "YYYY-MM-DD",
     "dueDate": "YYYY-MM-DD",
+    "nextClosingDate": "YYYY-MM-DD o null si no se encuentra",
+    "nextDueDate": "YYYY-MM-DD o null si no se encuentra",
     "totalConsumption": Number,
     "minPayment": Number
   },

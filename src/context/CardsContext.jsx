@@ -4,7 +4,7 @@ import { collection, onSnapshot, query, where, addDoc } from 'firebase/firestore
 import { useAuth } from './AuthContext';
 import { useUIDispatch } from './UIContext';
 import { getCache, setCache } from '../utils/cache';
-import { COLLECTIONS, CACHE_KEYS } from '../config/constants';
+import { COLLECTIONS, CACHE_KEYS, ENABLE_HOUSEHOLD } from '../config/constants';
 import { sanitizeFinancialData } from '../utils/security';
 
 const CardsStateContext = createContext(null);
@@ -61,8 +61,6 @@ export const CardsProvider = ({ children }) => {
             unsubTrans();
         };
     }, [user, userData, showToast]);
-
-    const ENABLE_HOUSEHOLD = true;
 
     const visibleCards = useMemo(() => {
         if (!ENABLE_HOUSEHOLD || !userData?.householdId) return cards;

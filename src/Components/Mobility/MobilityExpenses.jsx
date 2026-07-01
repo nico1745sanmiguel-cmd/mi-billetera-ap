@@ -10,7 +10,7 @@ const fmt = (n) => `$${Number(n || 0).toLocaleString('es-AR', { maximumFractionD
 
 const ICONS = { Zap, Fuel, Wrench, Droplets, Tag };
 
-export default function MobilityExpenses({ isGlass }) {
+export default function MobilityExpenses({ isGlass, month, year }) {
     const { expenses, settings } = useMobilityState();
     const { addExpense, deleteExpense } = useMobilityDispatch();
 
@@ -58,9 +58,8 @@ export default function MobilityExpenses({ isGlass }) {
         }
     }, [activeCategories]); // eslint-disable-line react-hooks/exhaustive-deps
 
-    // ─── Mes visible ──────────────────────────────────────────────────────────
-    const now = new Date();
-    const [viewMonth] = useState(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`);
+    // ─── Mes visible (viene del Dashboard compartido) ───────────────────────────
+    const viewMonth = `${year}-${String(month + 1).padStart(2, '0')}`;
 
     const monthExpenses = useMemo(() =>
         expenses.filter(e => e.date?.startsWith(viewMonth)),
@@ -287,7 +286,7 @@ export default function MobilityExpenses({ isGlass }) {
             <div className={card}>
                 <div className="flex items-center justify-between mb-3">
                     <p className={`text-xs font-bold uppercase tracking-wide ${sub}`}>
-                        {MONTHS[now.getMonth()]} — Total gastos
+                        {MONTHS[month]} — Total gastos
                     </p>
                     <p className={`text-base font-bold ${isGlass ? 'text-red-300' : 'text-red-500'}`}>{fmt(totalMonth)}</p>
                 </div>

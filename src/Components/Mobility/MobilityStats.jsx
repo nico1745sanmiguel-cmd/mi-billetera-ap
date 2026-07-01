@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from 'react';
-import { TrendingUp, Clock, Navigation, Star, ChevronLeft, ChevronRight, Zap, Fuel, Wrench, Droplets } from 'lucide-react';
+import React, { useMemo } from 'react';
+import { TrendingUp, Clock, Navigation, Star, Zap, Fuel, Wrench, Droplets } from 'lucide-react';
 import { useMobilityState } from '../../context/MobilityContext';
 
 const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
@@ -20,20 +20,8 @@ const EXPENSE_CATS = [
 
 const fmt = (n, prefix = '$') => `${prefix}${Number(n || 0).toLocaleString('es-AR', { maximumFractionDigits: 0 })}`;
 
-export default function MobilityStats({ isGlass, privacyMode }) {
+export default function MobilityStats({ isGlass, privacyMode, month, year }) {
     const { sessions, expenses, settings } = useMobilityState();
-
-    const now = new Date();
-    const [year,  setYear]  = useState(now.getFullYear());
-    const [month, setMonth] = useState(now.getMonth());
-
-    const changeMonth = (dir) => {
-        let m = month + dir;
-        let y = year;
-        if (m < 0)  { m = 11; y--; }
-        if (m > 11) { m = 0;  y++; }
-        setMonth(m); setYear(y);
-    };
 
     const monthKey = `${year}-${String(month + 1).padStart(2, '0')}`;
 
@@ -139,17 +127,6 @@ export default function MobilityStats({ isGlass, privacyMode }) {
 
     return (
         <div className="space-y-4">
-            {/* SELECTOR MES */}
-            <div className={`${card} flex items-center justify-between`}>
-                <button onClick={() => changeMonth(-1)} className={`p-2 rounded-xl transition-all ${isGlass ? 'bg-white/10 hover:bg-white/20' : 'bg-gray-100 hover:bg-gray-200'}`}>
-                    <ChevronLeft size={16} />
-                </button>
-                <p className={`font-bold text-sm ${text}`}>{MONTHS[month]} {year}</p>
-                <button onClick={() => changeMonth(1)} className={`p-2 rounded-xl transition-all ${isGlass ? 'bg-white/10 hover:bg-white/20' : 'bg-gray-100 hover:bg-gray-200'}`}>
-                    <ChevronRight size={16} />
-                </button>
-            </div>
-
             {!kpis ? (
                 <div className={`${card} text-center py-12`}>
                     <p className="text-4xl mb-2">📊</p>

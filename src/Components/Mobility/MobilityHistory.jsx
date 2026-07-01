@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Trash2, Pencil, ChevronLeft, ChevronRight, X, Check } from 'lucide-react';
+import { Trash2, Pencil, X, Check } from 'lucide-react';
 import { useMobilityState, useMobilityDispatch } from '../../context/MobilityContext';
 import MobilityForm from './MobilityForm';
 
@@ -7,25 +7,11 @@ const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto
 
 const fmt = (n) => `$${Number(n || 0).toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
 
-export default function MobilityHistory({ isGlass, privacyMode }) {
+export default function MobilityHistory({ isGlass, privacyMode, month, year }) {
     const { sessions } = useMobilityState();
     const { deleteSession } = useMobilityDispatch();
     const [editingId, setEditingId] = useState(null);
     const [confirmDelete, setConfirmDelete] = useState(null);
-
-    // Selector de mes
-    const now = new Date();
-    const [year, setYear]   = useState(now.getFullYear());
-    const [month, setMonth] = useState(now.getMonth()); // 0-indexed
-
-    const changeMonth = (dir) => {
-        let m = month + dir;
-        let y = year;
-        if (m < 0)  { m = 11; y--; }
-        if (m > 11) { m = 0;  y++; }
-        setMonth(m);
-        setYear(y);
-    };
 
     const monthKey = `${year}-${String(month + 1).padStart(2, '0')}`;
 
@@ -68,16 +54,6 @@ export default function MobilityHistory({ isGlass, privacyMode }) {
 
     return (
         <div className="space-y-4">
-            {/* SELECTOR MES */}
-            <div className={`${card} flex items-center justify-between`}>
-                <button onClick={() => changeMonth(-1)} className={`p-2 rounded-xl transition-all ${isGlass ? 'bg-white/10 hover:bg-white/20' : 'bg-gray-100 hover:bg-gray-200'}`}>
-                    <ChevronLeft size={16} />
-                </button>
-                <p className={`font-bold text-sm ${text}`}>{MONTHS[month]} {year}</p>
-                <button onClick={() => changeMonth(1)} className={`p-2 rounded-xl transition-all ${isGlass ? 'bg-white/10 hover:bg-white/20' : 'bg-gray-100 hover:bg-gray-200'}`}>
-                    <ChevronRight size={16} />
-                </button>
-            </div>
             {/* RESUMEN DEL MES */}
             {filtered.length > 0 && (
                 <div className={`${card} grid grid-cols-4 gap-2 text-center`}>

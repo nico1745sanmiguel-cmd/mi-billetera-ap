@@ -97,6 +97,7 @@ export const COLLECTIONS = {
     CONTRIBUTIONS:    'contributions',
     SAVINGS_TRANSACTIONS: 'savings_transactions',
     MOBILITY_SESSIONS:  'mobility_sessions',
+    MOBILITY_EXPENSES:  'mobility_expenses',
 };
 
 // ─── CACHE KEYS ───────────────────────────────────────────────────────────────

@@ -104,7 +104,7 @@ export const MobilityProvider = ({ children }) => {
         if (!user) { setLoadingExpenses(false); return; }
 
         const q = query(
-            collection(db, 'mobility_expenses'),
+            collection(db, COLLECTIONS.MOBILITY_EXPENSES),
             where('userId', '==', user.uid)
         );
 
@@ -112,7 +112,7 @@ export const MobilityProvider = ({ children }) => {
             const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
             data.sort((a, b) => b.date.localeCompare(a.date));
             setExpenses(data);
-            setCache('mobility_expenses', data);
+            setCache(CACHE_KEYS.MOBILITY_EXPENSES, data);
             setLoadingExpenses(false);
         }, (error) => {
             console.error('Mobility expenses error:', error);
@@ -200,9 +200,12 @@ export const MobilityProvider = ({ children }) => {
     const deleteAllSessions = useCallback(async () => {
         if (!user) return;
         try {
+            const { writeBatch } = await import('firebase/firestore');
+            const batch = writeBatch(db);
             for (const session of sessions) {
-                await deleteDoc(doc(db, COLLECTIONS.MOBILITY_SESSIONS, session.id));
+                batch.delete(doc(db, COLLECTIONS.MOBILITY_SESSIONS, session.id));
             }
+            await batch.commit();
         } catch (error) {
             console.error('Error deleting all sessions:', error);
             showToast('Hubo un error al eliminar las jornadas.', 'error');
@@ -236,7 +239,7 @@ export const MobilityProvider = ({ children }) => {
         if (!user) return;
         const safeData = sanitizeFinancialData({ amount }, ['amount'], false);
         try {
-            await addDoc(collection(db, 'mobility_expenses'), {
+            await addDoc(collection(db, COLLECTIONS.MOBILITY_EXPENSES), {
                 date,
                 category,
                 amount: safeData.amount,
@@ -255,7 +258,7 @@ export const MobilityProvider = ({ children }) => {
         if (!user) return;
         const safeData = sanitizeFinancialData({ amount: data.amount }, ['amount'], false);
         try {
-            await updateDoc(doc(db, 'mobility_expenses', id), {
+            await updateDoc(doc(db, COLLECTIONS.MOBILITY_EXPENSES, id), {
                 date: data.date,
                 category: data.category,
                 amount: safeData.amount,
@@ -271,7 +274,7 @@ export const MobilityProvider = ({ children }) => {
     const deleteExpense = useCallback(async (id) => {
         if (!user) return;
         try {
-            await deleteDoc(doc(db, 'mobility_expenses', id));
+            await deleteDoc(doc(db, COLLECTIONS.MOBILITY_EXPENSES, id));
         } catch (error) {
             console.error('Error deleting expense:', error);
             showToast('Hubo un error al eliminar el gasto.', 'error');

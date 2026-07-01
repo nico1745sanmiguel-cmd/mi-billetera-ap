@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { db } from '../firebase';
-import { collection, onSnapshot, query, where, addDoc } from 'firebase/firestore';
+import { collection, onSnapshot, query, where, addDoc, serverTimestamp } from 'firebase/firestore';
 import { useAuth } from './AuthContext';
 import { getCache, setCache } from '../utils/cache';
 import { COLLECTIONS, CACHE_KEYS } from '../config/constants';
@@ -37,14 +37,14 @@ export const SavingsProvider = ({ children }) => {
         return () => unsubSavings();
     }, [user, userData]);
 
-    const addSavingsTransaction = async (t) => {
+    const addSavingsTransaction = useCallback(async (t) => {
         if (!user) return;
         const payload = {
             ...t,
             userId: user.uid,
             ownerId: user.uid,
             householdId: userData?.householdId || null,
-            createdAt: new Date()
+            createdAt: serverTimestamp()
         };
 
         try {
@@ -53,12 +53,12 @@ export const SavingsProvider = ({ children }) => {
             console.error("Error adding savings transaction:", error);
             throw error;
         }
-    };
+    }, [user, userData]);
 
     const value = useMemo(() => ({
         savingsTransactions,
         addSavingsTransaction
-    }), [savingsTransactions]);
+    }), [savingsTransactions, addSavingsTransaction]);
 
     return (
         <SavingsContext.Provider value={value}>

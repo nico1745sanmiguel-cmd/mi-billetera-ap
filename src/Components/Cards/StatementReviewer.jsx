@@ -10,7 +10,7 @@ const CATEGORIES = [
 
 const StatementReviewer = ({ data, onConfirm, onCancel }) => {
     // Estado local para permitir ediciones rápidas antes de guardar
-    console.log("=== DATA RECIBIDA EN STATEMENT REVIEWER ===", data);
+
     // Normalizamos los amounts a número para evitar bugs si la IA devuelve strings
     const [transactions, setTransactions] = useState(
         (data.transactions || []).map(tx => ({ ...tx, amount: Number(tx.amount) || 0 }))

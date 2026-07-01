@@ -3,7 +3,7 @@ import { db } from '../firebase';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { useAuth } from './AuthContext';
 import { getCache, setCache } from '../utils/cache';
-import { COLLECTIONS, CACHE_KEYS } from '../config/constants';
+import { COLLECTIONS, CACHE_KEYS, ENABLE_HOUSEHOLD } from '../config/constants';
 
 const SupermarketContext = createContext();
 
@@ -48,8 +48,6 @@ export const SupermarketProvider = ({ children }) => {
             unsubPlannerCat();
         };
     }, [user, userData]);
-
-    const ENABLE_HOUSEHOLD = true; // Mantener la constante
 
     const visibleSuperItems = useMemo(() => {
         if (!ENABLE_HOUSEHOLD || !userData?.householdId) return superItems;

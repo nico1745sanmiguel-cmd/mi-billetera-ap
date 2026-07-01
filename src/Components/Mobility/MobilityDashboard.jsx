@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, List, BarChart2, Upload, ArrowLeft, Zap, Settings } from 'lucide-react';
+import { Plus, List, BarChart2, Upload, ArrowLeft, Zap, Settings, ChevronLeft, ChevronRight } from 'lucide-react';
 import { MobilityProvider, useMobility } from '../../context/MobilityContext';
 import MobilityForm from './MobilityForm';
 import MobilityHistory from './MobilityHistory';
@@ -17,10 +17,26 @@ const TABS = [
     { id: 'import',   label: 'Importar',  icon: Upload },
 ];
 
+const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
 function DashboardContent({ onBack }) {
     const { isGlass, privacyMode } = useUI();
     const { settings } = useMobility();
     const [tab, setTab] = useState(settings?.defaultTab || 'expenses');
+
+    // Estado de mes compartido entre todas las pestañas
+    const now = new Date();
+    const [year,  setYear]  = useState(now.getFullYear());
+    const [month, setMonth] = useState(now.getMonth());
+
+    const changeMonth = (dir) => {
+        let m = month + dir;
+        let y = year;
+        if (m < 0)  { m = 11; y--; }
+        if (m > 11) { m = 0;  y++; }
+        setMonth(m);
+        setYear(y);
+    };
 
     // Mantenemos sincronizado si el usuario cambia el defaultTab
     useEffect(() => {
@@ -89,13 +105,40 @@ function DashboardContent({ onBack }) {
                 </div>
             )}
 
+            {/* SELECTOR MES COMPARTIDO */}
+            {tab !== 'settings' && (
+                <div className={`rounded-2xl px-4 py-3 flex items-center justify-between ${
+                    isGlass ? 'bg-white/10 border border-white/10' : 'bg-white shadow-sm border border-gray-100'
+                }`}>
+                    <button
+                        onClick={() => changeMonth(-1)}
+                        className={`p-2 rounded-xl transition-all active:scale-95 ${
+                            isGlass ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
+                        }`}
+                    >
+                        <ChevronLeft size={16} />
+                    </button>
+                    <p className={`font-bold text-sm ${
+                        isGlass ? 'text-white' : 'text-gray-800'
+                    }`}>{MONTHS[month]} {year}</p>
+                    <button
+                        onClick={() => changeMonth(1)}
+                        className={`p-2 rounded-xl transition-all active:scale-95 ${
+                            isGlass ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
+                        }`}
+                    >
+                        <ChevronRight size={16} />
+                    </button>
+                </div>
+            )}
+
             {/* CONTENIDO */}
             <div>
                 {tab === 'settings' && <MobilitySettings isGlass={isGlass} onBack={() => setTab(settings?.defaultTab || 'expenses')} />}
-                {tab === 'expenses' && <MobilityExpenses isGlass={isGlass} />}
+                {tab === 'expenses' && <MobilityExpenses isGlass={isGlass} month={month} year={year} />}
                 {tab === 'register' && <MobilityForm isGlass={isGlass} onSuccess={() => setTab('history')} />}
-                {tab === 'history'  && <MobilityHistory isGlass={isGlass} privacyMode={privacyMode} />}
-                {tab === 'stats'    && <MobilityStats isGlass={isGlass} privacyMode={privacyMode} />}
+                {tab === 'history'  && <MobilityHistory isGlass={isGlass} privacyMode={privacyMode} month={month} year={year} />}
+                {tab === 'stats'    && <MobilityStats isGlass={isGlass} privacyMode={privacyMode} month={month} year={year} />}
                 {tab === 'import'   && <MobilityImport isGlass={isGlass} onSuccess={() => setTab('history')} />}
             </div>
         </div>

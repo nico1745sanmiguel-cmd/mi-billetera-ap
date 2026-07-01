@@ -3,7 +3,7 @@ import { db } from '../firebase';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { useAuth } from './AuthContext';
 import { getCache, setCache } from '../utils/cache';
-import { COLLECTIONS, CACHE_KEYS } from '../config/constants';
+import { COLLECTIONS, CACHE_KEYS, ENABLE_HOUSEHOLD } from '../config/constants';
 
 const ServicesContext = createContext();
 
@@ -36,8 +36,6 @@ export const ServicesProvider = ({ children }) => {
 
         return () => unsubServices();
     }, [user, userData]);
-
-    const ENABLE_HOUSEHOLD = true; // Mantener la constante
 
     const visibleServices = useMemo(() => {
         if (!ENABLE_HOUSEHOLD || !userData?.householdId) return services;
