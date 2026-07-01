@@ -66,9 +66,5 @@ function SalaryWidgetInner({ setView, privacyMode }) {
 }
 
 export default function SalaryWidget(props) {
-    return (
-        <SalaryProvider>
-            <SalaryWidgetInner {...props} />
-        </SalaryProvider>
-    );
+    return <SalaryWidgetInner {...props} />;
 }

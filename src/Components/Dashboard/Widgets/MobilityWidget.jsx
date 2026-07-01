@@ -64,11 +64,7 @@ function MobilityWidgetInner({ setView, currentDate, privacyMode }) {
     );
 }
 
-// Envolvemos el widget en el Provider para que traiga sus propios datos sin ensuciar la app global
+// El Provider ahora está en main.jsx
 export default function MobilityWidget(props) {
-    return (
-        <MobilityProvider>
-            <MobilityWidgetInner {...props} />
-        </MobilityProvider>
-    );
+    return <MobilityWidgetInner {...props} />;
 }

@@ -267,11 +267,7 @@ function SalaryDashboardInner({ onBack }) {
     );
 }
 
-// El Provider envuelve el Dashboard (igual que hace MobilityDashboard)
+// El Provider ahora está en main.jsx
 export default function SalaryDashboard({ onBack }) {
-    return (
-        <SalaryProvider>
-            <SalaryDashboardInner onBack={onBack} />
-        </SalaryProvider>
-    );
+    return <SalaryDashboardInner onBack={onBack} />;
 }

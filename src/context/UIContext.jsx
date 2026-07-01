@@ -12,7 +12,7 @@
  *
  * USO:
  *   import { useUI } from '../context/UIContext';
- *   const { view, setView, isGlass } = useUI();
+ *   const { isGlass } = useUI();
  */
 
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
@@ -40,7 +40,6 @@ export const useUI = () => {
 };
 
 export const UIProvider = ({ children }) => {
-    const [view, setViewRaw] = useState('dashboard');
     const [privacyMode, setPrivacyMode] = useState(false);
     const [expenseScope, setExpenseScope] = useState('all'); // 'all', 'family', 'personal'
     const [currentDate, setCurrentDate] = useState(new Date());
@@ -66,23 +65,8 @@ export const UIProvider = ({ children }) => {
         }
     }, [isGlass]);
 
-    useEffect(() => {
-        if (view !== 'dashboard') {
-            window.history.pushState({ page: view }, '', '');
-        }
-        const handleBackButton = () => setViewRaw('dashboard');
-        window.addEventListener('popstate', handleBackButton);
-        return () => window.removeEventListener('popstate', handleBackButton);
-    }, [view]);
-
     // Dispatch methods
-    const setView = useCallback((newView) => {
-        if (typeof newView === 'string') setViewRaw(newView);
-    }, []);
-
     const setIsGlass = useCallback((val) => setIsGlassRaw(val), []);
-
-    const goBack = useCallback(() => setView('dashboard'), [setView]);
 
     const changeMonth = useCallback((offset) => {
         setCurrentDate(prev => {
@@ -101,17 +85,14 @@ export const UIProvider = ({ children }) => {
     }, []);
 
     const stateValue = useMemo(() => ({
-        view,
         privacyMode,
         expenseScope,
         isGlass,
         currentDate,
         toast,
-    }), [view, privacyMode, expenseScope, isGlass, currentDate, toast]);
+    }), [privacyMode, expenseScope, isGlass, currentDate, toast]);
 
     const dispatchValue = useMemo(() => ({
-        setView,
-        goBack,
         setPrivacyMode,
         setExpenseScope,
         setIsGlass,
@@ -119,7 +100,7 @@ export const UIProvider = ({ children }) => {
         changeMonth,
         showToast,
         hideToast,
-    }), [setView, goBack, setPrivacyMode, setExpenseScope, setIsGlass, changeMonth, showToast, hideToast]);
+    }), [setPrivacyMode, setExpenseScope, setIsGlass, changeMonth, showToast, hideToast]);
 
     return (
         <UIDispatchContext.Provider value={dispatchValue}>

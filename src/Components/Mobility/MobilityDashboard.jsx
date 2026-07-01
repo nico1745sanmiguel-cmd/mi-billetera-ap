@@ -146,9 +146,5 @@ function DashboardContent({ onBack }) {
 }
 
 export default function MobilityDashboard({ onBack }) {
-    return (
-        <MobilityProvider>
-            <DashboardContent onBack={onBack} />
-        </MobilityProvider>
-    );
+    return <DashboardContent onBack={onBack} />;
 }

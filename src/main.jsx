@@ -9,6 +9,8 @@ import { CardsProvider } from './context/CardsContext'
 import { SupermarketProvider } from './context/SupermarketContext'
 import { ServicesProvider } from './context/ServicesContext'
 import { SavingsProvider } from './context/SavingsContext'
+import { MobilityProvider } from './context/MobilityContext'
+import { SalaryProvider } from './context/SalaryContext'
 import ErrorBoundary from './Components/UI/ErrorBoundary'
 import './index.css' // <--- ¡ESTA ES LA LÍNEA MÁGICA!
 
@@ -21,11 +23,15 @@ ReactDOM.createRoot(document.getElementById('root')).render(
             <ServicesProvider>
               <SavingsProvider>
                 <FinancialProvider>
-                  <BrowserRouter>
-                    <ErrorBoundary>
-                      <App />
-                    </ErrorBoundary>
-                  </BrowserRouter>
+                  <MobilityProvider>
+                    <SalaryProvider>
+                      <BrowserRouter>
+                        <ErrorBoundary>
+                          <App />
+                        </ErrorBoundary>
+                      </BrowserRouter>
+                    </SalaryProvider>
+                  </MobilityProvider>
                 </FinancialProvider>
               </SavingsProvider>
             </ServicesProvider>
