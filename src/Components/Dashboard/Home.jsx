@@ -260,7 +260,7 @@ const Home = memo(({ onLogout, notifications = [], onCardClick }) => {
         ...(isModuleEnabled('cards') ? { cards: (size) => <CardsWidget cards={cards} targetMonthKey={targetMonthKey} privacyMode={privacyMode} onCardClick={openCardModal} size={size} /> } : {}),
         ...(isModuleEnabled('agenda') ? { agenda: () => <AgendaWidget agenda={agenda} currentDate={currentDate} privacyMode={privacyMode} setView={(path) => navigate(`/${path}`)} freshItems={freshItems} plannerCategories={plannerCategories} onTogglePaid={handleToggleAgendaPaid} /> } : {}),
         ...(isModuleEnabled('supermarket') ? { super_actions: () => <SuperActionsWidget superData={superData} privacyMode={privacyMode} setView={(path) => navigate(`/${path}`)} /> } : {}),
-        ...(isModuleEnabled('planner') ? { planner_access: () => <PlannerWidget setView={(path) => navigate(`/${path}`)} /> } : {}),
+        ...(isModuleEnabled('planner') ? { planner_access: (size) => <PlannerWidget setView={(path) => navigate(`/${path}`)} size={size} /> } : {}),
     };
 
     // Normalizar: widgets que no son función se envuelven para API uniforme

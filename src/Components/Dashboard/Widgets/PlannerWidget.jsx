@@ -1,24 +1,147 @@
-import React from 'react';
-import { LayoutList } from 'lucide-react';
+import React, { useMemo } from 'react';
+import { LayoutList, Circle, CheckCircle2 } from 'lucide-react';
+import { useSupermarket } from '../../../context/SupermarketContext';
+import { useUI } from '../../../context/UIContext';
+import { formatMoney } from '../../../utils';
+import { DEFAULT_CATEGORIES, AVAILABLE_ICONS } from '../../Supermarket/constants';
 
-export default function PlannerWidget({ setView }) {
-    return (
-        <div
-            onClick={() => setView('fresh')}
-            className="h-full bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-900/20 dark:to-blue-900/20 border border-indigo-200 dark:border-indigo-500/20 p-4 rounded-[24px] cursor-pointer hover:from-indigo-100 hover:to-blue-100 dark:hover:from-indigo-900/40 dark:hover:to-blue-900/40 active:scale-95 transition-all flex items-center justify-between group shadow-sm dark:backdrop-blur-md mx-1"
-        >
-            <div className="flex items-center gap-3">
-                <div className="bg-indigo-100 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-300 p-2.5 rounded-xl group-hover:scale-110 transition-transform">
-                    <LayoutList size={20} />
+export default function PlannerWidget({ setView, size }) {
+    const { freshItems, plannerCategories } = useSupermarket();
+    const { currentDate } = useUI();
+
+    const currentMonthKey = useMemo(() => {
+        if (!currentDate) return '';
+        return `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
+    }, [currentDate]);
+
+    const allCategories = useMemo(() => {
+        return [...DEFAULT_CATEGORIES, ...plannerCategories];
+    }, [plannerCategories]);
+
+    const activeItems = useMemo(() => {
+        const catIds = new Set(allCategories.map(c => c.id));
+        return freshItems.filter(t => catIds.has(t.category) && t.month === currentMonthKey);
+    }, [freshItems, allCategories, currentMonthKey]);
+
+    const pendingItems = useMemo(() => {
+        return activeItems.filter(item => !item.completed);
+    }, [activeItems]);
+
+    const { spent, planned } = useMemo(() => {
+        const spent = activeItems.reduce((acc, t) => t.completed ? acc + (t.total || 0) : acc, 0);
+        const planned = activeItems.reduce((acc, t) => acc + (parseFloat(t.estimatedPrice || 0) * (t.quantity || 1)), 0);
+        return { spent, planned };
+    }, [activeItems]);
+
+    // ---- MODO COMPACTO (Opción B) ----
+    if (size === 'compact') {
+        return (
+            <div
+                onClick={() => setView('fresh')}
+                className="h-full bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-900/30 dark:to-blue-900/30 border border-indigo-200 dark:border-indigo-500/20 p-4 rounded-[24px] cursor-pointer hover:from-indigo-100 hover:to-blue-100 dark:hover:from-indigo-900/50 dark:hover:to-blue-900/50 active:scale-95 transition-all flex flex-col items-center justify-center group shadow-sm dark:backdrop-blur-md text-center gap-2"
+            >
+                <div className="relative bg-indigo-100 text-indigo-600 dark:bg-indigo-500/30 dark:text-indigo-300 p-3 rounded-2xl group-hover:scale-110 transition-transform shadow-inner">
+                    <LayoutList size={24} />
+                    {pendingItems.length > 0 && (
+                        <div className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center shadow-lg border-2 border-white dark:border-[#1a1b4b]">
+                            {pendingItems.length}
+                        </div>
+                    )}
                 </div>
                 <div>
                     <p className="font-bold text-gray-800 dark:text-white text-sm">Planificador</p>
-                    <p className="text-[10px] text-indigo-600 dark:text-indigo-400 font-medium">Proyectos · Verdulería · Categorías</p>
+                    <p className="text-[10px] text-indigo-600 dark:text-indigo-400 font-medium leading-tight mt-0.5">
+                        {pendingItems.length > 0 ? `Faltan ${pendingItems.length} tareas` : 'Todo al día 🎉'}
+                    </p>
                 </div>
             </div>
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-gray-300 dark:text-white/20 group-hover:text-indigo-500 dark:group-hover:text-indigo-400 group-hover:translate-x-1 transition-all">
-                <path d="M9 18l6-6-6-6"/>
-            </svg>
+        );
+    }
+
+    // ---- MODO COMPLETO (Mix Opción 2 y 3) ----
+    const topPending = pendingItems.slice(0, 2);
+    
+    // Contar cuántos ítems pendientes hay por categoría
+    const categoryCounts = pendingItems.reduce((acc, item) => {
+        acc[item.category] = (acc[item.category] || 0) + 1;
+        return acc;
+    }, {});
+    
+    // Tomar las categorías con tareas pendientes, o si no hay, tomar las primeras 3
+    const sortedActiveCats = allCategories
+        .filter(c => categoryCounts[c.id] > 0)
+        .sort((a, b) => categoryCounts[b.id] - categoryCounts[a.id])
+        .slice(0, 3);
+        
+    const displayCategories = sortedActiveCats.length > 0 ? sortedActiveCats : allCategories.slice(0, 3);
+
+    return (
+        <div
+            className="h-full bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-900/30 dark:to-blue-900/30 border border-indigo-200 dark:border-indigo-500/20 p-4 rounded-[24px] cursor-pointer hover:shadow-md transition-all flex flex-col justify-between group shadow-sm dark:backdrop-blur-md"
+            onClick={() => setView('fresh')}
+        >
+            {/* Header: Titulo y Gastado */}
+            <div className="flex justify-between items-start mb-3">
+                <div className="flex items-center gap-3">
+                    <div className="bg-indigo-100 text-indigo-600 dark:bg-indigo-500/30 dark:text-indigo-300 p-2.5 rounded-xl transition-transform group-hover:scale-105">
+                        <LayoutList size={20} />
+                    </div>
+                    <div>
+                        <p className="font-bold text-gray-800 dark:text-white text-sm leading-none mb-1">Planificador</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                            Gastado: <span className="font-semibold text-gray-700 dark:text-gray-200">${formatMoney(spent)}</span>
+                        </p>
+                    </div>
+                </div>
+                {pendingItems.length > 0 && (
+                    <span className="bg-indigo-100 text-indigo-700 dark:bg-indigo-500/30 dark:text-indigo-300 text-[10px] px-2 py-1 rounded-full font-bold">
+                        {pendingItems.length} tareas
+                    </span>
+                )}
+            </div>
+
+            {/* Próximas Tareas */}
+            <div className="mb-3 space-y-1.5 flex-1">
+                {topPending.length > 0 ? (
+                    topPending.map(item => (
+                        <div key={item.id} className="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300 bg-white/60 dark:bg-black/20 p-2 rounded-xl border border-white/40 dark:border-white/5">
+                            <Circle size={12} className="text-gray-400 dark:text-gray-500 min-w-[12px]" />
+                            <span className="truncate">{item.name}</span>
+                        </div>
+                    ))
+                ) : (
+                    <div className="text-xs text-gray-500 dark:text-gray-400 italic text-center py-2 bg-white/40 dark:bg-black/10 rounded-xl border border-white/20 dark:border-white/5 h-full flex items-center justify-center">
+                        No hay tareas pendientes este mes.
+                    </div>
+                )}
+            </div>
+
+            {/* Accesos Rápidos por Categoría */}
+            <div className="flex gap-2 mt-auto pt-2 border-t border-indigo-200/50 dark:border-indigo-500/20">
+                {displayCategories.map(cat => {
+                    const hasPending = categoryCounts[cat.id] > 0;
+                    const IconComponent = AVAILABLE_ICONS[cat.iconName] || LayoutList;
+                    return (
+                        <div 
+                            key={cat.id} 
+                            className="flex-1 flex flex-col items-center gap-1 bg-white/70 dark:bg-white/5 py-1.5 rounded-[14px] border border-white/50 dark:border-white/5 hover:bg-white dark:hover:bg-white/10 transition-colors relative"
+                            onClick={(e) => {
+                                e.stopPropagation(); // Evita que se dispare el click general
+                                // Podríamos añadir hash si FreshShop lo soporta en el futuro
+                                setView('fresh');
+                            }}
+                        >
+                            {hasPending && (
+                                <div className="absolute top-1 right-1 w-1.5 h-1.5 bg-red-400 rounded-full shadow-sm" />
+                            )}
+                            <IconComponent size={14} className={hasPending ? 'text-indigo-600 dark:text-indigo-300' : 'text-gray-400 dark:text-gray-500'} />
+                            <span className="text-[9px] font-semibold text-gray-600 dark:text-gray-400 truncate w-full text-center px-1">
+                                {cat.label}
+                            </span>
+                        </div>
+                    );
+                })}
+            </div>
         </div>
     );
 }
