@@ -73,7 +73,7 @@ export default function Login() {
         )}
 
         {/* Botón Google */}
-        <button
+        <button type="button"
           onClick={handleGoogleLogin}
           className="w-full flex items-center justify-center gap-3 bg-white text-gray-800 p-3.5 rounded-xl hover:bg-gray-100 transition-all font-bold mb-8 shadow-lg active:scale-95 group"
         >
@@ -121,7 +121,7 @@ export default function Login() {
         </form>
 
         <div className="mt-8 text-center">
-          <button
+          <button type="button"
             onClick={() => { setIsRegistering(!isRegistering); setError(''); }}
             className="text-sm text-white/60 font-medium hover:text-white transition-colors underline decoration-transparent hover:decoration-white/50 underline-offset-4"
           >

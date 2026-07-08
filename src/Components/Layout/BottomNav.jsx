@@ -12,7 +12,7 @@ export default function BottomNav({ currentView, setView }) {
   const NavItem = ({ id, icon, label }) => {
     const isActive = currentView === id;
     return (
-      <button 
+      <button type="button" 
         onClick={() => setView(id)}
         className={`flex flex-col items-center justify-center w-full h-full transition-colors duration-200 ${isActive ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600'}`}
       >
@@ -32,7 +32,7 @@ export default function BottomNav({ currentView, setView }) {
       {/* 1. EL BOTÓN FLOTANTE (CENTRAL) */}
       {/* Lo sacamos del flujo normal para que "flote" de verdad sobre el borde */}
       <div className="absolute start-1/2 -translate-x-1/2 rtl:translate-x-1/2 -top-6">
-        <button 
+        <button type="button" 
             onClick={handleCentralClick}
             className="
                 w-14 h-14 rounded-full 

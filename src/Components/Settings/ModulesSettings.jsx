@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Briefcase, Car, Puzzle, ShoppingCart, CreditCard, TrendingUp, Users, CalendarDays, ListTodo, PieChart } from 'lucide-react';
+import { ArrowLeft, Briefcase, Car, Puzzle, ShoppingCart, CreditCard, TrendingUp, Users, CalendarDays, ListTodo, PieChart, Sparkles } from 'lucide-react';
 import { CACHE_KEYS } from '../../config/constants';
 import { getCache, setCache } from '../../utils/cache';
 import { useUI } from '../../context/UIContext';
@@ -115,7 +115,7 @@ export const isModuleEnabled = (moduleId) => {
 };
 
 export default function ModulesSettings({ onBack }) {
-    const { isGlass } = useUI();
+    const { isGlass, motionPreference, setMotionPreference } = useUI();
     const [enabled, setEnabled] = useState(loadModules);
 
     const toggle = (id) => {
@@ -135,7 +135,7 @@ export default function ModulesSettings({ onBack }) {
             {/* HEADER */}
             <div className={`rounded-2xl p-5 ${isGlass ? 'bg-white/10 border border-white/10' : 'bg-gradient-to-r from-gray-800 to-gray-700 text-white shadow-lg'}`}>
                 <div className="flex items-center gap-3">
-                    <button
+                    <button type="button"
                         onClick={onBack}
                         className="p-2 rounded-xl bg-white/20 hover:bg-white/30 transition-all active:scale-95"
                     >
@@ -153,7 +153,44 @@ export default function ModulesSettings({ onBack }) {
                 </div>
             </div>
 
-            <p className={`text-xs px-1 ${sub}`}>
+            {/* SECCIÓN: ANIMACIONES */}
+            <div className={`${card} mt-4`}>
+                <div className="flex items-center gap-3 mb-3">
+                    <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
+                        <Sparkles size={16} />
+                    </div>
+                    <div>
+                        <h3 className={`font-bold text-sm ${text}`}>Animaciones</h3>
+                        <p className={`text-xs ${sub}`}>Controlá el movimiento en la app</p>
+                    </div>
+                </div>
+                
+                <div className={`flex items-center w-full rounded-xl p-1 ${isGlass ? 'bg-white/5' : 'bg-gray-100'}`}>
+                    {[
+                        { id: 'on', label: 'Prendido' },
+                        { id: 'system', label: 'Sistema' },
+                        { id: 'off', label: 'Apagado' }
+                    ].map(option => (
+                        <button type="button"
+                            key={option.id}
+                            onClick={() => setMotionPreference(option.id)}
+                            className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+                                motionPreference === option.id
+                                    ? isGlass 
+                                        ? 'bg-blue-500 text-white shadow-md' 
+                                        : 'bg-white text-blue-600 shadow-sm'
+                                    : isGlass 
+                                        ? 'text-white/50 hover:text-white/80' 
+                                        : 'text-gray-500 hover:text-gray-700'
+                            }`}
+                        >
+                            {option.label}
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            <p className={`text-xs px-1 ${sub} mt-4`}>
                 Activá solo los módulos que usás. Los módulos desactivados no aparecen en el menú de navegación.
             </p>
 
@@ -212,7 +249,7 @@ export default function ModulesSettings({ onBack }) {
                                 </div>
 
                                 {/* TOGGLE */}
-                                <button
+                                <button type="button"
                                     onClick={() => toggle(id)}
                                     className={`shrink-0 w-12 h-6 rounded-full transition-all duration-300 relative ${
                                         active

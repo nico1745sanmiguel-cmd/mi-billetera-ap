@@ -118,7 +118,7 @@ export default function ReceiptScanner({ items = [], onBack }) {
       
       {/* HEADER */}
       <div className="flex items-center gap-4 mb-6">
-        <button 
+        <button type="button" 
           onClick={step === 'START' ? onBack : () => { stopCamera(); setStep('START'); }} 
           className={`p-2 rounded-xl transition-colors ${isGlass ? 'hover:bg-white/10' : 'hover:bg-gray-200'}`}
         >
@@ -153,7 +153,7 @@ export default function ReceiptScanner({ items = [], onBack }) {
               )}
             </div>
 
-            <button 
+            <button type="button" 
               onClick={startCamera}
               className="w-full py-4 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold text-lg shadow-lg hover:shadow-blue-500/30 transition-all active:scale-95 flex items-center justify-center gap-2"
             >
@@ -192,7 +192,7 @@ export default function ReceiptScanner({ items = [], onBack }) {
             {/* Controls */}
             {!isScanning && (
               <div className="absolute bottom-6 left-0 w-full flex justify-center z-20">
-                <button 
+                <button type="button" 
                   onClick={handleCapture}
                   className="w-16 h-16 rounded-full bg-white border-4 border-gray-300 active:scale-90 transition-transform shadow-lg"
                 />
@@ -261,7 +261,7 @@ export default function ReceiptScanner({ items = [], onBack }) {
             })}
           </div>
 
-          <button 
+          <button type="button" 
             onClick={() => setStep('START')}
             className={`mt-6 py-4 rounded-2xl font-bold transition-all active:scale-95 ${isGlass ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-800'}`}
           >

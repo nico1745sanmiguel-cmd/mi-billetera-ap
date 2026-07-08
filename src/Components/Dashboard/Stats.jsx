@@ -246,7 +246,7 @@ export default function Stats() {
                         { id: 'family', label: 'Familiar' },
                         { id: 'personal', label: 'Personal' }
                     ].map(s => (
-                        <button
+                        <button type="button"
                             key={s.id}
                             onClick={() => setExpenseScope(s.id)}
                             className={`px-5 py-1.5 rounded-full text-xs font-bold transition-all ${
@@ -295,7 +295,7 @@ export default function Stats() {
                     { id: 'cards_services', label: 'Tarjetas & Fijos' },
                     { id: 'manual', label: 'Gastos Sueltos' }
                 ].map(f => (
-                    <button 
+                    <button type="button" 
                         key={f.id}
                         onClick={() => { setFilter(f.id); setActiveIndex(0); }}
                         className={`whitespace-nowrap px-4 py-2 rounded-full text-xs font-bold transition-all active:scale-95 border ${

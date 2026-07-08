@@ -152,7 +152,7 @@ export default function HouseholdManager({ onBack }) {
     return (
         <div className={`min-h-screen p-4 font-sans pb-20 ${isGlass ? 'bg-[#0f0c29] text-white' : 'bg-[#f3f4f6] text-gray-800'}`}>
             <div className="flex items-center gap-4 mb-8">
-                <button onClick={onBack} className={`p-2 rounded-xl transition-colors ${isGlass ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-white shadow-sm text-gray-600 hover:bg-gray-100'}`}>
+                <button type="button" onClick={onBack} className={`p-2 rounded-xl transition-colors ${isGlass ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-white shadow-sm text-gray-600 hover:bg-gray-100'}`}>
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
                 </button>
                 <div className="flex items-center gap-3">
@@ -179,7 +179,7 @@ export default function HouseholdManager({ onBack }) {
                                 <div className={`flex-1 p-4 rounded-2xl text-center text-3xl font-mono tracking-widest shadow-inner border ${isGlass ? 'bg-black/30 text-blue-300 border-white/5' : 'bg-gray-50 text-blue-600 border-gray-200'}`}>
                                     {household.inviteCode}
                                 </div>
-                                <button onClick={copyCode} className="p-4 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl transition-colors shadow-lg shadow-blue-500/30">
+                                <button type="button" onClick={copyCode} className="p-4 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl transition-colors shadow-lg shadow-blue-500/30">
                                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" /></svg>
                                 </button>
                             </div>
@@ -216,19 +216,19 @@ export default function HouseholdManager({ onBack }) {
                             <div className="space-y-4">
                                 <div className={`flex items-center justify-between p-3 rounded-2xl transition-colors ${isGlass ? 'bg-white/5 hover:bg-white/10' : 'bg-gray-50 hover:bg-gray-100 text-gray-700'}`}>
                                     <span className="text-sm font-bold flex items-center gap-2"><CreditCard size={18} className="text-indigo-400" /> Mis Tarjetas y Gastos</span>
-                                    <button onClick={() => handleToggleShare('shareCards')} className={`w-12 h-6 rounded-full p-1 transition-colors ${sharePreferences.shareCards ? 'bg-green-500' : 'bg-gray-400'}`}>
+                                    <button type="button" onClick={() => handleToggleShare('shareCards')} className={`w-12 h-6 rounded-full p-1 transition-colors ${sharePreferences.shareCards ? 'bg-green-500' : 'bg-gray-400'}`}>
                                         <div className={`w-4 h-4 bg-white rounded-full shadow-md transform transition-transform ${sharePreferences.shareCards ? 'translate-x-6' : 'translate-x-0'}`} />
                                     </button>
                                 </div>
                                 <div className={`flex items-center justify-between p-3 rounded-2xl transition-colors ${isGlass ? 'bg-white/5 hover:bg-white/10' : 'bg-gray-50 hover:bg-gray-100 text-gray-700'}`}>
                                     <span className="text-sm font-bold flex items-center gap-2"><ShoppingCart size={18} className="text-purple-400" /> Lista de Supermercado</span>
-                                    <button onClick={() => handleToggleShare('shareSupermarket')} className={`w-12 h-6 rounded-full p-1 transition-colors ${sharePreferences.shareSupermarket ? 'bg-green-500' : 'bg-gray-400'}`}>
+                                    <button type="button" onClick={() => handleToggleShare('shareSupermarket')} className={`w-12 h-6 rounded-full p-1 transition-colors ${sharePreferences.shareSupermarket ? 'bg-green-500' : 'bg-gray-400'}`}>
                                         <div className={`w-4 h-4 bg-white rounded-full shadow-md transform transition-transform ${sharePreferences.shareSupermarket ? 'translate-x-6' : 'translate-x-0'}`} />
                                     </button>
                                 </div>
                                 <div className={`flex items-center justify-between p-3 rounded-2xl transition-colors ${isGlass ? 'bg-white/5 hover:bg-white/10' : 'bg-gray-50 hover:bg-gray-100 text-gray-700'}`}>
                                     <span className="text-sm font-bold flex items-center gap-2"><Lightbulb size={18} className="text-yellow-400" /> Servicios y Fijos</span>
-                                    <button onClick={() => handleToggleShare('shareServices')} className={`w-12 h-6 rounded-full p-1 transition-colors ${sharePreferences.shareServices ? 'bg-green-500' : 'bg-gray-400'}`}>
+                                    <button type="button" onClick={() => handleToggleShare('shareServices')} className={`w-12 h-6 rounded-full p-1 transition-colors ${sharePreferences.shareServices ? 'bg-green-500' : 'bg-gray-400'}`}>
                                         <div className={`w-4 h-4 bg-white rounded-full shadow-md transform transition-transform ${sharePreferences.shareServices ? 'translate-x-6' : 'translate-x-0'}`} />
                                     </button>
                                 </div>
@@ -236,7 +236,7 @@ export default function HouseholdManager({ onBack }) {
                         </div>
 
                         <div className="pt-4">
-                            <button onClick={handleLeave} className="w-full py-4 text-red-500 font-bold text-sm tracking-widest hover:bg-red-50 rounded-2xl transition-colors border border-transparent hover:border-red-100">
+                            <button type="button" onClick={handleLeave} className="w-full py-4 text-red-500 font-bold text-sm tracking-widest hover:bg-red-50 rounded-2xl transition-colors border border-transparent hover:border-red-100">
                                 Salir del Grupo de Hogar
                             </button>
                         </div>

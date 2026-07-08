@@ -158,7 +158,7 @@ export default function FreshShop() {
             ))}
 
             {!showNewCatForm ? (
-                <button
+                <button type="button"
                     onClick={() => setShowNewCatForm(true)}
                     className={`w-full py-4 rounded-3xl border-2 border-dashed flex items-center justify-center gap-2 font-bold transition-all ${
                         isGlass ? 'border-white/20 text-white/60 hover:text-white hover:bg-white/5' : 'border-gray-300 text-gray-500 hover:text-gray-800 hover:bg-gray-50'

@@ -49,7 +49,7 @@ function SizeMenu({ currentSize, onSelect, onClose }) {
                 <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-white/10 rounded-2xl shadow-2xl shadow-black/20 dark:shadow-black/60 p-1.5 flex flex-col gap-1 min-w-[160px]">
                     <p className="text-[9px] uppercase font-bold text-gray-400 dark:text-white/30 tracking-widest px-2 pt-1 pb-0.5">Tamaño del widget</p>
 
-                    <button
+                    <button type="button"
                         onClick={(e) => { e.stopPropagation(); onSelect('full'); onClose(); }}
                         className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all ${
                             currentSize === 'full'
@@ -65,7 +65,7 @@ function SizeMenu({ currentSize, onSelect, onClose }) {
                         </span>
                     </button>
 
-                    <button
+                    <button type="button"
                         onClick={(e) => { e.stopPropagation(); onSelect('half'); onClose(); }}
                         className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all ${
                             currentSize === 'half'
@@ -101,26 +101,20 @@ function WidgetWrapper({ widgetKey, children, size, onToggleSize, getDragProps, 
 
     return (
         <div
-            className={`relative transition-all duration-300 ${isDragging ? 'opacity-40 scale-95' : ''}`}
+            className={`relative transition-all duration-300 ${isDragging ? 'opacity-40 scale-95 cursor-grabbing' : 'cursor-grab'}`}
             {...(!menuOpen ? longPressHandlers : {})}
+            draggable={dragProps.draggable}
+            onDragStart={dragProps.onDragStart}
+            onDragEnter={dragProps.onDragEnter}
+            onTouchEnd={(e) => {
+                if (!menuOpen && longPressHandlers.onTouchEnd) longPressHandlers.onTouchEnd(e);
+                if (dragProps.onTouchEnd) dragProps.onTouchEnd(e);
+            }}
         >
             {/* Feedback visual durante el long press: borde pulsante */}
             {isHolding && !isFixed && (
                 <div className="absolute inset-0 rounded-2xl border-2 border-indigo-400 dark:border-indigo-400 animate-pulse z-10 pointer-events-none" />
             )}
-
-            {/* Drag handle: solo ícono grip + badge ½ si es compacto */}
-            <div
-                className="flex items-center justify-between px-1 mb-1"
-                {...dragProps}
-            >
-                {!isFixed && (
-                    <GripVertical size={13} className="text-gray-300 dark:text-white/20" />
-                )}
-                {size === 'half' && (
-                    <span className="text-[8px] bg-indigo-100 dark:bg-indigo-500/20 text-indigo-500 dark:text-indigo-300 px-1.5 py-0.5 rounded-full font-bold ml-auto">½</span>
-                )}
-            </div>
 
             {/* Contenido del widget — sin wrapper extra, usa el estilo nativo de cada widget */}
             {children}
@@ -141,14 +135,17 @@ function WidgetWrapper({ widgetKey, children, size, onToggleSize, getDragProps, 
 // Agrupa los widgets en filas. Dos 'half' consecutivos → fila de 2 columnas.
 // Un 'half' sin pareja → renderiza solo al 50% del ancho.
 function WidgetGrid({ order, getWidgetNode, getSize, toggleSize, getDragProps, draggingItem }) {
+    // Filtrar los widgets que realmente están activos (habilitados en Módulos)
+    const activeKeys = order.filter(key => !!getWidgetNode(key, 'full'));
+
     // Construir filas: agrupar half+half en pares
     const rows = [];
     let i = 0;
-    while (i < order.length) {
-        const key = order[i];
+    while (i < activeKeys.length) {
+        const key = activeKeys[i];
         const size = getSize(key);
         if (size === 'half') {
-            const nextKey = order[i + 1];
+            const nextKey = activeKeys[i + 1];
             const nextSize = nextKey ? getSize(nextKey) : 'full';
             if (nextSize === 'half') {
                 rows.push([key, nextKey]);
@@ -443,12 +440,12 @@ const Home = memo(({ onLogout, notifications = [], onCardClick }) => {
                 </div>
                 <div className="flex items-center gap-2">
                     {isModuleEnabled('household') && (
-                        <button onClick={() => navigate('/household')} className="bg-blue-50 text-blue-500 dark:bg-white/10 dark:text-white/70 p-2 rounded-full hover:bg-blue-100 dark:hover:bg-blue-500/20 dark:hover:text-blue-200 transition-colors dark:backdrop-blur-md dark:border dark:border-white/5">
+                        <button type="button" onClick={() => navigate('/household')} className="bg-blue-50 text-blue-500 dark:bg-white/10 dark:text-white/70 p-2 rounded-full hover:bg-blue-100 dark:hover:bg-blue-500/20 dark:hover:text-blue-200 transition-colors dark:backdrop-blur-md dark:border dark:border-white/5">
                             <Users size={20} />
                         </button>
                     )}
 
-                    <button onClick={() => setIsNotificationsOpen(true)} className="relative bg-indigo-50 text-indigo-500 dark:bg-white/10 dark:text-white/70 p-2 rounded-full hover:bg-indigo-100 dark:hover:bg-indigo-500/20 dark:hover:text-indigo-200 transition-colors dark:backdrop-blur-md dark:border dark:border-white/5">
+                    <button type="button" onClick={() => setIsNotificationsOpen(true)} className="relative bg-indigo-50 text-indigo-500 dark:bg-white/10 dark:text-white/70 p-2 rounded-full hover:bg-indigo-100 dark:hover:bg-indigo-500/20 dark:hover:text-indigo-200 transition-colors dark:backdrop-blur-md dark:border dark:border-white/5">
                         <Bell size={20} className={unreadNotifsCount > 0 ? "animate-pulse" : ""} />
                         {unreadNotifsCount > 0 && (
                             <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-lg border-2 border-white dark:border-[#1a1b4b]">
@@ -456,10 +453,10 @@ const Home = memo(({ onLogout, notifications = [], onCardClick }) => {
                             </span>
                         )}
                     </button>
-                    <button onClick={() => navigate('/settings_modules')} className="bg-violet-50 text-violet-500 dark:bg-white/10 dark:text-white/70 p-2 rounded-full hover:bg-violet-100 dark:hover:bg-violet-500/20 dark:hover:text-violet-200 transition-colors dark:backdrop-blur-md dark:border dark:border-white/5">
+                    <button type="button" onClick={() => navigate('/settings_modules')} className="bg-violet-50 text-violet-500 dark:bg-white/10 dark:text-white/70 p-2 rounded-full hover:bg-violet-100 dark:hover:bg-violet-500/20 dark:hover:text-violet-200 transition-colors dark:backdrop-blur-md dark:border dark:border-white/5">
                         <Puzzle size={20} />
                     </button>
-                    <button onClick={onLogout} className="bg-gray-50 text-gray-400 dark:bg-white/10 dark:text-white/70 p-2 rounded-full hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-500/20 dark:hover:text-red-200 transition-colors dark:backdrop-blur-md dark:border dark:border-white/5">
+                    <button type="button" onClick={onLogout} className="bg-gray-50 text-gray-400 dark:bg-white/10 dark:text-white/70 p-2 rounded-full hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-500/20 dark:hover:text-red-200 transition-colors dark:backdrop-blur-md dark:border dark:border-white/5">
                         <LogOut size={20} />
                     </button>
                 </div>
@@ -492,7 +489,7 @@ const Home = memo(({ onLogout, notifications = [], onCardClick }) => {
                     {THEME_OPTIONS.map(({ key, label, Icon }) => {
                         const isActive = theme === key;
                         return (
-                            <button
+                            <button type="button"
                                 key={key}
                                 onClick={() => setTheme(key)}
                                 className={`relative flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold transition-all duration-300 ${
@@ -520,7 +517,7 @@ const Home = memo(({ onLogout, notifications = [], onCardClick }) => {
                 </div>
             </div>
 
-            <button
+            <button type="button"
                 onClick={handleCacheRefresh}
                 className="w-full py-4 mt-3 rounded-full border border-gray-100 dark:border-white/10 text-gray-400 dark:text-white/40 text-xs font-bold uppercase tracking-widest hover:bg-gray-50 dark:hover:bg-white/5 hover:text-gray-600 dark:hover:text-white/80 transition-all flex items-center justify-center gap-2 group"
             >

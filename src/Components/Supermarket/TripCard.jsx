@@ -39,7 +39,7 @@ export default function TripCard({ trip, cfg, isGlass, onDelete, onUpdateTotal, 
             isGlass ? 'bg-white/5 border-white/10' : 'bg-white border-gray-100 shadow-sm'
         } ${trip.completed ? 'opacity-60' : ''}`}>
             
-            <button 
+            <button type="button" 
                 onClick={() => onToggleCompleted(trip.id, !trip.completed)}
                 className={`p-1 transition-colors ${trip.completed ? 'text-emerald-500' : (isGlass ? 'text-white/20' : 'text-gray-300')}`}
             >
@@ -60,7 +60,7 @@ export default function TripCard({ trip, cfg, isGlass, onDelete, onUpdateTotal, 
                     autoFocus
                 />
             ) : (
-                <button
+                <button type="button"
                     onClick={() => setEditingDate(true)}
                     title="Tap para editar fecha"
                     className={`w-11 h-11 rounded-xl flex flex-col items-center justify-center flex-shrink-0 font-bold text-center transition-opacity hover:opacity-70 active:scale-95 ${
@@ -102,7 +102,7 @@ export default function TripCard({ trip, cfg, isGlass, onDelete, onUpdateTotal, 
                     </div>
                 </div>
             ) : (
-                <button
+                <button type="button"
                     onClick={startEdit}
                     className={`font-mono font-bold text-sm min-w-[80px] text-right px-2 py-1 rounded-xl transition-colors ${
                         trip.total > 0
@@ -114,7 +114,7 @@ export default function TripCard({ trip, cfg, isGlass, onDelete, onUpdateTotal, 
                 </button>
             )}
 
-            <button
+            <button type="button"
                 onClick={() => onDelete(trip.id)}
                 className={`p-1.5 rounded-lg transition-colors flex-shrink-0 ${
                     isGlass ? 'text-white/20 hover:text-red-400 hover:bg-red-500/10' : 'text-gray-300 hover:text-red-500 hover:bg-red-50'

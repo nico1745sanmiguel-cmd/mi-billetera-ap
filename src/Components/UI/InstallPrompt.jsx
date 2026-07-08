@@ -43,13 +43,13 @@ export default function InstallPrompt() {
         <p className="text-xs text-gray-300">Acceso rápido y sin barras.</p>
       </div>
       <div className="flex gap-3">
-        <button 
+        <button type="button" 
             onClick={() => setShow(false)} 
             className="text-gray-400 text-xs font-bold hover:text-white"
         >
             LUEGO
         </button>
-        <button 
+        <button type="button" 
             onClick={handleInstallClick} 
             className="bg-blue-600 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-blue-500 shadow-lg"
         >

@@ -91,7 +91,7 @@ export default function PlannerSection({ catData, trips, currentMonthKey, isGlas
                 : `bg-gradient-to-b ${cfg.headerLight} border-gray-200 shadow-sm`
         }`}>
             <div className="w-full flex items-center justify-between p-4">
-                <button onClick={() => setIsOpen(o => !o)} className="flex-1 flex items-center gap-3 text-left">
+                <button type="button" onClick={() => setIsOpen(o => !o)} className="flex-1 flex items-center gap-3 text-left">
                     <div className={`p-2 rounded-xl ${isGlass ? cfg.accentGlass : cfg.accentLight}`}>
                         <Icon size={18} />
                     </div>
@@ -112,11 +112,11 @@ export default function PlannerSection({ catData, trips, currentMonthKey, isGlas
                         </p>
                     </div>
                     {!catData.isDefault && (
-                        <button onClick={handleDeleteCategory} className={`p-1.5 rounded-lg ${isGlass ? 'text-white/20 hover:text-red-400 hover:bg-red-500/10' : 'text-gray-300 hover:text-red-500 hover:bg-red-50'}`}>
+                        <button type="button" onClick={handleDeleteCategory} className={`p-1.5 rounded-lg ${isGlass ? 'text-white/20 hover:text-red-400 hover:bg-red-500/10' : 'text-gray-300 hover:text-red-500 hover:bg-red-50'}`}>
                             <Trash2 size={14} />
                         </button>
                     )}
-                    <button onClick={() => setIsOpen(o => !o)}>
+                    <button type="button" onClick={() => setIsOpen(o => !o)}>
                         {isOpen
                             ? <ChevronUp size={16} className={isGlass ? 'text-white/40' : 'text-gray-400'} />
                             : <ChevronDown size={16} className={isGlass ? 'text-white/40' : 'text-gray-400'} />

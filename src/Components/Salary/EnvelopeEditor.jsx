@@ -72,7 +72,7 @@ export default function EnvelopeEditor({ envelope, onSave, onClose, isGlass }) {
                     <h3 className={`text-lg font-bold ${isGlass ? 'text-white' : 'text-gray-800'}`}>
                         {isNew ? 'Nuevo sobre' : 'Editar sobre'}
                     </h3>
-                    <button onClick={onClose} className={`p-2 rounded-xl ${isGlass ? 'text-white/60 hover:bg-white/10' : 'text-gray-400 hover:bg-gray-100'}`}>
+                    <button type="button" onClick={onClose} className={`p-2 rounded-xl ${isGlass ? 'text-white/60 hover:bg-white/10' : 'text-gray-400 hover:bg-gray-100'}`}>
                         <X size={18} />
                     </button>
                 </div>
@@ -117,7 +117,7 @@ export default function EnvelopeEditor({ envelope, onSave, onClose, isGlass }) {
                         </label>
                         <div className="grid grid-cols-6 gap-2">
                             {ENVELOPE_ICONS.map(ic => (
-                                <button
+                                <button type="button"
                                     key={ic.id}
                                     onClick={() => setSelectedIcon(ic.id)}
                                     title={ic.label}
@@ -139,7 +139,7 @@ export default function EnvelopeEditor({ envelope, onSave, onClose, isGlass }) {
                         </label>
                         <div className="flex gap-3 flex-wrap">
                             {ENVELOPE_COLORS.map(c => (
-                                <button
+                                <button type="button"
                                     key={c.id}
                                     onClick={() => setSelectedColor(c.id)}
                                     className={`w-8 h-8 rounded-full ${c.bg} transition-all
@@ -151,7 +151,7 @@ export default function EnvelopeEditor({ envelope, onSave, onClose, isGlass }) {
                 </div>
 
                 {/* Botón guardar */}
-                <button
+                <button type="button"
                     onClick={handleSave}
                     disabled={!label.trim() || !budgeted || saving}
                     className="mt-6 w-full py-3.5 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-bold text-sm

@@ -110,13 +110,13 @@ export default function SalarySection({ memberIds, currentUserUid, isGlass }) {
                                         autoFocus
                                         className={`flex-1 px-3 py-2 rounded-xl text-sm border focus:outline-none focus:border-indigo-500 ${isGlass ? 'bg-black/40 border-white/10 text-white' : 'bg-white border-gray-200 text-gray-800'}`}
                                     />
-                                    <button onClick={() => handleSaveSalary(member.id)} disabled={saving} className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold rounded-xl disabled:opacity-50 transition-colors">
+                                    <button type="button" onClick={() => handleSaveSalary(member.id)} disabled={saving} className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold rounded-xl disabled:opacity-50 transition-colors">
                                         {saving ? '...' : 'Guardar'}
                                     </button>
-                                    <button onClick={() => setEditingUid(null)} className={`px-3 py-2 rounded-xl text-sm font-bold transition-colors ${isGlass ? 'bg-white/10 text-gray-300' : 'bg-gray-100 text-gray-500'}`}>✕</button>
+                                    <button type="button" onClick={() => setEditingUid(null)} className={`px-3 py-2 rounded-xl text-sm font-bold transition-colors ${isGlass ? 'bg-white/10 text-gray-300' : 'bg-gray-100 text-gray-500'}`}>✕</button>
                                 </div>
                             ) : (
-                                <button onClick={() => handleStartEdit(member)} className={`w-full flex items-center justify-between p-3 rounded-xl border-dashed border-2 transition-colors group ${salary > 0 ? (isGlass ? 'border-indigo-500/40 hover:border-indigo-400' : 'border-indigo-200 hover:border-indigo-400') : (isGlass ? 'border-white/20 hover:border-white/40' : 'border-gray-200 hover:border-gray-400')}`}>
+                                <button type="button" onClick={() => handleStartEdit(member)} className={`w-full flex items-center justify-between p-3 rounded-xl border-dashed border-2 transition-colors group ${salary > 0 ? (isGlass ? 'border-indigo-500/40 hover:border-indigo-400' : 'border-indigo-200 hover:border-indigo-400') : (isGlass ? 'border-white/20 hover:border-white/40' : 'border-gray-200 hover:border-gray-400')}`}>
                                     <div className="text-left">
                                         <p className={`text-[10px] font-bold uppercase tracking-wider mb-0.5 ${ isGlass ? 'text-gray-400' : 'text-gray-400'}`}>Sueldo mensual neto</p>
                                         <p className={`text-lg font-bold font-mono ${ salary > 0 ? (isGlass ? 'text-white' : 'text-gray-900') : (isGlass ? 'text-gray-500' : 'text-gray-400')}`}>

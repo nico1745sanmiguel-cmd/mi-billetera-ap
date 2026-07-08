@@ -219,7 +219,7 @@ export default function CardDetailModal({ isOpen, onClose, card, privacyMode, is
         {/* Header */}
         <div className={`px-6 py-4 flex justify-between items-center ${isGlass ? 'border-b border-white/5 bg-white/5' : 'border-b border-gray-100 bg-gray-50/50'}`}>
           <h3 className={`font-bold ${isGlass ? 'text-white' : 'text-gray-800'}`}>{card ? card.name : 'Nueva Tarjeta'}</h3>
-          <button onClick={onClose} className={`rounded-full p-1 transition-colors ${isGlass ? 'bg-white/10 text-white/70 hover:bg-white/20' : 'bg-gray-200 text-gray-500 hover:bg-gray-300'}`}>
+          <button type="button" onClick={onClose} className={`rounded-full p-1 transition-colors ${isGlass ? 'bg-white/10 text-white/70 hover:bg-white/20' : 'bg-gray-200 text-gray-500 hover:bg-gray-300'}`}>
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
           </button>
         </div>
@@ -228,7 +228,7 @@ export default function CardDetailModal({ isOpen, onClose, card, privacyMode, is
         {card && (
           <div className={`flex border-b ${isGlass ? 'border-white/5' : 'border-gray-100'}`}>
             {['card', 'statement'].map((tab) => (
-              <button
+              <button type="button"
                 key={tab}
                 onClick={() => setActiveTab(tab)}
                 className={`flex-1 py-3 text-sm font-bold transition-colors ${activeTab === tab
@@ -327,7 +327,7 @@ export default function CardDetailModal({ isOpen, onClose, card, privacyMode, is
                       <StatementUploader 
                           onAnalysisComplete={data => { setAiData(data); setAiState('reviewing'); }} 
                       />
-                      <button onClick={() => setAiState('idle')} className={`w-full mt-4 text-xs font-bold uppercase tracking-wider ${isGlass ? 'text-white/50 hover:text-white' : 'text-gray-400 hover:text-gray-600'}`}>
+                      <button type="button" onClick={() => setAiState('idle')} className={`w-full mt-4 text-xs font-bold uppercase tracking-wider ${isGlass ? 'text-white/50 hover:text-white' : 'text-gray-400 hover:text-gray-600'}`}>
                           Cancelar
                       </button>
                   </div>
@@ -347,7 +347,7 @@ export default function CardDetailModal({ isOpen, onClose, card, privacyMode, is
                 <>
                   {(!statement.transactions || statement.transactions.length === 0) && (
                     <>
-                      <button 
+                      <button type="button" 
                           onClick={() => setAiState('uploading')}
                           className="w-full flex items-center justify-center gap-2 py-4 px-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white rounded-2xl font-bold shadow-lg shadow-emerald-500/20 transition-all hover:scale-[1.02]"
                       >

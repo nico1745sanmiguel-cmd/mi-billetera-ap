@@ -1,6 +1,6 @@
 import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion, MotionConfig } from 'framer-motion';
 import Navbar from './Components/Layout/Navbar';
 import Home from './Components/Dashboard/Home';
 import Login from './Components/Login';
@@ -51,6 +51,7 @@ export default function App() {
         changeMonth,
         toast,
         hideToast,
+        motionPreference,
     } = useUI();
 
     const navigate = useNavigate();
@@ -94,7 +95,7 @@ export default function App() {
                 <SkeletonDashboard isGlass={isGlass} />
                 {showReload && (
                     <div className="fixed bottom-10 left-0 right-0 flex justify-center z-50 animate-fade-in">
-                        <button onClick={() => window.location.reload()} className="px-6 py-3 bg-white/20 backdrop-blur-md text-white rounded-full shadow-lg border border-white/20 active:scale-95 transition-transform">
+                        <button type="button" onClick={() => window.location.reload()} className="px-6 py-3 bg-white/20 backdrop-blur-md text-white rounded-full shadow-lg border border-white/20 active:scale-95 transition-transform">
                             La conexión está lenta. Toca para recargar.
                         </button>
                     </div>
@@ -107,7 +108,10 @@ export default function App() {
         return <Login />;
     }
 
+    const reducedMotionSetting = motionPreference === 'system' ? 'user' : (motionPreference === 'off' ? 'always' : 'never');
+
     return (
+        <MotionConfig reducedMotion={reducedMotionSetting}>
         <div className={`app-container min-h-screen transition-colors duration-700 ease-in-out ${isGlass ? 'glass-mode bg-[#0f0c29]' : 'light-mode bg-gray-50'}`}>
             <div className="relative z-10 min-h-screen flex flex-col">
                 
@@ -122,7 +126,7 @@ export default function App() {
 
                     {/* HEADER MÓVIL */}
                     <div className={`md:hidden px-4 py-3 shadow-sm sticky top-0 z-40 flex items-center justify-between gap-3 transition-colors duration-300 ${isGlass ? 'bg-[#0f0c29]/90 backdrop-blur-md text-white border-b border-white/5' : 'bg-white text-gray-800'}`}>
-                        <button
+                        <button type="button"
                             onClick={() => navigate('/dashboard')}
                             className={`p-2 rounded-xl transition-all active:scale-95 ${location.pathname === '/dashboard' || location.pathname === '/' ? (isGlass ? 'bg-white/20 text-white' : 'bg-blue-50 text-blue-600') : (isGlass ? 'bg-transparent text-white/60' : 'bg-gray-100 text-gray-500')}`}
                         >
@@ -131,18 +135,18 @@ export default function App() {
 
                         {/* SELECTOR DE MES */}
                         <div className={`flex-1 flex items-center justify-between rounded-xl p-1 max-w-[180px] transition-colors ${isGlass ? 'bg-white/10 border border-white/10 text-white' : 'bg-gray-50 text-gray-800'}`}>
-                            <button onClick={() => changeMonth(-1)} className={`p-2 rounded-lg active:scale-95 transition-colors ${isGlass ? 'text-white/70 hover:bg-white/10' : 'text-gray-400 hover:bg-gray-200'}`}>
+                            <button type="button" onClick={() => changeMonth(-1)} className={`p-2 rounded-lg active:scale-95 transition-colors ${isGlass ? 'text-white/70 hover:bg-white/10' : 'text-gray-400 hover:bg-gray-200'}`}>
                                 <ChevronLeft size={16} strokeWidth={2.5} />
                             </button>
                             <span className="font-bold text-sm capitalize">{getFormattedDate(currentDate)}</span>
-                            <button onClick={() => changeMonth(1)} className={`p-2 rounded-lg active:scale-95 transition-colors ${isGlass ? 'text-white/70 hover:bg-white/10' : 'text-gray-400 hover:bg-gray-200'}`}>
+                            <button type="button" onClick={() => changeMonth(1)} className={`p-2 rounded-lg active:scale-95 transition-colors ${isGlass ? 'text-white/70 hover:bg-white/10' : 'text-gray-400 hover:bg-gray-200'}`}>
                                 <ChevronRight size={16} strokeWidth={2.5} />
                             </button>
                         </div>
 
                         <div className="flex gap-1">
                             {/* BOTÓN PRIVACIDAD */}
-                            <button onClick={() => setPrivacyMode(!privacyMode)} className={`p-2 rounded-xl transition-all active:scale-95 ${privacyMode ? 'bg-indigo-50 text-indigo-600' : 'bg-gray-100 text-gray-400'}`}>
+                            <button type="button" onClick={() => setPrivacyMode(!privacyMode)} className={`p-2 rounded-xl transition-all active:scale-95 ${privacyMode ? 'bg-indigo-50 text-indigo-600' : 'bg-gray-100 text-gray-400'}`}>
                                 {privacyMode ? <EyeOff size={24} /> : <Eye size={24} />}
                             </button>
                         </div>
@@ -247,5 +251,6 @@ export default function App() {
                 </div>
             </div>
         </div>
+        </MotionConfig>
     );
 }

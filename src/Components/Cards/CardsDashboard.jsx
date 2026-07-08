@@ -176,7 +176,7 @@ function CardsList({ cards, monthKey, privacyMode, isGlass, onSelectCard, onNewC
             {/* Header */}
             <div className={`rounded-2xl p-5 ${isGlass ? 'bg-white/10 border border-white/10' : 'bg-gradient-to-r from-blue-700 to-indigo-700 text-white shadow-lg shadow-blue-200'}`}>
                 <div className="flex items-center gap-3">
-                    <button
+                    <button type="button"
                         onClick={onBack}
                         className="p-2 rounded-xl bg-white/20 hover:bg-white/30 transition-all active:scale-95"
                     >
@@ -222,7 +222,7 @@ function CardsList({ cards, monthKey, privacyMode, isGlass, onSelectCard, onNewC
             )}
 
             {/* Botón nueva tarjeta */}
-            <button
+            <button type="button"
                 onClick={onNewCard}
                 className={`w-full py-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all active:scale-95 ${isGlass ? 'bg-surface-glass border border-white/10 text-white hover:bg-white/20' : 'bg-brand-primary text-surface-light hover:bg-blue-700'}`}
             >
@@ -399,7 +399,7 @@ function CardDetail({ card, isNewCard, currentDate, privacyMode, isGlass, househ
             {/* Header */}
             <div className={`rounded-2xl p-5 ${isGlass ? 'bg-white/10 border border-white/10' : 'bg-gradient-to-r from-blue-700 to-indigo-700 text-white shadow-lg shadow-blue-200'}`}>
                 <div className="flex items-center gap-3">
-                    <button onClick={onBack} className="p-2 rounded-xl bg-white/20 hover:bg-white/30 transition-all active:scale-95">
+                    <button type="button" onClick={onBack} className="p-2 rounded-xl bg-white/20 hover:bg-white/30 transition-all active:scale-95">
                         <ArrowLeft size={18} />
                     </button>
                     <div className="flex items-center gap-3">
@@ -418,7 +418,7 @@ function CardDetail({ card, isNewCard, currentDate, privacyMode, isGlass, househ
             {!isNewCard && card && (
                 <div className={`flex rounded-2xl overflow-hidden ${isGlass ? 'bg-white/5 border border-white/10' : 'bg-white border border-gray-100 shadow-sm'}`}>
                     {['card', 'statement'].map(tab => (
-                        <button
+                        <button type="button"
                             key={tab}
                             onClick={() => { setActiveTab(tab); setAiState('idle'); }}
                             className={`flex-1 py-3 text-sm font-bold transition-colors ${activeTab === tab
@@ -508,7 +508,7 @@ function CardDetail({ card, isNewCard, currentDate, privacyMode, isGlass, househ
                     {aiState === 'uploading' && (
                         <div className="py-2 animate-in fade-in">
                             <StatementUploader onAnalysisComplete={data => { setAiData(data); setAiState('reviewing'); }} />
-                            <button onClick={() => setAiState('idle')} className={`w-full mt-4 text-xs font-bold uppercase tracking-wider ${isGlass ? 'text-white/50 hover:text-white' : 'text-gray-400 hover:text-gray-600'}`}>Cancelar</button>
+                            <button type="button" onClick={() => setAiState('idle')} className={`w-full mt-4 text-xs font-bold uppercase tracking-wider ${isGlass ? 'text-white/50 hover:text-white' : 'text-gray-400 hover:text-gray-600'}`}>Cancelar</button>
                         </div>
                     )}
 
@@ -520,7 +520,7 @@ function CardDetail({ card, isNewCard, currentDate, privacyMode, isGlass, househ
                         <>
                             {(!statement.transactions || statement.transactions.length === 0) && (
                                 <>
-                                    <button
+                                    <button type="button"
                                         onClick={() => setAiState('uploading')}
                                         className="w-full flex items-center justify-center gap-2 py-4 px-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white rounded-2xl font-bold shadow-lg shadow-emerald-500/20 transition-all hover:scale-[1.02]"
                                     >

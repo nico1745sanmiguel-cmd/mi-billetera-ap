@@ -164,6 +164,7 @@ export default function SuperList() {
 
     // 3. AUTO-SCROLL Y FOCO AL AGREGAR 🎯
     useEffect(() => {
+        let timerId;
         if (lastAddedId && itemsRefs.current[lastAddedId]) {
             // Scrollear hasta el elemento
             itemsRefs.current[lastAddedId].scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -171,10 +172,14 @@ export default function SuperList() {
             // Enfocar el input de precio del nuevo item
             const priceInputEl = itemsRefs.current[lastAddedId].querySelector('input[type="tel"]');
             if (priceInputEl) {
-                setTimeout(() => priceInputEl.focus(), 300);
+                timerId = setTimeout(() => priceInputEl.focus(), 300);
             }
             setLastAddedId(null);
         }
+        
+        return () => {
+            if (timerId) clearTimeout(timerId);
+        };
     }, [monthlyList, lastAddedId]);
 
     // 4. CÁLCULOS
@@ -313,7 +318,7 @@ export default function SuperList() {
                 <div className={`shadow-2xl backdrop-blur-md px-6 py-3 rounded-full flex items-center gap-3 text-sm font-bold pointer-events-auto border ${isGlass ? 'bg-black/40 text-white border-white/20' : 'bg-gray-900 text-white border-gray-700/50'}`}>
                     <span>{toast?.message}</span>
                     {toast?.undoAction && (
-                        <button onClick={handleUndo} className="text-yellow-400 hover:text-yellow-300 uppercase tracking-wider ml-2 text-xs">
+                        <button type="button" onClick={handleUndo} className="text-yellow-400 hover:text-yellow-300 uppercase tracking-wider ml-2 text-xs">
                             Deshacer
                         </button>
                     )}
@@ -327,14 +332,14 @@ export default function SuperList() {
                         <div className="flex items-center gap-3">
                             <h2 className={`text-xl font-bold ${isGlass ? 'text-white' : 'text-gray-800'}`}>Supermercado</h2>
                             <div className="flex flex-col gap-1 items-start">
-                                    <button 
+                                    <button type="button" 
                                         onClick={() => navigate('/scanner')}
                                         className={`px-3 py-1 text-[10px] font-bold rounded-full uppercase tracking-wider flex items-center gap-1 transition-all active:scale-95 shadow-sm ${isGlass ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' : 'bg-purple-100 text-purple-700 border border-purple-200'}`}
                                     >
                                         <Camera size={12} />
                                         Escanear
                                     </button>
-                                <button
+                                <button type="button"
                                     onClick={handleExportToAI}
                                     className={`px-3 py-1 text-[10px] font-bold rounded-full uppercase tracking-wider flex items-center gap-1 transition-all active:scale-95 shadow-sm ${isGlass ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30' : 'bg-indigo-100 text-indigo-700 border border-indigo-200'}`}
                                 >
@@ -422,15 +427,15 @@ export default function SuperList() {
                                         </p>
                                     )}
                                 </div>
-                                <button onClick={() => handleDelete(item.id)} className={`p-1 ${isGlass ? 'text-white/20 hover:text-red-400' : 'text-gray-300 hover:text-red-500'}`}>
+                                <button type="button" onClick={() => handleDelete(item.id)} className={`p-1 ${isGlass ? 'text-white/20 hover:text-red-400' : 'text-gray-300 hover:text-red-500'}`}>
                                     <Trash2 size={16} />
                                 </button>
 
                                 <div className="flex gap-3 pl-9">
                                     <div className={`flex items-center rounded-2xl border h-10 ${isGlass ? 'bg-white/5 border-white/10' : 'bg-gray-50 border-gray-200'}`}>
-                                        <button onClick={() => handleUpdateQuantity(item, -1)} className={`w-8 h-full flex items-center justify-center rounded-l-2xl transition-colors text-lg font-bold ${isGlass ? 'text-white/50 hover:bg-white/10' : 'text-gray-500 hover:bg-gray-200'}`}>-</button>
+                                        <button type="button" onClick={() => handleUpdateQuantity(item, -1)} className={`w-8 h-full flex items-center justify-center rounded-l-2xl transition-colors text-lg font-bold ${isGlass ? 'text-white/50 hover:bg-white/10' : 'text-gray-500 hover:bg-gray-200'}`}>-</button>
                                         <span className={`w-8 text-center text-sm font-bold ${isGlass ? 'text-white' : 'text-gray-700'}`}>{item.quantity}</span>
-                                        <button onClick={() => handleUpdateQuantity(item, 1)} className={`w-8 h-full flex items-center justify-center rounded-r-2xl transition-colors text-lg font-bold ${isGlass ? 'text-white/50 hover:bg-white/10' : 'text-gray-500 hover:bg-gray-200'}`}>+</button>
+                                        <button type="button" onClick={() => handleUpdateQuantity(item, 1)} className={`w-8 h-full flex items-center justify-center rounded-r-2xl transition-colors text-lg font-bold ${isGlass ? 'text-white/50 hover:bg-white/10' : 'text-gray-500 hover:bg-gray-200'}`}>+</button>
                                     </div>
                                     <div className={`flex-1 rounded-2xl flex items-center px-3 border transition-all duration-150 h-10 ${
                                         lastAddedId === item.id
@@ -507,13 +512,13 @@ export default function SuperList() {
                                 })}
                             </div>
                             <div className="flex gap-2">
-                                <button
+                                <button type="button"
                                     onClick={() => setShowSuggestions(false)}
                                     className={`flex-1 py-2.5 rounded-2xl text-sm font-bold border transition-all ${
                                         isGlass ? 'border-white/10 text-white/50 hover:bg-white/5' : 'border-gray-200 text-gray-500 hover:bg-gray-50'
                                     }`}
                                 >Ignorar</button>
-                                <button
+                                <button type="button"
                                     onClick={handleConfirmSuggestions}
                                     disabled={isAddingSuggestions}
                                     className={`flex-2 px-6 py-2.5 rounded-2xl text-sm font-bold text-white shadow-md transition-all active:scale-95 disabled:opacity-50 flex items-center gap-2 ${

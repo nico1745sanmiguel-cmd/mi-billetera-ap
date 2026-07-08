@@ -12,7 +12,7 @@ import React from 'react';
 const NavItem = ({ id, icon, label, currentView, setView }) => {
   const isActive = currentView === id;
   return (
-    <button
+    <button type="button"
       onClick={() => setView(id)}
       className={`flex flex-col items-center justify-center w-full h-full transition-colors duration-200 ${isActive ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600'}`}
     >

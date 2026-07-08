@@ -10,7 +10,7 @@ export default function NotificationsModal({ notifications, user, privacyMode, s
                     <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
                         <Bell className="text-indigo-500" /> Notificaciones
                     </h3>
-                    <button onClick={() => setIsNotificationsOpen(false)} className="p-2 bg-gray-200 dark:bg-white/10 rounded-full text-gray-500 dark:text-white/50 hover:bg-gray-300 dark:hover:bg-white/20 transition-colors">
+                    <button type="button" onClick={() => setIsNotificationsOpen(false)} className="p-2 bg-gray-200 dark:bg-white/10 rounded-full text-gray-500 dark:text-white/50 hover:bg-gray-300 dark:hover:bg-white/20 transition-colors">
                         <X size={20} />
                     </button>
                 </div>
@@ -40,7 +40,7 @@ export default function NotificationsModal({ notifications, user, privacyMode, s
                                             <div className="text-[10px] text-gray-400 dark:text-white/40 mt-3 flex justify-between items-center border-t border-gray-100 dark:border-white/5 pt-2">
                                                 <span>{new Date(n.createdAt?.toMillis() || Date.now()).toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' })}</span>
                                                 {!isRead && (
-                                                    <button 
+                                                    <button type="button" 
                                                         onClick={() => handleMarkAsRead(n.id)}
                                                         className="flex items-center gap-1 text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 font-bold px-2 py-1 bg-indigo-50 dark:bg-indigo-500/20 rounded-lg transition-colors active:scale-95"
                                                     >

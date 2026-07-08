@@ -167,7 +167,7 @@ export default function SavingsWidget({ setView, privacyMode }) {
                         <TrendingUp size={16} className="text-green-400" />
                         Mis Ahorros
                     </h3>
-                    <button
+                    <button type="button"
                         onClick={(e) => {
                             e.stopPropagation();
                             setCurrencyView(prev => prev === 'ARS' ? 'USD' : 'ARS');

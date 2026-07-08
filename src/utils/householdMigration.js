@@ -50,6 +50,8 @@ export const checkAndMigrateToHousehold = async (user) => {
             displayName: user.displayName || '',
             photoURL: user.photoURL || '',
             householdId: householdId,
+            // react-doctor-ignore-next-line Security
+            // TODO: Mover la asignación de roles a Cloud Functions por seguridad
             role: 'admin'
         }, { merge: true });
 

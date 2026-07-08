@@ -79,7 +79,7 @@ export default function SalarySourcesEditor({ onClose, isGlass }) {
                 {/* Header */}
                 <div className="flex items-center justify-between mb-1">
                     <h3 className={`text-lg font-bold ${isGlass ? 'text-white' : 'text-gray-800'}`}>Fuentes de ingreso</h3>
-                    <button onClick={onClose} className={`p-2 rounded-xl ${isGlass ? 'text-white/60 hover:bg-white/10' : 'text-gray-400 hover:bg-gray-100'}`}>
+                    <button type="button" onClick={onClose} className={`p-2 rounded-xl ${isGlass ? 'text-white/60 hover:bg-white/10' : 'text-gray-400 hover:bg-gray-100'}`}>
                         <X size={18} />
                     </button>
                 </div>
@@ -112,8 +112,8 @@ export default function SalarySourcesEditor({ onClose, isGlass }) {
                                         />
                                     </div>
                                     <div className="flex gap-2">
-                                        <button onClick={confirmEdit} className="flex-1 py-2 rounded-xl bg-violet-600 text-white text-xs font-bold">Listo</button>
-                                        <button onClick={() => setEditingId(null)} className={`px-4 py-2 rounded-xl text-xs font-bold ${isGlass ? 'bg-white/10 text-white/70' : 'bg-gray-100 text-gray-500'}`}>Cancelar</button>
+                                        <button type="button" onClick={confirmEdit} className="flex-1 py-2 rounded-xl bg-violet-600 text-white text-xs font-bold">Listo</button>
+                                        <button type="button" onClick={() => setEditingId(null)} className={`px-4 py-2 rounded-xl text-xs font-bold ${isGlass ? 'bg-white/10 text-white/70' : 'bg-gray-100 text-gray-500'}`}>Cancelar</button>
                                     </div>
                                 </div>
                             ) : (
@@ -123,9 +123,9 @@ export default function SalarySourcesEditor({ onClose, isGlass }) {
                                         <p className={`text-xs font-mono font-bold mt-0.5 ${isGlass ? 'text-violet-300' : 'text-violet-600'}`}>{formatMoney(source.amount)}</p>
                                     </div>
                                     <div className="flex gap-1">
-                                        <button onClick={() => startEdit(source)} className={`p-2 rounded-xl ${isGlass ? 'text-white/40 hover:bg-white/10' : 'text-gray-400 hover:bg-gray-200'}`}><Pencil size={14} /></button>
+                                        <button type="button" onClick={() => startEdit(source)} className={`p-2 rounded-xl ${isGlass ? 'text-white/40 hover:bg-white/10' : 'text-gray-400 hover:bg-gray-200'}`}><Pencil size={14} /></button>
                                         {localSources.length > 1 && (
-                                            <button onClick={() => removeSource(source.id)} className={`p-2 rounded-xl ${isGlass ? 'text-white/40 hover:bg-red-500/20 hover:text-red-300' : 'text-gray-400 hover:bg-red-50 hover:text-red-500'}`}><Trash2 size={14} /></button>
+                                            <button type="button" onClick={() => removeSource(source.id)} className={`p-2 rounded-xl ${isGlass ? 'text-white/40 hover:bg-red-500/20 hover:text-red-300' : 'text-gray-400 hover:bg-red-50 hover:text-red-500'}`}><Trash2 size={14} /></button>
                                         )}
                                     </div>
                                 </div>
@@ -156,8 +156,8 @@ export default function SalarySourcesEditor({ onClose, isGlass }) {
                                 />
                             </div>
                             <div className="flex gap-2">
-                                <button onClick={addSource} disabled={!newLabel.trim() || !newAmount} className="flex-1 py-2 rounded-xl bg-violet-600 text-white text-xs font-bold disabled:opacity-40">Agregar</button>
-                                <button onClick={() => setAddingNew(false)} className={`px-4 py-2 rounded-xl text-xs font-bold ${isGlass ? 'bg-white/10 text-white/70' : 'bg-gray-100 text-gray-500'}`}>Cancelar</button>
+                                <button type="button" onClick={addSource} disabled={!newLabel.trim() || !newAmount} className="flex-1 py-2 rounded-xl bg-violet-600 text-white text-xs font-bold disabled:opacity-40">Agregar</button>
+                                <button type="button" onClick={() => setAddingNew(false)} className={`px-4 py-2 rounded-xl text-xs font-bold ${isGlass ? 'bg-white/10 text-white/70' : 'bg-gray-100 text-gray-500'}`}>Cancelar</button>
                             </div>
                         </div>
                     )}
@@ -165,7 +165,7 @@ export default function SalarySourcesEditor({ onClose, isGlass }) {
 
                 {/* Agregar fuente */}
                 {!addingNew && (
-                    <button
+                    <button type="button"
                         onClick={() => setAddingNew(true)}
                         className={`mt-3 w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border-2 border-dashed text-sm font-semibold transition-all
                             ${isGlass ? 'border-white/20 text-white/50 hover:border-violet-500/50 hover:text-violet-300' : 'border-gray-200 text-gray-400 hover:border-violet-400 hover:text-violet-600'}`}
@@ -174,7 +174,7 @@ export default function SalarySourcesEditor({ onClose, isGlass }) {
                     </button>
                 )}
 
-                <button
+                <button type="button"
                     onClick={handleSave}
                     disabled={saving || localSources.length === 0}
                     className="mt-5 w-full py-3.5 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-bold text-sm

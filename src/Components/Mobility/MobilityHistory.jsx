@@ -37,7 +37,7 @@ export default function MobilityHistory({ isGlass, privacyMode, month, year }) {
         return (
             <div className="space-y-4">
                 <div className={`${card} flex items-center gap-3`}>
-                    <button onClick={() => setEditingId(null)} className={`p-2 rounded-xl ${isGlass ? 'bg-white/10 hover:bg-white/20' : 'bg-gray-100 hover:bg-gray-200'} transition-all`}>
+                    <button type="button" onClick={() => setEditingId(null)} className={`p-2 rounded-xl ${isGlass ? 'bg-white/10 hover:bg-white/20' : 'bg-gray-100 hover:bg-gray-200'} transition-all`}>
                         <X size={16} />
                     </button>
                     <p className={`font-bold text-sm ${text}`}>Editando jornada del {session?.date}</p>
@@ -87,8 +87,8 @@ export default function MobilityHistory({ isGlass, privacyMode, month, year }) {
                                 <div className="flex items-center justify-between gap-3">
                                     <p className={`text-sm font-medium ${text}`}>¿Eliminar esta jornada?</p>
                                     <div className="flex gap-2">
-                                        <button onClick={() => setConfirmDelete(null)} className={`p-2 rounded-xl ${isGlass ? 'bg-white/10' : 'bg-gray-100'}`}><X size={14} /></button>
-                                        <button
+                                        <button type="button" onClick={() => setConfirmDelete(null)} className={`p-2 rounded-xl ${isGlass ? 'bg-white/10' : 'bg-gray-100'}`}><X size={14} /></button>
+                                        <button type="button"
                                             onClick={async () => { await deleteSession(session.id); setConfirmDelete(null); }}
                                             className="p-2 rounded-xl bg-red-500 text-white"
                                         ><Check size={14} /></button>
@@ -132,11 +132,11 @@ export default function MobilityHistory({ isGlass, privacyMode, month, year }) {
                                             {privacyMode ? '••••' : fmt(session.total)}
                                         </p>
                                         <div className="flex gap-1">
-                                            <button
+                                            <button type="button"
                                                 onClick={() => setEditingId(session.id)}
                                                 className={`p-1.5 rounded-lg transition-all ${isGlass ? 'bg-white/10 hover:bg-white/20 text-white/60' : 'bg-gray-100 hover:bg-gray-200 text-gray-500'}`}
                                             ><Pencil size={13} /></button>
-                                            <button
+                                            <button type="button"
                                                 onClick={() => setConfirmDelete(session.id)}
                                                 className="p-1.5 rounded-lg bg-red-50 text-red-400 hover:bg-red-100 transition-all"
                                             ><Trash2 size={13} /></button>

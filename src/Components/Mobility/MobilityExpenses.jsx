@@ -176,7 +176,7 @@ export default function MobilityExpenses({ isGlass, month, year }) {
 
             {/* ─── OTROS GASTOS (colapsable) ─── */}
             <div className={card}>
-                <button
+                <button type="button"
                     onClick={() => setShowFull(v => !v)}
                     className={`w-full flex items-center justify-between ${text}`}
                 >
@@ -334,7 +334,7 @@ export default function MobilityExpenses({ isGlass, month, year }) {
                                     </div>
                                     <p className={`text-xs ${sub} flex-shrink-0`}>{exp.date?.slice(5)}</p>
                                     <p className={`text-sm font-bold ${isGlass ? 'text-red-300' : 'text-red-500'} flex-shrink-0`}>{fmt(exp.amount)}</p>
-                                    <button
+                                    <button type="button"
                                         onClick={() => deleteExpense(exp.id)}
                                         className={`opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-lg ${isGlass ? 'hover:bg-white/20 text-white/40' : 'hover:bg-red-50 text-gray-300 hover:text-red-400'}`}
                                     >

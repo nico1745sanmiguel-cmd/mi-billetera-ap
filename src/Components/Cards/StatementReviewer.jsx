@@ -98,7 +98,7 @@ const StatementReviewer = ({ data, onConfirm, onCancel }) => {
                                     <span className={`text-base font-black ${tx.isPayment ? 'text-emerald-500' : 'text-slate-800 dark:text-slate-200'}`}>
                                         ${(tx.amount || 0).toLocaleString()}
                                     </span>
-                                    <button
+                                    <button type="button"
                                         onClick={() => handleDelete(idx)}
                                         className="p-1.5 text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                                         title="Eliminar gasto"
@@ -196,7 +196,7 @@ const StatementReviewer = ({ data, onConfirm, onCancel }) => {
                                         </span>
                                     </td>
                                     <td className="p-4 text-center">
-                                        <button 
+                                        <button type="button" 
                                             onClick={() => handleDelete(idx)}
                                             className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
                                             title="Eliminar gasto"
@@ -212,14 +212,14 @@ const StatementReviewer = ({ data, onConfirm, onCancel }) => {
 
                 {/* Footer / Actions */}
                 <div className="p-5 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center">
-                    <button 
+                    <button type="button" 
                         onClick={onCancel}
                         className="flex items-center gap-2 px-6 py-2.5 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 font-medium transition-colors rounded-xl hover:bg-slate-200/50 dark:hover:bg-slate-800"
                     >
                         <XCircle className="w-5 h-5" />
                         Descartar
                     </button>
-                    <button 
+                    <button type="button" 
                         onClick={handleConfirm}
                         className="flex items-center gap-2 px-8 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/40 transition-all hover:-translate-y-0.5"
                     >

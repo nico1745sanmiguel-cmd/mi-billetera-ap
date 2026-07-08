@@ -203,7 +203,7 @@ export default function SavingsGoal() {
 
                     {/* Acciones */}
                     <div className="flex gap-3 pt-2">
-                        <button
+                        <button type="button"
                             onClick={handleSave}
                             disabled={!form.name || !form.amount || saving}
                             className="flex-1 bg-amber-500 hover:bg-amber-600 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2"
@@ -212,7 +212,7 @@ export default function SavingsGoal() {
                             {savingsGoal ? 'Guardar cambios' : 'Crear objetivo'}
                         </button>
                         {savingsGoal && (
-                            <button
+                            <button type="button"
                                 onClick={handleCancel}
                                 className={`px-4 py-3 rounded-xl font-bold transition-colors ${isGlass ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-600'}`}
                             >
@@ -252,7 +252,7 @@ export default function SavingsGoal() {
                         <h2 className={`text-xl font-black leading-tight ${textColor}`}>{savingsGoal.name}</h2>
                     </div>
                 </div>
-                <button
+                <button type="button"
                     onClick={openEdit}
                     className={`p-2 rounded-xl opacity-40 hover:opacity-100 transition-all ${
                         isGlass ? 'hover:bg-white/10 text-white' : 'hover:bg-gray-100 text-gray-600'
@@ -370,7 +370,7 @@ export default function SavingsGoal() {
             </div>
 
             {/* Borrar objetivo */}
-            <button
+            <button type="button"
                 onClick={handleDelete}
                 disabled={saving}
                 className={`w-full py-3 text-xs font-bold uppercase tracking-wider transition-colors border-t ${

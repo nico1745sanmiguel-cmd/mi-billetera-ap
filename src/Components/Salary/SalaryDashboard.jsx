@@ -86,7 +86,7 @@ function SalaryDashboardInner({ onBack }) {
             {/* ─── Header ───────────────────────────────────────────────── */}
             <div className={`sticky top-0 z-20 px-4 pt-4 pb-3 ${isGlass ? 'bg-gradient-to-b from-[#12133a] to-transparent' : 'bg-white/80 backdrop-blur-md border-b border-gray-100'}`}>
                 <div className="flex items-center justify-between">
-                    <button
+                    <button type="button"
                         onClick={onBack}
                         className={`p-2 rounded-xl transition-all active:scale-90 ${isGlass ? 'text-white/60 hover:bg-white/10' : 'text-gray-500 hover:bg-gray-100'}`}
                     >
@@ -98,7 +98,7 @@ function SalaryDashboardInner({ onBack }) {
                             {MONTH_NAMES[currentDate.getMonth()]} {currentDate.getFullYear()}
                         </p>
                     </div>
-                    <button
+                    <button type="button"
                         onClick={() => setShowSourcesEditor(true)}
                         className={`p-2 rounded-xl transition-all active:scale-90 ${isGlass ? 'text-white/60 hover:bg-white/10' : 'text-gray-500 hover:bg-gray-100'}`}
                     >
@@ -212,7 +212,7 @@ function SalaryDashboardInner({ onBack }) {
                     )}
 
                     {/* Botón agregar sobre */}
-                    <button
+                    <button type="button"
                         onClick={() => { setEditingEnvelope(null); setShowEnvelopeEditor(true); }}
                         className={`mt-3 w-full flex items-center justify-center gap-2 py-3 rounded-2xl border-2 border-dashed text-sm font-semibold transition-all active:scale-95
                             ${isGlass ? 'border-white/20 text-white/50 hover:border-violet-500/50 hover:text-violet-300' : 'border-gray-200 text-gray-400 hover:border-violet-400 hover:text-violet-600'}`}

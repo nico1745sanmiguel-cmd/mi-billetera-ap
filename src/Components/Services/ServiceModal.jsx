@@ -25,7 +25,7 @@ export default function ServiceModal({
                     <h3 className={`text-lg font-bold ${isGlass ? 'text-white' : 'text-gray-800'}`}>
                         {editingService?.type === 'card' ? `Ajustar Resumen ${editingService.bank}` : (editingService ? 'Editar' : 'Nuevo Fijo')}
                     </h3>
-                    <button onClick={() => setIsModalOpen(false)} className={`p-2 rounded-full transition-colors ${isGlass ? 'text-white/50 hover:bg-white/10' : 'text-gray-400 hover:text-gray-600 bg-gray-50 hover:bg-gray-100'}`}>✕</button>
+                    <button type="button" onClick={() => setIsModalOpen(false)} className={`p-2 rounded-full transition-colors ${isGlass ? 'text-white/50 hover:bg-white/10' : 'text-gray-400 hover:text-gray-600 bg-gray-50 hover:bg-gray-100'}`}>✕</button>
                 </div>
 
                 <form onSubmit={handleSave} className="space-y-5 pb-6">

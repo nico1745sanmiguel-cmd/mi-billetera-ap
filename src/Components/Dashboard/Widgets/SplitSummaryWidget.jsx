@@ -16,7 +16,7 @@ export default function SplitSummaryWidget({ setView, householdMembers, splitDat
                     <h3 className="font-bold text-gray-800 dark:text-white text-sm flex items-center gap-2"><Scale size={18} className="text-emerald-600 dark:text-emerald-400" /> Reparto del Mes</h3>
                     <p className="text-[10px] text-gray-400 dark:text-white/40 font-medium capitalize">{currentDate.toLocaleString('es-AR', { month: 'long', year: 'numeric' })}</p>
                 </div>
-                <button 
+                <button type="button" 
                     onClick={(e) => { e.stopPropagation(); setView('household'); }} 
                     className="text-[10px] font-bold text-emerald-600 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-500/10 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 px-2 py-1 rounded-full transition-colors dark:border dark:border-emerald-500/20"
                 >
@@ -65,7 +65,7 @@ export default function SplitSummaryWidget({ setView, householdMembers, splitDat
                     <div className="flex justify-center mb-2"><Wallet size={32} className="text-yellow-500 dark:text-yellow-400 drop-shadow-sm" /></div>
                     <p className="text-sm font-bold text-gray-700 dark:text-white/80 mb-1">Cargá los sueldos para ver el reparto</p>
                     <p className="text-xs text-gray-400 dark:text-white/40 mb-3">Cada uno tiene que ingresar su sueldo mensual neto para que podamos calcular cuánto le corresponde de cada gasto compartido.</p>
-                    <button onClick={(e) => { e.stopPropagation(); setView('household'); }} className="text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-500 dark:bg-indigo-600/80 dark:hover:bg-indigo-500/80 px-4 py-2 rounded-xl transition-colors dark:border dark:border-indigo-400/30">
+                    <button type="button" onClick={(e) => { e.stopPropagation(); setView('household'); }} className="text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-500 dark:bg-indigo-600/80 dark:hover:bg-indigo-500/80 px-4 py-2 rounded-xl transition-colors dark:border dark:border-indigo-400/30">
                         Ir a Grupo Familiar →
                     </button>
                 </div>

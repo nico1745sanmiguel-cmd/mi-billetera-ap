@@ -91,10 +91,10 @@ export default function SavingsCard({ cartera, items, isGlass, privacyMode, dola
                                             if (e.key === 'Escape') setEditingIdx(null);
                                         }}
                                     />
-                                    <button onClick={() => handleSaveEdit(item)} className="text-green-500 hover:text-green-600 transition-colors p-1 bg-green-500/10 rounded">
+                                    <button type="button" onClick={() => handleSaveEdit(item)} className="text-green-500 hover:text-green-600 transition-colors p-1 bg-green-500/10 rounded">
                                         <Check size={16} strokeWidth={3} />
                                     </button>
-                                    <button onClick={() => setEditingIdx(null)} className="text-gray-400 hover:text-red-500 transition-colors p-1">
+                                    <button type="button" onClick={() => setEditingIdx(null)} className="text-gray-400 hover:text-red-500 transition-colors p-1">
                                         <X size={16} strokeWidth={3} />
                                     </button>
                                 </div>
@@ -103,7 +103,7 @@ export default function SavingsCard({ cartera, items, isGlass, privacyMode, dola
                                     <span className={`font-bold ${textColor}`}>
                                         {formatAmount(item.cantidad)}
                                     </span>
-                                    <button 
+                                    <button type="button" 
                                         onClick={() => {
                                             setEditValue(item.cantidad.toString());
                                             setEditingIdx(idx);
@@ -123,7 +123,7 @@ export default function SavingsCard({ cartera, items, isGlass, privacyMode, dola
             </div>
 
             {/* BOTÓN HISTORIAL */}
-            <button 
+            <button type="button" 
                 onClick={() => setShowHistory(!showHistory)}
                 className={`w-full p-3 flex items-center justify-center gap-2 text-xs font-bold uppercase transition-colors ${
                     isGlass 

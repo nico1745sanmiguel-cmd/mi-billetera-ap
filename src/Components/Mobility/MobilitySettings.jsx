@@ -127,7 +127,7 @@ export default function MobilitySettings({ isGlass, onBack }) {
                                     <span className={`text-sm capitalize ${text}`}>
                                         {key === 'others' ? 'Otros' : key}
                                     </span>
-                                    <button 
+                                    <button type="button" 
                                         onClick={() => togglePlatform(key)}
                                         className={`w-11 h-6 rounded-full transition-colors relative ${activePlatforms[key] ? 'bg-violet-500' : 'bg-gray-300 dark:bg-white/20'}`}
                                     >
@@ -149,13 +149,13 @@ export default function MobilitySettings({ isGlass, onBack }) {
                                         <span className={`text-sm ${text}`}>{cat.label}</span>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <button 
+                                        <button type="button" 
                                             onClick={() => toggleCategory(cat.id)}
                                             className={`w-9 h-5 rounded-full transition-colors relative ${cat.active ? 'bg-violet-500' : 'bg-gray-300 dark:bg-white/20'}`}
                                         >
                                             <div className={`w-3 h-3 rounded-full bg-white absolute top-1 transition-transform ${cat.active ? 'translate-x-5' : 'translate-x-1'}`} />
                                         </button>
-                                        <button onClick={() => removeCategory(cat.id)} className="p-1 text-red-400 hover:bg-red-400/10 rounded">
+                                        <button type="button" onClick={() => removeCategory(cat.id)} className="p-1 text-red-400 hover:bg-red-400/10 rounded">
                                             <X size={14} />
                                         </button>
                                     </div>
@@ -171,7 +171,7 @@ export default function MobilitySettings({ isGlass, onBack }) {
                                 placeholder="Nueva categoría..."
                                 className={inputStyle}
                             />
-                            <button 
+                            <button type="button" 
                                 onClick={addCategory}
                                 className={`p-2 rounded-xl bg-violet-500 text-white hover:bg-violet-600 transition-colors`}
                             >
@@ -186,7 +186,7 @@ export default function MobilitySettings({ isGlass, onBack }) {
                     <p className={`text-xs font-bold uppercase tracking-wide mb-3 text-red-500`}>Zona de Peligro</p>
                     
                     {sessions.length > 0 && !showDeleteAll && (
-                        <button
+                        <button type="button"
                             onClick={() => setShowDeleteAll(true)}
                             className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-semibold transition-all ${isGlass ? 'bg-red-500/20 text-red-300 hover:bg-red-500/30 border border-red-500/20' : 'bg-red-50 text-red-500 hover:bg-red-100 border border-red-100'}`}
                         >
@@ -205,13 +205,13 @@ export default function MobilitySettings({ isGlass, onBack }) {
                                 </div>
                             </div>
                             <div className="flex gap-2">
-                                <button
+                                <button type="button"
                                     onClick={() => setShowDeleteAll(false)}
                                     className={`flex-1 py-2.5 rounded-xl text-xs font-semibold transition-all ${isGlass ? 'bg-white/10 text-white/70 hover:bg-white/20' : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'}`}
                                 >
                                     Cancelar
                                 </button>
-                                <button
+                                <button type="button"
                                     onClick={handleDeleteAll}
                                     disabled={deletingAll}
                                     className="flex-1 py-2.5 rounded-xl text-xs font-bold text-white bg-red-500 hover:bg-red-600 transition-all disabled:opacity-50"
@@ -223,7 +223,7 @@ export default function MobilitySettings({ isGlass, onBack }) {
                     )}
                 </div>
 
-                <button 
+                <button type="button" 
                     onClick={handleSave}
                     className="w-full mt-6 flex items-center justify-center gap-2 py-3 rounded-xl bg-violet-600 text-white font-bold hover:bg-violet-700 transition-colors"
                 >

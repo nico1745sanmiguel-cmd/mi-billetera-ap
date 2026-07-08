@@ -59,6 +59,9 @@ export const UIProvider = ({ children }) => {
     const [expenseScope, setExpenseScope] = useState('all'); // 'all', 'family', 'personal'
     const [currentDate, setCurrentDate] = useState(new Date());
     const [toast, setToast] = useState(null);
+    const [motionPreference, setMotionPreferenceRaw] = useState(() => {
+        return localStorage.getItem('app_motion') || 'system';
+    });
 
     // Nuevo estado: 'light' | 'dark' | 'system'
     const [theme, setThemeRaw] = useState(() => {
@@ -106,6 +109,18 @@ export const UIProvider = ({ children }) => {
         localStorage.setItem('glass_mode', isGlass);
     }, [theme, isGlass]);
 
+    // Persistir preferencia de movimiento
+    useEffect(() => {
+        localStorage.setItem('app_motion', motionPreference);
+    }, [motionPreference]);
+
+    // Dispatch: setMotionPreference con validación
+    const setMotionPreference = useCallback((val) => {
+        if (val === 'on' || val === 'off' || val === 'system') {
+            setMotionPreferenceRaw(val);
+        }
+    }, []);
+
     // Dispatch: setTheme con validación
     const setTheme = useCallback((val) => {
         if (val === 'light' || val === 'dark' || val === 'system') {
@@ -139,20 +154,22 @@ export const UIProvider = ({ children }) => {
         expenseScope,
         isGlass,
         theme,
+        motionPreference,
         currentDate,
         toast,
-    }), [privacyMode, expenseScope, isGlass, theme, currentDate, toast]);
+    }), [privacyMode, expenseScope, isGlass, theme, motionPreference, currentDate, toast]);
 
     const dispatchValue = useMemo(() => ({
         setPrivacyMode,
         setExpenseScope,
         setIsGlass,
         setTheme,
+        setMotionPreference,
         setCurrentDate,
         changeMonth,
         showToast,
         hideToast,
-    }), [setPrivacyMode, setExpenseScope, setIsGlass, setTheme, changeMonth, showToast, hideToast]);
+    }), [setPrivacyMode, setExpenseScope, setIsGlass, setTheme, setMotionPreference, changeMonth, showToast, hideToast]);
 
     return (
         <UIDispatchContext.Provider value={dispatchValue}>

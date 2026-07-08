@@ -131,7 +131,7 @@ export default function ServicesCalendarView({
                                     Día {selectedDay}
                                 </h2>
                             </div>
-                            <button
+                            <button type="button"
                                 onClick={() => setSelectedDay(null)}
                                 className={`p-2 rounded-full transition-colors ${isGlass ? 'bg-white/10 hover:bg-white/20 text-white/70' : 'bg-gray-100 hover:bg-gray-200 text-gray-500'}`}
                             >
