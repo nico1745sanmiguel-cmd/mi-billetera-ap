@@ -9,8 +9,10 @@ service cloud.firestore {
     }
     
     // Función auxiliar: obtiene el householdId del usuario actual leyendo su documento en "users"
+    // Devuelve null si el campo no existe (usuario sin familia configurada)
     function getUserHouseholdId() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.householdId;
+      let userData = get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+      return userData.keys().hasAll(['householdId']) ? userData.householdId : null;
     }
 
     // Colección de Usuarios: 
@@ -40,10 +42,24 @@ service cloud.firestore {
       allow read, write: if isAuthenticated() && 
                             // Aseguramos que solo afecte a las colecciones con aislamiento por familia
                             collection in ['transactions', 'cards', 'supermarket_items', 'fresh_purchases', 'services', 'planner_categories', 'contributions', 'savings_transactions', 'savings_goals'] &&
-                            // Validamos que el recurso existente o el nuevo dato que se guarda tenga el mismo householdId que el usuario
+                            // Validamos acceso: con household (comparte con familia) o sin household (solo el propio userId)
                             (
-                              (resource == null && request.resource.data.householdId == getUserHouseholdId()) || 
-                              (resource != null && resource.data.householdId == getUserHouseholdId())
+                              // Caso 1: usuario CON household → el householdId del documento debe coincidir
+                              (
+                                getUserHouseholdId() != null &&
+                                (
+                                  (resource == null && request.resource.data.householdId == getUserHouseholdId()) ||
+                                  (resource != null && resource.data.householdId == getUserHouseholdId())
+                                )
+                              ) ||
+                              // Caso 2: usuario SIN household → el userId del documento debe coincidir
+                              (
+                                getUserHouseholdId() == null &&
+                                (
+                                  (resource == null && request.resource.data.userId == request.auth.uid) ||
+                                  (resource != null && resource.data.userId == request.auth.uid)
+                                )
+                              )
                             );
     }
 
