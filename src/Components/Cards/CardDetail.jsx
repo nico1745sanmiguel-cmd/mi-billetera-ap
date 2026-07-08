@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { db } from '../../firebase';
 import { doc, deleteDoc, updateDoc, setDoc, collection, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { formatInputNumber, parseInputNumber } from '../../utils';
@@ -33,8 +33,14 @@ export default function CardDetail({ card, isNewCard, currentDate, privacyMode, 
     const isEditing = !!card && !isNewCard;
     const monthKey = getMonthKey(currentDate);
 
-    // Si abrimos una tarjeta existente, cargar sus datos
-    useEffect(() => {
+    const [prevCardId, setPrevCardId] = useState(card?.id || null);
+    const [prevMonthKey, setPrevMonthKey] = useState(monthKey);
+
+    // Sync state when props change (evita el bug de useEffect sincronizando props)
+    if (card?.id !== prevCardId || monthKey !== prevMonthKey) {
+        setPrevCardId(card?.id || null);
+        setPrevMonthKey(monthKey);
+        
         if (card && !isNewCard) {
             setForm({
                 name: card.name || '',
@@ -55,8 +61,13 @@ export default function CardDetail({ card, isNewCard, currentDate, privacyMode, 
             } else {
                 setStatement({ totalDue: '', dueDate: '', nextCloseDate: '', nextDueDate: '', isPaid: false });
             }
+        } else {
+            setForm({
+                name: '', bank: '', closeDay: '', dueDay: '', color: PRESET_COLORS[0]
+            });
+            setStatement({ totalDue: '', dueDate: '', nextCloseDate: '', nextDueDate: '', isPaid: false });
         }
-    }, [card, monthKey, isNewCard]);
+    }
 
     const handleSaveCard = async (e) => {
         e.preventDefault();
