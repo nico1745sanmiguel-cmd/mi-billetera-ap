@@ -476,16 +476,16 @@ function CardDetail({ card, isNewCard, currentDate, privacyMode, isGlass, househ
                         )}
 
                         <div>
-                            <label className={labelClass}>Nombre (ej. Visa Oro)</label>
-                            <input required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className={inputClass} placeholder="Descripción corta" />
+                            <label className={labelClass} htmlFor="cardName">Nombre (ej. Visa Oro)</label>
+                            <input id="cardName" required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className={inputClass} placeholder="Descripción corta" />
                         </div>
                         <div>
-                            <label className={labelClass}>Banco Emisor</label>
-                            <input required value={form.bank} onChange={e => setForm({ ...form, bank: e.target.value })} className={inputClass} placeholder="Galicia, Santander, etc." />
+                            <label className={labelClass} htmlFor="cardBank">Banco Emisor</label>
+                            <input id="cardBank" required value={form.bank} onChange={e => setForm({ ...form, bank: e.target.value })} className={inputClass} placeholder="Galicia, Santander, etc." />
                         </div>
                         <div>
-                            <label className={`${labelClass} mb-2`}>Color de Tarjeta</label>
-                            <div className="flex flex-wrap gap-2 p-2">
+                            <label className={`${labelClass} mb-2`} id="cardColorLabel">Color de Tarjeta</label>
+                            <div className="flex flex-wrap gap-2 p-2" aria-labelledby="cardColorLabel">
                                 {PRESET_COLORS.map(color => (
                                     <button key={color} type="button" onClick={() => setForm({ ...form, color })} className={`w-8 h-8 rounded-full shadow-sm transition-transform hover:scale-110 ${form.color === color ? 'ring-2 ring-offset-2 ring-blue-500 scale-110' : ''}`} style={{ backgroundColor: color }} />
                                 ))}
@@ -493,12 +493,12 @@ function CardDetail({ card, isNewCard, currentDate, privacyMode, isGlass, househ
                         </div>
                         <div className="grid grid-cols-2 gap-3">
                             <div>
-                                <label className={labelClass}>Día de Cierre</label>
-                                <input required type="number" min="1" max="31" value={form.closeDay} onChange={e => setForm({ ...form, closeDay: e.target.value })} className={`${inputClass} text-center`} placeholder="Ej: 5" />
+                                <label className={labelClass} htmlFor="cardCloseDay">Día de Cierre</label>
+                                <input id="cardCloseDay" required type="number" min="1" max="31" value={form.closeDay} onChange={e => setForm({ ...form, closeDay: e.target.value })} className={`${inputClass} text-center`} placeholder="Ej: 5" />
                             </div>
                             <div>
-                                <label className={labelClass}>Día de Vencimiento</label>
-                                <input required type="number" min="1" max="31" value={form.dueDay} onChange={e => setForm({ ...form, dueDay: e.target.value })} className={`${inputClass} text-center`} placeholder="Ej: 20" />
+                                <label className={labelClass} htmlFor="cardDueDay">Día de Vencimiento</label>
+                                <input id="cardDueDay" required type="number" min="1" max="31" value={form.dueDay} onChange={e => setForm({ ...form, dueDay: e.target.value })} className={`${inputClass} text-center`} placeholder="Ej: 20" />
                             </div>
                         </div>
                         <div className="flex gap-3 pt-2">
@@ -569,8 +569,9 @@ function CardDetail({ card, isNewCard, currentDate, privacyMode, isGlass, househ
                                 <p className={`text-[10px] font-bold uppercase ${isGlass ? 'text-white/30' : 'text-gray-400'} ml-1`}>Datos del período</p>
 
                                 <div>
-                                    <label className={labelClass}>Total a Pagar ($)</label>
+                                    <label className={labelClass} htmlFor="statementTotalDue">Total a Pagar ($)</label>
                                     <input
+                                        id="statementTotalDue"
                                         type="text" inputMode="numeric"
                                         value={formatInputNumber(statement.totalDue)}
                                         onChange={e => setStatement({ ...statement, totalDue: parseInputNumber(e.target.value) })}
@@ -578,20 +579,20 @@ function CardDetail({ card, isNewCard, currentDate, privacyMode, isGlass, househ
                                     />
                                 </div>
                                 <div>
-                                    <label className={labelClass}>Fecha de Vencimiento</label>
-                                    <input type="date" value={statement.dueDate} onChange={e => setStatement({ ...statement, dueDate: e.target.value })} className={inputClass} />
+                                    <label className={labelClass} htmlFor="statementDueDate">Fecha de Vencimiento</label>
+                                    <input id="statementDueDate" type="date" value={statement.dueDate} onChange={e => setStatement({ ...statement, dueDate: e.target.value })} className={inputClass} />
                                 </div>
 
                                 <div className={`p-3 rounded-xl border ${isGlass ? 'bg-white/5 border-white/10' : 'bg-gray-50 border-gray-100'}`}>
                                     <p className={`text-[10px] font-bold uppercase mb-3 ${isGlass ? 'text-white/50' : 'text-gray-400'}`}>Próximo período</p>
                                     <div className="grid grid-cols-2 gap-3">
                                         <div>
-                                            <label className={labelClass}>Próximo Cierre</label>
-                                            <input type="date" value={statement.nextCloseDate} onChange={e => setStatement({ ...statement, nextCloseDate: e.target.value })} className={inputClass} />
+                                            <label className={labelClass} htmlFor="statementNextCloseDate">Próximo Cierre</label>
+                                            <input id="statementNextCloseDate" type="date" value={statement.nextCloseDate} onChange={e => setStatement({ ...statement, nextCloseDate: e.target.value })} className={inputClass} />
                                         </div>
                                         <div>
-                                            <label className={labelClass}>Próximo Vencimiento</label>
-                                            <input type="date" value={statement.nextDueDate} onChange={e => setStatement({ ...statement, nextDueDate: e.target.value })} className={inputClass} />
+                                            <label className={labelClass} htmlFor="statementNextDueDate">Próximo Vencimiento</label>
+                                            <input id="statementNextDueDate" type="date" value={statement.nextDueDate} onChange={e => setStatement({ ...statement, nextDueDate: e.target.value })} className={inputClass} />
                                         </div>
                                     </div>
                                 </div>

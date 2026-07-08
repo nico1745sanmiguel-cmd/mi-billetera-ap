@@ -157,6 +157,9 @@ export default function AgendaWidget({ agenda, currentDate, privacyMode, setView
                 <div className="px-5 py-4 border-b border-gray-50 dark:border-white/5 flex justify-between items-center bg-gray-50/50 dark:bg-transparent">
                     <h3
                         className="font-bold text-gray-800 dark:text-white text-sm flex items-center gap-2 cursor-pointer"
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => e.key === 'Enter' && setView('services_manager')}
                         onClick={() => setView('services_manager')}
                     >
                         <CalendarDays size={18} /> Agenda {currentDate.toLocaleString('es-AR', { month: 'long' })}
@@ -181,6 +184,9 @@ export default function AgendaWidget({ agenda, currentDate, privacyMode, setView
                         </div>
                         <span
                             className="text-xs font-bold text-gray-400 dark:text-white/40 cursor-pointer"
+                            role="button"
+                            tabIndex={0}
+                            onKeyDown={(e) => e.key === 'Enter' && setView('services_manager')}
                             onClick={() => setView('services_manager')}
                         >
                             Ver todo →

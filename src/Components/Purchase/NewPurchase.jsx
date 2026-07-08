@@ -150,7 +150,6 @@ export default function NewPurchase({ onSave }) {
                             onChange={(e) => setAmount(parseInputNumber(e.target.value))}
                             className={`text-5xl font-bold w-full text-center outline-none bg-transparent tracking-tighter ${isGlass ? 'text-white placeholder-white/10' : 'text-gray-800 placeholder-gray-200'}`}
                             placeholder="0"
-                            autoFocus
                         />
                     </div>
                 </div>
@@ -166,6 +165,9 @@ export default function NewPurchase({ onSave }) {
                                 {cards.map((card) => (
                                     <div
                                         key={card.id}
+                                        role="button"
+                                        tabIndex={0}
+                                        onKeyDown={(e) => e.key === 'Enter' && setSelectedCardId(card.id)}
                                         onClick={() => setSelectedCardId(card.id)}
                                         className={`flex-shrink-0 cursor-pointer border-2 rounded-2xl p-4 w-40 relative transition-all ${selectedCardId === card.id
                                             ? (isGlass ? 'border-blue-400/50 bg-blue-600/20' : 'border-blue-500 bg-blue-50')

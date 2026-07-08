@@ -94,7 +94,6 @@ export default function Login() {
               type="email"
               required
               value={email}
-              autoFocus
               onChange={e => setEmail(e.target.value)}
               className="w-full p-3.5 bg-black/20 border border-white/10 rounded-xl focus:border-white/30 focus:bg-black/30 outline-none text-white placeholder-white/20 transition-all"
               placeholder="nombre@ejemplo.com"

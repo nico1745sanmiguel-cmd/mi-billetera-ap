@@ -157,7 +157,6 @@ function ContributionModal({ person, totalTarget, monthKey, householdId, isGlass
                                 value={amount}
                                 onChange={handleAmountChange}
                                 onKeyDown={handleKeyDown}
-                                autoFocus
                                 className={`flex-1 bg-transparent font-mono font-bold text-base outline-none ${
                                     isGlass ? 'text-white placeholder-gray-600' : 'text-gray-900 placeholder-gray-300'
                                 }`}

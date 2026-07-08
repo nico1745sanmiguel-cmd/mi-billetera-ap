@@ -155,8 +155,9 @@ export default function MobilityForm({ isGlass, onSuccess, initialData = null, o
                 <h3 className={`font-bold text-sm ${isGlass ? 'text-white' : 'text-gray-700'}`}>📅 Jornada</h3>
                 <div className="grid grid-cols-3 gap-3">
                     <div className="col-span-1">
-                        <label className={labelCls}>Fecha</label>
+                        <label className={labelCls} htmlFor="mobDate">Fecha</label>
                         <input
+                            id="mobDate"
                             type="date"
                             value={form.date}
                             onChange={e => set('date', e.target.value)}
@@ -165,8 +166,9 @@ export default function MobilityForm({ isGlass, onSuccess, initialData = null, o
                         />
                     </div>
                     <div>
-                        <label className={labelCls}>Horas</label>
+                        <label className={labelCls} htmlFor="mobHours">Horas</label>
                         <CurrencyInput
+                            id="mobHours"
                             value={form.hoursWorked}
                             onChange={val => set('hoursWorked', val)}
                             placeholder="8"
@@ -175,8 +177,9 @@ export default function MobilityForm({ isGlass, onSuccess, initialData = null, o
                         />
                     </div>
                     <div>
-                        <label className={labelCls}>KM</label>
+                        <label className={labelCls} htmlFor="mobKm">KM</label>
                         <CurrencyInput
+                            id="mobKm"
                             value={form.kilometers}
                             onChange={val => set('kilometers', val)}
                             placeholder="120"
@@ -217,7 +220,7 @@ export default function MobilityForm({ isGlass, onSuccess, initialData = null, o
                                 </div>
 
                                 {/* Label */}
-                                <label className={`w-14 text-xs font-bold flex-shrink-0 ${
+                                <label htmlFor={`mob_${key}`} className={`w-14 text-xs font-bold flex-shrink-0 ${
                                     isConfirmed
                                         ? isGlass ? 'text-green-300' : 'text-green-600'
                                         : isGlass ? 'text-white/70' : 'text-gray-600'
@@ -229,6 +232,7 @@ export default function MobilityForm({ isGlass, onSuccess, initialData = null, o
                                 <div className="relative flex-1 min-w-0">
                                     <span className={`absolute start-3 top-1/2 -translate-y-1/2 text-sm font-bold ${isGlass ? 'text-white/40' : 'text-gray-300'}`}>$</span>
                                     <CurrencyInput
+                                        id={`mob_${key}`}
                                         value={form[key]}
                                         onChange={val => set(key, val)}
                                         placeholder="0"

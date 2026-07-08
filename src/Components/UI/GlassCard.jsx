@@ -4,6 +4,9 @@ const GlassCard = ({ children, className = '', onClick }) => {
     return (
         <div
             onClick={onClick}
+            role={onClick ? "button" : undefined}
+            tabIndex={onClick ? 0 : undefined}
+            onKeyDown={onClick ? (e) => e.key === 'Enter' && onClick(e) : undefined}
             className={`
         relative overflow-hidden
         bg-white/10 

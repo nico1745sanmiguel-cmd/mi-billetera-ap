@@ -78,7 +78,7 @@ function SizeMenu({ currentSize, onSelect, onClose }) {
     return (
         <>
             {/* Overlay para cerrar al tocar fuera */}
-            <div className="fixed inset-0 z-40" onTouchStart={onClose} onClick={onClose} />
+            <div className="fixed inset-0 z-40" onTouchStart={onClose} onClick={onClose} role="presentation" aria-hidden="true" />
 
             <div className="absolute top-2 right-2 z-50 animate-in fade-in zoom-in-95 duration-150">
                 <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-white/10 rounded-2xl shadow-2xl shadow-black/20 dark:shadow-black/60 p-1.5 flex flex-col gap-1 min-w-[160px]">
