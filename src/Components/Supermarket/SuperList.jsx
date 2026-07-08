@@ -16,6 +16,7 @@ import {
 } from '../../repositories/supermarketRepository';
 import { useUI } from '../../context/UIContext';
 import { analyzePurchaseFrequency } from '../../utils/purchasePrediction';
+import SupermarketAddInput from './SupermarketAddInput';
 
 // FORMATOS
 const formatInputCurrency = (val) => val ? '$ ' + Number(val).toLocaleString('es-AR') : '';
@@ -40,8 +41,7 @@ export default function SuperList() {
     const { userData } = useAuth();
     const householdId = userData?.householdId;
     const { superItems: items } = useSupermarket();
-    const [newItem, setNewItem] = useState('');
-
+    
     // ESTADO PARA ENFOCAR EL NUEVO ÍTEM AUTOMÁTICAMENTE
     const [lastAddedId, setLastAddedId] = useState(null);
     // ESTADO LETRAS 📜
@@ -139,7 +139,7 @@ export default function SuperList() {
 
     // Estado para la tarjeta de sugerencias
     const [selectedSuggestions, setSelectedSuggestions] = useState({});
-    const [showSuggestions, setShowSuggestions] = useState(true);
+    const [showSuggestions, setShowSuggestions] = useState(false);
     const [isAddingSuggestions, setIsAddingSuggestions] = useState(false);
 
     // Resetear selección cuando cambia el mes o aparecen nuevas sugerencias
@@ -223,16 +223,12 @@ export default function SuperList() {
         return { lastPrice, diff };
     };
 
-
-
-
     // --- HANDLERS ---
-    const handleAdd = async (e) => {
-        e.preventDefault();
-        if (!newItem || !auth.currentUser) return;
+    const handleAdd = async (itemName) => {
+        if (!itemName || !auth.currentUser) return;
         try {
             const docRef = await addSuperItem({
-                name: newItem,
+                name: itemName,
                 price: 0,
                 quantity: 1,
                 checked: false,
@@ -245,8 +241,7 @@ export default function SuperList() {
                 })
             });
             setLastAddedId(docRef.id);
-            setNewItem('');
-            showToast(`Agregado: ${newItem}`, async () => {
+            showToast('Agregado', async () => {
                 await deleteSuperItem(docRef.id);
             });
         } catch (error) { console.error(error); }
@@ -543,26 +538,7 @@ export default function SuperList() {
             </div>
 
             {/* INPUT ADD — FIXED BOTTOM */}
-            <div className={`fixed bottom-0 left-0 right-0 px-4 py-3 border-t z-40 ${isGlass ? 'bg-[#0f0c29]/95 border-white/10 backdrop-blur-md' : 'bg-white/95 border-gray-100 backdrop-blur-sm'}`}>
-                <form onSubmit={handleAdd} className="flex gap-2 max-w-5xl mx-auto">
-                    <div className={`flex-1 rounded-[30px] flex items-center px-4 border focus-within:border-purple-500 transition-all shadow-sm ${isGlass ? 'bg-white/10 border-white/10 focus-within:bg-white/20' : 'bg-gray-100 border-transparent focus-within:bg-white'}`}>
-                        <input
-                            type="text"
-                            className={`w-full bg-transparent outline-none text-sm font-bold py-3 ${isGlass ? 'text-white placeholder-white/30' : 'text-gray-800'}`}
-                            placeholder="¿Qué falta comprar?"
-                            value={newItem}
-                            onChange={(e) => setNewItem(e.target.value)}
-                        />
-                    </div>
-                    <button
-                        type="submit"
-                        disabled={!newItem}
-                        className="bg-purple-600 text-white w-12 h-12 rounded-[24px] flex items-center justify-center shadow-lg shadow-purple-200 active:scale-95 disabled:opacity-50 transition-all flex-shrink-0"
-                    >
-                        <Plus size={24} />
-                    </button>
-                </form>
-            </div>
+            <SupermarketAddInput onAdd={handleAdd} />
         </>
     );
 }
