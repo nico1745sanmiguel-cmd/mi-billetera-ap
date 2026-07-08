@@ -4,6 +4,7 @@ import { useFinancial } from '../../context/FinancialContext';
 import { Plus, Wallet, ArrowRightLeft, TrendingUp } from 'lucide-react';
 import SavingsCard from './SavingsCard';
 import AddSavingsModal from './AddSavingsModal';
+import SavingsGoal from './SavingsGoal';
 import { useUI } from '../../context/UIContext';
 
 export default function SavingsDashboard({ onBack }) {
@@ -159,6 +160,9 @@ export default function SavingsDashboard({ onBack }) {
             </div>
 
             {/* COTIZACIONES MANUALES (Removido a petición del usuario) */}
+
+            {/* OBJETIVO DE AHORRO */}
+            <SavingsGoal />
 
             {/* CARTERAS LIST */}
             <div className="space-y-4">
