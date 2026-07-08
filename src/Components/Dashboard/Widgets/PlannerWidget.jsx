@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { LayoutList, Circle, CheckCircle2 } from 'lucide-react';
+import { LayoutList, Circle } from 'lucide-react';
 import { useSupermarket } from '../../../context/SupermarketContext';
 import { useUI } from '../../../context/UIContext';
 import { formatMoney } from '../../../utils';
@@ -27,11 +27,11 @@ export default function PlannerWidget({ setView, size }) {
         return activeItems.filter(item => !item.completed);
     }, [activeItems]);
 
-    const { spent, planned } = useMemo(() => {
-        const spent = activeItems.reduce((acc, t) => t.completed ? acc + (t.total || 0) : acc, 0);
-        const planned = activeItems.reduce((acc, t) => acc + (parseFloat(t.estimatedPrice || 0) * (t.quantity || 1)), 0);
-        return { spent, planned };
-    }, [activeItems]);
+    const faltante = useMemo(() => {
+        // En PlannerSection, total = budget (si está pendiente) o real (si está completo)
+        // Lo que falta gastar es la suma de los "totales" (presupuestos) de los pendientes
+        return pendingItems.reduce((acc, t) => acc + (t.total || 0), 0);
+    }, [pendingItems]);
 
     // ---- MODO COMPACTO (Opción B) ----
     if (size === 'compact') {
@@ -50,7 +50,7 @@ export default function PlannerWidget({ setView, size }) {
                 </div>
                 <div>
                     <p className="font-bold text-gray-800 dark:text-white text-sm">Planificador</p>
-                    <p className="text-[10px] text-indigo-600 dark:text-indigo-400 font-medium leading-tight mt-0.5">
+                    <p className="text-[10px] text-indigo-600 dark:text-indigo-400 font-medium leading-tight mt-0.5 whitespace-nowrap">
                         {pendingItems.length > 0 ? `Faltan ${pendingItems.length} tareas` : 'Todo al día 🎉'}
                     </p>
                 </div>
@@ -80,21 +80,21 @@ export default function PlannerWidget({ setView, size }) {
             className="h-full bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-900/30 dark:to-blue-900/30 border border-indigo-200 dark:border-indigo-500/20 p-4 rounded-[24px] cursor-pointer hover:shadow-md transition-all flex flex-col justify-between group shadow-sm dark:backdrop-blur-md"
             onClick={() => setView('fresh')}
         >
-            {/* Header: Titulo y Gastado */}
-            <div className="flex justify-between items-start mb-3">
+            {/* Header: Titulo y Faltante */}
+            <div className="flex justify-between items-start mb-3 gap-2">
                 <div className="flex items-center gap-3">
-                    <div className="bg-indigo-100 text-indigo-600 dark:bg-indigo-500/30 dark:text-indigo-300 p-2.5 rounded-xl transition-transform group-hover:scale-105">
+                    <div className="bg-indigo-100 text-indigo-600 dark:bg-indigo-500/30 dark:text-indigo-300 p-2.5 rounded-xl transition-transform group-hover:scale-105 shrink-0">
                         <LayoutList size={20} />
                     </div>
-                    <div>
-                        <p className="font-bold text-gray-800 dark:text-white text-sm leading-none mb-1">Planificador</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                            Gastado: <span className="font-semibold text-gray-700 dark:text-gray-200">${formatMoney(spent)}</span>
+                    <div className="min-w-0">
+                        <p className="font-bold text-gray-800 dark:text-white text-sm leading-none mb-1 truncate">Planificador</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                            Faltan: <span className="font-semibold text-gray-700 dark:text-gray-200">{formatMoney(faltante)}</span>
                         </p>
                     </div>
                 </div>
                 {pendingItems.length > 0 && (
-                    <span className="bg-indigo-100 text-indigo-700 dark:bg-indigo-500/30 dark:text-indigo-300 text-[10px] px-2 py-1 rounded-full font-bold">
+                    <span className="bg-indigo-100 text-indigo-700 dark:bg-indigo-500/30 dark:text-indigo-300 text-[10px] px-2 py-1 rounded-full font-bold whitespace-nowrap shrink-0">
                         {pendingItems.length} tareas
                     </span>
                 )}
@@ -105,8 +105,8 @@ export default function PlannerWidget({ setView, size }) {
                 {topPending.length > 0 ? (
                     topPending.map(item => (
                         <div key={item.id} className="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300 bg-white/60 dark:bg-black/20 p-2 rounded-xl border border-white/40 dark:border-white/5">
-                            <Circle size={12} className="text-gray-400 dark:text-gray-500 min-w-[12px]" />
-                            <span className="truncate">{item.name}</span>
+                            <Circle size={12} className="text-gray-400 dark:text-gray-500 min-w-[12px] shrink-0" />
+                            <span className="truncate">{item.note || 'Sin descripción'}</span>
                         </div>
                     ))
                 ) : (
@@ -127,7 +127,6 @@ export default function PlannerWidget({ setView, size }) {
                             className="flex-1 flex flex-col items-center gap-1 bg-white/70 dark:bg-white/5 py-1.5 rounded-[14px] border border-white/50 dark:border-white/5 hover:bg-white dark:hover:bg-white/10 transition-colors relative"
                             onClick={(e) => {
                                 e.stopPropagation(); // Evita que se dispare el click general
-                                // Podríamos añadir hash si FreshShop lo soporta en el futuro
                                 setView('fresh');
                             }}
                         >
