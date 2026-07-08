@@ -1,5 +1,5 @@
 import React, { useMemo, useEffect, useState, memo, useCallback } from 'react';
-import { Users, LogOut, AlertCircle, BarChart3, Moon, RefreshCw, Bell, TrendingUp, Puzzle } from 'lucide-react';
+import { Users, LogOut, AlertCircle, Moon, RefreshCw, Bell, TrendingUp, Puzzle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { db, auth } from '../../firebase';
 import { doc, updateDoc, arrayUnion, arrayRemove, addDoc, collection } from 'firebase/firestore';
@@ -226,7 +226,17 @@ const Home = memo(({ onLogout, notifications = [], onCardClick }) => {
     const WIDGETS = {
         ...(isModuleEnabled('planner') ? { target: (
             <div className={`transition-all duration-300 ${privacyMode ? 'opacity-50 blur-sm pointer-events-none select-none' : 'opacity-100'}`}>
-                <FinancialTarget totalNeed={totalNeed} totalPaid={totalPaid} privacyMode={privacyMode} />
+                <FinancialTarget
+                    totalNeed={totalNeed}
+                    totalPaid={totalPaid}
+                    privacyMode={privacyMode}
+                    services={services}
+                    cardsWithDebt={cardsWithDebt}
+                    superData={superEnabled ? superData : null}
+                    targetMonthKey={targetMonthKey}
+                    showStats={isModuleEnabled('stats')}
+                    onNavigateStats={() => navigate('/stats')}
+                />
                 {privacyMode && <div className="absolute inset-0 flex items-center justify-center font-bold text-gray-500 z-10">Vista Privada</div>}
             </div>
         ) } : {}),
@@ -290,20 +300,7 @@ const Home = memo(({ onLogout, notifications = [], onCardClick }) => {
                 })}
             </div>
 
-            {isModuleEnabled('stats') && (
-                <button onClick={() => navigate('/stats')} className="w-full h-20 mx-1 rounded-2xl relative overflow-hidden group shadow-lg shadow-indigo-200 active:scale-95 transition-all">
-                    <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 bg-[length:200%_auto] animate-gradient-x opacity-90 group-hover:opacity-100 transition-opacity"></div>
-                    <div className="relative z-10 flex flex-col items-center justify-center h-full text-white gap-1">
-                        <div className="flex items-center gap-2">
-                            <div className="bg-white/20 p-1.5 rounded-full backdrop-blur-sm">
-                                <BarChart3 size={16} />
-                            </div>
-                            <span className="font-bold text-base tracking-wide">Ver Análisis Completo</span>
-                        </div>
-                        <span className="text-[10px] opacity-80 uppercase tracking-widest font-medium">Estadísticas & Proyecciones</span>
-                    </div>
-                </button>
-            )}
+
 
             <button
                 onClick={onToggleTheme}
