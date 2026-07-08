@@ -185,7 +185,7 @@ export default function SuperList() {
     // 4. CÁLCULOS
     const totals = useMemo(() => {
         const estimated = monthlyList.reduce((acc, i) => acc + (i.price * i.quantity), 0);
-        const real = monthlyList.filter(i => i.checked).reduce((acc, i) => acc + (i.price * i.quantity), 0);
+        const real = monthlyList.reduce((acc, i) => i.checked ? acc + (i.price * i.quantity) : acc, 0);
         const count = monthlyList.length;
         const checkedCount = monthlyList.filter(i => i.checked).length;
         return { estimated, real, count, checkedCount };
@@ -372,7 +372,7 @@ export default function SuperList() {
                 {/* ÍNDICE ALFABÉTICO (Chips horizontales seguros) */}
                 <style>{`.hide-scrollbar::-webkit-scrollbar { display: none; }`}</style>
                 <div className="flex gap-2 overflow-x-auto mt-4 pb-1 snap-x hide-scrollbar" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-                    {[...new Set(monthlyList.filter(i => !i.checked && i.name).map(i => (i.name[0] || '?').toUpperCase()))].sort().map(letter => (
+                    {[...new Set(monthlyList.flatMap(i => !i.checked && i.name ? [(i.name[0] || '?').toUpperCase()] : []))].sort().map(letter => (
                         <button
                             key={letter}
                             type="button"

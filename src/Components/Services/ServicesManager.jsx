@@ -68,7 +68,7 @@ export default function ServicesManager({ onBack }) {
     const cardServices = useMemo(() => {
         const targetMonthVal = currentDate.getFullYear() * 12 + currentDate.getMonth();
 
-        return cards.map(c => {
+        return cards.flatMap(c => {
             const manualAmount = c.monthlyStatements?.[currentMonthKey]?.totalDue ?? c.adjustments?.[currentMonthKey];
             let debt = 0;
             if (manualAmount !== undefined) {
@@ -88,12 +88,12 @@ export default function ServicesManager({ onBack }) {
                     }, 0);
             }
 
-            if (debt === 0 && manualAmount === undefined) return null;
+            if (debt === 0 && manualAmount === undefined) return [];
 
             const isPaid = c.paidPeriods?.includes(currentMonthKey);
 
-            return { id: c.id, name: c.name, amount: debt, day: c.dueDay || 10, isPaid, type: 'card', bank: c.bank, frequency: 'Mensual', isManual: manualAmount !== undefined, isShared: c.isShared };
-        }).filter(Boolean);
+            return [{ id: c.id, name: c.name, amount: debt, day: c.dueDay || 10, isPaid, type: 'card', bank: c.bank, frequency: 'Mensual', isManual: manualAmount !== undefined, isShared: c.isShared }];
+        });
     }, [cards, transactions, currentMonthKey, currentDate]);
 
     const allItems = useMemo(() => {
@@ -234,7 +234,8 @@ export default function ServicesManager({ onBack }) {
         }
         if (isModuleEnabled('planner')) {
             const monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
-            freshItems.filter(fi => fi.month === monthKey && fi.date).forEach(fi => {
+            freshItems.forEach(fi => {
+                if (!(fi.month === monthKey && fi.date)) return;
                 const day = parseInt(fi.date.split('-')[2]);
                 if (!day || day < 1 || day > 31) return;
                 if (!map[day]) map[day] = [];

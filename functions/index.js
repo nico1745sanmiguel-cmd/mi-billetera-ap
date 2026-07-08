@@ -49,7 +49,7 @@ exports.analyzeReceipt = functions.https.onCall(async (data, context) => {
         throw new functions.https.HttpsError('invalid-argument', 'Faltan parámetros: base64Image o expectedItems');
     }
 
-    const expectedNames = expectedItems.map(i => i.name).filter(Boolean).join(', ');
+    const expectedNames = expectedItems.flatMap(i => i.name ? [i.name] : []).join(', ');
     
     const promptText = `Sos un experto asistente contable. Analizá este ticket de supermercado de la imagen. 
 Tengo esta lista de productos que yo anoté: [${expectedNames}].

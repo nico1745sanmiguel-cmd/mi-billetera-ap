@@ -15,7 +15,7 @@ export default function MobilityExpenses({ isGlass, month, year }) {
     const { addExpense, deleteExpense } = useMobilityDispatch();
 
     const activeCategories = useMemo(() => {
-        return (settings?.expenseCategories || []).filter(c => c.active).map(c => ({
+        return (settings?.expenseCategories || []).flatMap(c => c.active ? [{
             key: c.id,
             label: c.label,
             icon: ICONS[c.iconName] || Tag,
@@ -27,7 +27,7 @@ export default function MobilityExpenses({ isGlass, month, year }) {
             bg: 'bg-gray-50',
             text: 'text-gray-700',
             ring: 'ring-gray-300'
-        }));
+        }] : []);
     }, [settings?.expenseCategories]);
 
     // La primera categoría non-gnc, para usarla como default
@@ -91,7 +91,7 @@ export default function MobilityExpenses({ isGlass, month, year }) {
         });
         return cats.map(cat => ({
             ...cat,
-            total: monthExpenses.filter(e => e.category === cat.key).reduce((a, e) => a + (e.amount || 0), 0),
+            total: monthExpenses.reduce((a, e) => e.category === cat.key ? a + (e.amount || 0) : a, 0),
         }));
     }, [monthExpenses, activeCategories, settings?.expenseCategories]);
 
@@ -191,7 +191,7 @@ export default function MobilityExpenses({ isGlass, month, year }) {
                         <div className="text-left">
                             <p className={`text-sm font-bold ${text}`}>Otros gastos</p>
                             <p className={`text-xs ${sub}`}>
-                                {activeCategories.filter(c => c.key !== 'gnc').map(c => c.label).join(' · ') || 'Sin categorías activas'}
+                                {activeCategories.flatMap(c => c.key !== 'gnc' ? [c.label] : []).join(' · ') || 'Sin categorías activas'}
                             </p>
                         </div>
                     </div>
@@ -209,10 +209,11 @@ export default function MobilityExpenses({ isGlass, month, year }) {
                                 </p>
                             ) : (
                                 <div className="grid grid-cols-3 gap-2">
-                                    {activeCategories.filter(c => c.key !== 'gnc').map(cat => {
+                                    {activeCategories.flatMap(cat => {
+                                        if (cat.key === 'gnc') return [];
                                         const Icon = cat.icon;
                                         const active = fullForm.category === cat.key;
-                                        return (
+                                        return [(
                                             <button
                                                 key={cat.key}
                                                 type="button"
@@ -230,7 +231,7 @@ export default function MobilityExpenses({ isGlass, month, year }) {
                                                 <Icon size={16} />
                                                 {cat.label}
                                             </button>
-                                        );
+                                        )];
                                     })}
                                 </div>
                             )}

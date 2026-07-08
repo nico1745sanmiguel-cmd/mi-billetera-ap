@@ -72,9 +72,7 @@ export default function FreshShop() {
 
             // Buscar todos los meses pasados que tienen ítems de esta categoría
             const pastMonths = [...new Set(
-                activeItems
-                    .filter(t => t.category === cat.id && t.month < currentMonthKey)
-                    .map(t => t.month)
+                activeItems.flatMap(t => t.category === cat.id && t.month < currentMonthKey ? [t.month] : [])
             )].sort().reverse(); // más reciente primero
 
             if (pastMonths.length === 0) {
@@ -99,7 +97,7 @@ export default function FreshShop() {
 
     const totals = useMemo(() => {
         const monthItems = activeItems.filter(t => t.month === currentMonthKey);
-        const spent = monthItems.filter(t => t.completed).reduce((acc, t) => acc + (t.total || 0), 0);
+        const spent = monthItems.reduce((acc, t) => t.completed ? acc + (t.total || 0) : acc, 0);
         const budget = monthItems.reduce((acc, t) => acc + (t.total || 0), 0);
         return { spent, budget };
     }, [activeItems, currentMonthKey]);

@@ -38,11 +38,13 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames
-          .filter((name) => name !== STATIC_CACHE && name !== ASSETS_CACHE)
-          .map((name) => {
-            console.log('[SW] Eliminando caché viejo:', name);
-            return caches.delete(name);
-          })
+          .reduce((acc, name) => {
+            if (name !== STATIC_CACHE && name !== ASSETS_CACHE) {
+              console.log('[SW] Eliminando caché viejo:', name);
+              acc.push(caches.delete(name));
+            }
+            return acc;
+          }, [])
       );
     }).then(() => {
       // Tomar control de todos los tabs abiertos inmediatamente

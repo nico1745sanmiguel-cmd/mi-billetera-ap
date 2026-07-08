@@ -255,19 +255,19 @@ export default function SharedExpensesDashboard({ onBack }) {
 
     // 1. OBTENER ITEMS COMPARTIDOS
     const sharedItems = useMemo(() => {
-        const sharedServices = services.filter(s => s.isShared !== false).map(s => ({
+        const sharedServices = services.flatMap(s => s.isShared !== false ? [{
             ...s, type: 'service',
             icon: <Lightbulb size={16} className="text-yellow-400" />
-        }));
+        }] : []);
 
         const allCardsWithDebt = buildCardsWithDebt(cards, transactions, currentMonthKey, targetMonthVal);
-        const sharedCards = allCardsWithDebt
-            .filter(c => c.isShared !== false && c.currentDebt > 0)
-            .map(c => ({
+        const sharedCards = allCardsWithDebt.flatMap(c => 
+            c.isShared !== false && c.currentDebt > 0 ? [{
                 id: c.id, name: c.name, amount: c.currentDebt,
                 day: c.dueDay || 10, type: 'card',
                 icon: <CreditCard size={16} className="text-indigo-400" />
-            }));
+            }] : []
+        );
 
         const sharedSuperItems = supermarketItems.filter(i => i.month === currentMonthKey && i.isShared !== false);
         const superTotal = sharedSuperItems.reduce((acc, i) => acc + (Number(i.price) * Number(i.quantity)), 0);

@@ -76,19 +76,22 @@ export default function Stats() {
 
     // A. Transacciones del Mes
     const monthlyTransactions = useMemo(() => {
-        return transactions.filter(filterByScope).filter(t => {
+        return transactions.flatMap(t => {
+            if (!filterByScope(t)) return [];
             const tDate = new Date(t.date);
             const tLocal = new Date(tDate.valueOf() + tDate.getTimezoneOffset() * 60000);
             if (t.type === 'cash') {
-                return tLocal.getMonth() === currentDate.getMonth() && tLocal.getFullYear() === currentDate.getFullYear();
+                if (!(tLocal.getMonth() === currentDate.getMonth() && tLocal.getFullYear() === currentDate.getFullYear())) return [];
+            } else {
+                const startMonthVal = tLocal.getFullYear() * 12 + tLocal.getMonth();
+                const endMonthVal = startMonthVal + (t.installments || 1);
+                if (!(targetMonthVal >= startMonthVal && targetMonthVal < endMonthVal)) return [];
             }
-            const startMonthVal = tLocal.getFullYear() * 12 + tLocal.getMonth();
-            const endMonthVal = startMonthVal + (t.installments || 1);
-            return targetMonthVal >= startMonthVal && targetMonthVal < endMonthVal;
-        }).map(t => ({
-            ...t,
-            displayAmount: t.type === 'cash' ? t.amount : t.monthlyInstallment
-        }));
+            return [{
+                ...t,
+                displayAmount: t.type === 'cash' ? t.amount : t.monthlyInstallment
+            }];
+        });
     }, [transactions, currentDate, targetMonthVal, expenseScope]);
 
     const cashTransactions = useMemo(() => monthlyTransactions.filter(t => t.type === 'cash'), [monthlyTransactions]);
@@ -96,7 +99,8 @@ export default function Stats() {
 
     // B. Tarjetas
     const cardsStatus = useMemo(() => {
-        return cards.filter(filterByScope).map(c => {
+        return cards.flatMap(c => {
+            if (!filterByScope(c)) return [];
             let debt = 0;
             let cardTransactions = [];
             const manualDebt = c.monthlyStatements?.[currentMonthKey]?.totalDue ?? c.adjustments?.[currentMonthKey];
@@ -108,8 +112,8 @@ export default function Stats() {
                 cardTransactions = monthlyTransactions.filter(t => t.cardId === c.id);
                 debt = cardTransactions.reduce((acc, t) => acc + t.displayAmount, 0);
             }
-            return { ...c, currentMonthDebt: debt, details: cardTransactions };
-        }).filter(c => c.currentMonthDebt > 0).sort((a, b) => b.currentMonthDebt - a.currentMonthDebt);
+            return debt > 0 ? [{ ...c, currentMonthDebt: debt, details: cardTransactions }] : [];
+        }).sort((a, b) => b.currentMonthDebt - a.currentMonthDebt);
     }, [cards, monthlyTransactions, currentMonthKey, expenseScope]);
     
     const cardsTotalDebt = cardsStatus.reduce((acc, c) => acc + c.currentMonthDebt, 0);
@@ -143,12 +147,14 @@ export default function Stats() {
         const nextMonthKey = `${nextMonth.getFullYear()}-${String(nextMonth.getMonth() + 1).padStart(2, '0')}`;
 
         let total = 0;
-        cards.filter(filterByScope).forEach(c => {
+        cards.forEach(c => {
+            if (!filterByScope(c)) return;
             const manualNextValue = c.monthlyStatements?.[nextMonthKey]?.totalDue ?? c.adjustments?.[nextMonthKey];
             if (manualNextValue !== undefined) {
                 total += manualNextValue;
             } else {
-                const cardDebt = transactions.filter(t => t.cardId === c.id && t.type !== 'cash').reduce((acc, t) => {
+                const cardDebt = transactions.reduce((acc, t) => {
+                    if (t.cardId !== c.id || t.type === 'cash') return acc;
                     const tDate = new Date(t.date);
                     const tLocal = new Date(tDate.valueOf() + tDate.getTimezoneOffset() * 60000);
                     const startVal = tLocal.getFullYear() * 12 + tLocal.getMonth();
@@ -189,7 +195,7 @@ export default function Stats() {
                 if (!categoryMap[catName]) categoryMap[catName] = { value: 0, color: '#10b981', icon: Apple };
                 categoryMap[catName].value += Number(i.total || 0);
             });
-            return Object.entries(categoryMap).map(([name, data]) => ({ name, ...data })).filter(d => d.value > 0).sort((a, b) => b.value - a.value);
+            return Object.entries(categoryMap).flatMap(([name, data]) => data.value > 0 ? [{ name, ...data }] : []).sort((a, b) => b.value - a.value);
         }
 
         if (filter === 'cards_services') {

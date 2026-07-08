@@ -45,12 +45,15 @@ export default function MobilityStats({ isGlass, privacyMode, month, year }) {
         const avgPerHour    = totalHours > 0 ? totalEarnings / totalHours : 0;
         const avgPerKm      = totalKm    > 0 ? totalEarnings / totalKm    : 0;
 
-        const activePlats = Object.keys(settings?.activePlatforms || { uber: true, didi: true, cabify: true, others: true }).filter(k => settings?.activePlatforms[k]);
-        const platforms = activePlats.map(key => ({
-            key,
-            label: key === 'others' ? 'Otros' : key.charAt(0).toUpperCase() + key.slice(1),
-            total: filtered.reduce((a, s) => a + (s[key] || 0), 0),
-        })).filter(p => p.total > 0);
+        const platforms = Object.keys(settings?.activePlatforms || { uber: true, didi: true, cabify: true, others: true }).reduce((acc, key) => {
+            if (settings?.activePlatforms[key]) {
+                const total = filtered.reduce((a, s) => a + (s[key] || 0), 0);
+                if (total > 0) {
+                    acc.push({ key, label: key === 'others' ? 'Otros' : key.charAt(0).toUpperCase() + key.slice(1), total });
+                }
+            }
+            return acc;
+        }, []);
 
         // Calcula la fecha del inicio real de la semana (YYYY-MM-DD) según el día configurado.
         // Ej: si startDay=2 (martes) y la fecha es un jueves, retorna el martes anterior.
@@ -89,11 +92,17 @@ export default function MobilityStats({ isGlass, privacyMode, month, year }) {
 
         // Gastos del mes por categoría (usando las de settings)
         const cats = settings?.expenseCategories || [];
-        const expenseByCategory = cats.map(cat => ({
-            ...cat,
-            icon: cat.iconName === 'Zap' ? Zap : cat.iconName === 'Fuel' ? Fuel : cat.iconName === 'Wrench' ? Wrench : cat.iconName === 'Droplets' ? Droplets : Zap,
-            total: filteredExpenses.filter(e => e.category === cat.id).reduce((a, e) => a + (e.amount || 0), 0),
-        })).filter(c => c.total > 0);
+        const expenseByCategory = cats.flatMap(cat => {
+            const total = filteredExpenses.reduce((a, e) => e.category === cat.id ? a + (e.amount || 0) : a, 0);
+            if (total > 0) {
+                return [{
+                    ...cat,
+                    icon: cat.iconName === 'Zap' ? Zap : cat.iconName === 'Fuel' ? Fuel : cat.iconName === 'Wrench' ? Wrench : cat.iconName === 'Droplets' ? Droplets : Zap,
+                    total
+                }];
+            }
+            return [];
+        });
 
         const totalExpenses = filteredExpenses.reduce((a, e) => a + (e.amount || 0), 0);
         const netEarnings   = totalEarnings - totalExpenses;
@@ -109,12 +118,8 @@ export default function MobilityStats({ isGlass, privacyMode, month, year }) {
             while (m < 0)  { m += 12; y--; }
             while (m > 11) { m -= 12; y++; }
             const key = `${y}-${String(m + 1).padStart(2, '0')}`;
-            const total = sessions
-                .filter(s => s.date?.startsWith(key))
-                .reduce((a, s) => a + (s.total || 0), 0);
-            const gastos = (expenses || [])
-                .filter(e => e.date?.startsWith(key))
-                .reduce((a, e) => a + (e.amount || 0), 0);
+            const total = sessions.reduce((a, s) => s.date?.startsWith(key) ? a + (s.total || 0) : a, 0);
+            const gastos = (expenses || []).reduce((a, e) => e.date?.startsWith(key) ? a + (e.amount || 0) : a, 0);
             return { label: MONTHS[m].slice(0, 3), total, gastos, key };
         });
     }, [sessions, expenses, month, year]);

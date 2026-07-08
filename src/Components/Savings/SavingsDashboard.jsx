@@ -48,12 +48,11 @@ export default function SavingsDashboard({ onBack }) {
         });
         
         // Limpiar balances en 0 y formatear en array para mapeo
-        const formatted = Object.keys(result).map(cartera => {
+        const formatted = Object.keys(result).flatMap(cartera => {
             const items = Object.keys(result[cartera])
-                .map(especie => ({ especie, cantidad: result[cartera][especie] }))
-                .filter(item => item.cantidad !== 0);
-            return { cartera, items };
-        }).filter(c => c.items.length > 0);
+                .flatMap(especie => result[cartera][especie] !== 0 ? [{ especie, cantidad: result[cartera][especie] }] : []);
+            return items.length > 0 ? [{ cartera, items }] : [];
+        });
 
         return formatted;
     }, [savingsTransactions]);

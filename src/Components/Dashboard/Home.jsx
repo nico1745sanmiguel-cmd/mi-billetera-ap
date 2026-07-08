@@ -326,7 +326,7 @@ const Home = memo(({ onLogout, notifications = [], onCardClick }) => {
 
     const agenda = useMemo(() => {
         const realServices = services.map(s => ({ id: s.id, name: s.name, amount: s.amount, day: s.day, isPaid: s.paidPeriods?.includes(targetMonthKey) || false, type: 'service' }));
-        const cardServices = cardsWithDebt.filter(c => c.currentDebt > 0).map(c => ({
+        const cardServices = cardsWithDebt.flatMap(c => c.currentDebt > 0 ? [{
             id: c.id,
             name: c.name,
             amount: c.currentDebt,
@@ -334,7 +334,7 @@ const Home = memo(({ onLogout, notifications = [], onCardClick }) => {
             isPaid: c.paidPeriods?.includes(targetMonthKey) || false,
             type: 'card_item',
             bank: c.bank
-        }));
+        }] : []);
 
         return [...realServices, ...cardServices]
             .sort((a, b) => a.day - b.day)
