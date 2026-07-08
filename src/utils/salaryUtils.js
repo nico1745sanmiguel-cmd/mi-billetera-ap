@@ -13,7 +13,7 @@
  */
 export const getLatestSalary = (salaryHistory) => {
     if (!salaryHistory || salaryHistory.length === 0) return 0;
-    const sorted = [...salaryHistory].sort((a, b) => new Date(b.date) - new Date(a.date));
+    const sorted = salaryHistory.toSorted((a, b) => new Date(b.date) - new Date(a.date));
     return Number(sorted[0].amount) || 0;
 };
 

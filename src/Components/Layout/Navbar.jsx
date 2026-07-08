@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BarChart3, Plus, CreditCard, Eye, EyeOff, TrendingUp, Car, Puzzle } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { isModuleEnabled } from '../Settings/ModulesSettings';
+import { isModuleEnabled } from '../../utils/modulesUtils';
 
 export default function Navbar({ privacyMode, setPrivacyMode }) {
   // Re-render cuando el usuario activa/desactiva módulos (localStorage puede cambiar)

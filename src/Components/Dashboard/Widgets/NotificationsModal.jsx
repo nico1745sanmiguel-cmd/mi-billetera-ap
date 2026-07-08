@@ -38,7 +38,7 @@ export default function NotificationsModal({ notifications, user, privacyMode, s
                                                 {privacyMode ? '****' : formatMoney(n.amount)}
                                             </p>
                                             <div className="text-[10px] text-gray-400 dark:text-white/40 mt-3 flex justify-between items-center border-t border-gray-100 dark:border-white/5 pt-2">
-                                                <span>{new Date(n.createdAt?.toMillis() || Date.now()).toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' })}</span>
+                                                <span>{n.createdAt ? new Date(n.createdAt.toMillis()).toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' }) : 'Reciente'}</span>
                                                 {!isRead && (
                                                     <button type="button" 
                                                         onClick={() => handleMarkAsRead(n.id)}

@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useSavings } from '../../context/SavingsContext';
 import { useFinancial } from '../../context/FinancialContext';
 import { Plus, Wallet, ArrowRightLeft, TrendingUp } from 'lucide-react';
@@ -7,29 +7,23 @@ import AddSavingsModal from './AddSavingsModal';
 import SavingsGoal from './SavingsGoal';
 import { useUI } from '../../context/UIContext';
 
-export default function SavingsDashboard({ onBack }) {
+const arsFormatter = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 });
+const usdFormatter = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+
+export default function SavingsDashboard() {
     const { isGlass, privacyMode } = useUI();
     const { savingsTransactions } = useSavings();
     const { dolarBlue } = useFinancial();
     const [showAddModal, setShowAddModal] = useState(false);
     const [currencyView, setCurrencyView] = useState('ARS'); // 'ARS' or 'USD'
-    const [customQuotes, setCustomQuotes] = useState({});
-
-    // Cargar cotizaciones personalizadas guardadas
-    useEffect(() => {
-        const saved = localStorage.getItem('savings_custom_quotes');
+    const [customQuotes] = useState(() => {
+        const saved = localStorage.getItem('savings_custom_quotes:v1');
         if (saved) {
-            try { setCustomQuotes(JSON.parse(saved)); } catch (e) {}
+            try { return JSON.parse(saved); } catch (e) { console.warn(e); }
         }
-    }, []);
+        return {};
+    });
 
-    const updateCustomQuote = (especie, value) => {
-        // Reemplazar coma por punto para evitar que parseFloat falle
-        const cleanValue = value.replace(',', '.');
-        const updated = { ...customQuotes, [especie]: cleanValue };
-        setCustomQuotes(updated);
-        localStorage.setItem('savings_custom_quotes', JSON.stringify(updated));
-    };
 
     // 1. Calcular balances agrupados por cartera y especie
     const balances = useMemo(() => {
@@ -57,15 +51,6 @@ export default function SavingsDashboard({ onBack }) {
         return formatted;
     }, [savingsTransactions]);
 
-    // 2. Extraer especies "raras" (que no son ARS ni USD)
-    const rareSpecies = useMemo(() => {
-        const speciesSet = new Set();
-        balances.forEach(c => c.items.forEach(i => {
-            const es = i.especie.toUpperCase();
-            if (es !== 'ARS' && es !== 'USD') speciesSet.add(es);
-        }));
-        return Array.from(speciesSet);
-    }, [balances]);
 
     // 3. Calcular Total General
     const total = useMemo(() => {
@@ -102,11 +87,7 @@ export default function SavingsDashboard({ onBack }) {
 
     const formatCurrency = (amount, currency) => {
         if (privacyMode) return '****';
-        return new Intl.NumberFormat('es-AR', {
-            style: 'currency',
-            currency: currency,
-            maximumFractionDigits: 0
-        }).format(amount);
+        return currency === 'USD' ? usdFormatter.format(amount) : arsFormatter.format(amount);
     };
 
     const textColor = isGlass ? 'text-white' : 'text-gray-800';
@@ -185,8 +166,6 @@ export default function SavingsDashboard({ onBack }) {
                                 items={carteraData.items}
                                 isGlass={isGlass}
                                 privacyMode={privacyMode}
-                                dolarBlue={dolarBlue}
-                                customQuotes={customQuotes}
                             />
                         ))}
                     </div>

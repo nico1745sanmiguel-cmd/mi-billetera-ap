@@ -6,7 +6,7 @@ import { useSupermarket } from '../../context/SupermarketContext';
 import { useServices } from '../../context/ServicesContext';
 import { collection, addDoc, deleteDoc, doc, updateDoc, setDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { formatMoney } from '../../utils';
-import { isModuleEnabled } from '../Settings/ModulesSettings';
+import { isModuleEnabled } from '../../utils/modulesUtils';
 import { useUI } from '../../context/UIContext';
 
 import RepartoPanel from './RepartoPanel';
@@ -38,7 +38,7 @@ const daysOfWeek = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
  * @param {Function} props.onBack - Callback para regresar a la vista anterior.
  * @returns {JSX.Element}
  */
-export default function ServicesManager({ onBack }) {
+export default function ServicesManager() {
     const { currentDate, privacyMode, isGlass } = useUI();
     const { userData } = useAuth();
     const householdId = userData?.householdId;
@@ -128,7 +128,7 @@ export default function ServicesManager({ onBack }) {
             if (a.isPaid !== b.isPaid) return a.isPaid ? 1 : -1;
             return a.day - b.day;
         });
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+         
     }, [services, cardServices, currentMonthKey, currentDate]);
 
     const weeklyData = useMemo(() => {

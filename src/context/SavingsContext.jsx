@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useMemo, useCall
 import { db } from '../firebase';
 import {
     collection, onSnapshot, query, where, addDoc, serverTimestamp,
-    doc, setDoc, deleteDoc, getDocs, limit
+    doc, setDoc, deleteDoc, limit
 } from 'firebase/firestore';
 import { useAuth } from './AuthContext';
 import { getCache, setCache } from '../utils/cache';

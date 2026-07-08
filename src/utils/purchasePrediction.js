@@ -56,7 +56,7 @@ export const analyzePurchaseFrequency = (allItems, currentMonthKey) => {
         if (itemGroup.length < 2) continue;
 
         // Ordenar por mes
-        const sorted = [...itemGroup].sort((a, b) => a.month.localeCompare(b.month));
+        const sorted = itemGroup.toSorted((a, b) => a.month.localeCompare(b.month));
 
         // Calcular intervalos entre compras consecutivas
         const gaps = [];

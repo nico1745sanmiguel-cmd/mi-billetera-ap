@@ -63,7 +63,7 @@ export const updateFreshDate = (id, date) =>
  * @returns {Promise<void>}
  */
 export const copyItemsToMonth = (items, newMonthKey) => {
-    const promises = items.map(({ id, createdAt, completed, date, ...rest }) => {
+    const promises = items.map(({ id: _id, createdAt: _createdAt, completed: _completed, date: _date, ...rest }) => {
         // Ajustamos la fecha al primer día del mes destino para mantener coherencia
         const [year, month] = newMonthKey.split('-');
         const newDate = `${year}-${month}-01`;

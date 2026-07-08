@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { ShoppingBag, ShoppingCart, Coffee, CreditCard, Banknote, CalendarDays, Receipt, Package, CarFront, Utensils, X, CheckCircle2, ChevronRight, Calculator, Plus, Minus, X as MultiplyIcon } from 'lucide-react';
 import { useFinancialProjections } from '../../hooks/useFinancialProjections';
 import { formatInputNumber, parseInputNumber } from '../../utils';
-import { Banknote, CreditCard } from 'lucide-react';
 import { useUI } from '../../context/UIContext';
 import { useAuth } from '../../context/AuthContext';
 import { useCards } from '../../context/CardsContext';
@@ -17,22 +17,23 @@ const getBrandLogo = (cardName) => {
     return <span className="text-[10px] font-bold bg-gray-100 px-1 rounded text-gray-500">{cardName?.substring(0, 3)}</span>;
 };
 
-const formatMoney = (val) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(val);
+const arsFormatter = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 });
+const formatMoney = (val) => arsFormatter.format(val);
 
 export default function NewPurchase({ onSave }) {
     const { cards, transactions, addTransaction } = useCards();
-    const { userData } = useAuth();
-    const householdId = userData?.householdId;
+    const { user } = useAuth();
+    const householdId = user?.householdId;
     const [amount, setAmount] = useState('');
     const [description, setDescription] = useState('');
-    const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+    const [date, setDate] = useState(() => new Date().toISOString().split('T')[0]);
     const [type, setType] = useState('cash'); // 'cash' | 'credit'
     const [selectedCardId, setSelectedCardId] = useState('');
     const [installments, setInstallments] = useState(1);
     const [category, setCategory] = useState('varios');
     const [isShared, setIsShared] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
-    const { showToast, currentDate, isGlass, privacyMode } = useUI();
+    const { showToast, currentDate, isGlass } = useUI();
 
     // --- PROJECTIONS HOOK ---
     const projections = useFinancialProjections(
@@ -114,7 +115,7 @@ export default function NewPurchase({ onSave }) {
         }
     };
 
-    const getSelectedCardInfo = () => cards.find(c => c.id === selectedCardId);
+
 
 
     return (
@@ -163,13 +164,10 @@ export default function NewPurchase({ onSave }) {
                             <label className={`block text-xs font-bold uppercase mb-3 ml-1 ${isGlass ? 'text-white/40' : 'text-gray-400'}`}>Seleccionar Tarjeta</label>
                             <div className="flex gap-3 overflow-x-auto pb-2 hide-scrollbar">
                                 {cards.map((card) => (
-                                    <div
+                                    <button type="button"
                                         key={card.id}
-                                        role="button"
-                                        tabIndex={0}
-                                        onKeyDown={(e) => e.key === 'Enter' && setSelectedCardId(card.id)}
                                         onClick={() => setSelectedCardId(card.id)}
-                                        className={`flex-shrink-0 cursor-pointer border-2 rounded-2xl p-4 w-40 relative transition-all ${selectedCardId === card.id
+                                        className={`flex-shrink-0 cursor-pointer border-2 rounded-2xl p-4 w-40 relative transition-all text-left ${selectedCardId === card.id
                                             ? (isGlass ? 'border-blue-400/50 bg-blue-600/20' : 'border-blue-500 bg-blue-50')
                                             : (isGlass ? 'border-white/5 bg-white/5 hover:bg-white/10' : 'border-gray-100 bg-white hover:border-gray-200')
                                             }`}
@@ -179,7 +177,7 @@ export default function NewPurchase({ onSave }) {
                                             {selectedCardId === card.id && <div className="w-2 h-2 bg-blue-500 rounded-full shadow-[0_0_10px_rgba(59,130,246,0.8)]"></div>}
                                         </div>
                                         <p className={`text-sm font-bold truncate ${isGlass ? 'text-white' : 'text-gray-700'}`}>{card.name}</p>
-                                        <div class="flex justify-between items-end mt-2">
+                                        <div className="flex justify-between items-end mt-2">
                                             <div>
                                                 <p className={`text-[9px] uppercase ${isGlass ? 'text-white/30' : 'text-gray-400'}`}>Cierre</p>
                                                 <p className={`text-[10px] font-mono ${isGlass ? 'text-white/70' : 'text-gray-600'}`}>Día {card.closeDay || '--'}</p>
@@ -189,7 +187,7 @@ export default function NewPurchase({ onSave }) {
                                                 <p className={`text-[10px] font-mono ${isGlass ? 'text-white/70' : 'text-gray-600'}`}>Día {card.dueDay || '--'}</p>
                                             </div>
                                         </div>
-                                    </div>
+                                    </button>
                                 ))}
                             </div>
                         </div>

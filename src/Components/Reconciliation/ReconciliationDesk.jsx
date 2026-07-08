@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { ChevronLeft, Loader2, UploadCloud, Check } from 'lucide-react';
 import { parseBankText } from '../../utils/bankParser';
 import { extractTextFromPDF } from '../../utils/pdfParser';
 import { useAliases } from '../../hooks/useAliases';
 import { collection, addDoc } from 'firebase/firestore';
-import { doc, setDoc } from 'firebase/firestore';
+
 import { useAuth } from '../../context/AuthContext';
 import { useCards } from '../../context/CardsContext';
 import { useUI } from '../../context/UIContext';
@@ -13,17 +13,17 @@ import { db } from '../../firebase';
 const ReconciliationDesk = ({
     onBack
 }) => {
-    const { isGlass, privacyMode } = useUI();
+    const { isGlass } = useUI();
     const { user, userData } = useAuth();
     const householdId = userData?.householdId;
-    const { cards, transactions: existingTransactions } = useCards();
+    const { transactions: existingTransactions } = useCards();
     const [inputText, setInputText] = useState('');
     const [parsedItems, setParsedItems] = useState([]);
     const [step, setStep] = useState('input'); // input, review
     const [isDragging, setIsDragging] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
 
-    const { aliases, addAlias, findAlias } = useAliases(user?.uid, householdId);
+    const { addAlias, findAlias } = useAliases(user?.uid, householdId);
 
     // --- HANDLERS PDF ---
     const processFile = async (file) => {

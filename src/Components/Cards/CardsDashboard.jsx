@@ -3,13 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { useUI } from '../../context/UIContext';
 import { useAuth } from '../../context/AuthContext';
 import { useCards } from '../../context/CardsContext';
+import { formatMonthKey } from '../../utils/cardDebtUtils';
 import CardsList from './CardsList';
 import CardDetail from './CardDetail';
 
-export const getMonthKey = (date) => {
-    const d = date || new Date();
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-};
 
 export default function CardsDashboard({ initialCard }) {
     const { isGlass, privacyMode, currentDate } = useUI();
@@ -30,7 +27,7 @@ export default function CardsDashboard({ initialCard }) {
         }
     }
 
-    const monthKey = getMonthKey(currentDate);
+    const monthKey = formatMonthKey(currentDate);
 
     if (selectedCard || isNew) {
         return (

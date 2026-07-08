@@ -12,7 +12,7 @@ const PLATFORMS = [
     { key: 'others', label: 'Otros',  color: 'from-gray-500 to-gray-600',      emoji: '⚪', accentBg: 'bg-gray-500', accentText: 'text-white' },
 ];
 
-const STORAGE_KEY = 'mobility_draft';
+const STORAGE_KEY = 'mobility_draft:v1';
 
 // Lee el borrador del día de hoy de localStorage
 const loadDraft = (date) => {

@@ -66,12 +66,17 @@ export default function ReceiptScanner({ items = [], onBack }) {
       let finalResults = [];
       let nextId = 1;
 
+      const itemsMap = new Map();
+      for (const i of items) {
+          itemsMap.set(i.name, i);
+      }
+
       for (const scanned of groqResults) {
         let expectedPrice = 0;
         let expectedName = scanned.matchedExpectedName || 'No estaba en la lista';
         
         if (scanned.matchedExpectedName) {
-            const found = items.find(i => i.name === scanned.matchedExpectedName);
+            const found = itemsMap.get(scanned.matchedExpectedName);
             if (found) expectedPrice = found.price;
         }
 

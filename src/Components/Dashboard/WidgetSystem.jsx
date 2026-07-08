@@ -4,7 +4,7 @@ import { useLongPress } from '../../hooks/useLongPress';
 import { WIDGET_SIZE_FIXED } from '../../config/constants';
 
 // ─── SizeMenu ─────────────────────────────────────────────────────────────────
-export function SizeMenu({ currentSize, onSelect, onClose }) {
+function SizeMenu({ currentSize, onSelect, onClose }) {
     return (
         <>
             {/* Overlay para cerrar al tocar fuera */}
@@ -51,7 +51,7 @@ export function SizeMenu({ currentSize, onSelect, onClose }) {
 }
 
 // ─── WidgetWrapper ─────────────────────────────────────────────────────────────
-export function WidgetWrapper({ widgetKey, children, size, onToggleSize, getDragProps, isDragging }) {
+function WidgetWrapper({ widgetKey, children, size, onToggleSize, getDragProps, isDragging }) {
     const [menuOpen, setMenuOpen] = useState(false);
     const isFixed = WIDGET_SIZE_FIXED.has(widgetKey);
 

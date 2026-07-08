@@ -1,6 +1,6 @@
 import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
-import { AnimatePresence, m, LazyMotion, domMax, MotionConfig } from 'framer-motion';
+import { AnimatePresence, LazyMotion, domMax, MotionConfig } from 'framer-motion';
 import Navbar from './Components/Layout/Navbar';
 import Home from './Components/Dashboard/Home';
 import Login from './Components/Login';
@@ -14,7 +14,7 @@ import { useFinancial } from './context/FinancialContext';
 import { useUI } from './context/UIContext';
 import { Home as HomeIcon, ChevronLeft, ChevronRight, Eye, EyeOff } from 'lucide-react';
 import { SLOW_CONNECTION_TIMEOUT_MS } from './config/constants';
-import { isModuleEnabled } from './Components/Settings/ModulesSettings';
+import { isModuleEnabled } from './utils/modulesUtils';
 
 // --- LAZY IMPORTS ---
 const Stats = lazy(() => import('./Components/Dashboard/Stats'));

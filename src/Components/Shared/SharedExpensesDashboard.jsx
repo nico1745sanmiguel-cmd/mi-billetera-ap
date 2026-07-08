@@ -9,7 +9,7 @@ import { useSupermarket } from '../../context/SupermarketContext';
 import { useServices } from '../../context/ServicesContext';
 import { useUI } from '../../context/UIContext';
 import { formatMoney } from '../../utils';
-import { calcularProporciones, getLatestSalary } from '../../utils/salaryUtils';
+import { calcularProporciones } from '../../utils/salaryUtils';
 import { buildCardsWithDebt, formatMonthKey } from '../../utils/cardDebtUtils';
 import { COLLECTIONS } from '../../config/constants';
 
@@ -238,6 +238,7 @@ export default function SharedExpensesDashboard({ onBack }) {
     const navigate = useNavigate();
     const { userData } = useAuth();
     const householdId = userData?.householdId;
+
     const { cards, transactions } = useCards();
     const { superItems: supermarketItems, freshItems } = useSupermarket();
     const { services } = useServices();

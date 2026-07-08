@@ -6,8 +6,8 @@ export const getDolarBlue = async () => {
         }
         const data = await response.json();
         return data; // { compra, venta, casa, nombre, moneda, fechaActualizacion }
-    } catch (error) {
-        console.error('getDolarBlue error:', error);
+    } catch (e) {
+        console.warn('DolarAPI cache error:', e);
         return null;
     }
 };

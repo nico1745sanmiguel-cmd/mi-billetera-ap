@@ -4,6 +4,8 @@ import { useSavings } from '../../context/SavingsContext';
 import { useFinancial } from '../../context/FinancialContext';
 import { useUI } from '../../context/UIContext';
 
+const arsFormatter = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 });
+
 export default function SavingsGoal() {
     const { isGlass, privacyMode } = useUI();
     const { savingsTransactions, savingsGoal, goalLoading, saveSavingsGoal, deleteSavingsGoal } = useSavings();
@@ -47,11 +49,7 @@ export default function SavingsGoal() {
 
     const formatCurrency = (amount) => {
         if (privacyMode) return '****';
-        return new Intl.NumberFormat('es-AR', {
-            style: 'currency',
-            currency: 'ARS',
-            maximumFractionDigits: 0,
-        }).format(amount);
+        return arsFormatter.format(amount);
     };
 
     const openEdit = () => {
@@ -75,6 +73,7 @@ export default function SavingsGoal() {
             });
             setEditing(false);
         } catch (e) {
+            console.error(e);
             alert('No se pudo guardar el objetivo. Intentá de nuevo.');
         } finally {
             setSaving(false);
@@ -88,6 +87,7 @@ export default function SavingsGoal() {
             await deleteSavingsGoal();
             setEditing(false);
         } catch (e) {
+            console.error(e);
             alert('Error al eliminar el objetivo.');
         } finally {
             setSaving(false);

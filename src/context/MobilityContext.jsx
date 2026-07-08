@@ -7,6 +7,13 @@ import { useFinancial } from './FinancialContext';
 import { useUIDispatch } from './UIContext';
 import { sanitizeFinancialData } from '../utils/security';
 
+const getDayOfWeek = (dateStr) => {
+    if (!dateStr) return 'lunes';
+    const days = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+    const d = new Date(dateStr + 'T12:00:00');
+    return days[d.getDay()];
+};
+
 const MobilityStateContext = createContext(null);
 const MobilityDispatchContext = createContext(null);
 
@@ -151,12 +158,6 @@ export const MobilityProvider = ({ children }) => {
         };
     }, []);
 
-    const getDayOfWeek = useCallback((dateStr) => {
-        if (!dateStr) return 'lunes';
-        const days = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
-        const d = new Date(dateStr + 'T12:00:00');
-        return days[d.getDay()];
-    }, []);
 
     // ─── CRUD JORNADAS ────────────────────────────────────────────────────────
     const addSession = useCallback(async (formData) => {
@@ -303,7 +304,7 @@ export const MobilityProvider = ({ children }) => {
         deleteExpense,
         getDayOfWeek,
         updateSettings,
-    }), [addSession, updateSession, deleteSession, deleteAllSessions, importSessions, addExpense, updateExpense, deleteExpense, getDayOfWeek, updateSettings]);
+    }), [addSession, updateSession, deleteSession, deleteAllSessions, importSessions, addExpense, updateExpense, deleteExpense, updateSettings]);
 
     return (
         <MobilityDispatchContext.Provider value={dispatchValue}>

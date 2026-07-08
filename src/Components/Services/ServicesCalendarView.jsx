@@ -34,7 +34,7 @@ export default function ServicesCalendarView({
 
                         const todayDate = new Date();
                         const isToday = todayDate.getDate() === day && todayDate.getMonth() === currentDate.getMonth() && todayDate.getFullYear() === currentDate.getFullYear();
-                        const hasItems = dayItems.length > 0;
+
 
                         return (
                             <div

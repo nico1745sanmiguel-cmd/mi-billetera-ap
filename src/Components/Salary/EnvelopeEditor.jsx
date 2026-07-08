@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X, Briefcase, Tag, Palette } from 'lucide-react';
-import { formatMoney, formatInputNumber, parseInputNumber } from '../../utils';
+import { formatInputNumber, parseInputNumber } from '../../utils';
 
 // Íconos de categoría disponibles para los sobres
 const ENVELOPE_ICONS = [

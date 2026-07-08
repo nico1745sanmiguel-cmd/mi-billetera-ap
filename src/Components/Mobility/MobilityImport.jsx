@@ -118,6 +118,7 @@ export default function MobilityImport({ isGlass, onSuccess }) {
                 setTimeout(() => onSuccess?.(), 1500);
             }
         } catch (e) {
+            console.error(e);
             setResult({ ok: 0, errors: 1 });
         } finally {
             setLoading(false);
@@ -186,7 +187,7 @@ export default function MobilityImport({ isGlass, onSuccess }) {
                         {preview.errors.length > 0 && (
                             <div className={`rounded-xl p-3 mb-3 ${isGlass ? 'bg-amber-400/10 border border-amber-400/20' : 'bg-amber-50 border border-amber-100'}`}>
                                 <p className="text-amber-500 font-semibold text-xs mb-1">⚠️ {preview.errors.length} filas con errores (se saltearán):</p>
-                                {preview.errors.slice(0, 3).map((e, i) => (
+                                {preview.errors.slice(0, 3).map((e) => (
                                     <p key={e} className="text-amber-600 text-xs">{e}</p>
                                 ))}
                                 {preview.errors.length > 3 && <p className="text-amber-500 text-xs">... y {preview.errors.length - 3} más.</p>}

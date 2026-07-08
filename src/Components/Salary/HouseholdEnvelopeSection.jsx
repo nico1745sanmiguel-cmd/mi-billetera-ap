@@ -32,7 +32,7 @@ export default function HouseholdEnvelopeSection({
 
     if (!hasHousehold) return null;
 
-    const displayAmount = isApproved ? approvedAmount : suggestedAmount;
+
 
     const handleApprove = () => {
         const amount = useCustom

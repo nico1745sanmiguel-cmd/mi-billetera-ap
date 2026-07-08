@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
+import { parseInputNumber } from '../../utils';
 
 /**
  * CurrencyInput — Input con formato automático de miles (es-AR: puntos de miles, coma decimal).
@@ -43,13 +44,15 @@ export default function CurrencyInput({
 
 
     const [display, setDisplay] = useState(() => toDisplay(value));
-    const skipUpdate = useRef(false);
+    const [lastPropValue, setLastPropValue] = useState(value);
 
     // Sincronizar si el valor externo cambia (ej: reset del form)
-    useEffect(() => {
-        if (skipUpdate.current) { skipUpdate.current = false; return; }
-        setDisplay(toDisplay(value));
-    }, [value]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (value !== lastPropValue) {
+        setLastPropValue(value);
+        if (parseInputNumber(display) !== value) {
+            setDisplay(toDisplay(value));
+        }
+    }
 
     const handleChange = (e) => {
         const raw = e.target.value;
@@ -64,7 +67,6 @@ export default function CurrencyInput({
         // Si el string termina en coma, dejar que siga escribiendo el decimal
         if (allowDecimals && digitsAndSep.endsWith(',')) {
             setDisplay(digitsAndSep);
-            skipUpdate.current = true;
             return;
         }
 
@@ -75,7 +77,6 @@ export default function CurrencyInput({
 
         if (!intPart && decPart === undefined) {
             setDisplay('');
-            skipUpdate.current = true;
             onChange('');
             return;
         }
@@ -89,10 +90,13 @@ export default function CurrencyInput({
             ? `${intFormatted},${decPart}`
             : intFormatted;
 
-        setDisplay(newDisplay);
-        skipUpdate.current = true;
+        const finalDisplay = allowDecimals && decPart === ''
+            ? `${intFormatted},`
+            : newDisplay;
 
-        // Calcular valor numérico real para el onChange
+        setDisplay(finalDisplay);
+        
+        // Disparar onChange
         const numericStr = decPart !== undefined
             ? `${intPart}.${decPart}`
             : intPart;

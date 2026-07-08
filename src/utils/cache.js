@@ -45,7 +45,8 @@ export const getCache = (key, defaultValue = [], ttlMs = null) => {
         // Formato legacy (array directo): devolver tal cual
         return parsed ?? defaultValue;
 
-    } catch {
+    } catch (e) {
+        console.error('Error reading cache:', e);
         return defaultValue;
     }
 };
@@ -63,7 +64,7 @@ export const setCache = (key, data) => {
         }));
     } catch (e) {
         // Puede fallar si el localStorage está lleno (5MB limit) o en modo privado
-        console.warn(`[cache] No se pudo guardar "${key}":`, e.message);
+        console.error(`[cache] No se pudo guardar "${key}":`, e);
     }
 };
 

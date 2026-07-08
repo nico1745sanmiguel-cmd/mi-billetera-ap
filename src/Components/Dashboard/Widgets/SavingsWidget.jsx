@@ -1,22 +1,23 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState } from 'react';
 import { TrendingUp, ArrowRightLeft, Target } from 'lucide-react';
 import { useFinancial } from '../../../context/FinancialContext';
 import { useSavings } from '../../../context/SavingsContext';
+
+const arsFormatter = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 });
+const usdFormatter = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
 
 export default function SavingsWidget({ setView, privacyMode }) {
     const { dolarBlue } = useFinancial();
     const { savingsTransactions, savingsGoal } = useSavings();
     const [currencyView, setCurrencyView] = useState('ARS');
-    const [customQuotes, setCustomQuotes] = useState({});
-    const [imgError, setImgError] = useState(false);
-
-    // Cargar cotizaciones manuales
-    useEffect(() => {
+    const [customQuotes] = useState(() => {
         const saved = localStorage.getItem('savings_custom_quotes');
         if (saved) {
-            try { setCustomQuotes(JSON.parse(saved)); } catch (e) {}
+            try { return JSON.parse(saved); } catch (e) { console.warn(e); }
         }
-    }, []);
+        return {};
+    });
+    const [imgError, setImgError] = useState(false);
 
     const total = useMemo(() => {
         let totalUSD = 0;
@@ -63,11 +64,7 @@ export default function SavingsWidget({ setView, privacyMode }) {
 
     const formatCurrency = (amount, currency) => {
         if (privacyMode) return '****';
-        return new Intl.NumberFormat('es-AR', {
-            style: 'currency',
-            currency: currency,
-            maximumFractionDigits: 0
-        }).format(amount);
+        return currency === 'USD' ? usdFormatter.format(amount) : arsFormatter.format(amount);
     };
 
     // Progreso del objetivo para el widget
@@ -128,7 +125,7 @@ export default function SavingsWidget({ setView, privacyMode }) {
                             className="absolute inset-0 w-full h-full object-cover"
                             style={{
                                 clipPath: `inset(${(100 - progress).toFixed(2)}% 0 0 0)`,
-                                transition: 'clip-path 1.2s cubic-bezier(0.22, 1, 0.36, 1)',
+                                transition: 'clip-path 0.8s cubic-bezier(0.22, 1, 0.36, 1)',
                                 filter: 'brightness(0.6)',
                             }}
                         />
@@ -142,7 +139,7 @@ export default function SavingsWidget({ setView, privacyMode }) {
                                 height: '1.5px',
                                 background: 'rgba(255,255,255,0.7)',
                                 boxShadow: '0 0 6px 2px rgba(255,255,255,0.4)',
-                                transition: 'top 1.2s cubic-bezier(0.22, 1, 0.36, 1)',
+                                transition: 'top 0.8s cubic-bezier(0.22, 1, 0.36, 1)',
                             }}
                         />
                     )}

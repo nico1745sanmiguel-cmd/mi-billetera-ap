@@ -4,6 +4,7 @@ import { formatMoney, formatInputNumber, parseInputNumber } from '../../utils';
 import { addFreshItem, deleteFreshItem, updateFreshTotal, toggleFreshCompleted } from '../../repositories/freshRepository';
 import { deletePlannerCategory } from '../../repositories/plannerCategoriesRepository';
 import { AVAILABLE_COLORS, AVAILABLE_ICONS } from './constants';
+import { auth } from '../../firebase';
 import TripCard from './TripCard';
 
 const handleDelete = async (id) => {
@@ -19,7 +20,13 @@ export default function PlannerSection({ catData, trips, currentMonthKey, isGlas
         Icon = catData.id === 'verduleria' ? Leaf : Beef;
     }
 
+    const [prevCatId, setPrevCatId] = useState(catData.id);
     const [isOpen, setIsOpen] = useState(catData.isDefault);
+    
+    if (catData.id !== prevCatId) {
+        setPrevCatId(catData.id);
+        setIsOpen(catData.isDefault);
+    }
     const [addingNote, setAddingNote] = useState('');
     const [addingTotal, setAddingTotal] = useState('');
     const [addingDate, setAddingDate] = useState(() => {
@@ -46,7 +53,7 @@ export default function PlannerSection({ catData, trips, currentMonthKey, isGlas
 
     const handleAdd = async (e) => {
         e.preventDefault();
-        const { currentUser } = require('../../firebase').auth;
+        const { currentUser } = auth;
         if (!currentUser) return;
         if (!addingNote.trim() && !addingTotal) return;
 

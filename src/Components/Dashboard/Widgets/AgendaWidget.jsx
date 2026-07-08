@@ -69,7 +69,9 @@ function UndoToast({ toast, onUndo, onDismiss }) {
     );
 }
 
-export default function AgendaWidget({ agenda, currentDate, privacyMode, setView, freshItems = [], plannerCategories = [], onTogglePaid }) {
+const EMPTY_ARRAY = [];
+
+export default function AgendaWidget({ agenda, currentDate, privacyMode, setView, freshItems = EMPTY_ARRAY, plannerCategories = EMPTY_ARRAY, onTogglePaid }) {
     const showMoney = (amount) => privacyMode ? '****' : formatMoney(amount);
 
     const [viewMode, setViewMode] = useState(() => {
@@ -81,7 +83,7 @@ export default function AgendaWidget({ agenda, currentDate, privacyMode, setView
 
     const switchMode = (mode) => {
         setViewMode(mode);
-        try { localStorage.setItem('agenda_widget_mode', mode); } catch {}
+        try { localStorage.setItem('agenda_widget_mode', mode); } catch { /* ignore */ }
     };
 
     const handleTogglePaid = useCallback((item) => {
@@ -155,15 +157,12 @@ export default function AgendaWidget({ agenda, currentDate, privacyMode, setView
             <div className="h-full flex flex-col bg-white dark:bg-white/5 rounded-3xl border border-gray-100 dark:border-white/10 shadow-sm overflow-hidden mx-1 dark:backdrop-blur-md">
                 {/* HEADER */}
                 <div className="px-5 py-4 border-b border-gray-50 dark:border-white/5 flex justify-between items-center bg-gray-50/50 dark:bg-transparent">
-                    <h3
-                        className="font-bold text-gray-800 dark:text-white text-sm flex items-center gap-2 cursor-pointer"
-                        role="button"
-                        tabIndex={0}
-                        onKeyDown={(e) => e.key === 'Enter' && setView('services_manager')}
+                    <button type="button"
+                        className="font-bold text-gray-800 dark:text-white text-sm flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
                         onClick={() => setView('services_manager')}
                     >
                         <CalendarDays size={18} /> Agenda {currentDate.toLocaleString('es-AR', { month: 'long' })}
-                    </h3>
+                    </button>
                     <div className="flex items-center gap-2">
                         {/* Switch lista / semana */}
                         <div className="flex bg-gray-100 dark:bg-white/10 rounded-xl p-0.5">
@@ -182,15 +181,12 @@ export default function AgendaWidget({ agenda, currentDate, privacyMode, setView
                                 <CalendarRange size={14} />
                             </button>
                         </div>
-                        <span
-                            className="text-xs font-bold text-gray-400 dark:text-white/40 cursor-pointer"
-                            role="button"
-                            tabIndex={0}
-                            onKeyDown={(e) => e.key === 'Enter' && setView('services_manager')}
+                        <button type="button"
+                            className="text-xs font-bold text-gray-400 dark:text-white/40 cursor-pointer hover:text-gray-600 dark:hover:text-white/60 transition-colors"
                             onClick={() => setView('services_manager')}
                         >
                             Ver todo →
-                        </span>
+                        </button>
                     </div>
                 </div>
 
@@ -241,14 +237,14 @@ export default function AgendaWidget({ agenda, currentDate, privacyMode, setView
                     <div className="p-3">
                         <div className="grid grid-cols-7 gap-1">
                             {/* Cabecera días */}
-                            {DAYS_LABELS.map((label, i) => (
+                            {DAYS_LABELS.map((label) => (
                                 <div key={label} className="text-center text-[9px] font-bold uppercase tracking-wider text-gray-400 dark:text-white/30 pb-1">
                                     {label}
                                 </div>
                             ))}
 
                             {/* Celdas de cada día */}
-                            {weekDays.map((day, i) => {
+                            {weekDays.map((day) => {
                                 const dayKey = day.toISOString().split('T')[0];
                                 const isToday = day.getTime() === today.getTime();
                                 const plannerEvents = plannerItemsByDay[dayKey] || [];

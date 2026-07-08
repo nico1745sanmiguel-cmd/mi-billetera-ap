@@ -41,7 +41,7 @@ export default function MobilityStats({ isGlass, privacyMode, month, year }) {
         const totalEarnings = filtered.reduce((a, s) => a + (s.total || 0), 0);
         const totalHours    = filtered.reduce((a, s) => a + (s.hoursWorked || 0), 0);
         const totalKm       = filtered.reduce((a, s) => a + (s.kilometers || 0), 0);
-        const bestDay       = [...filtered].sort((a, b) => (b.total || 0) - (a.total || 0))[0];
+        const bestDay       = filtered.toSorted((a, b) => (b.total || 0) - (a.total || 0))[0];
         const avgPerHour    = totalHours > 0 ? totalEarnings / totalHours : 0;
         const avgPerKm      = totalKm    > 0 ? totalEarnings / totalKm    : 0;
 
@@ -85,7 +85,7 @@ export default function MobilityStats({ isGlass, privacyMode, month, year }) {
 
         const weeks = Array.from(weeksMap.entries())
             .sort((a, b) => a[0].localeCompare(b[0])) // strings YYYY-MM-DD ordenan correctamente
-            .map(([w, data], i) => ({
+            .map(([, data], i) => ({
                 label: `S${i + 1}`,
                 ...data
             }));

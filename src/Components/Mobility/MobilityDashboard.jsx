@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Plus, List, BarChart2, Upload, ArrowLeft, Zap, Settings } from 'lucide-react';
 import { MobilityProvider, useMobility } from '../../context/MobilityContext';
 import MobilityForm from './MobilityForm';
@@ -28,13 +28,7 @@ function DashboardContent({ onBack }) {
     const month = currentDate.getMonth();
     const year  = currentDate.getFullYear();
 
-    // Mantenemos sincronizado si el usuario cambia el defaultTab
-    useEffect(() => {
-        if (settings?.defaultTab && tab === 'settings') {
-            // si volvemos de settings que se quede donde estaba o vaya al default si no habia nada
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [settings?.defaultTab]);
+    // Mantenemos sincronizado si el usuario cambia el defaultTab (eliminado por React Doctor)
 
     return (
         <div className="space-y-4">

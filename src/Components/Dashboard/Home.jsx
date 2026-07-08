@@ -1,6 +1,5 @@
 import React, { useMemo, useEffect, useState, memo, useCallback } from 'react';
 import { Users, LogOut, AlertCircle, Moon, Sun, Monitor, RefreshCw, Bell, Puzzle, Maximize2, Minimize2, GripVertical } from 'lucide-react';
-import { useLongPress } from '../../hooks/useLongPress';
 import { useWidgetSizes } from '../../hooks/useWidgetSizes';
 import { useNavigate } from 'react-router-dom';
 import { db, auth } from '../../firebase';
@@ -34,7 +33,7 @@ import NotificationsModal from './Widgets/NotificationsModal';
 import MobilityWidget from './Widgets/MobilityWidget';
 import SalaryWidget from './Widgets/SalaryWidget';
 import PlannerWidget from './Widgets/PlannerWidget';
-import { isModuleEnabled } from '../Settings/ModulesSettings';
+import { isModuleEnabled } from '../../utils/modulesUtils';
 import { WidgetGrid } from './WidgetSystem';
 
 const handleCacheRefresh = async () => {
@@ -80,7 +79,8 @@ const THEME_OPTIONS = [
     { key: 'system', label: 'Sistema', Icon: Monitor },
 ];
 
-const Home = memo(({ onLogout, notifications = [], onCardClick }) => {
+const EMPTY_ARRAY = [];
+const Home = memo(({ onLogout, notifications = EMPTY_ARRAY, onCardClick }) => {
     const { privacyMode, currentDate, isGlass, theme, setTheme } = useUI();
     const navigate = useNavigate();
     const { user, userData, householdMembers } = useAuth();

@@ -1,13 +1,16 @@
 // src/utils.js
+
+const arsFormatter = new Intl.NumberFormat('es-AR', {
+    style: 'currency',
+    currency: 'ARS',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+});
+
 // Esta función convierte cualquier número en formato plata argentina para visualización
 // Ejemplo: 12000 -> $ 12.000
 export const formatMoney = (amount) => {
-  return new Intl.NumberFormat('es-AR', {
-    style: 'currency',
-    currency: 'ARS',
-    minimumFractionDigits: 0, // Sin centavos
-    maximumFractionDigits: 0, // Sin centavos
-  }).format(Number(amount) || 0);
+  return arsFormatter.format(Number(amount) || 0);
 };
 
 // Formatea un número o string quitando caracteres no numéricos y agregando separadores de miles

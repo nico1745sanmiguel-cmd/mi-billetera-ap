@@ -1,11 +1,10 @@
-import React, { useRef, useState } from 'react';
-import { m } from 'framer-motion';
+import React, { useRef } from 'react';
 import { Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export default function DraggableFAB() {
     const navigate = useNavigate();
-    const [isDragging, setIsDragging] = useState(false);
+    const isDragging = useRef(false);
 
     // Initial position based on screen size: bottom right
     const initialY = typeof window !== 'undefined' ? window.innerHeight - 100 : 500;
@@ -15,12 +14,12 @@ export default function DraggableFAB() {
         <m.div
             drag
             dragMomentum={false}
-            onDragStart={() => setIsDragging(true)}
+            onDragStart={() => { isDragging.current = true; }}
             onDragEnd={() => {
-                setTimeout(() => setIsDragging(false), 150);
+                setTimeout(() => { isDragging.current = false; }, 150);
             }}
             onClick={() => {
-                if (!isDragging) {
+                if (!isDragging.current) {
                     navigate('/purchase');
                 }
             }}

@@ -2,7 +2,9 @@ import React, { useMemo, useState } from 'react';
 import { Wallet, ChevronDown, ChevronUp, Clock, Edit2, Check, X } from 'lucide-react';
 import { useSavings } from '../../context/SavingsContext';
 
-export default function SavingsCard({ cartera, items, isGlass, privacyMode, dolarBlue, customQuotes }) {
+const amountFormatter = new Intl.NumberFormat('es-AR', { maximumFractionDigits: 2 });
+
+export default function SavingsCard({ cartera, items, isGlass, privacyMode }) {
     const { addSavingsTransaction, savingsTransactions } = useSavings();
     const [showHistory, setShowHistory] = useState(false);
     
@@ -12,9 +14,7 @@ export default function SavingsCard({ cartera, items, isGlass, privacyMode, dola
 
     const formatAmount = (amount) => {
         if (privacyMode) return '****';
-        return new Intl.NumberFormat('es-AR', {
-            maximumFractionDigits: 2
-        }).format(amount);
+        return amountFormatter.format(amount);
     };
 
     const textColor = isGlass ? 'text-white' : 'text-gray-800';

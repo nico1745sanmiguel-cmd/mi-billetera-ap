@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Briefcase, Car, Puzzle, ShoppingCart, CreditCard, TrendingUp, Users, CalendarDays, ListTodo, PieChart, Sparkles } from 'lucide-react';
 import { CACHE_KEYS } from '../../config/constants';
-import { getCache, setCache } from '../../utils/cache';
+import { setCache } from '../../utils/cache';
 import { useUI } from '../../context/UIContext';
 
 // ─── Definición de módulos disponibles ────────────────────────────────────────
@@ -99,19 +99,12 @@ const AVAILABLE_MODULES = [
     },
 ];
 
-const loadModules = () => {
-    // Usa getCache para respetar el prefijo v1_ y no ser borrado por cleanOldCaches
-    return getCache(CACHE_KEYS.ENABLED_MODULES, {});
-};
+import { loadModules } from '../../utils/modulesUtils';
 
 const saveModules = (state) => {
     setCache(CACHE_KEYS.ENABLED_MODULES, state);
     // Notificar a App.jsx que los módulos cambiaron para forzar re-render
     window.dispatchEvent(new CustomEvent('modulesChanged'));
-};
-
-export const isModuleEnabled = (moduleId) => {
-    return loadModules()[moduleId] === true;
 };
 
 export default function ModulesSettings({ onBack }) {

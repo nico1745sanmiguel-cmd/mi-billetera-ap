@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import { db } from '../firebase';
-import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
+import { doc, onSnapshot, setDoc } from 'firebase/firestore';
 import { getCache, setCache } from '../utils/cache';
 import { useFinancial } from './FinancialContext';
 import { useUIDispatch } from './UIContext';
@@ -96,7 +96,7 @@ export const SalaryProvider = ({ children }) => {
         return envelopes.reduce((acc, e) => acc + (Number(e.budgeted) || 0), 0) + householdAmount;
     }, [config]);
 
-    const totalFree = useMemo(() => totalIncome - totalBudgeted, [totalIncome, totalBudgeted]);
+    const totalFree = totalIncome - totalBudgeted;
 
     // ─── Acciones ────────────────────────────────────────────────────────
     const saveConfig = useCallback(async (newConfig) => {

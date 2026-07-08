@@ -112,10 +112,10 @@ export default function MobilityHistory({ isGlass, privacyMode, month, year }) {
 
                                         {/* PLATAFORMAS */}
                                         <div className="flex flex-wrap gap-1.5 mb-2">
-                                            {session.uber   > 0 && <PlatformBadge label="Uber"   value={session.uber}   isGlass={isGlass} privacyMode={privacyMode} color="bg-gray-800 text-white" />}
-                                            {session.didi   > 0 && <PlatformBadge label="DiDi"   value={session.didi}   isGlass={isGlass} privacyMode={privacyMode} color="bg-orange-500 text-white" />}
-                                            {session.cabify > 0 && <PlatformBadge label="Cabify" value={session.cabify} isGlass={isGlass} privacyMode={privacyMode} color="bg-purple-600 text-white" />}
-                                            {session.others > 0 && <PlatformBadge label="Otros"  value={session.others} isGlass={isGlass} privacyMode={privacyMode} color="bg-gray-500 text-white" />}
+                                            {session.uber   > 0 && <PlatformBadge label="Uber"   value={session.uber}   privacyMode={privacyMode} color="bg-gray-800 text-white" />}
+                                            {session.didi   > 0 && <PlatformBadge label="DiDi"   value={session.didi}   privacyMode={privacyMode} color="bg-orange-500 text-white" />}
+                                            {session.cabify > 0 && <PlatformBadge label="Cabify" value={session.cabify} privacyMode={privacyMode} color="bg-purple-600 text-white" />}
+                                            {session.others > 0 && <PlatformBadge label="Otros"  value={session.others} privacyMode={privacyMode} color="bg-gray-500 text-white" />}
                                         </div>
 
                                         {/* MÉTRICAS */}
@@ -152,7 +152,7 @@ export default function MobilityHistory({ isGlass, privacyMode, month, year }) {
     );
 }
 
-function PlatformBadge({ label, value, isGlass, privacyMode, color }) {
+function PlatformBadge({ label, value, privacyMode, color }) {
     return (
         <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${color}`}>
             {label}: {privacyMode ? '••' : `$${Number(value).toLocaleString('es-AR')}`}

@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { UploadCloud, FileText, Lock, AlertCircle, Loader2, ExternalLink, ChevronDown, ChevronUp, Download, MousePointer, ArrowRight } from 'lucide-react';
 import { extractTextFromPDF } from '../../utils/pdfExtractor';
 import { analyzeStatement } from '../../services/aiService';
@@ -87,7 +87,7 @@ const StatementUploader = ({ onAnalysisComplete }) => {
     const [error, setError] = useState(null);
     const [needsPassword, setNeedsPassword] = useState(false);
     const [password, setPassword] = useState('');
-    const [currentFile, setCurrentFile] = useState(null);
+    const currentFile = useRef(null);
 
     const handleDrag = useCallback((e) => {
         e.preventDefault();
@@ -122,13 +122,13 @@ const StatementUploader = ({ onAnalysisComplete }) => {
             setProcessingStep('Analizando consumos con IA...');
             const analysisResult = await analyzeStatement(text);
 
-            setCurrentFile(null);
+            currentFile.current = null;
             setPassword('');
             if (onAnalysisComplete) onAnalysisComplete(analysisResult);
         } catch (err) {
             if (err.message === 'PASSWORD_REQUIRED' || err.message === 'PASSWORD_INCORRECT') {
                 setNeedsPassword(true);
-                setCurrentFile(file);
+                currentFile.current = file;
                 setError(err.message === 'PASSWORD_INCORRECT' ? 'Contraseña incorrecta. Intentá de nuevo.' : null);
             } else {
                 setError(err.message);
@@ -146,7 +146,7 @@ const StatementUploader = ({ onAnalysisComplete }) => {
             setError('Por favor ingresá la contraseña.');
             return;
         }
-        processFile(currentFile, password);
+        processFile(currentFile.current, password);
     };
 
     const handleDrop = useCallback((e) => {
@@ -238,7 +238,7 @@ const StatementUploader = ({ onAnalysisComplete }) => {
                             </button>
                         </div>
                         <button type="button" 
-                            onClick={() => { setNeedsPassword(false); setError(null); setCurrentFile(null); }}
+                            onClick={() => { setNeedsPassword(false); setError(null); currentFile.current = null; }}
                             className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 mt-2 transition-colors"
                         >
                             Cancelar

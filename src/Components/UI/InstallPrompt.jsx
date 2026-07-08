@@ -27,7 +27,7 @@ export default function InstallPrompt() {
     deferredPrompt.prompt();
 
     // Esperar a ver qué decidió el usuario
-    const { outcome } = await deferredPrompt.userChoice;
+    await deferredPrompt.userChoice;
     
     // Limpiar
     setDeferredPrompt(null);

@@ -6,9 +6,10 @@ export default function StatementDashboard({ statement, isGlass, onReload }) {
     const transactions = statement?.transactions || [];
 
     const stats = useMemo(() => {
-        if (!transactions.length) return null;
+        const txs = statement?.transactions || [];
+        if (!txs.length) return null;
 
-        const totals = transactions.reduce((acc, tx) => {
+        const totals = txs.reduce((acc, tx) => {
             if (tx.isPayment) return acc; // No sumar los pagos que el usuario hizo a la tarjeta
             const cat = tx.category || 'Varios';
             acc[cat] = (acc[cat] || 0) + (tx.amount || 0);
@@ -26,8 +27,7 @@ export default function StatementDashboard({ statement, isGlass, onReload }) {
             .sort((a, b) => b.amount - a.amount);
 
         return { breakdown, totalSpent };
-    }, [transactions]);
-
+    }, [statement?.transactions]);
     const textColor = isGlass ? 'text-white' : 'text-gray-800';
     const subTextColor = isGlass ? 'text-white/60' : 'text-gray-500';
     const bgClass = isGlass ? 'bg-white/5 border border-white/10' : 'bg-gray-50 border border-gray-100';

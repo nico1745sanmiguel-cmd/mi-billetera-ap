@@ -1,5 +1,5 @@
 import { db } from '../firebase';
-import { collection, query, where, getDocs, addDoc, updateDoc, doc, getDoc, setDoc, writeBatch } from 'firebase/firestore';
+import { collection, query, where, getDocs, addDoc, doc, getDoc, setDoc, writeBatch } from 'firebase/firestore';
 
 /**
  * Checks if the user belongs to a household.

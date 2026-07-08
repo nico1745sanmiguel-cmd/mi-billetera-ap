@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { auth } from '../../firebase';
 import { useNavigate } from 'react-router-dom';
 import { ShoppingCart, Loader2, Camera, Check, Trash2, Copy, Plus, Sparkles } from 'lucide-react';
@@ -12,7 +12,6 @@ import {
     updateSuperPrice,
     updateSuperQuantity,
     toggleSuperChecked,
-    updateSuperFields,
 } from '../../repositories/supermarketRepository';
 import { useUI } from '../../context/UIContext';
 import { analyzePurchaseFrequency } from '../../utils/purchasePrediction';
@@ -105,7 +104,8 @@ export default function SuperList() {
     }, [items, currentMonthKey]);
 
     // Ref para que el auto-add solo se ejecute una vez por mes
-    const autoAddRunRef = useRef(new Set());
+    const autoAddRunRef = useRef(null);
+    if (!autoAddRunRef.current) autoAddRunRef.current = new Set();
 
     // Auto-agregar ítems de frecuencia mensual cuando el carrito está vacío
     useEffect(() => {

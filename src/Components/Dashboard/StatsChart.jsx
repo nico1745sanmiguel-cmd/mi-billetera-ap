@@ -1,5 +1,16 @@
 import React from 'react';
-import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Sector } from 'recharts';
+
+// Renderizado personalizado para el sector activo del gráfico de Dona
+const renderActiveShape = (props) => {
+    const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill } = props;
+    return (
+        <g>
+            <Sector cx={cx} cy={cy} innerRadius={innerRadius} outerRadius={outerRadius + 8} startAngle={startAngle} endAngle={endAngle} fill={fill} />
+            <Sector cx={cx} cy={cy} startAngle={startAngle} endAngle={endAngle} innerRadius={outerRadius + 10} outerRadius={outerRadius + 12} fill={fill} />
+        </g>
+    );
+};
 
 export default function StatsChart({
     chartData,
@@ -8,7 +19,6 @@ export default function StatsChart({
     activeChartItem,
     currentChartTotal,
     showMoney,
-    renderActiveShape,
     glassClass,
     glassTextPrimary,
     glassTextSecondary,

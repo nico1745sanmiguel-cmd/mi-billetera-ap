@@ -1,9 +1,9 @@
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
-import { db, auth } from '../firebase';
-import { collection, onSnapshot, query, where, addDoc } from 'firebase/firestore';
+import { db } from '../firebase';
+import { collection, onSnapshot, query } from 'firebase/firestore';
 import { useAuth } from './AuthContext';
 import { useUIDispatch } from './UIContext';
-import { getCache, setCache, cleanOldCaches } from '../utils/cache';
+import { cleanOldCaches } from '../utils/cache';
 import { getDolarBlue } from '../services/dolarApi';
 import { COLLECTIONS, CACHE_KEYS, SLOW_CONNECTION_TIMEOUT_MS, LOADING_DELAY_MS } from '../config/constants';
 
@@ -18,7 +18,7 @@ export const useFinancial = () => {
 };
 
 export const FinancialProvider = ({ children }) => {
-    const { user, userData, householdMembers, loadingUser } = useAuth();
+    const { user, userData, loadingUser } = useAuth();
     const { showToast } = useUIDispatch();
 
     const [notifications, setNotifications] = useState([]);
@@ -43,14 +43,21 @@ export const FinancialProvider = ({ children }) => {
         // (CardsContext, SupermarketContext, etc.)
     }, [user, userData]);
 
+    const currentHouseholdId = userData?.householdId;
+    const [prevAuth, setPrevAuth] = useState({ user, householdId: currentHouseholdId });
+
+    if (user !== prevAuth.user || currentHouseholdId !== prevAuth.householdId) {
+        setPrevAuth({ user, householdId: currentHouseholdId });
+        if (!user || !currentHouseholdId) {
+            setNotifications([]);
+        }
+    }
+
     // 3. Listener de Notificaciones (separado para que se re-monte cuando householdId llega)
     useEffect(() => {
-        const householdId = userData?.householdId;
-        if (!user || !householdId) {
-            setNotifications([]);
-            return;
-        }
-        const qNotif = query(collection(db, 'households', householdId, 'notifications'));
+        if (!user || !currentHouseholdId) return;
+        
+        const qNotif = query(collection(db, 'households', currentHouseholdId, 'notifications'));
         const unsubNotifications = onSnapshot(qNotif, (snap) => {
             const data = snap.docs
                 .map(d => ({ id: d.id, ...d.data() }))
@@ -62,7 +69,7 @@ export const FinancialProvider = ({ children }) => {
         });
 
         return () => unsubNotifications();
-    }, [user, userData?.householdId, showToast]);
+    }, [user, currentHouseholdId, showToast]);
 
     const value = useMemo(() => ({
         user,

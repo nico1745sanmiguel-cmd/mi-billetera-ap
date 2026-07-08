@@ -6,7 +6,7 @@ import StatementUploader from './StatementUploader';
 import StatementDashboard from './StatementDashboard';
 import CardVisual from './CardVisual';
 import { Sparkles, ArrowLeft, CreditCard as CreditCardIcon } from 'lucide-react';
-import { getMonthKey } from './CardsDashboard';
+import { formatMonthKey } from '../../utils/cardDebtUtils';
 
 const PRESET_COLORS = [
     '#1a1a1a', '#005f73', '#0a9396', '#ae2012',
@@ -30,8 +30,8 @@ export default function CardDetail({ card, isNewCard, currentDate, privacyMode, 
         isPaid: false
     });
 
-    const isEditing = !!card && !isNewCard;
-    const monthKey = getMonthKey(currentDate);
+
+    const monthKey = formatMonthKey(currentDate);
 
     const [prevCardId, setPrevCardId] = useState(card?.id || null);
     const [prevMonthKey, setPrevMonthKey] = useState(monthKey);
@@ -156,10 +156,10 @@ export default function CardDetail({ card, isNewCard, currentDate, privacyMode, 
             {/* Tabs */}
             {!isNewCard && (
                 <div className={`flex p-1.5 rounded-2xl border ${isGlass ? 'bg-white/5 border-white/10' : 'bg-gray-50 border-gray-100'}`}>
-                    <button onClick={() => setActiveTab('statement')} className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${tabClass(activeTab === 'statement')}`}>Resumen Actual</button>
-                    <button onClick={() => setActiveTab('pdf')} className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${tabClass(activeTab === 'pdf')}`}>PDF Automático</button>
-                    <button onClick={() => setActiveTab('history')} className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${tabClass(activeTab === 'history')}`}>Historial</button>
-                    <button onClick={() => setActiveTab('card')} className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${tabClass(activeTab === 'card')}`}>Ajustes</button>
+                    <button type="button" onClick={() => setActiveTab('statement')} className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${tabClass(activeTab === 'statement')}`}>Resumen Actual</button>
+                    <button type="button" onClick={() => setActiveTab('pdf')} className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${tabClass(activeTab === 'pdf')}`}>PDF Automático</button>
+                    <button type="button" onClick={() => setActiveTab('history')} className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${tabClass(activeTab === 'history')}`}>Historial</button>
+                    <button type="button" onClick={() => setActiveTab('card')} className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${tabClass(activeTab === 'card')}`}>Ajustes</button>
                 </div>
             )}
 

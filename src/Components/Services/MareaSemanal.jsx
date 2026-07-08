@@ -21,7 +21,7 @@ export default function MareaSemanal({ weeklyData, isGlass, showMoney }) {
                             </div>
                             <div className="w-2 h-2 bg-white rotate-45 mx-auto -mt-1"></div>
                         </div>
-                        {week.percentFilled >= 100 && week.total > 0 && <div className="absolute -top-8 animate-bounce z-20 drop-shadow-[0_0_10px_rgba(255,215,0,0.6)]"><Star size={20} className="text-yellow-400 fill-current" /></div>}
+                        {week.percentFilled >= 100 && week.total > 0 && <div className="absolute -top-8 z-20 drop-shadow-[0_0_10px_rgba(255,215,0,0.6)]"><Star size={20} className="text-yellow-400 fill-current" /></div>}
                         <div className="w-full bg-gray-800/50 rounded-t-lg relative flex items-end overflow-hidden transition-all duration-500" style={{ height: `${week.heightTotal}%` }}>
                             <div className={`w-full transition-all duration-1000 ease-out relative ${week.percentFilled >= 100 ? 'bg-green-400 shadow-[0_0_20px_rgba(74,222,128,0.4)]' : 'bg-green-500/80'}`} style={{ height: `${week.percentFilled}%` }}>
                                 <div className="absolute top-0 left-0 right-0 h-[1px] bg-white/50"></div>

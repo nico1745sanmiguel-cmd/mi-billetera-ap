@@ -6,7 +6,7 @@ import CardVisual from './CardVisual';
 // Formateamos la fecha de vencimiento de forma legible
 const formatDueDate = (dateStr) => {
     if (!dateStr) return null;
-    const [y, m, d] = dateStr.split('-');
+    const [, m, d] = dateStr.split('-');
     return `${d}/${m}`;
 };
 
