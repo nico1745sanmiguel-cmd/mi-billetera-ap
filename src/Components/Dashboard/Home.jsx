@@ -33,6 +33,7 @@ import SuperActionsWidget from './Widgets/SuperActionsWidget';
 import NotificationsModal from './Widgets/NotificationsModal';
 import MobilityWidget from './Widgets/MobilityWidget';
 import SalaryWidget from './Widgets/SalaryWidget';
+import PlannerWidget from './Widgets/PlannerWidget';
 import { isModuleEnabled } from '../Settings/ModulesSettings';
 
 // ─── SizeMenu ─────────────────────────────────────────────────────────────────
@@ -108,28 +109,21 @@ function WidgetWrapper({ widgetKey, children, size, onToggleSize, getDragProps, 
                 <div className="absolute inset-0 rounded-2xl border-2 border-indigo-400 dark:border-indigo-400 animate-pulse z-10 pointer-events-none" />
             )}
 
-            {/* Drag handle + indicador de tamaño — siempre visible, baja opacidad */}
+            {/* Drag handle: solo ícono grip + badge ½ si es compacto */}
             <div
-                className={`flex items-center justify-between px-1 mb-1.5 ${isFixed ? 'justify-end' : ''}`}
+                className="flex items-center justify-between px-1 mb-1"
                 {...dragProps}
             >
                 {!isFixed && (
-                    <div className="flex items-center gap-1">
-                        <GripVertical size={14} className="text-gray-300 dark:text-white/20" />
-                        <span className="text-[9px] text-gray-300 dark:text-white/20 font-medium uppercase tracking-wider">
-                            {size === 'half' ? 'Compacto · mantené para cambiar' : 'Mantené para cambiar tamaño'}
-                        </span>
-                    </div>
+                    <GripVertical size={13} className="text-gray-300 dark:text-white/20" />
                 )}
                 {size === 'half' && (
                     <span className="text-[8px] bg-indigo-100 dark:bg-indigo-500/20 text-indigo-500 dark:text-indigo-300 px-1.5 py-0.5 rounded-full font-bold ml-auto">½</span>
                 )}
             </div>
 
-            {/* Contenido del widget */}
-            <div className="bg-white dark:bg-white/5 rounded-2xl border border-gray-100/60 dark:border-white/5 shadow-sm overflow-hidden">
-                {children}
-            </div>
+            {/* Contenido del widget — sin wrapper extra, usa el estilo nativo de cada widget */}
+            {children}
 
             {/* SizeMenu flotante */}
             {menuOpen && (
@@ -428,6 +422,7 @@ const Home = memo(({ onLogout, notifications = [], onCardClick }) => {
         ...(isModuleEnabled('cards') ? { cards: (size) => <CardsWidget cards={cards} targetMonthKey={targetMonthKey} privacyMode={privacyMode} onCardClick={openCardModal} size={size} /> } : {}),
         ...(isModuleEnabled('agenda') ? { agenda: () => <AgendaWidget agenda={agenda} currentDate={currentDate} privacyMode={privacyMode} setView={(path) => navigate(`/${path}`)} freshItems={freshItems} plannerCategories={plannerCategories} onTogglePaid={handleToggleAgendaPaid} /> } : {}),
         ...(isModuleEnabled('supermarket') ? { super_actions: () => <SuperActionsWidget superData={superData} privacyMode={privacyMode} setView={(path) => navigate(`/${path}`)} /> } : {}),
+        ...(isModuleEnabled('planner') ? { planner_access: () => <PlannerWidget setView={(path) => navigate(`/${path}`)} /> } : {}),
     };
 
     // Normalizar: widgets que no son función se envuelven para API uniforme
