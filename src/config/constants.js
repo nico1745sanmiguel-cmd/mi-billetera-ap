@@ -96,6 +96,7 @@ export const COLLECTIONS = {
     PLANNER_CATEGORIES: 'planner_categories',
     CONTRIBUTIONS:    'contributions',
     SAVINGS_TRANSACTIONS: 'savings_transactions',
+    SAVINGS_GOALS:        'savings_goals',
     MOBILITY_SESSIONS:  'mobility_sessions',
     MOBILITY_EXPENSES:  'mobility_expenses',
 };

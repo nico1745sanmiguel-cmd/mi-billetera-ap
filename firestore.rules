@@ -35,11 +35,11 @@ service cloud.firestore {
 
     // Regla general para colecciones que comparten el campo householdId:
     // transactions, cards, supermarket_items, fresh_purchases, services, 
-    // planner_categories, contributions, savings_transactions
+    // planner_categories, contributions, savings_transactions, savings_goals
     match /{collection}/{document} {
       allow read, write: if isAuthenticated() && 
                             // Aseguramos que solo afecte a las colecciones con aislamiento por familia
-                            collection in ['transactions', 'cards', 'supermarket_items', 'fresh_purchases', 'services', 'planner_categories', 'contributions', 'savings_transactions'] &&
+                            collection in ['transactions', 'cards', 'supermarket_items', 'fresh_purchases', 'services', 'planner_categories', 'contributions', 'savings_transactions', 'savings_goals'] &&
                             // Validamos que el recurso existente o el nuevo dato que se guarda tenga el mismo householdId que el usuario
                             (
                               (resource == null && request.resource.data.householdId == getUserHouseholdId()) || 

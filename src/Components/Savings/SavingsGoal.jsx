@@ -1,30 +1,20 @@
 import React, { useState, useMemo } from 'react';
-import { Target, Edit3, Check, X, Link, Sparkles, Trophy, ImageOff } from 'lucide-react';
+import { Target, Edit3, Check, X, Link, Sparkles, Trophy, ImageOff, Loader2 } from 'lucide-react';
 import { useSavings } from '../../context/SavingsContext';
 import { useFinancial } from '../../context/FinancialContext';
 import { useUI } from '../../context/UIContext';
 
-const GOAL_KEY = 'savings_goal_v1';
-
 export default function SavingsGoal() {
     const { isGlass, privacyMode } = useUI();
-    const { savingsTransactions } = useSavings();
+    const { savingsTransactions, savingsGoal, goalLoading, saveSavingsGoal, deleteSavingsGoal } = useSavings();
     const { dolarBlue } = useFinancial();
 
-    const [goal, setGoal] = useState(() => {
-        try { return JSON.parse(localStorage.getItem(GOAL_KEY)) || null; }
-        catch { return null; }
-    });
-
-    const [editing, setEditing] = useState(!goal);
-    const [form, setForm] = useState({
-        name: goal?.name || '',
-        amount: goal?.amount || '',
-        imageUrl: goal?.imageUrl || '',
-    });
+    const [editing, setEditing] = useState(false);
+    const [form, setForm] = useState({ name: '', amount: '', imageUrl: '' });
     const [imageError, setImageError] = useState(false);
+    const [saving, setSaving] = useState(false);
 
-    // Calcula el total general en ARS (misma lógica que SavingsDashboard)
+    // Calcula el total general en ARS
     const totalARS = useMemo(() => {
         const rate = dolarBlue || 1000;
         const balances = {};
@@ -45,15 +35,14 @@ export default function SavingsGoal() {
                 if (es === 'ARS') total += cant;
                 else if (es === 'USD') total += cant * rate;
                 else if (['USDT', 'USDC', 'DAI', 'USDP'].includes(es)) total += cant * rate;
-                // Otras criptos se ignoran si no hay cotización cargada
             });
         });
         return total;
     }, [savingsTransactions, dolarBlue]);
 
-    const goalAmount = goal ? parseFloat(goal.amount) : 0;
-    const progress = goal && goalAmount > 0 ? Math.min(100, (totalARS / goalAmount) * 100) : 0;
-    const remaining = goal ? Math.max(0, goalAmount - totalARS) : 0;
+    const goalAmount = savingsGoal ? parseFloat(savingsGoal.amount) : 0;
+    const progress = savingsGoal && goalAmount > 0 ? Math.min(100, (totalARS / goalAmount) * 100) : 0;
+    const remaining = savingsGoal ? Math.max(0, goalAmount - totalARS) : 0;
     const isComplete = progress >= 100;
 
     const formatCurrency = (amount) => {
@@ -65,32 +54,47 @@ export default function SavingsGoal() {
         }).format(amount);
     };
 
-    const handleSave = () => {
-        if (!form.name || !form.amount) return;
-        const newGoal = {
-            name: form.name,
-            amount: parseFloat(String(form.amount).replace(/\./g, '').replace(',', '.')),
-            imageUrl: form.imageUrl.trim(),
-        };
-        setGoal(newGoal);
-        localStorage.setItem(GOAL_KEY, JSON.stringify(newGoal));
-        setEditing(false);
+    const openEdit = () => {
+        setForm({
+            name: savingsGoal?.name || '',
+            amount: savingsGoal?.amount || '',
+            imageUrl: savingsGoal?.imageUrl || '',
+        });
         setImageError(false);
+        setEditing(true);
     };
 
-    const handleCancel = () => {
-        if (goal) {
-            setForm({ name: goal.name, amount: goal.amount, imageUrl: goal.imageUrl || '' });
+    const handleSave = async () => {
+        if (!form.name || !form.amount) return;
+        setSaving(true);
+        try {
+            await saveSavingsGoal({
+                name: form.name,
+                amount: parseFloat(String(form.amount).replace(/\./g, '').replace(',', '.')),
+                imageUrl: form.imageUrl.trim(),
+            });
             setEditing(false);
+        } catch (e) {
+            alert('No se pudo guardar el objetivo. Intentá de nuevo.');
+        } finally {
+            setSaving(false);
         }
     };
 
-    const handleDelete = () => {
-        localStorage.removeItem(GOAL_KEY);
-        setGoal(null);
-        setForm({ name: '', amount: '', imageUrl: '' });
-        setEditing(true);
+    const handleDelete = async () => {
+        if (!confirm('¿Eliminar el objetivo?')) return;
+        setSaving(true);
+        try {
+            await deleteSavingsGoal();
+            setEditing(false);
+        } catch (e) {
+            alert('Error al eliminar el objetivo.');
+        } finally {
+            setSaving(false);
+        }
     };
+
+    const handleCancel = () => setEditing(false);
 
     // ─── Estilos compartidos ───────────────────────────────────────────────────
     const cardBg = isGlass
@@ -101,8 +105,18 @@ export default function SavingsGoal() {
         ? 'bg-white/10 text-white placeholder-white/30 border border-white/20 focus:border-amber-400/60'
         : 'bg-gray-50 text-gray-800 placeholder-gray-400 border border-gray-200 focus:border-amber-400 focus:bg-white';
 
+    // ─── Loading ───────────────────────────────────────────────────────────────
+    if (goalLoading) {
+        return (
+            <div className={`rounded-3xl p-6 flex items-center justify-center gap-3 ${cardBg}`}>
+                <Loader2 size={20} className="animate-spin text-amber-400" />
+                <span className={`text-sm font-semibold ${isGlass ? 'text-white/50' : 'text-gray-400'}`}>Cargando objetivo...</span>
+            </div>
+        );
+    }
+
     // ─── FORMULARIO (crear/editar) ─────────────────────────────────────────────
-    if (!goal || editing) {
+    if (!savingsGoal || editing) {
         return (
             <div className={`rounded-3xl p-6 ${cardBg} animate-fade-in`}>
                 <div className="flex items-center gap-3 mb-5">
@@ -112,7 +126,7 @@ export default function SavingsGoal() {
                     <div>
                         <h2 className={`text-lg font-black ${textColor}`}>Mi Objetivo</h2>
                         <p className={`text-xs ${isGlass ? 'text-white/50' : 'text-gray-500'}`}>
-                            {goal ? 'Editá tu objetivo de ahorro' : 'Creá tu primer objetivo de ahorro'}
+                            {savingsGoal ? 'Editá tu objetivo de ahorro' : 'Creá tu primer objetivo de ahorro'}
                         </p>
                     </div>
                 </div>
@@ -166,7 +180,7 @@ export default function SavingsGoal() {
                         </p>
                     </div>
 
-                    {/* Preview de imagen si hay URL */}
+                    {/* Preview de imagen */}
                     {form.imageUrl && !imageError && (
                         <div className="relative rounded-2xl overflow-hidden h-28">
                             <img
@@ -191,13 +205,13 @@ export default function SavingsGoal() {
                     <div className="flex gap-3 pt-2">
                         <button
                             onClick={handleSave}
-                            disabled={!form.name || !form.amount}
+                            disabled={!form.name || !form.amount || saving}
                             className="flex-1 bg-amber-500 hover:bg-amber-600 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2"
                         >
-                            <Check size={18} />
-                            {goal ? 'Guardar cambios' : 'Crear objetivo'}
+                            {saving ? <Loader2 size={18} className="animate-spin" /> : <Check size={18} />}
+                            {savingsGoal ? 'Guardar cambios' : 'Crear objetivo'}
                         </button>
-                        {goal && (
+                        {savingsGoal && (
                             <button
                                 onClick={handleCancel}
                                 className={`px-4 py-3 rounded-xl font-bold transition-colors ${isGlass ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-600'}`}
@@ -212,7 +226,7 @@ export default function SavingsGoal() {
     }
 
     // ─── VISTA DE OBJETIVO ─────────────────────────────────────────────────────
-    const hasImage = goal.imageUrl && !imageError;
+    const hasImage = savingsGoal.imageUrl && !imageError;
 
     return (
         <div className={`rounded-3xl overflow-hidden ${cardBg} animate-fade-in`}>
@@ -235,14 +249,11 @@ export default function SavingsGoal() {
                         }`}>
                             {isComplete ? '🎉 ¡Objetivo alcanzado!' : 'Mi Objetivo'}
                         </p>
-                        <h2 className={`text-xl font-black leading-tight ${textColor}`}>{goal.name}</h2>
+                        <h2 className={`text-xl font-black leading-tight ${textColor}`}>{savingsGoal.name}</h2>
                     </div>
                 </div>
                 <button
-                    onClick={() => {
-                        setForm({ name: goal.name, amount: goal.amount, imageUrl: goal.imageUrl || '' });
-                        setEditing(true);
-                    }}
+                    onClick={openEdit}
                     className={`p-2 rounded-xl opacity-40 hover:opacity-100 transition-all ${
                         isGlass ? 'hover:bg-white/10 text-white' : 'hover:bg-gray-100 text-gray-600'
                     }`}
@@ -257,18 +268,17 @@ export default function SavingsGoal() {
                 <div className="mx-5 relative overflow-hidden rounded-2xl" style={{ height: '220px' }}>
                     {/* Capa B&N (fondo) */}
                     <img
-                        src={goal.imageUrl}
-                        alt={goal.name}
+                        src={savingsGoal.imageUrl}
+                        alt={savingsGoal.name}
                         className="absolute inset-0 w-full h-full object-cover"
                         style={{ filter: 'grayscale(100%) brightness(0.75)' }}
                         onError={() => setImageError(true)}
                     />
-
-                    {/* Capa a color, recortada de abajo hacia arriba según el progreso */}
+                    {/* Capa a color, recortada de abajo hacia arriba */}
                     {progress > 0 && (
                         <img
-                            src={goal.imageUrl}
-                            alt={goal.name}
+                            src={savingsGoal.imageUrl}
+                            alt={savingsGoal.name}
                             className="absolute inset-0 w-full h-full object-cover"
                             style={{
                                 clipPath: `inset(${(100 - progress).toFixed(2)}% 0 0 0)`,
@@ -276,8 +286,7 @@ export default function SavingsGoal() {
                             }}
                         />
                     )}
-
-                    {/* Línea "nivel de agua" en el borde del revelado */}
+                    {/* Línea "nivel de agua" */}
                     {progress > 1 && progress < 99 && (
                         <div
                             className="absolute left-0 right-0 pointer-events-none"
@@ -290,8 +299,7 @@ export default function SavingsGoal() {
                             }}
                         />
                     )}
-
-                    {/* Badge de porcentaje */}
+                    {/* Badge */}
                     <div className="absolute bottom-3 left-3 right-3 flex justify-between items-end pointer-events-none">
                         <div className="bg-black/65 backdrop-blur-sm text-white text-sm font-black px-3 py-1.5 rounded-xl">
                             {privacyMode ? '**%' : `${progress.toFixed(0)}% ahorrado`}
@@ -305,21 +313,17 @@ export default function SavingsGoal() {
                     </div>
                 </div>
             ) : (
-                /* Sin imagen: barra de progreso estilizada */
                 <div className="mx-5">
                     <div className={`rounded-2xl p-5 ${isGlass ? 'bg-white/5 border border-white/10' : 'bg-gray-50 border border-dashed border-gray-200'} flex flex-col items-center gap-3`}>
                         <ImageOff size={28} className={isGlass ? 'text-white/20' : 'text-gray-300'} />
                         <p className={`text-xs text-center ${isGlass ? 'text-white/40' : 'text-gray-400'}`}>
                             Editá el objetivo para agregar una imagen
                         </p>
-                        {/* Barra de progreso */}
                         <div className="w-full mt-1">
                             <div className={`h-4 rounded-full overflow-hidden ${isGlass ? 'bg-black/30' : 'bg-gray-200'}`}>
                                 <div
                                     className={`h-full rounded-full transition-all duration-1000 ease-out ${
-                                        isComplete
-                                            ? 'bg-gradient-to-r from-yellow-400 to-amber-500'
-                                            : 'bg-gradient-to-r from-amber-400 to-amber-600'
+                                        isComplete ? 'bg-gradient-to-r from-yellow-400 to-amber-500' : 'bg-gradient-to-r from-amber-400 to-amber-600'
                                     }`}
                                     style={{ width: `${progress}%` }}
                                 />
@@ -368,13 +372,14 @@ export default function SavingsGoal() {
             {/* Borrar objetivo */}
             <button
                 onClick={handleDelete}
+                disabled={saving}
                 className={`w-full py-3 text-xs font-bold uppercase tracking-wider transition-colors border-t ${
                     isGlass
                         ? 'border-white/10 text-red-400/50 hover:text-red-400 hover:bg-red-500/10'
                         : 'border-gray-100 text-gray-300 hover:text-red-400 hover:bg-red-50'
                 }`}
             >
-                Eliminar objetivo
+                {saving ? 'Eliminando...' : 'Eliminar objetivo'}
             </button>
         </div>
     );
