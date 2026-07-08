@@ -60,10 +60,15 @@ export const checkAndMigrateToHousehold = async (user) => {
         const batch = writeBatch(db);
         const collectionsToMigrate = ['cards', 'transactions', 'supermarket_items', 'services'];
 
-        for (const collName of collectionsToMigrate) {
-            const q = query(collection(db, collName), where("userId", "==", user.uid));
-            const snapshot = await getDocs(q);
+        const snapshots = await Promise.all(
+            collectionsToMigrate.map(async (collName) => {
+                const q = query(collection(db, collName), where("userId", "==", user.uid));
+                const snapshot = await getDocs(q);
+                return { collName, snapshot };
+            })
+        );
 
+        snapshots.forEach(({ collName, snapshot }) => {
             snapshot.forEach((docSnap) => {
                 const ref = doc(db, collName, docSnap.id);
                 // Add householdId, ownerId and default shared status
@@ -77,7 +82,7 @@ export const checkAndMigrateToHousehold = async (user) => {
                     isShared: isShared
                 });
             });
-        }
+        });
 
         await batch.commit();
 

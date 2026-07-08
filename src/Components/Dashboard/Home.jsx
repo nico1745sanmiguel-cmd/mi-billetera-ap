@@ -40,9 +40,7 @@ const handleCacheRefresh = async () => {
     if ('serviceWorker' in navigator) {
         try {
             const registrations = await navigator.serviceWorker.getRegistrations();
-            for (let registration of registrations) {
-                await registration.unregister();
-            }
+            await Promise.all(registrations.map(registration => registration.unregister()));
         } catch (e) {
             console.error("Error al desregistrar SW:", e);
         }
@@ -235,6 +233,12 @@ function WidgetGrid({ order, getWidgetNode, getSize, toggleSize, getDragProps, d
     );
 }
 
+const THEME_OPTIONS = [
+    { key: 'light',  label: 'Día',     Icon: Sun     },
+    { key: 'dark',   label: 'Noche',   Icon: Moon    },
+    { key: 'system', label: 'Sistema', Icon: Monitor },
+];
+
 const Home = memo(({ onLogout, notifications = [], onCardClick }) => {
     const { privacyMode, currentDate, isGlass, theme, setTheme } = useUI();
     const navigate = useNavigate();
@@ -243,11 +247,6 @@ const Home = memo(({ onLogout, notifications = [], onCardClick }) => {
     const { cards, transactions } = useCards();
     const { superItems: supermarketItems, freshItems, plannerCategories } = useSupermarket();
     const { services } = useServices();
-    const THEME_OPTIONS = [
-        { key: 'light',  label: 'Día',     Icon: Sun     },
-        { key: 'dark',   label: 'Noche',   Icon: Moon    },
-        { key: 'system', label: 'Sistema', Icon: Monitor },
-    ];
     const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
 
     const unreadNotifsCount = useMemo(() => {

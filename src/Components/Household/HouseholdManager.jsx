@@ -102,10 +102,11 @@ export default function HouseholdManager({ onBack }) {
             await updateDoc(doc(db, 'households', targetHouseholdId), { members: newMembers });
 
             const batch = writeBatch(db);
-            for (const collName of ['cards', 'transactions', 'supermarket_items', 'services']) {
-                const snap = await getDocs(query(collection(db, collName), where("ownerId", "==", user.uid)));
-                snap.forEach(docSnap => batch.update(docSnap.ref, { householdId: targetHouseholdId }));
-            }
+            const collectionsToUpdate = ['cards', 'transactions', 'supermarket_items', 'services'];
+            const snaps = await Promise.all(collectionsToUpdate.map(collName => 
+                getDocs(query(collection(db, collName), where("ownerId", "==", user.uid)))
+            ));
+            snaps.forEach(snap => snap.forEach(docSnap => batch.update(docSnap.ref, { householdId: targetHouseholdId })));
             await batch.commit();
 
             setJoinStatus("success");

@@ -5,15 +5,16 @@ import { analyzeStatement } from '../../services/aiService';
 
 const VISA_URL = 'https://mycards.prismamediosdepago.com/';
 
+const steps = [
+    { icon: ExternalLink, label: 'Abrí el sitio de Visa', detail: 'Tocá el botón de abajo' },
+    { icon: Lock, label: 'Ingresá con tu usuario', detail: 'Usuario y contraseña de Prisma' },
+    { icon: Download, label: 'Descargá el PDF', detail: 'Buscá tu resumen y descargalo' },
+    { icon: MousePointer, label: 'Volvé aquí y subí el PDF', detail: 'Usá el botón de abajo' },
+];
+
 const VisaDownloadGuide = () => {
     const [isOpen, setIsOpen] = useState(true);
 
-    const steps = [
-        { icon: ExternalLink, label: 'Abrí el sitio de Visa', detail: 'Tocá el botón de abajo' },
-        { icon: Lock, label: 'Ingresá con tu usuario', detail: 'Usuario y contraseña de Prisma' },
-        { icon: Download, label: 'Descargá el PDF', detail: 'Buscá tu resumen y descargalo' },
-        { icon: MousePointer, label: 'Volvé aquí y subí el PDF', detail: 'Usá el botón de abajo' },
-    ];
 
     return (
         <div className="w-full max-w-xl mx-auto mb-4 rounded-2xl border border-blue-200 dark:border-blue-800/60 bg-blue-50 dark:bg-blue-950/30 overflow-hidden shadow-sm">

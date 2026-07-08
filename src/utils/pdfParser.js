@@ -12,14 +12,16 @@ export const extractTextFromPDF = async (file) => {
 
         let fullText = '';
 
+        const pagePromises = [];
         for (let i = 1; i <= pdf.numPages; i++) {
-            const page = await pdf.getPage(i);
-            const textContent = await page.getTextContent();
+            pagePromises.push(pdf.getPage(i).then(page => page.getTextContent()));
+        }
+        const pagesTextContent = await Promise.all(pagePromises);
 
-            // Unir los items de texto
+        pagesTextContent.forEach(textContent => {
             const pageText = textContent.items.map(item => item.str).join(' ');
             fullText += pageText + '\n';
-        }
+        });
 
         return fullText;
     } catch (error) {

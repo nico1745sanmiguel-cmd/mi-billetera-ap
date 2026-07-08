@@ -50,10 +50,13 @@ export const extractTextFromPDF = async (file, password = null) => {
         let totalChars = 0;
         const MAX_TOTAL_CHARS = 100000;
 
+        const pagePromises = [];
         for (let i = 1; i <= pdf.numPages; i++) {
-            const page = await pdf.getPage(i);
-            const textContent = await page.getTextContent();
-            
+            pagePromises.push(pdf.getPage(i).then(page => page.getTextContent()));
+        }
+        const pagesTextContent = await Promise.all(pagePromises);
+        
+        pagesTextContent.forEach((textContent, index) => {
             const pageText = textContent.items.map((item) => item.str).join(' ');
             totalChars += pageText.length;
             
@@ -61,8 +64,8 @@ export const extractTextFromPDF = async (file, password = null) => {
                 throw new Error('El PDF es demasiado pesado en texto.');
             }
 
-            fullText += `--- PÁGINA ${i} ---\n${pageText}\n\n`;
-        }
+            fullText += `--- PÁGINA ${index + 1} ---\n${pageText}\n\n`;
+        });
 
         // Validación básica de palabras clave
         const keywords = ['resumen', 'tarjeta', 'vencimiento', 'saldo', 'pago', 'cierre', 'credito', 'visa', 'mastercard'];

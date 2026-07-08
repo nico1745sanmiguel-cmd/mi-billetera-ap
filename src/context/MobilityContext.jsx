@@ -27,6 +27,18 @@ export const useMobility = () => {
     return { ...useMobilityState(), ...useMobilityDispatch() };
 };
 
+const DEFAULT_SETTINGS = {
+    weekStartDay: 1, // 0 = Domingo, 1 = Lunes, etc.
+    activePlatforms: { uber: true, didi: true, cabify: true, others: true },
+    expenseCategories: [
+        { id: 'gnc', label: 'GNC', iconName: 'Zap', color: '#06b6d4', active: true },
+        { id: 'nafta', label: 'Nafta', iconName: 'Fuel', color: '#f59e0b', active: true },
+        { id: 'repuestos', label: 'Repuestos', iconName: 'Wrench', color: '#ef4444', active: true },
+        { id: 'lavadero', label: 'Lavadero', iconName: 'Droplets', color: '#14b8a6', active: true },
+    ],
+    defaultTab: 'expenses'
+};
+
 export const MobilityProvider = ({ children }) => {
     const { user } = useFinancial();
     const { showToast } = useUIDispatch();
@@ -40,17 +52,6 @@ export const MobilityProvider = ({ children }) => {
     const [loadingExpenses, setLoadingExpenses] = useState(true);
 
     // ─── AJUSTES ──────────────────────────────────────────────────────────────
-    const DEFAULT_SETTINGS = {
-        weekStartDay: 1, // 0 = Domingo, 1 = Lunes, etc.
-        activePlatforms: { uber: true, didi: true, cabify: true, others: true },
-        expenseCategories: [
-            { id: 'gnc', label: 'GNC', iconName: 'Zap', color: '#06b6d4', active: true },
-            { id: 'nafta', label: 'Nafta', iconName: 'Fuel', color: '#f59e0b', active: true },
-            { id: 'repuestos', label: 'Repuestos', iconName: 'Wrench', color: '#ef4444', active: true },
-            { id: 'lavadero', label: 'Lavadero', iconName: 'Droplets', color: '#14b8a6', active: true },
-        ],
-        defaultTab: 'expenses'
-    };
     
     const [settings, setSettings] = useState(() => {
         const cached = getCache('mobility_settings');
@@ -216,7 +217,7 @@ export const MobilityProvider = ({ children }) => {
     const importSessions = useCallback(async (rows) => {
         if (!user) return { ok: 0, errors: 0 };
         let ok = 0, errors = 0;
-        for (const row of rows) {
+        const promises = rows.map(async (row) => {
             try {
                 const payload = {
                     ...buildPayload(row),
@@ -225,12 +226,14 @@ export const MobilityProvider = ({ children }) => {
                     importedFromCSV: true,
                 };
                 await addDoc(collection(db, COLLECTIONS.MOBILITY_SESSIONS), payload);
-                ok++;
+                return { status: 'fulfilled' };
             } catch (e) {
                 console.error('Import error for row:', row, e);
-                errors++;
+                return { status: 'rejected' };
             }
-        }
+        });
+        const results = await Promise.all(promises);
+        results.forEach(res => res.status === 'fulfilled' ? ok++ : errors++);
         return { ok, errors };
     }, [user, buildPayload]);
 

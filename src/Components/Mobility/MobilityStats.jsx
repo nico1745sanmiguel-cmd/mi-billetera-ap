@@ -390,13 +390,14 @@ export default function MobilityStats({ isGlass, privacyMode, month, year }) {
     );
 }
 
+const accents = {
+    violet: { from: 'from-violet-600', to: 'to-violet-500', text: 'text-violet-50' },
+    indigo: { from: 'from-indigo-600', to: 'to-indigo-500', text: 'text-indigo-50' },
+    purple: { from: 'from-purple-600', to: 'to-purple-500', text: 'text-purple-50' },
+    blue:   { from: 'from-blue-600',   to: 'to-blue-500',   text: 'text-blue-50' },
+};
+
 function KpiCard({ icon, label, value, accent, isGlass }) {
-    const accents = {
-        violet: { from: 'from-violet-600', to: 'to-violet-500', text: 'text-violet-50' },
-        indigo: { from: 'from-indigo-600', to: 'to-indigo-500', text: 'text-indigo-50' },
-        purple: { from: 'from-purple-600', to: 'to-purple-500', text: 'text-purple-50' },
-        blue:   { from: 'from-blue-600',   to: 'to-blue-500',   text: 'text-blue-50' },
-    };
     const a = accents[accent];
 
     return (

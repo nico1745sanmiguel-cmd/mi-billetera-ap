@@ -15,6 +15,20 @@ import MareaSemanal from './MareaSemanal';
 import ServicesList from './ServicesList';
 import ServicesCalendarView from './ServicesCalendarView';
 
+const frequencyMap = { 'Mensual': 1, 'Bimestral': 2, 'Trimestral': 3, 'Semestral': 6, 'Anual': 12 };
+
+const PLANNER_COLOR_MAP = {
+    blue:   { bg: 'bg-blue-100',   text: 'text-blue-700',   border: 'border-blue-200',   glBg: 'bg-blue-500/20',   glText: 'text-blue-200',   glBorder: 'border-blue-500/30' },
+    purple: { bg: 'bg-purple-100', text: 'text-purple-700', border: 'border-purple-200', glBg: 'bg-purple-500/20', glText: 'text-purple-200', glBorder: 'border-purple-500/30' },
+    orange: { bg: 'bg-orange-100', text: 'text-orange-700', border: 'border-orange-200', glBg: 'bg-orange-500/20', glText: 'text-orange-200', glBorder: 'border-orange-500/30' },
+    pink:   { bg: 'bg-pink-100',   text: 'text-pink-700',   border: 'border-pink-200',   glBg: 'bg-pink-500/20',   glText: 'text-pink-200',   glBorder: 'border-pink-500/30' },
+    green:  { bg: 'bg-green-100',  text: 'text-green-700',  border: 'border-green-200',  glBg: 'bg-green-500/20',  glText: 'text-green-200',  glBorder: 'border-green-500/30' },
+    red:    { bg: 'bg-red-100',    text: 'text-red-700',    border: 'border-red-200',    glBg: 'bg-red-500/20',    glText: 'text-red-200',    glBorder: 'border-red-500/30' },
+};
+const DEFAULT_PLANNER_COLORS = { bg: 'bg-teal-100', text: 'text-teal-700', border: 'border-teal-200', glBg: 'bg-teal-500/20', glText: 'text-teal-200', glBorder: 'border-teal-500/30' };
+
+const daysOfWeek = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+
 /**
  * Gestor principal de Servicios y Gastos Fijos.
  * Coordine la visualización de la lista de servicios, la distribución de gastos
@@ -44,8 +58,6 @@ export default function ServicesManager({ onBack }) {
         if (!currentDate) return '';
         return `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
     }, [currentDate]);
-
-    const frequencyMap = { 'Mensual': 1, 'Bimestral': 2, 'Trimestral': 3, 'Semestral': 6, 'Anual': 12 };
 
     const getStatusLabel = (day, isPaid) => {
         if (isPaid) return { text: 'Pagado', color: isGlass ? 'text-green-300 bg-green-500/20 border-green-500/30' : 'text-green-600 bg-green-100 border-green-200' };
@@ -214,16 +226,6 @@ export default function ServicesManager({ onBack }) {
         return grid;
     }, [currentDate]);
 
-    const PLANNER_COLOR_MAP = {
-        blue:   { bg: 'bg-blue-100',   text: 'text-blue-700',   border: 'border-blue-200',   glBg: 'bg-blue-500/20',   glText: 'text-blue-200',   glBorder: 'border-blue-500/30' },
-        purple: { bg: 'bg-purple-100', text: 'text-purple-700', border: 'border-purple-200', glBg: 'bg-purple-500/20', glText: 'text-purple-200', glBorder: 'border-purple-500/30' },
-        orange: { bg: 'bg-orange-100', text: 'text-orange-700', border: 'border-orange-200', glBg: 'bg-orange-500/20', glText: 'text-orange-200', glBorder: 'border-orange-500/30' },
-        pink:   { bg: 'bg-pink-100',   text: 'text-pink-700',   border: 'border-pink-200',   glBg: 'bg-pink-500/20',   glText: 'text-pink-200',   glBorder: 'border-pink-500/30' },
-        green:  { bg: 'bg-green-100',  text: 'text-green-700',  border: 'border-green-200',  glBg: 'bg-green-500/20',  glText: 'text-green-200',  glBorder: 'border-green-500/30' },
-        red:    { bg: 'bg-red-100',    text: 'text-red-700',    border: 'border-red-200',    glBg: 'bg-red-500/20',    glText: 'text-red-200',    glBorder: 'border-red-500/30' },
-    };
-    const DEFAULT_PLANNER_COLORS = { bg: 'bg-teal-100', text: 'text-teal-700', border: 'border-teal-200', glBg: 'bg-teal-500/20', glText: 'text-teal-200', glBorder: 'border-teal-500/30' };
-
     const allPlannerCats = useMemo(() => [...[{ id: 'verduleria', colorName: 'green' }, { id: 'carniceria', colorName: 'red' }], ...plannerCategories], [plannerCategories]);
     const catColorMap = useMemo(() => { const map = {}; allPlannerCats.forEach(c => { map[c.id] = c.colorName; }); return map; }, [allPlannerCats]);
 
@@ -244,8 +246,6 @@ export default function ServicesManager({ onBack }) {
         }
         return map;
     }, [allItems, freshItems, currentDate, catColorMap]);
-
-    const daysOfWeek = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
 
     return (
         <div className="space-y-6 animate-fade-in pb-24">

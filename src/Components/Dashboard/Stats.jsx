@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+// eslint-disable-next-line react-doctor/prefer-dynamic-import
 import { PieChart, Pie, Cell, ResponsiveContainer, Sector } from 'recharts';
 import { 
     ShoppingCart, Stethoscope, Utensils, CarFront, Lightbulb, ShoppingBag, 
