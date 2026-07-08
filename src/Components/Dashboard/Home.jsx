@@ -1,8 +1,8 @@
-import React, { useMemo, useEffect, useState, memo } from 'react';
+import React, { useMemo, useEffect, useState, memo, useCallback } from 'react';
 import { Users, LogOut, AlertCircle, BarChart3, Moon, RefreshCw, Bell, TrendingUp, Puzzle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { db } from '../../firebase';
-import { doc, updateDoc, arrayUnion } from 'firebase/firestore';
+import { db, auth } from '../../firebase';
+import { doc, updateDoc, arrayUnion, arrayRemove, addDoc, collection } from 'firebase/firestore';
 import { formatMoney } from '../../utils';
 import FinancialTarget from './FinancialTarget';
 import { useDragReorder } from '../../hooks/useDragReorder';
@@ -64,6 +64,29 @@ const Home = memo(({ onLogout, notifications = [], onCardClick }) => {
     const openCardModal = (card) => {
         if (onCardClick) onCardClick(card);
     };
+
+    const handleToggleAgendaPaid = useCallback(async (item) => {
+        const collectionName = item.type === 'card_item' ? 'cards' : 'services';
+        const ref = doc(db, collectionName, item.id);
+        if (item.isPaid) {
+            await updateDoc(ref, { paidPeriods: arrayRemove(targetMonthKey) });
+        } else {
+            await updateDoc(ref, { paidPeriods: arrayUnion(targetMonthKey) });
+            if (householdId && auth.currentUser) {
+                try {
+                    const { serverTimestamp } = await import('firebase/firestore');
+                    await addDoc(collection(db, 'households', householdId, 'notifications'), {
+                        type: 'payment', itemName: item.name, amount: item.amount,
+                        dueDate: item.day, itemType: item.type,
+                        paidByUid: auth.currentUser.uid,
+                        paidByName: auth.currentUser.displayName || 'Alguien',
+                        createdAt: serverTimestamp(), readBy: [auth.currentUser.uid]
+                    });
+                } catch (e) { console.error('Error saving notification', e); }
+            }
+        }
+    }, [targetMonthKey, householdId]);
+
 
     const handleCacheRefresh = async () => {
         if ('serviceWorker' in navigator) {
@@ -212,7 +235,7 @@ const Home = memo(({ onLogout, notifications = [], onCardClick }) => {
         ...(isModuleEnabled('salary') ? { salary: <SalaryWidget setView={(path) => navigate(`/${path}`)} privacyMode={privacyMode} /> } : {}),
         ...(isModuleEnabled('household') ? { split_summary: <SplitSummaryWidget setView={(path) => navigate(`/${path}`)} householdMembers={householdMembers} splitData={splitData} currentDate={currentDate} privacyMode={privacyMode} user={user} /> } : {}),
         ...(isModuleEnabled('cards') ? { cards: <CardsWidget cards={cards} targetMonthKey={targetMonthKey} privacyMode={privacyMode} onCardClick={openCardModal} /> } : {}),
-        ...(isModuleEnabled('agenda') ? { agenda: <AgendaWidget agenda={agenda} currentDate={currentDate} privacyMode={privacyMode} setView={(path) => navigate(`/${path}`)} freshItems={freshItems} plannerCategories={plannerCategories} /> } : {}),
+        ...(isModuleEnabled('agenda') ? { agenda: <AgendaWidget agenda={agenda} currentDate={currentDate} privacyMode={privacyMode} setView={(path) => navigate(`/${path}`)} freshItems={freshItems} plannerCategories={plannerCategories} onTogglePaid={handleToggleAgendaPaid} /> } : {}),
         ...(isModuleEnabled('supermarket') ? { super_actions: <SuperActionsWidget superData={superData} privacyMode={privacyMode} setView={(path) => navigate(`/${path}`)} /> } : {}),
     };
 
