@@ -72,7 +72,7 @@ export default function SavingsCard({ cartera, items, isGlass, privacyMode, dola
 
                 <div className="space-y-3">
                     {items.map((item, idx) => (
-                        <div key={idx} className={`flex justify-between items-center p-3 rounded-xl ${isGlass ? 'bg-white/5' : 'bg-gray-50'}`}>
+                        <div key={item.id || item.especie || idx} className={`flex justify-between items-center p-3 rounded-xl ${isGlass ? 'bg-white/5' : 'bg-gray-50'}`}>
                             <span className={`font-semibold ${textColor}`}>{item.especie}</span>
                             
                             {editingIdx === idx ? (
@@ -145,7 +145,7 @@ export default function SavingsCard({ cartera, items, isGlass, privacyMode, dola
                         </p>
                     ) : (
                         history.map((tx, idx) => (
-                            <div key={idx} className="flex justify-between items-center text-sm">
+                            <div key={tx.id || idx} className="flex justify-between items-center text-sm">
                                 <div className="flex flex-col">
                                     <span className={`font-semibold ${tx.tipo === 'ingreso' ? 'text-green-500' : 'text-red-500'}`}>
                                         {tx.tipo === 'ingreso' ? '+' : '-'} {tx.cantidad} {tx.especie}

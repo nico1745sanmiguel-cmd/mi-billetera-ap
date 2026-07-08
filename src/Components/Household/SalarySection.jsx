@@ -30,6 +30,7 @@ export default function SalarySection({ memberIds, currentUserUid, isGlass }) {
         }
     };
 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => { fetchMembers(); }, [memberIds]);
 
     const handleStartEdit = (member) => {

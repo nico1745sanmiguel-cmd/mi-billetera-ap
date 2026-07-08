@@ -38,6 +38,7 @@ function UndoToast({ toast, onUndo, onDismiss }) {
         }, interval);
         const dismiss = setTimeout(() => { onDismiss(); }, duration);
         return () => { clearInterval(timer); clearTimeout(dismiss); };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [toast?.id]);
 
     if (!toast) return null;
@@ -235,7 +236,7 @@ export default function AgendaWidget({ agenda, currentDate, privacyMode, setView
                         <div className="grid grid-cols-7 gap-1">
                             {/* Cabecera días */}
                             {DAYS_LABELS.map((label, i) => (
-                                <div key={i} className="text-center text-[9px] font-bold uppercase tracking-wider text-gray-400 dark:text-white/30 pb-1">
+                                <div key={label} className="text-center text-[9px] font-bold uppercase tracking-wider text-gray-400 dark:text-white/30 pb-1">
                                     {label}
                                 </div>
                             ))}

@@ -77,7 +77,7 @@ export default function StatementDashboard({ statement, isGlass, onReload }) {
             {/* Barras de Categorías */}
             <div className="space-y-3">
                 {stats.breakdown.map((item, idx) => (
-                    <div key={idx} className="relative">
+                    <div key={item.category || idx} className="relative">
                         <div className="flex justify-between text-xs font-bold mb-1 relative z-10">
                             <span className={textColor}>{item.category}</span>
                             <span className={textColor}>{formatMoney(item.amount)}</span>
@@ -99,7 +99,7 @@ export default function StatementDashboard({ statement, isGlass, onReload }) {
                 </h4>
                 <div className="space-y-3 max-h-40 overflow-y-auto custom-scrollbar pr-2">
                     {transactions.slice(0, 50).map((tx, i) => (
-                        <div key={i} className={`flex justify-between items-center pb-2 border-b last:border-0 ${isGlass ? 'border-white/10' : 'border-gray-200'}`}>
+                        <div key={tx.id || i} className={`flex justify-between items-center pb-2 border-b last:border-0 ${isGlass ? 'border-white/10' : 'border-gray-200'}`}>
                             <div className="flex-1 min-w-0 pr-2">
                                 <p className={`text-xs font-bold truncate ${textColor}`}>
                                     {tx.cleanName || tx.originalDescription}

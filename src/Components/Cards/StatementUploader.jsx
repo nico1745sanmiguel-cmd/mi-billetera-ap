@@ -41,7 +41,7 @@ const VisaDownloadGuide = () => {
                     {/* Steps */}
                     <ol className="space-y-2.5 mb-4">
                         {steps.map((step, i) => (
-                            <li key={i} className="flex items-center gap-3">
+                            <li key={step.label} className="flex items-center gap-3">
                                 <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-600 text-white text-xs font-bold flex items-center justify-center shadow">
                                     {i + 1}
                                 </span>
@@ -157,6 +157,7 @@ const StatementUploader = ({ onAnalysisComplete }) => {
         if (e.dataTransfer.files && e.dataTransfer.files[0]) {
             processFile(e.dataTransfer.files[0]);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const handleChange = (e) => {

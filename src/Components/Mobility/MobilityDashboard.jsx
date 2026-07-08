@@ -33,6 +33,7 @@ function DashboardContent({ onBack }) {
         if (settings?.defaultTab && tab === 'settings') {
             // si volvemos de settings que se quede donde estaba o vaya al default si no habia nada
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [settings?.defaultTab]);
 
     return (

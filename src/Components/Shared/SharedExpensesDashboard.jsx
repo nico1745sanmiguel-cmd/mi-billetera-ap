@@ -289,6 +289,7 @@ export default function SharedExpensesDashboard({ onBack }) {
         if (cashTotal > 0) result.push({ id: 'cash_total', name: 'Gastos Manuales', amount: cashTotal, day: 1, type: 'cash', icon: <Wallet size={16} className="text-pink-400" /> });
 
         return result.sort((a, b) => a.day - b.day);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [services, cards, transactions, supermarketItems, currentMonthKey, currentDate, freshItems]);
 
     const grandTotal = useMemo(() => sharedItems.reduce((acc, i) => acc + (i.amount || 0), 0), [sharedItems]);

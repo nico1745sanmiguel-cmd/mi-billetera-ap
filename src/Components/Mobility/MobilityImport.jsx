@@ -187,7 +187,7 @@ export default function MobilityImport({ isGlass, onSuccess }) {
                             <div className={`rounded-xl p-3 mb-3 ${isGlass ? 'bg-amber-400/10 border border-amber-400/20' : 'bg-amber-50 border border-amber-100'}`}>
                                 <p className="text-amber-500 font-semibold text-xs mb-1">⚠️ {preview.errors.length} filas con errores (se saltearán):</p>
                                 {preview.errors.slice(0, 3).map((e, i) => (
-                                    <p key={i} className="text-amber-600 text-xs">{e}</p>
+                                    <p key={e} className="text-amber-600 text-xs">{e}</p>
                                 ))}
                                 {preview.errors.length > 3 && <p className="text-amber-500 text-xs">... y {preview.errors.length - 3} más.</p>}
                             </div>
@@ -196,7 +196,7 @@ export default function MobilityImport({ isGlass, onSuccess }) {
                         {/* MUESTRA LAS PRIMERAS 3 FILAS */}
                         <div className="space-y-1">
                             {preview.rows.slice(0, 3).map((r, i) => (
-                                <div key={i} className={`flex justify-between text-xs rounded-lg px-3 py-2 ${isGlass ? 'bg-white/5' : 'bg-gray-50'}`}>
+                                <div key={r.date || i} className={`flex justify-between text-xs rounded-lg px-3 py-2 ${isGlass ? 'bg-white/5' : 'bg-gray-50'}`}>
                                     <span className={sub}>{r.date}</span>
                                     <span className={text}>${(r.uber + r.didi + r.cabify + r.others).toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
                                     <span className={sub}>{r.hoursWorked}h · {r.kilometers}km</span>

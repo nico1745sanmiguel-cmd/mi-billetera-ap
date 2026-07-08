@@ -14,7 +14,7 @@ export default function MareaSemanal({ weeklyData, isGlass, showMoney }) {
             </div>
             <div className="flex items-end justify-between h-40 gap-4 px-2 relative z-10">
                 {weeklyData.map((week, idx) => (
-                    <div key={idx} className="flex-1 flex flex-col items-center gap-3 group relative h-full justify-end">
+                    <div key={week.label || idx} className="flex-1 flex flex-col items-center gap-3 group relative h-full justify-end">
                         <div className={`absolute -top-10 transition-all duration-300 transform ${week.total > 0 ? 'opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0' : 'hidden'}`}>
                             <div className="bg-white text-gray-900 text-[10px] font-bold px-2 py-1 rounded shadow-lg whitespace-nowrap">
                                 {showMoney(week.paid)} / {showMoney(week.total)}

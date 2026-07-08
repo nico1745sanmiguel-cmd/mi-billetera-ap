@@ -197,7 +197,7 @@ const ReconciliationDesk = ({
                     </div>
 
                     {parsedItems.map((item, index) => (
-                        <div key={index} className={`p-4 rounded-2xl flex flex-col gap-3 ${item.status === 'saved' ? 'opacity-50' : ''
+                        <div key={item.id || item.description || index} className={`p-4 rounded-2xl flex flex-col gap-3 ${item.status === 'saved' ? 'opacity-50' : ''
                             } ${isGlass ? 'bg-white/5 border border-white/5' : 'bg-white shadow-sm'
                             }`}>
 

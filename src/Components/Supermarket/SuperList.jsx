@@ -134,6 +134,7 @@ export default function SuperList() {
         Promise.all(promises)
             .then(() => showToast(`🛒 ${prediction.auto.length} ítems agregados automáticamente`))
             .catch(err => console.error('Error en auto-add:', err));
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [currentMonthKey, monthlyList.length, prediction.auto]);
 
     // Estado para la tarjeta de sugerencias
@@ -147,6 +148,7 @@ export default function SuperList() {
         prediction.suggestions.forEach(s => { initial[s.name.toLowerCase()] = true; });
         setSelectedSuggestions(initial);
         setShowSuggestions(true);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [currentMonthKey, prediction.suggestions.length]);
 
     const handleConfirmSuggestions = async () => {

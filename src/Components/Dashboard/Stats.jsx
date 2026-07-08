@@ -93,6 +93,7 @@ export default function Stats() {
                 displayAmount: t.type === 'cash' ? t.amount : t.monthlyInstallment
             }];
         });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [transactions, currentDate, targetMonthVal, expenseScope]);
 
     const cashTransactions = useMemo(() => monthlyTransactions.filter(t => t.type === 'cash'), [monthlyTransactions]);
@@ -115,11 +116,13 @@ export default function Stats() {
             }
             return debt > 0 ? [{ ...c, currentMonthDebt: debt, details: cardTransactions }] : [];
         }).sort((a, b) => b.currentMonthDebt - a.currentMonthDebt);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [cards, monthlyTransactions, currentMonthKey, expenseScope]);
     
     const cardsTotalDebt = cardsStatus.reduce((acc, c) => acc + c.currentMonthDebt, 0);
 
     // C. Servicios
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     const scopedServices = useMemo(() => services.filter(filterByScope), [services, expenseScope]);
     const servicesTotal = scopedServices.reduce((acc, s) => acc + Number(s.amount || 0), 0);
 
@@ -167,6 +170,7 @@ export default function Stats() {
             }
         });
         return total + servicesTotal;
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [transactions, currentDate, cards, servicesTotal, expenseScope]);
 
 
@@ -337,7 +341,7 @@ export default function Stats() {
                                     onClick={(_, index) => setActiveIndex(index)}
                                 >
                                     {chartData.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={entry.color} style={{ cursor: 'pointer', outline: 'none' }} />
+                                        <Cell key={entry.name || `cell-${index}`} fill={entry.color} style={{ cursor: 'pointer', outline: 'none' }} />
                                     ))}
                                 </Pie>
                             </PieChart>
@@ -387,7 +391,7 @@ export default function Stats() {
                 {filter === 'all' && (
                     <div className="grid grid-cols-2 gap-3">
                         {chartData.map((item, idx) => (
-                            <div key={idx} className={`p-4 rounded-2xl border shadow-sm flex flex-col justify-between ${glassClass}`}>
+                            <div key={item.name || idx} className={`p-4 rounded-2xl border shadow-sm flex flex-col justify-between ${glassClass}`}>
                                 <div className="flex items-center gap-2 mb-3">
                                     <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }}></div>
                                     <span className={`text-xs font-bold ${glassTextSecondary}`}>{item.name}</span>

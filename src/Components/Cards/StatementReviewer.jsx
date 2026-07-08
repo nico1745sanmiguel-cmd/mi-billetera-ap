@@ -88,7 +88,7 @@ const StatementReviewer = ({ data, onConfirm, onCancel }) => {
                 {/* ── VISTA MOBILE: tarjetas apiladas ── */}
                 <div className="md:hidden max-h-[60vh] overflow-y-auto custom-scrollbar divide-y divide-slate-100 dark:divide-slate-800/50">
                     {transactions.map((tx, idx) => (
-                        <div key={idx} className="p-4 flex flex-col gap-3">
+                        <div key={tx.id || idx} className="p-4 flex flex-col gap-3">
                             {/* Fila 1: fecha + monto + eliminar */}
                             <div className="flex items-center justify-between">
                                 <span className="text-xs text-slate-400 dark:text-slate-500 font-mono">
@@ -155,7 +155,7 @@ const StatementReviewer = ({ data, onConfirm, onCancel }) => {
                         </thead>
                         <tbody className="divide-y divide-slate-100 dark:divide-slate-800/50">
                             {transactions.map((tx, idx) => (
-                                <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-800/20 transition-colors group">
+                                <tr key={tx.id || idx} className="hover:bg-slate-50 dark:hover:bg-slate-800/20 transition-colors group">
                                     <td className="p-4 text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">
                                         {tx.date || '-'}
                                     </td>

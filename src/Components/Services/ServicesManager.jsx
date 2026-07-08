@@ -128,6 +128,7 @@ export default function ServicesManager({ onBack }) {
             if (a.isPaid !== b.isPaid) return a.isPaid ? 1 : -1;
             return a.day - b.day;
         });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [services, cardServices, currentMonthKey, currentDate]);
 
     const weeklyData = useMemo(() => {

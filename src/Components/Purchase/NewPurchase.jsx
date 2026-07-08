@@ -219,7 +219,7 @@ export default function NewPurchase({ onSave }) {
                             <h4 className={`text-[10px] font-bold uppercase mb-3 ${isGlass ? 'text-white/40' : 'text-gray-400'}`}>Tu Compromiso Futuro (6 Meses)</h4>
                             <div className="space-y-2">
                                 {projections.map((p, idx) => (
-                                    <div key={idx} className="flex items-center gap-3 text-xs">
+                                    <div key={p.monthLabel || idx} className="flex items-center gap-3 text-xs">
                                         <div className={`w-8 font-bold ${isGlass ? 'text-white/60' : 'text-gray-500'}`}>{p.monthLabel}</div>
                                         <div className={`flex-1 h-2 rounded-full overflow-hidden ${isGlass ? 'bg-white/10' : 'bg-gray-200'}`}>
                                             <div className="h-full bg-blue-500/30" style={{ width: `${(p.existing / (p.total * 1.2 || 1)) * 100}%` }}></div> {/* Base Debt */}
