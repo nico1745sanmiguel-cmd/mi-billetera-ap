@@ -7,6 +7,7 @@ import Login from './Components/Login';
 import InstallPrompt from './Components/UI/InstallPrompt';
 import SkeletonDashboard from './Components/UI/SkeletonDashboard';
 import Toast from './Components/UI/Toast';
+import DraggableFAB from './Components/Dashboard/Widgets/DraggableFAB';
 import { auth } from './firebase';
 import { signOut } from 'firebase/auth';
 import { useFinancial } from './context/FinancialContext';
@@ -242,6 +243,7 @@ export default function App() {
                             </AnimatePresence>
                         </Suspense>
                     </main>
+                    <DraggableFAB />
                 </div>
             </div>
         </div>

@@ -30,7 +30,6 @@ import SuperActionsWidget from './Widgets/SuperActionsWidget';
 import NotificationsModal from './Widgets/NotificationsModal';
 import MobilityWidget from './Widgets/MobilityWidget';
 import SalaryWidget from './Widgets/SalaryWidget';
-import DraggableFAB from './Widgets/DraggableFAB';
 import { isModuleEnabled } from '../Settings/ModulesSettings';
 
 const Home = memo(({ onLogout, notifications = [], onCardClick }) => {
@@ -332,8 +331,6 @@ const Home = memo(({ onLogout, notifications = [], onCardClick }) => {
                     handleMarkAsRead={handleMarkAsRead} 
                 />
             )}
-
-            <DraggableFAB />
         </div>
     );
 });
