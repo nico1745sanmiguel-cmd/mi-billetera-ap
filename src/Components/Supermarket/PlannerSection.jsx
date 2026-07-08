@@ -6,6 +6,12 @@ import { deletePlannerCategory } from '../../repositories/plannerCategoriesRepos
 import { AVAILABLE_COLORS, AVAILABLE_ICONS } from './constants';
 import TripCard from './TripCard';
 
+const handleDelete = async (id) => {
+    if (window.confirm('¿Borrar este ítem?')) {
+        await deleteFreshItem(id);
+    }
+};
+
 export default function PlannerSection({ catData, trips, currentMonthKey, isGlass, householdId }) {
     const cfg = AVAILABLE_COLORS[catData.colorName] || AVAILABLE_COLORS.blue;
     let Icon = AVAILABLE_ICONS[catData.iconName] || LayoutList;
@@ -70,11 +76,6 @@ export default function PlannerSection({ catData, trips, currentMonthKey, isGlas
         }
     };
 
-    const handleDelete = async (id) => {
-        if (window.confirm('¿Borrar este ítem?')) {
-            await deleteFreshItem(id);
-        }
-    };
 
     const handleDeleteCategory = async () => {
         if (window.confirm(`¿Seguro que querés eliminar la categoría "${catData.label}" y todos sus gastos internos?`)) {

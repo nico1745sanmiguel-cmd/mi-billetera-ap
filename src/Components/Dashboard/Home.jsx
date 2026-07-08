@@ -36,6 +36,43 @@ import SalaryWidget from './Widgets/SalaryWidget';
 import PlannerWidget from './Widgets/PlannerWidget';
 import { isModuleEnabled } from '../Settings/ModulesSettings';
 
+const handleCacheRefresh = async () => {
+    if ('serviceWorker' in navigator) {
+        try {
+            const registrations = await navigator.serviceWorker.getRegistrations();
+            for (let registration of registrations) {
+                await registration.unregister();
+            }
+        } catch (e) {
+            console.error("Error al desregistrar SW:", e);
+        }
+    }
+    if ('caches' in window) {
+        try {
+            const cacheNames = await caches.keys();
+            await Promise.all(
+                cacheNames.map(cacheName => caches.delete(cacheName))
+            );
+        } catch (e) {
+            console.error("Error al vaciar cachés:", e);
+        }
+    }
+    window.location.href = window.location.origin + window.location.pathname + '?t=' + Date.now();
+};
+
+const getInitialOrder = () => {
+    const saved = getCache(CACHE_KEYS.WIDGET_ORDER, null);
+    const legacy = localStorage.getItem('widget_order');
+    const raw = saved || (legacy ? JSON.parse(legacy) : null);
+    if (raw) {
+        try {
+            const hasAll = DEFAULT_WIDGET_ORDER.every(k => raw.includes(k));
+            if (hasAll && raw.length === DEFAULT_WIDGET_ORDER.length) return raw;
+        } catch (e) { console.error("Error leyendo orden", e); }
+    }
+    return DEFAULT_WIDGET_ORDER;
+};
+
 // ─── SizeMenu ─────────────────────────────────────────────────────────────────
 // Menú flotante que aparece al completar el long press.
 // Muestra dos opciones: Completo (full) o Compacto (half).
@@ -258,42 +295,6 @@ const Home = memo(({ onLogout, notifications = [], onCardClick }) => {
     }, [targetMonthKey, householdId]);
 
 
-    const handleCacheRefresh = async () => {
-        if ('serviceWorker' in navigator) {
-            try {
-                const registrations = await navigator.serviceWorker.getRegistrations();
-                for (let registration of registrations) {
-                    await registration.unregister();
-                }
-            } catch (e) {
-                console.error("Error al desregistrar SW:", e);
-            }
-        }
-        if ('caches' in window) {
-            try {
-                const cacheNames = await caches.keys();
-                await Promise.all(
-                    cacheNames.map(cacheName => caches.delete(cacheName))
-                );
-            } catch (e) {
-                console.error("Error al vaciar cachés:", e);
-            }
-        }
-        window.location.href = window.location.origin + window.location.pathname + '?t=' + Date.now();
-    };
-
-    const getInitialOrder = () => {
-        const saved = getCache(CACHE_KEYS.WIDGET_ORDER, null);
-        const legacy = localStorage.getItem('widget_order');
-        const raw = saved || (legacy ? JSON.parse(legacy) : null);
-        if (raw) {
-            try {
-                const hasAll = DEFAULT_WIDGET_ORDER.every(k => raw.includes(k));
-                if (hasAll && raw.length === DEFAULT_WIDGET_ORDER.length) return raw;
-            } catch (e) { console.error("Error leyendo orden", e); }
-        }
-        return DEFAULT_WIDGET_ORDER;
-    };
     const { order, getDragProps, draggingItem } = useDragReorder(getInitialOrder());
     useEffect(() => { setCache(CACHE_KEYS.WIDGET_ORDER, order); }, [order]);
 

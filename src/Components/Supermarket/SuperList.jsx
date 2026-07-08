@@ -17,6 +17,23 @@ import {
 import { useUI } from '../../context/UIContext';
 import { analyzePurchaseFrequency } from '../../utils/purchasePrediction';
 
+// FORMATOS
+const formatInputCurrency = (val) => val ? '$ ' + Number(val).toLocaleString('es-AR') : '';
+const parseCurrencyInput = (val) => val.replace(/\D/g, '');
+
+const handleToggle = async (item) => {
+    await toggleSuperChecked(item.id, !item.checked);
+};
+
+const handleDelete = async (id) => {
+    if (window.confirm('¿Borrar item?')) await deleteSuperItem(id);
+};
+
+const handleUpdatePrice = async (item, rawValue) => {
+    const numericValue = parseCurrencyInput(rawValue);
+    await updateSuperPrice(item.id, numericValue);
+};
+
 export default function SuperList() {
     const { currentDate, isGlass } = useUI();
     const navigate = useNavigate();
@@ -204,9 +221,6 @@ export default function SuperList() {
         return { lastPrice, diff };
     };
 
-    // FORMATOS
-    const formatInputCurrency = (val) => val ? '$ ' + Number(val).toLocaleString('es-AR') : '';
-    const parseCurrencyInput = (val) => val.replace(/\D/g, '');
 
 
 
@@ -236,13 +250,6 @@ export default function SuperList() {
         } catch (error) { console.error(error); }
     };
 
-    const handleToggle = async (item) => {
-        await toggleSuperChecked(item.id, !item.checked);
-    };
-
-    const handleDelete = async (id) => {
-        if (window.confirm('¿Borrar item?')) await deleteSuperItem(id);
-    };
 
     // --- HANDLERS PRECIO Y CONFIRMACIÓN ---
     // Ref para guardar el estado original antes de editar (para Undo y lógica de cambios)
@@ -258,10 +265,6 @@ export default function SuperList() {
         setFocusedItemId(item.id);
     };
 
-    const handleUpdatePrice = async (item, rawValue) => {
-        const numericValue = parseCurrencyInput(rawValue);
-        await updateSuperPrice(item.id, numericValue);
-    };
 
     const handlePriceBlur = async (item) => {
         if (!editingItemRef.current || editingItemRef.current.id !== item.id) return;

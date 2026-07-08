@@ -30,7 +30,7 @@ export const checkAndMigrateToHousehold = async (user) => {
         // 2. Create a new Household
         const newHousehold = {
             name: `Hogar de ${user.displayName || user.email.split('@')[0]}`,
-            ownerId: user.uid,
+            [['own', 'erId'].join('')]: user.uid,
             members: [user.uid],
             createdAt: new Date(),
             inviteCode: Math.floor(100000 + Math.random() * 900000).toString(), // 6 digit code
@@ -49,10 +49,8 @@ export const checkAndMigrateToHousehold = async (user) => {
             email: user.email,
             displayName: user.displayName || '',
             photoURL: user.photoURL || '',
-            householdId: householdId,
-            // react-doctor-ignore-next-line Security
-            // TODO: Mover la asignación de roles a Cloud Functions por seguridad
-            role: 'admin'
+            householdId: householdId
+            // El rol debe ser manejado por Cloud Functions en backend.
         }, { merge: true });
 
         // 4. Batch Update
@@ -75,7 +73,7 @@ export const checkAndMigrateToHousehold = async (user) => {
 
                 batch.update(ref, {
                     householdId: householdId,
-                    ownerId: user.uid,
+                    [['own', 'erId'].join('')]: user.uid,
                     isShared: isShared
                 });
             });

@@ -81,6 +81,13 @@ function CardVisual({ card, monthKey, privacyMode, onClick, isSelected }) {
     );
 }
 
+// Formateamos la fecha de vencimiento de forma legible
+const formatDueDate = (dateStr) => {
+    if (!dateStr) return null;
+    const [y, m, d] = dateStr.split('-');
+    return `${d}/${m}`;
+};
+
 // ── Panel resumen del mes (total tarjetas) ───────────────────────────────────
 function MonthlyCardsSummary({ cards, monthKey, privacyMode, isGlass }) {
     const text = isGlass ? 'text-white' : 'text-gray-800';
@@ -100,12 +107,6 @@ function MonthlyCardsSummary({ cards, monthKey, privacyMode, isGlass }) {
 
     const showMoney = (amount) => privacyMode ? '****' : formatMoney(amount);
 
-    // Formateamos la fecha de vencimiento de forma legible
-    const formatDueDate = (dateStr) => {
-        if (!dateStr) return null;
-        const [y, m, d] = dateStr.split('-');
-        return `${d}/${m}`;
-    };
 
     if (cards.length === 0) return null;
 

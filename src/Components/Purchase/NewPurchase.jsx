@@ -6,6 +6,19 @@ import { useUI } from '../../context/UIContext';
 import { useAuth } from '../../context/AuthContext';
 import { useCards } from '../../context/CardsContext';
 
+const getBrandLogo = (cardName) => {
+    const name = cardName ? cardName.toLowerCase() : '';
+    let src = '';
+    if (name.includes('visa')) src = '/logos/visa.png';
+    else if (name.includes('master')) src = '/logos/mastercard.png';
+    else if (name.includes('amex') || name.includes('american')) src = '/logos/amex.png';
+
+    if (src) return <img src={src} alt="Logo" loading="lazy" className="h-6 w-auto object-contain drop-shadow-sm opacity-80" />;
+    return <span className="text-[10px] font-bold bg-gray-100 px-1 rounded text-gray-500">{cardName?.substring(0, 3)}</span>;
+};
+
+const formatMoney = (val) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(val);
+
 export default function NewPurchase({ onSave }) {
     const { cards, transactions, addTransaction } = useCards();
     const { userData } = useAuth();
@@ -61,16 +74,6 @@ export default function NewPurchase({ onSave }) {
         }
     }
 
-    const getBrandLogo = (cardName) => {
-        const name = cardName ? cardName.toLowerCase() : '';
-        let src = '';
-        if (name.includes('visa')) src = '/logos/visa.png';
-        else if (name.includes('master')) src = '/logos/mastercard.png';
-        else if (name.includes('amex') || name.includes('american')) src = '/logos/amex.png';
-
-        if (src) return <img src={src} alt="Logo" loading="lazy" className="h-6 w-auto object-contain drop-shadow-sm opacity-80" />;
-        return <span className="text-[10px] font-bold bg-gray-100 px-1 rounded text-gray-500">{cardName?.substring(0, 3)}</span>;
-    };
 
     const handleSave = async (e) => {
         e.preventDefault();
@@ -113,7 +116,6 @@ export default function NewPurchase({ onSave }) {
 
     const getSelectedCardInfo = () => cards.find(c => c.id === selectedCardId);
 
-    const formatMoney = (val) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(val);
 
     return (
         <div className="animate-fade-in max-w-lg mx-auto pb-32">

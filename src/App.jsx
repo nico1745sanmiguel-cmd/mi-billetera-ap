@@ -1,6 +1,6 @@
 import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
-import { AnimatePresence, motion, MotionConfig } from 'framer-motion';
+import { AnimatePresence, m, LazyMotion, domMax, MotionConfig } from 'framer-motion';
 import Navbar from './Components/Layout/Navbar';
 import Home from './Components/Dashboard/Home';
 import Login from './Components/Login';
@@ -37,6 +37,19 @@ const LazyLoader = () => (
         <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
     </div>
 );
+
+// Formateador de fecha para el header móvil
+const getFormattedDate = (date) => {
+    const options = { month: 'long', year: 'numeric' };
+    let text = date.toLocaleDateString('es-AR', options).replace(' de ', ' ');
+    return text.charAt(0).toUpperCase() + text.slice(1);
+};
+
+const handleLogout = () => {
+    if (window.confirm('¿Cerrar sesión?')) {
+        signOut(auth);
+    }
+};
 
 export default function App() {
     // ─── DATOS FINANCIEROS ───────────────────────────────────────────────────
@@ -76,18 +89,6 @@ export default function App() {
         }
     }, [loadingUser]);
 
-    // Formateador de fecha para el header móvil
-    const getFormattedDate = (date) => {
-        const options = { month: 'long', year: 'numeric' };
-        let text = date.toLocaleDateString('es-AR', options).replace(' de ', ' ');
-        return text.charAt(0).toUpperCase() + text.slice(1);
-    };
-
-    const handleLogout = () => {
-        if (window.confirm('¿Cerrar sesión?')) {
-            signOut(auth);
-        }
-    };
 
     if (loadingUser) {
         return (
@@ -112,6 +113,7 @@ export default function App() {
 
     return (
         <MotionConfig reducedMotion={reducedMotionSetting}>
+        <LazyMotion features={domMax}>
         <div className={`app-container min-h-screen transition-colors duration-700 ease-in-out ${isGlass ? 'glass-mode bg-[#0f0c29]' : 'light-mode bg-gray-50'}`}>
             <div className="relative z-10 min-h-screen flex flex-col">
                 
@@ -159,86 +161,86 @@ export default function App() {
                                     <Route path="/" element={<Navigate to="/dashboard" replace />} />
                                     
                                     <Route path="/dashboard" element={
-                                        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}>
+                                        <m.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}>
                                             <Home
                                                 onLogout={handleLogout}
                                                 notifications={notifications}
                                                 onCardClick={(card) => { setSelectedCard(card); navigate('/cards'); }}
                                             />
-                                        </motion.div>
+                                        </m.div>
                                     } />
 
                                     <Route path="/services_manager" element={
                                         (isModuleEnabled('agenda') || isModuleEnabled('planner')) ? 
-                                        <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.2 }}><ServicesManager /></motion.div> : <Navigate to="/dashboard" replace />
+                                        <m.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.2 }}><ServicesManager /></m.div> : <Navigate to="/dashboard" replace />
                                     } />
 
                                     <Route path="/reconcile" element={
-                                        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.2 }}>
+                                        <m.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.2 }}>
                                             <ReconciliationDesk onBack={() => navigate('/dashboard')} />
-                                        </motion.div>
+                                        </m.div>
                                     } />
 
                                     <Route path="/household" element={
                                         isModuleEnabled('household') ? 
-                                        <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.2 }}><HouseholdManager onBack={() => navigate('/dashboard')} /></motion.div> : <Navigate to="/dashboard" replace />
+                                        <m.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.2 }}><HouseholdManager onBack={() => navigate('/dashboard')} /></m.div> : <Navigate to="/dashboard" replace />
                                     } />
 
                                     <Route path="/stats" element={
                                         isModuleEnabled('stats') ? 
-                                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}><Stats /></motion.div> : <Navigate to="/dashboard" replace />
+                                        <m.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}><Stats /></m.div> : <Navigate to="/dashboard" replace />
                                     } />
 
                                     <Route path="/purchase" element={
-                                        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.2 }}>
+                                        <m.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.2 }}>
                                             <NewPurchase onSave={() => navigate('/dashboard')} />
-                                        </motion.div>
+                                        </m.div>
                                     } />
 
                                     <Route path="/super" element={
                                         isModuleEnabled('supermarket') ? 
-                                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}><SuperList /></motion.div> : <Navigate to="/dashboard" replace />
+                                        <m.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}><SuperList /></m.div> : <Navigate to="/dashboard" replace />
                                     } />
 
                                     <Route path="/fresh" element={
                                         isModuleEnabled('supermarket') ? 
-                                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}><FreshShop /></motion.div> : <Navigate to="/dashboard" replace />
+                                        <m.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}><FreshShop /></m.div> : <Navigate to="/dashboard" replace />
                                     } />
 
                                     <Route path="/reparto" element={
                                         isModuleEnabled('household') ? 
-                                        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.2 }}><SharedExpensesDashboard onBack={() => navigate('/dashboard')} /></motion.div> : <Navigate to="/dashboard" replace />
+                                        <m.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.2 }}><SharedExpensesDashboard onBack={() => navigate('/dashboard')} /></m.div> : <Navigate to="/dashboard" replace />
                                     } />
 
                                     <Route path="/scanner" element={
                                         isModuleEnabled('supermarket') ? 
-                                        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.2 }}><ReceiptScanner onBack={() => navigate('/super')} /></motion.div> : <Navigate to="/dashboard" replace />
+                                        <m.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.2 }}><ReceiptScanner onBack={() => navigate('/super')} /></m.div> : <Navigate to="/dashboard" replace />
                                     } />
 
                                     <Route path="/savings" element={
                                         isModuleEnabled('savings') ? 
-                                        <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} transition={{ duration: 0.2 }}><SavingsDashboard onBack={() => navigate('/dashboard')} /></motion.div> : <Navigate to="/dashboard" replace />
+                                        <m.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} transition={{ duration: 0.2 }}><SavingsDashboard onBack={() => navigate('/dashboard')} /></m.div> : <Navigate to="/dashboard" replace />
                                     } />
 
                                     <Route path="/cards" element={
                                         isModuleEnabled('cards') ? 
-                                        <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} transition={{ duration: 0.2 }}><CardsDashboard initialCard={selectedCard} /></motion.div> : <Navigate to="/dashboard" replace />
+                                        <m.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} transition={{ duration: 0.2 }}><CardsDashboard initialCard={selectedCard} /></m.div> : <Navigate to="/dashboard" replace />
                                     } />
 
                                     <Route path="/mobility" element={
                                         isModuleEnabled('mobility') ? 
-                                        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.2 }}><MobilityDashboard onBack={() => navigate('/dashboard')} /></motion.div> : <Navigate to="/dashboard" replace />
+                                        <m.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.2 }}><MobilityDashboard onBack={() => navigate('/dashboard')} /></m.div> : <Navigate to="/dashboard" replace />
                                     } />
 
                                     <Route path="/salary" element={
                                         isModuleEnabled('salary') ?
-                                        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.2 }}><SalaryDashboard onBack={() => navigate('/dashboard')} /></motion.div> : <Navigate to="/dashboard" replace />
+                                        <m.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.2 }}><SalaryDashboard onBack={() => navigate('/dashboard')} /></m.div> : <Navigate to="/dashboard" replace />
                                     } />
 
                                     <Route path="/settings_modules" element={
-                                        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.2 }}>
+                                        <m.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.2 }}>
                                             <ModulesSettings onBack={() => navigate('/dashboard')} />
-                                        </motion.div>
+                                        </m.div>
                                     } />
                                     
                                     {/* Fallback temporal a dashboard */}
@@ -251,6 +253,7 @@ export default function App() {
                 </div>
             </div>
         </div>
+        </LazyMotion>
         </MotionConfig>
     );
 }

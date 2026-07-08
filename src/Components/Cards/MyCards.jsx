@@ -28,6 +28,10 @@ const getBrandLogo = (name) => {
   return <span className="font-bold text-white text-[10px] tracking-widest uppercase opacity-80">TARJETA</span>;
 };
 
+const handleDelete = async (id) => {
+  if (window.confirm('¿Seguro que quieres borrar esta tarjeta?')) await deleteDoc(doc(db, 'cards', id));
+};
+
 export default function MyCards({ cards, privacyMode, currentDate }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -54,9 +58,6 @@ export default function MyCards({ cards, privacyMode, currentDate }) {
     setIsEditing(true);
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm('¿Seguro que quieres borrar esta tarjeta?')) await deleteDoc(doc(db, 'cards', id));
-  };
 
   const handleSave = async (e) => {
     e.preventDefault();

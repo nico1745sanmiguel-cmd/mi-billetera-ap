@@ -3,15 +3,16 @@ import { CreditCard, ExternalLink, Plus } from 'lucide-react';
 import { formatMoney } from '../../../utils';
 import { CARD_LOGO_MAP } from '../../../config/constants';
 
+const getCardLogo = (name) => {
+    const n = (name || '').toLowerCase();
+    const match = CARD_LOGO_MAP.find(({ keywords }) => keywords.some(kw => n.includes(kw)));
+    return match?.path || null;
+};
+
 export default function CardsWidget({ cards, targetMonthKey, privacyMode, onCardClick, size = 'full' }) {
     const showMoney = (amount) => privacyMode ? '****' : formatMoney(amount);
     const isHalf = size === 'half';
 
-    const getCardLogo = (name) => {
-        const n = (name || '').toLowerCase();
-        const match = CARD_LOGO_MAP.find(({ keywords }) => keywords.some(kw => n.includes(kw)));
-        return match?.path || null;
-    };
 
     // ─── Modo COMPACTO (half): tarjetas apiladas verticalmente con peek de la siguiente ───
     if (isHalf) {

@@ -2,6 +2,14 @@ import { useState, useEffect } from 'react';
 import { collection, query, where, onSnapshot, addDoc, doc, deleteDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 
+const deleteAlias = async (id) => {
+    try {
+        await deleteDoc(doc(db, 'merchant_aliases', id));
+    } catch (error) {
+        console.error("Error deleting alias", error);
+    }
+}
+
 export const useAliases = (userId, householdId = null) => {
     const [aliases, setAliases] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -73,13 +81,6 @@ export const useAliases = (userId, householdId = null) => {
         return aliases.find(a => descUpper.includes(a.pattern));
     };
 
-    const deleteAlias = async (id) => {
-        try {
-            await deleteDoc(doc(db, 'merchant_aliases', id));
-        } catch (error) {
-            console.error("Error deleting alias", error);
-        }
-    }
 
     return { aliases, loading, addAlias, findAlias, deleteAlias };
 };

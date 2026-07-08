@@ -12,6 +12,15 @@ import React, { useState, useEffect, useRef } from 'react';
  *   disabled     — boolean
  *   allowDecimals — si false, solo enteros (default: true)
  */
+// Convierte string con formato → número (limpiando puntos y reemplazando coma)
+const toRaw = (str) => {
+    if (!str) return '';
+    // Quitar puntos de miles, reemplazar coma decimal por punto
+    const clean = str.replace(/\./g, '').replace(',', '.');
+    const n = parseFloat(clean);
+    return isNaN(n) ? '' : n;
+};
+
 export default function CurrencyInput({
     value,
     onChange,
@@ -32,14 +41,6 @@ export default function CurrencyInput({
         });
     };
 
-    // Convierte string con formato → número (limpiando puntos y reemplazando coma)
-    const toRaw = (str) => {
-        if (!str) return '';
-        // Quitar puntos de miles, reemplazar coma decimal por punto
-        const clean = str.replace(/\./g, '').replace(',', '.');
-        const n = parseFloat(clean);
-        return isNaN(n) ? '' : n;
-    };
 
     const [display, setDisplay] = useState(() => toDisplay(value));
     const skipUpdate = useRef(false);

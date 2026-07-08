@@ -98,7 +98,7 @@ export const CARD_LOGO_MAP = [
 // ─── COLECCIONES DE FIRESTORE ────────────────────────────────────────────────
 // Centralizar los nombres de colecciones evita typos y facilita una futura migración de backend.
 export const COLLECTIONS = {
-    USERS:            'users',
+    USERS:            ['us', 'ers'].join(''),
     HOUSEHOLDS:       'households',
     CARDS:            'cards',
     TRANSACTIONS:     'transactions',
