@@ -7,7 +7,7 @@ export default function SuperActionsWidget({ superData, privacyMode, setView }) 
 
     return (
         <div className="space-y-3 mx-1">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3">
                 <div onClick={() => setView('super')} className="bg-white dark:bg-[#0f0c29]/50 p-4 rounded-[24px] border border-gray-100 dark:border-white/10 shadow-sm cursor-pointer hover:border-purple-200 dark:hover:border-purple-500/50 transition-colors group flex flex-col justify-between h-32 dark:backdrop-blur-md">
                     <div className="flex justify-between items-start">
                         <div className="bg-purple-50 text-purple-600 dark:bg-purple-500/20 dark:text-purple-300 p-2.5 rounded-xl">
@@ -18,16 +18,6 @@ export default function SuperActionsWidget({ superData, privacyMode, setView }) 
                     <div>
                         <p className="text-xs text-gray-400 dark:text-white/40 font-bold uppercase mb-0.5">{superData.label}</p>
                         <p className={`text-xl font-bold ${superData.statusColor === 'text-gray-900' ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-white/40'}`}>{showMoney(superData.showAmount)}</p>
-                    </div>
-                </div>
-
-                <div onClick={() => setView('purchase')} className="bg-gray-900 dark:bg-white/10 p-4 rounded-[24px] shadow-lg cursor-pointer active:scale-95 transition-all flex flex-col justify-between group h-32 dark:backdrop-blur-md dark:border dark:border-white/10">
-                    <div className="bg-gray-700 dark:bg-white/10 w-fit p-2.5 rounded-xl text-white group-hover:bg-gray-600 dark:group-hover:bg-white/20 transition-colors">
-                        <Plus size={24} />
-                    </div>
-                    <div>
-                        <p className="text-xs text-gray-400 dark:text-white/60 font-bold uppercase mb-0.5">Acción Rápida</p>
-                        <p className="text-xl font-bold text-white">Registrar Gasto</p>
                     </div>
                 </div>
             </div>
