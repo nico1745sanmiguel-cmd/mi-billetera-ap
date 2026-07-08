@@ -52,7 +52,7 @@ export const DEFAULT_WIDGET_SIZES = {};
  * Widgets que SIEMPRE ocupan el ancho completo y no pueden achicarse.
  * 'target' = análisis completo del mes, 'split_summary' = reparto del mes.
  */
-export const WIDGET_SIZE_FIXED = new Set(['target', 'split_summary']);
+export const WIDGET_SIZE_FIXED = new Set(['target']);
 
 /**
  * Día del mes a partir del cual un vencimiento se considera "urgente"
