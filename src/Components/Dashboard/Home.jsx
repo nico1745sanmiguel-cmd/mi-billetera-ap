@@ -259,7 +259,7 @@ const Home = memo(({ onLogout, notifications = EMPTY_ARRAY, onCardClick }) => {
         ...(isModuleEnabled('household') ? { split_summary: (size) => <SplitSummaryWidget setView={(path) => navigate(`/${path}`)} householdMembers={householdMembers} splitData={splitData} currentDate={currentDate} privacyMode={privacyMode} user={user} size={size} /> } : {}),
         ...(isModuleEnabled('cards') ? { cards: (size) => <CardsWidget cards={cards} targetMonthKey={targetMonthKey} privacyMode={privacyMode} onCardClick={openCardModal} size={size} /> } : {}),
         ...(isModuleEnabled('agenda') ? { agenda: () => <AgendaWidget agenda={agenda} currentDate={currentDate} privacyMode={privacyMode} setView={(path) => navigate(`/${path}`)} freshItems={freshItems} plannerCategories={plannerCategories} onTogglePaid={handleToggleAgendaPaid} /> } : {}),
-        ...(isModuleEnabled('supermarket') ? { super_actions: () => <SuperActionsWidget superData={superData} privacyMode={privacyMode} setView={(path) => navigate(`/${path}`)} /> } : {}),
+        ...(isModuleEnabled('supermarket') ? { super_actions: (size) => <SuperActionsWidget size={size} superData={superData} privacyMode={privacyMode} setView={(path) => navigate(`/${path}`)} targetMonthKey={targetMonthKey} /> } : {}),
         ...(isModuleEnabled('planner') ? { planner_access: (size) => <PlannerWidget setView={(path) => navigate(`/${path}`)} size={size} /> } : {}),
     };
 
