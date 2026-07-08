@@ -1,6 +1,6 @@
 // src/firebase.js
 import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
+import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from "firebase/firestore";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { getFunctions } from "firebase/functions";
 
@@ -14,7 +14,16 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+
+// Firestore con persistencia offline usando IndexedDB.
+// La app carga datos del caché local inmediatamente al abrir,
+// sin esperar la red. Los datos se sincronizan en background.
+// persistentMultipleTabManager permite que varios tabs compartan el caché.
+const db = initializeFirestore(app, {
+  localCache: persistentLocalCache({
+    tabManager: persistentMultipleTabManager()
+  })
+});
 
 // 2. Inicializamos Auth y el Proveedor de Google
 const auth = getAuth(app);

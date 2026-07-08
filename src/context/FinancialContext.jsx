@@ -69,7 +69,7 @@ export const FinancialProvider = ({ children }) => {
         loadingUser,
         notifications,
         dolarBlue
-    }), [user, userData, householdMembers, loadingUser, notifications, dolarBlue]);
+    }), [user, loadingUser, notifications, dolarBlue]);
 
     return (
         <FinancialContext.Provider value={value}>
