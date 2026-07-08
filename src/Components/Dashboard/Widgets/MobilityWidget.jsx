@@ -46,7 +46,7 @@ function MobilityWidgetInner({ setView, currentDate, privacyMode }) {
     return (
         <div
             onClick={() => setView('mobility')}
-            className="rounded-2xl p-5 shadow-sm border border-violet-100 bg-gradient-to-r from-violet-50 to-indigo-50 dark:from-white/10 dark:to-white/5 dark:border-white/10 relative overflow-hidden group cursor-pointer transition-all active:scale-95"
+            className="h-full flex flex-col justify-center rounded-2xl p-5 shadow-sm border border-violet-100 bg-gradient-to-r from-violet-50 to-indigo-50 dark:from-white/10 dark:to-white/5 dark:border-white/10 relative overflow-hidden group cursor-pointer transition-all active:scale-95"
         >
             <div className="absolute right-0 top-0 w-32 h-32 bg-gradient-to-br from-violet-200/50 to-indigo-200/50 dark:from-violet-500/10 dark:to-indigo-500/10 rounded-full -mr-10 -mt-10 blur-2xl transition-all group-hover:scale-110" />
 

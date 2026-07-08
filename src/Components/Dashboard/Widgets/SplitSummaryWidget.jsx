@@ -2,13 +2,13 @@ import React from 'react';
 import { Scale, Wallet } from 'lucide-react';
 import { formatMoney } from '../../../utils';
 
-export default function SplitSummaryWidget({ setView, householdMembers, splitData, currentDate, privacyMode, user }) {
+export default function SplitSummaryWidget({ setView, householdMembers, splitData, currentDate, privacyMode, user, size = 'full' }) {
     const showMoney = (amount) => privacyMode ? '****' : formatMoney(amount);
 
     return (
         <div 
             onClick={() => setView('reparto')}
-            className="bg-white dark:bg-white/5 rounded-3xl border border-gray-100 dark:border-white/10 shadow-sm overflow-hidden mx-1 cursor-pointer hover:border-emerald-200 dark:hover:bg-white/10 transition-all dark:backdrop-blur-md group"
+            className="h-full flex flex-col bg-white dark:bg-white/5 rounded-3xl border border-gray-100 dark:border-white/10 shadow-sm overflow-hidden mx-1 cursor-pointer hover:border-emerald-200 dark:hover:bg-white/10 transition-all dark:backdrop-blur-md group"
         >
             {/* Header */}
             <div className={`px-5 py-4 border-b border-gray-50 dark:border-white/5 flex ${size === 'half' ? 'flex-col items-start gap-2' : 'justify-between items-center'} bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-transparent dark:to-transparent`}>

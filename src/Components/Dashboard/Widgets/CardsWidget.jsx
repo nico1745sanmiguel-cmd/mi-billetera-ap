@@ -16,7 +16,7 @@ export default function CardsWidget({ cards, targetMonthKey, privacyMode, onCard
     // ─── Modo COMPACTO (half): tarjetas apiladas verticalmente con peek de la siguiente ───
     if (isHalf) {
         return (
-            <div>
+            <div className="h-full flex flex-col">
                 <div className="flex justify-between items-center px-2 mb-3">
                     <h3 className="font-bold text-gray-800 dark:text-white text-sm flex items-center gap-1.5">
                         <CreditCard size={15} /> Tarjetas
@@ -71,7 +71,7 @@ export default function CardsWidget({ cards, targetMonthKey, privacyMode, onCard
 
     // ─── Modo COMPLETO (full): layout horizontal original ────────────────────────────────
     return (
-        <div>
+        <div className="h-full flex flex-col">
             <div className="flex justify-between items-center px-2 mb-3">
                 <h3 className="font-bold text-gray-800 dark:text-white text-sm flex items-center gap-2">
                     <CreditCard size={18} /> Tus Tarjetas <span className="text-[9px] bg-gray-100 dark:bg-white/10 px-1.5 rounded text-gray-400 dark:text-white/40 font-normal">Desliza</span>

@@ -5,7 +5,7 @@ export default function PlannerWidget({ setView }) {
     return (
         <div
             onClick={() => setView('fresh')}
-            className="bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-900/20 dark:to-blue-900/20 border border-indigo-200 dark:border-indigo-500/20 p-4 rounded-[24px] cursor-pointer hover:from-indigo-100 hover:to-blue-100 dark:hover:from-indigo-900/40 dark:hover:to-blue-900/40 active:scale-95 transition-all flex items-center justify-between group shadow-sm dark:backdrop-blur-md mx-1"
+            className="h-full bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-900/20 dark:to-blue-900/20 border border-indigo-200 dark:border-indigo-500/20 p-4 rounded-[24px] cursor-pointer hover:from-indigo-100 hover:to-blue-100 dark:hover:from-indigo-900/40 dark:hover:to-blue-900/40 active:scale-95 transition-all flex items-center justify-between group shadow-sm dark:backdrop-blur-md mx-1"
         >
             <div className="flex items-center gap-3">
                 <div className="bg-indigo-100 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-300 p-2.5 rounded-xl group-hover:scale-110 transition-transform">

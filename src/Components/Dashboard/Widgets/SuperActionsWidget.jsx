@@ -8,7 +8,7 @@ export default function SuperActionsWidget({ superData, privacyMode, setView }) 
     return (
         <div
             onClick={() => setView('super')}
-            className="bg-white dark:bg-[#0f0c29]/50 p-4 rounded-[24px] border border-gray-100 dark:border-white/10 shadow-sm cursor-pointer hover:border-purple-200 dark:hover:border-purple-500/50 transition-colors group flex flex-col justify-between h-32 dark:backdrop-blur-md mx-1"
+            className="bg-white dark:bg-[#0f0c29]/50 p-4 rounded-[24px] border border-gray-100 dark:border-white/10 shadow-sm cursor-pointer hover:border-purple-200 dark:hover:border-purple-500/50 transition-colors group flex flex-col justify-between h-full dark:backdrop-blur-md mx-1"
         >
             <div className="flex justify-between items-start">
                 <div className="bg-purple-50 text-purple-600 dark:bg-purple-500/20 dark:text-purple-300 p-2.5 rounded-xl">

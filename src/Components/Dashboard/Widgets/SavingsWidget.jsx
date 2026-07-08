@@ -104,7 +104,7 @@ export default function SavingsWidget({ setView, privacyMode }) {
     return (
         <div
             onClick={() => setView('savings')}
-            className="rounded-3xl overflow-hidden mx-1 cursor-pointer transition-all group relative"
+            className="h-full flex flex-col justify-between rounded-3xl overflow-hidden mx-1 cursor-pointer transition-all group relative"
             style={{ minHeight: hasGoalImage ? '160px' : undefined }}
         >
             {/* Fondo: imagen del objetivo con revelado progresivo */}

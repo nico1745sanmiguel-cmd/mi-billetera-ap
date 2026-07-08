@@ -101,7 +101,7 @@ function WidgetWrapper({ widgetKey, children, size, onToggleSize, getDragProps, 
 
     return (
         <div
-            className={`relative transition-all duration-300 ${isDragging ? 'opacity-40 scale-95 cursor-grabbing' : 'cursor-grab'}`}
+            className={`relative transition-all duration-300 flex-1 flex flex-col ${isDragging ? 'opacity-40 scale-95 cursor-grabbing' : 'cursor-grab'}`}
             {...(!menuOpen ? longPressHandlers : {})}
             draggable={dragProps.draggable}
             onDragStart={dragProps.onDragStart}
@@ -173,7 +173,7 @@ function WidgetGrid({ order, getWidgetNode, getSize, toggleSize, getDragProps, d
                             return (
                                 <div
                                     key={key}
-                                    className={`${isPair || size === 'half' ? 'w-1/2' : 'w-full'} min-w-0`}
+                                    className={`${isPair || size === 'half' ? 'w-1/2' : 'w-full'} min-w-0 flex flex-col`}
                                 >
                                     <WidgetWrapper
                                         widgetKey={key}
@@ -397,7 +397,7 @@ const Home = memo(({ onLogout, notifications = [], onCardClick }) => {
 
     const WIDGETS = {
         ...(isModuleEnabled('planner') ? { target: () => (
-            <div className={`transition-all duration-300 ${privacyMode ? 'opacity-50 blur-sm pointer-events-none select-none' : 'opacity-100'}`}>
+            <div className={`h-full flex flex-col transition-all duration-300 ${privacyMode ? 'opacity-50 blur-sm pointer-events-none select-none' : 'opacity-100'}`}>
                 <FinancialTarget
                     totalNeed={totalNeed}
                     totalPaid={totalPaid}
