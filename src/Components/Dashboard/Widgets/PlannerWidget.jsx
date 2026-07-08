@@ -93,11 +93,7 @@ export default function PlannerWidget({ setView, size }) {
                         </p>
                     </div>
                 </div>
-                {pendingItems.length > 0 && (
-                    <span className="bg-indigo-100 text-indigo-700 dark:bg-indigo-500/30 dark:text-indigo-300 text-[10px] px-2 py-1 rounded-full font-bold whitespace-nowrap shrink-0">
-                        {pendingItems.length} tareas
-                    </span>
-                )}
+
             </div>
 
             {/* Próximas Tareas */}
