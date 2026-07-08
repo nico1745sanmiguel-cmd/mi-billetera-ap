@@ -30,8 +30,11 @@ export default function NewPurchase({ onSave }) {
     );
 
     // --- MÁQUINA DEL TIEMPO ⏳ ---
-    useEffect(() => {
-        if (currentDate) {
+    const [prevCurrentDate, setPrevCurrentDate] = useState(null);
+
+    if (currentDate && currentDate !== prevCurrentDate) {
+        setPrevCurrentDate(currentDate);
+        if (!date) {
             const realToday = new Date();
             const isSameMonth = currentDate.getMonth() === realToday.getMonth() && currentDate.getFullYear() === realToday.getFullYear();
             if (isSameMonth) setDate(realToday.toISOString().split('T')[0]);
@@ -41,16 +44,22 @@ export default function NewPurchase({ onSave }) {
                 setDate(`${year}-${month}-01`);
             }
         }
-    }, [currentDate]);
+    }
 
     // Auto-select card
-    useEffect(() => {
+    const [prevType, setPrevType] = useState('');
+    const [prevCards, setPrevCards] = useState([]);
+
+    if (type !== prevType || cards !== prevCards) {
+        setPrevType(type);
+        setPrevCards(cards);
+        
         if (type === 'credit' && cards.length === 1 && !selectedCardId) {
             setSelectedCardId(cards[0].id);
         } else if (type === 'credit' && cards.length > 0 && !selectedCardId) {
             setSelectedCardId(cards[0].id);
         }
-    }, [type, cards, selectedCardId]);
+    }
 
     const getBrandLogo = (cardName) => {
         const name = cardName ? cardName.toLowerCase() : '';

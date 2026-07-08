@@ -49,14 +49,18 @@ export default function MobilityExpenses({ isGlass, month, year }) {
 
     // Si las categorías cambian (ej: el usuario agrega una nueva), resincronizar
     // la categoría seleccionada si la actual ya no existe o es inválida.
-    useEffect(() => {
+    const [prevActiveCategories, setPrevActiveCategories] = useState([]);
+
+    if (activeCategories !== prevActiveCategories) {
+        setPrevActiveCategories(activeCategories);
         const valid = activeCategories.filter(c => c.key !== 'gnc');
-        if (valid.length === 0) return;
-        const currentOk = valid.find(c => c.key === fullForm.category);
-        if (!currentOk) {
-            setFullForm(f => ({ ...f, category: valid[0].key }));
+        if (valid.length > 0) {
+            const currentOk = valid.find(c => c.key === fullForm.category);
+            if (!currentOk) {
+                setFullForm(f => ({ ...f, category: valid[0].key }));
+            }
         }
-    }, [activeCategories]); // eslint-disable-line react-hooks/exhaustive-deps
+    }
 
     // ─── Mes visible (viene del Dashboard compartido) ───────────────────────────
     const viewMonth = `${year}-${String(month + 1).padStart(2, '0')}`;

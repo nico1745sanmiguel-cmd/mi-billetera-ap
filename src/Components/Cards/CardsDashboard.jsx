@@ -262,7 +262,15 @@ function CardDetail({ card, isNewCard, currentDate, privacyMode, isGlass, househ
         ? currentDate.toLocaleDateString('es-AR', { month: 'long', year: 'numeric' })
         : '';
 
-    useEffect(() => {
+    const [prevCardId, setPrevCardId] = useState(null);
+    const [prevMonthKey, setPrevMonthKey] = useState('');
+    const [prevIsNewCard, setPrevIsNewCard] = useState(false);
+
+    if (card?.id !== prevCardId || monthKey !== prevMonthKey || isNewCard !== prevIsNewCard) {
+        setPrevCardId(card?.id);
+        setPrevMonthKey(monthKey);
+        setPrevIsNewCard(isNewCard);
+        
         if (card && !isNewCard) {
             setForm({
                 name: card.name || '',
@@ -282,7 +290,7 @@ function CardDetail({ card, isNewCard, currentDate, privacyMode, isGlass, househ
                 transactions: saved.transactions || [],
             });
         }
-    }, [card, monthKey, isNewCard]);
+    }
 
     const handleSaveCard = async (e) => {
         e.preventDefault();
@@ -615,13 +623,15 @@ export default function CardsDashboard({ initialCard }) {
     const [selectedCard, setSelectedCard] = useState(null);
     const [isNew, setIsNew] = useState(false);
 
-    // Si viene una tarjeta pre-seleccionada desde el dashboard, la abrimos directamente
-    useEffect(() => {
+    const [prevInitialCard, setPrevInitialCard] = useState(null);
+
+    if (initialCard !== prevInitialCard) {
+        setPrevInitialCard(initialCard);
         if (initialCard) {
             setSelectedCard(initialCard);
             setIsNew(false);
         }
-    }, [initialCard]);
+    }
 
     const monthKey = getMonthKey(currentDate);
 

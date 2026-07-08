@@ -19,9 +19,14 @@ const DAYS_LABELS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 function UndoToast({ toast, onUndo, onDismiss }) {
     const [progress, setProgress] = useState(100);
 
+    const [prevToastId, setPrevToastId] = useState(null);
+    if (toast?.id !== prevToastId) {
+        setPrevToastId(toast?.id);
+        if (toast) setProgress(100);
+    }
+
     useEffect(() => {
         if (!toast) return;
-        setProgress(100);
         const duration = 4000;
         const interval = 50;
         const step = (interval / duration) * 100;

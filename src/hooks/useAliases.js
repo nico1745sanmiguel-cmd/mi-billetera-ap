@@ -6,9 +6,16 @@ export const useAliases = (userId, householdId = null) => {
     const [aliases, setAliases] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
+    const [prevUserId, setPrevUserId] = useState(null);
+    if (userId !== prevUserId) {
+        setPrevUserId(userId);
         if (!userId) {
             setAliases([]);
+        }
+    }
+
+    useEffect(() => {
+        if (!userId) {
             return;
         }
 

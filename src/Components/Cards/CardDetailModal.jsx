@@ -24,7 +24,15 @@ export default function CardDetailModal({ isOpen, onClose, card, privacyMode, is
 
   const monthKey = getMonthKey(currentDate);
 
-  useEffect(() => {
+  const [prevCardId, setPrevCardId] = useState(null);
+  const [prevIsOpen, setPrevIsOpen] = useState(false);
+  const [prevMonthKey, setPrevMonthKey] = useState('');
+
+  if (isOpen !== prevIsOpen || card?.id !== prevCardId || monthKey !== prevMonthKey) {
+    setPrevIsOpen(isOpen);
+    setPrevCardId(card?.id);
+    setPrevMonthKey(monthKey);
+
     if (isOpen) {
       setIsAnimating(true);
       setActiveTab('statement');
@@ -53,11 +61,15 @@ export default function CardDetailModal({ isOpen, onClose, card, privacyMode, is
         setStatement({ totalDue: '', dueDate: '', nextCloseDate: '', nextDueDate: '', isPaid: false, transactions: [] });
         setActiveTab('card');
       }
-    } else {
+    }
+  }
+
+  useEffect(() => {
+    if (!isOpen) {
       const timer = setTimeout(() => setIsAnimating(false), 300);
       return () => clearTimeout(timer);
     }
-  }, [isOpen, card, monthKey]);
+  }, [isOpen]);
 
   const handleSaveCard = async (e) => {
     e.preventDefault();

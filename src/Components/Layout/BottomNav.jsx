@@ -1,29 +1,29 @@
 import React from 'react';
 import { Home, CreditCard, ShoppingCart, BarChart3, Plus } from 'lucide-react';
 
+const NavItem = ({ id, icon, label, currentView, setView }) => {
+  const isActive = currentView === id;
+  return (
+    <button type="button" 
+      onClick={() => setView(id)}
+      className={`flex flex-col items-center justify-center w-full h-full transition-colors duration-200 ${isActive ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600'}`}
+    >
+      <div className={`transition-transform duration-200 ${isActive ? '-translate-y-1' : ''}`}>
+          {icon}
+      </div>
+      <span className={`text-[10px] font-bold mt-1 ${isActive ? 'opacity-100' : 'opacity-0 hidden md:block'}`}>
+          {label}
+      </span>
+    </button>
+  );
+};
+
 export default function BottomNav({ currentView, setView }) {
   
   // Función temporal para el botón central
   // (Pronto abrirá el menú de "Nuevo Ingreso / Nuevo Gasto / Nueva Tarjeta")
   const handleCentralClick = () => {
     setView('purchase');
-  };
-
-  const NavItem = ({ id, icon, label }) => {
-    const isActive = currentView === id;
-    return (
-      <button type="button" 
-        onClick={() => setView(id)}
-        className={`flex flex-col items-center justify-center w-full h-full transition-colors duration-200 ${isActive ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600'}`}
-      >
-        <div className={`transition-transform duration-200 ${isActive ? '-translate-y-1' : ''}`}>
-            {icon}
-        </div>
-        <span className={`text-[10px] font-bold mt-1 ${isActive ? 'opacity-100' : 'opacity-0 hidden md:block'}`}>
-            {label}
-        </span>
-      </button>
-    );
   };
 
   return (
@@ -56,11 +56,13 @@ export default function BottomNav({ currentView, setView }) {
                 id="dashboard" 
                 label="Inicio" 
                 icon={<Home size={24} />} 
+                currentView={currentView} setView={setView}
             />
             <NavItem 
                 id="cards" 
                 label="Tarjetas" 
                 icon={<CreditCard size={24} />} 
+                currentView={currentView} setView={setView}
             />
         </div>
 
@@ -73,11 +75,13 @@ export default function BottomNav({ currentView, setView }) {
                 id="super" 
                 label="Super" 
                 icon={<ShoppingCart size={24} />} 
+                currentView={currentView} setView={setView}
             />
             <NavItem 
                 id="stats" 
                 label="Análisis" 
                 icon={<BarChart3 size={24} />} 
+                currentView={currentView} setView={setView}
             />
         </div>
 
