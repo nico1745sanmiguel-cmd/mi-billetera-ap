@@ -1,5 +1,7 @@
 import React, { useMemo, useEffect, useState, memo, useCallback } from 'react';
-import { Users, LogOut, AlertCircle, Moon, RefreshCw, Bell, TrendingUp, Puzzle } from 'lucide-react';
+import { Users, LogOut, AlertCircle, Moon, Sun, Monitor, RefreshCw, Bell, Puzzle, Maximize2, Minimize2, GripVertical } from 'lucide-react';
+import { useLongPress } from '../../hooks/useLongPress';
+import { useWidgetSizes } from '../../hooks/useWidgetSizes';
 import { useNavigate } from 'react-router-dom';
 import { db, auth } from '../../firebase';
 import { doc, updateDoc, arrayUnion, arrayRemove, addDoc, collection } from 'firebase/firestore';
@@ -13,6 +15,7 @@ import {
     DEFAULT_WIDGET_ORDER,
     CRITICAL_DUE_DAY_THRESHOLD,
     CACHE_KEYS,
+    WIDGET_SIZE_FIXED,
 } from '../../config/constants';
 import { getCache, setCache } from '../../utils/cache';
 import { useUI } from '../../context/UIContext';
@@ -32,15 +35,191 @@ import MobilityWidget from './Widgets/MobilityWidget';
 import SalaryWidget from './Widgets/SalaryWidget';
 import { isModuleEnabled } from '../Settings/ModulesSettings';
 
+// ─── SizeMenu ─────────────────────────────────────────────────────────────────
+// Menú flotante que aparece al completar el long press.
+// Muestra dos opciones: Completo (full) o Compacto (half).
+function SizeMenu({ currentSize, onSelect, onClose }) {
+    return (
+        <>
+            {/* Overlay para cerrar al tocar fuera */}
+            <div className="fixed inset-0 z-40" onTouchStart={onClose} onClick={onClose} />
+
+            <div className="absolute top-2 right-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+                <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-white/10 rounded-2xl shadow-2xl shadow-black/20 dark:shadow-black/60 p-1.5 flex flex-col gap-1 min-w-[160px]">
+                    <p className="text-[9px] uppercase font-bold text-gray-400 dark:text-white/30 tracking-widest px-2 pt-1 pb-0.5">Tamaño del widget</p>
+
+                    <button
+                        onClick={(e) => { e.stopPropagation(); onSelect('full'); onClose(); }}
+                        className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                            currentSize === 'full'
+                                ? 'bg-indigo-500 text-white shadow-md shadow-indigo-500/30'
+                                : 'text-gray-600 dark:text-white/70 hover:bg-gray-50 dark:hover:bg-white/5'
+                        }`}
+                    >
+                        <Maximize2 size={14} />
+                        <span>Completo</span>
+                        {/* Ícono visual de ancho completo */}
+                        <span className="ml-auto flex gap-0.5">
+                            <span className="w-3 h-2 bg-current opacity-60 rounded-sm" />
+                        </span>
+                    </button>
+
+                    <button
+                        onClick={(e) => { e.stopPropagation(); onSelect('half'); onClose(); }}
+                        className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                            currentSize === 'half'
+                                ? 'bg-indigo-500 text-white shadow-md shadow-indigo-500/30'
+                                : 'text-gray-600 dark:text-white/70 hover:bg-gray-50 dark:hover:bg-white/5'
+                        }`}
+                    >
+                        <Minimize2 size={14} />
+                        <span>Compacto</span>
+                        {/* Ícono visual de medio ancho */}
+                        <span className="ml-auto flex gap-0.5">
+                            <span className="w-1.5 h-2 bg-current opacity-60 rounded-sm" />
+                            <span className="w-1.5 h-2 bg-current opacity-20 rounded-sm" />
+                        </span>
+                    </button>
+                </div>
+            </div>
+        </>
+    );
+}
+
+// ─── WidgetWrapper ─────────────────────────────────────────────────────────────
+// Envuelve cada widget con: long press, menú de tamaño, drag handle, feedback visual.
+function WidgetWrapper({ widgetKey, children, size, onToggleSize, getDragProps, isDragging }) {
+    const [menuOpen, setMenuOpen] = useState(false);
+    const isFixed = WIDGET_SIZE_FIXED.has(widgetKey);
+
+    const { handlers: longPressHandlers, isHolding } = useLongPress(() => {
+        if (!isFixed) setMenuOpen(true);
+    });
+
+    const dragProps = getDragProps(widgetKey);
+
+    return (
+        <div
+            className={`relative transition-all duration-300 ${isDragging ? 'opacity-40 scale-95' : ''}`}
+            {...(!menuOpen ? longPressHandlers : {})}
+        >
+            {/* Feedback visual durante el long press: borde pulsante */}
+            {isHolding && !isFixed && (
+                <div className="absolute inset-0 rounded-2xl border-2 border-indigo-400 dark:border-indigo-400 animate-pulse z-10 pointer-events-none" />
+            )}
+
+            {/* Drag handle + indicador de tamaño — siempre visible, baja opacidad */}
+            <div
+                className={`flex items-center justify-between px-1 mb-1.5 ${isFixed ? 'justify-end' : ''}`}
+                {...dragProps}
+            >
+                {!isFixed && (
+                    <div className="flex items-center gap-1">
+                        <GripVertical size={14} className="text-gray-300 dark:text-white/20" />
+                        <span className="text-[9px] text-gray-300 dark:text-white/20 font-medium uppercase tracking-wider">
+                            {size === 'half' ? 'Compacto · mantené para cambiar' : 'Mantené para cambiar tamaño'}
+                        </span>
+                    </div>
+                )}
+                {size === 'half' && (
+                    <span className="text-[8px] bg-indigo-100 dark:bg-indigo-500/20 text-indigo-500 dark:text-indigo-300 px-1.5 py-0.5 rounded-full font-bold ml-auto">½</span>
+                )}
+            </div>
+
+            {/* Contenido del widget */}
+            <div className="bg-white dark:bg-white/5 rounded-2xl border border-gray-100/60 dark:border-white/5 shadow-sm overflow-hidden">
+                {children}
+            </div>
+
+            {/* SizeMenu flotante */}
+            {menuOpen && (
+                <SizeMenu
+                    currentSize={size}
+                    onSelect={(newSize) => onToggleSize(widgetKey, newSize)}
+                    onClose={() => setMenuOpen(false)}
+                />
+            )}
+        </div>
+    );
+}
+
+// ─── WidgetGrid ────────────────────────────────────────────────────────────────
+// Agrupa los widgets en filas. Dos 'half' consecutivos → fila de 2 columnas.
+// Un 'half' sin pareja → renderiza solo al 50% del ancho.
+function WidgetGrid({ order, getWidgetNode, getSize, toggleSize, getDragProps, draggingItem }) {
+    // Construir filas: agrupar half+half en pares
+    const rows = [];
+    let i = 0;
+    while (i < order.length) {
+        const key = order[i];
+        const size = getSize(key);
+        if (size === 'half') {
+            const nextKey = order[i + 1];
+            const nextSize = nextKey ? getSize(nextKey) : 'full';
+            if (nextSize === 'half') {
+                rows.push([key, nextKey]);
+                i += 2;
+            } else {
+                rows.push([key]); // huérfano → se renderiza al 50%
+                i += 1;
+            }
+        } else {
+            rows.push([key]);
+            i += 1;
+        }
+    }
+
+    return (
+        <div className="flex flex-col gap-4">
+            {rows.map((row, rowIdx) => {
+                const isPair = row.length === 2;
+                return (
+                    <div key={rowIdx} className={`flex gap-3 ${isPair ? 'items-stretch' : ''}`}>
+                        {row.map((key) => {
+                            const size = getSize(key);
+                            const node = getWidgetNode(key, size);
+                            if (!node) return null;
+                            return (
+                                <div
+                                    key={key}
+                                    className={`${isPair || size === 'half' ? 'w-1/2' : 'w-full'} min-w-0`}
+                                >
+                                    <WidgetWrapper
+                                        widgetKey={key}
+                                        size={size}
+                                        onToggleSize={(k, newSize) => {
+                                            // toggleSize alterna, pero desde SizeMenu viene el valor exacto
+                                            const current = getSize(k);
+                                            if (current !== newSize) toggleSize(k);
+                                        }}
+                                        getDragProps={getDragProps}
+                                        isDragging={draggingItem === key}
+                                    >
+                                        {node}
+                                    </WidgetWrapper>
+                                </div>
+                            );
+                        })}
+                    </div>
+                );
+            })}
+        </div>
+    );
+}
+
 const Home = memo(({ onLogout, notifications = [], onCardClick }) => {
-    const { privacyMode, currentDate, isGlass, setIsGlass } = useUI();
+    const { privacyMode, currentDate, isGlass, theme, setTheme } = useUI();
     const navigate = useNavigate();
     const { user, userData, householdMembers } = useAuth();
     const householdId = userData?.householdId;
     const { cards, transactions } = useCards();
     const { superItems: supermarketItems, freshItems, plannerCategories } = useSupermarket();
     const { services } = useServices();
-    const onToggleTheme = () => setIsGlass(!isGlass);
+    const THEME_OPTIONS = [
+        { key: 'light',  label: 'Día',     Icon: Sun     },
+        { key: 'dark',   label: 'Noche',   Icon: Moon    },
+        { key: 'system', label: 'Sistema', Icon: Monitor },
+    ];
     const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
 
     const unreadNotifsCount = useMemo(() => {
@@ -223,8 +402,10 @@ const Home = memo(({ onLogout, notifications = [], onCardClick }) => {
         return { grandTotal, breakdown, proporciones };
     }, [householdMembers, services, cardsWithDebt, supermarketItems, freshItems, targetMonthKey]);
 
+    const { getSize, toggleSize } = useWidgetSizes();
+
     const WIDGETS = {
-        ...(isModuleEnabled('planner') ? { target: (
+        ...(isModuleEnabled('planner') ? { target: () => (
             <div className={`transition-all duration-300 ${privacyMode ? 'opacity-50 blur-sm pointer-events-none select-none' : 'opacity-100'}`}>
                 <FinancialTarget
                     totalNeed={totalNeed}
@@ -240,13 +421,20 @@ const Home = memo(({ onLogout, notifications = [], onCardClick }) => {
                 {privacyMode && <div className="absolute inset-0 flex items-center justify-center font-bold text-gray-500 z-10">Vista Privada</div>}
             </div>
         ) } : {}),
-        ...(isModuleEnabled('savings') ? { savings_summary: <SavingsWidget setView={(path) => navigate(`/${path}`)} privacyMode={privacyMode} /> } : {}),
-        ...(isModuleEnabled('mobility') ? { mobility: <MobilityWidget setView={(path) => navigate(`/${path}`)} currentDate={currentDate} privacyMode={privacyMode} /> } : {}),
-        ...(isModuleEnabled('salary') ? { salary: <SalaryWidget setView={(path) => navigate(`/${path}`)} privacyMode={privacyMode} /> } : {}),
-        ...(isModuleEnabled('household') ? { split_summary: <SplitSummaryWidget setView={(path) => navigate(`/${path}`)} householdMembers={householdMembers} splitData={splitData} currentDate={currentDate} privacyMode={privacyMode} user={user} /> } : {}),
-        ...(isModuleEnabled('cards') ? { cards: <CardsWidget cards={cards} targetMonthKey={targetMonthKey} privacyMode={privacyMode} onCardClick={openCardModal} /> } : {}),
-        ...(isModuleEnabled('agenda') ? { agenda: <AgendaWidget agenda={agenda} currentDate={currentDate} privacyMode={privacyMode} setView={(path) => navigate(`/${path}`)} freshItems={freshItems} plannerCategories={plannerCategories} onTogglePaid={handleToggleAgendaPaid} /> } : {}),
-        ...(isModuleEnabled('supermarket') ? { super_actions: <SuperActionsWidget superData={superData} privacyMode={privacyMode} setView={(path) => navigate(`/${path}`)} /> } : {}),
+        ...(isModuleEnabled('savings') ? { savings_summary: () => <SavingsWidget setView={(path) => navigate(`/${path}`)} privacyMode={privacyMode} /> } : {}),
+        ...(isModuleEnabled('mobility') ? { mobility: () => <MobilityWidget setView={(path) => navigate(`/${path}`)} currentDate={currentDate} privacyMode={privacyMode} /> } : {}),
+        ...(isModuleEnabled('salary') ? { salary: () => <SalaryWidget setView={(path) => navigate(`/${path}`)} privacyMode={privacyMode} /> } : {}),
+        ...(isModuleEnabled('household') ? { split_summary: () => <SplitSummaryWidget setView={(path) => navigate(`/${path}`)} householdMembers={householdMembers} splitData={splitData} currentDate={currentDate} privacyMode={privacyMode} user={user} /> } : {}),
+        ...(isModuleEnabled('cards') ? { cards: (size) => <CardsWidget cards={cards} targetMonthKey={targetMonthKey} privacyMode={privacyMode} onCardClick={openCardModal} size={size} /> } : {}),
+        ...(isModuleEnabled('agenda') ? { agenda: () => <AgendaWidget agenda={agenda} currentDate={currentDate} privacyMode={privacyMode} setView={(path) => navigate(`/${path}`)} freshItems={freshItems} plannerCategories={plannerCategories} onTogglePaid={handleToggleAgendaPaid} /> } : {}),
+        ...(isModuleEnabled('supermarket') ? { super_actions: () => <SuperActionsWidget superData={superData} privacyMode={privacyMode} setView={(path) => navigate(`/${path}`)} /> } : {}),
+    };
+
+    // Normalizar: widgets que no son función se envuelven para API uniforme
+    const getWidgetNode = (key, size) => {
+        const w = WIDGETS[key];
+        if (!w) return null;
+        return typeof w === 'function' ? w(size) : w;
     };
 
     return (
@@ -288,29 +476,54 @@ const Home = memo(({ onLogout, notifications = [], onCardClick }) => {
                 </div>
             )}
 
-            <div className="space-y-6">
-                {order.map((key) => {
-                    if (!WIDGETS[key]) return null;
-                    return (
-                        <div key={key} {...getDragProps(key)} className={`transition-all duration-300 ${draggingItem === key ? 'opacity-50 scale-95 cursor-grabbing' : 'cursor-grab'}`}>
-                            <div className="flex justify-center -mb-2 opacity-0 hover:opacity-100 transition-opacity"><div className="w-10 h-1 bg-gray-200 rounded-full"></div></div>
-                            {WIDGETS[key]}
-                        </div>
-                    );
-                })}
+            <WidgetGrid
+                order={order}
+                getWidgetNode={getWidgetNode}
+                getSize={getSize}
+                toggleSize={toggleSize}
+                getDragProps={getDragProps}
+                draggingItem={draggingItem}
+            />
+
+
+
+            {/* ── Selector de Tema Triple ── */}
+            <div className="mt-6 flex items-center justify-center">
+                <div className={`relative flex items-center p-1 rounded-full gap-1 ${
+                    isGlass
+                        ? 'bg-white/10 border border-white/10'
+                        : 'bg-gray-100 border border-gray-200'
+                }`}>
+                    {THEME_OPTIONS.map(({ key, label, Icon }) => {
+                        const isActive = theme === key;
+                        return (
+                            <button
+                                key={key}
+                                onClick={() => setTheme(key)}
+                                className={`relative flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold transition-all duration-300 ${
+                                    isActive
+                                        ? isGlass
+                                            ? 'bg-white/20 text-white shadow-lg shadow-black/20'
+                                            : 'bg-white text-gray-800 shadow-md shadow-gray-200'
+                                        : isGlass
+                                            ? 'text-white/40 hover:text-white/70'
+                                            : 'text-gray-400 hover:text-gray-600'
+                                }`}
+                            >
+                                <Icon
+                                    size={13}
+                                    className={`transition-colors duration-300 ${
+                                        isActive && key === 'light'  ? 'text-amber-500' :
+                                        isActive && key === 'dark'   ? 'text-indigo-400' :
+                                        isActive && key === 'system' ? 'text-emerald-400' : ''
+                                    }`}
+                                />
+                                <span>{label}</span>
+                            </button>
+                        );
+                    })}
+                </div>
             </div>
-
-
-
-            <button
-                onClick={onToggleTheme}
-                className="w-full py-4 mt-6 rounded-full border border-gray-100 dark:border-white/10 text-gray-400 dark:text-white/40 text-xs font-bold uppercase tracking-widest hover:bg-gray-50 dark:hover:bg-white/5 hover:text-gray-600 dark:hover:text-white/80 transition-all flex items-center justify-center gap-2"
-            >
-                <Moon size={16} className="dark:hidden" />
-                <span className="dark:hidden">Cambiar a Modo Noche</span>
-                <Moon size={16} className="hidden dark:block text-yellow-300" />
-                <span className="hidden dark:block">Volver a Modo Día</span>
-            </button>
 
             <button
                 onClick={handleCacheRefresh}

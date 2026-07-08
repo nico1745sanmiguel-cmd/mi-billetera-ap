@@ -43,6 +43,18 @@ export const AGENDA_MAX_ITEMS = 3;
 export const DEFAULT_WIDGET_ORDER = ['target', 'mobility', 'salary', 'savings_summary', 'split_summary', 'cards', 'agenda', 'super_actions'];
 
 /**
+ * Tamaños por defecto de los widgets. Todos comienzan en 'full'.
+ * El usuario puede cambiar a 'half' mediante long press.
+ */
+export const DEFAULT_WIDGET_SIZES = {};
+
+/**
+ * Widgets que SIEMPRE ocupan el ancho completo y no pueden achicarse.
+ * 'target' = análisis completo del mes, 'split_summary' = reparto del mes.
+ */
+export const WIDGET_SIZE_FIXED = new Set(['target', 'split_summary']);
+
+/**
  * Día del mes a partir del cual un vencimiento se considera "urgente"
  * y se muestra con alerta roja en el dashboard.
  */
@@ -110,6 +122,7 @@ export const CACHE_KEYS = {
     FRESH_ITEMS:  'freshItems',
     PLANNER_CATEGORIES: 'plannerCategories',
     WIDGET_ORDER: 'widget_order',
+    WIDGET_SIZES: 'widget_sizes',
     GLASS_MODE:   'glass_mode',
     SAVINGS_TRANSACTIONS: 'savingsTransactions',
     MOBILITY_SESSIONS: 'mobilitySessions',

@@ -3,8 +3,9 @@ import { CreditCard, ExternalLink, Plus } from 'lucide-react';
 import { formatMoney } from '../../../utils';
 import { CARD_LOGO_MAP } from '../../../config/constants';
 
-export default function CardsWidget({ cards, targetMonthKey, privacyMode, onCardClick }) {
+export default function CardsWidget({ cards, targetMonthKey, privacyMode, onCardClick, size = 'full' }) {
     const showMoney = (amount) => privacyMode ? '****' : formatMoney(amount);
+    const isHalf = size === 'half';
 
     const getCardLogo = (name) => {
         const n = (name || '').toLowerCase();
@@ -12,10 +13,69 @@ export default function CardsWidget({ cards, targetMonthKey, privacyMode, onCard
         return match?.path || null;
     };
 
+    // ─── Modo COMPACTO (half): tarjetas apiladas verticalmente con peek de la siguiente ───
+    if (isHalf) {
+        return (
+            <div>
+                <div className="flex justify-between items-center px-2 mb-3">
+                    <h3 className="font-bold text-gray-800 dark:text-white text-sm flex items-center gap-1.5">
+                        <CreditCard size={15} /> Tarjetas
+                    </h3>
+                </div>
+
+                {/* Scroll vertical con peek: cada tarjeta compacta, se ve el borde de la siguiente */}
+                <div className="flex flex-col gap-2 max-h-[200px] overflow-y-auto px-2 pb-2 snap-y snap-mandatory hide-scrollbar">
+                    {cards.map((card) => {
+                        const logo = getCardLogo(card.name);
+                        const debt = card.monthlyStatements?.[targetMonthKey]?.totalDue;
+                        return (
+                            <div
+                                key={card.id}
+                                onClick={() => onCardClick(card)}
+                                snap-center="true"
+                                className="cursor-pointer flex-shrink-0 rounded-2xl p-3 text-white relative overflow-hidden active:scale-95 transition-transform snap-center"
+                                style={{ background: `linear-gradient(135deg, ${card.color || '#1f2937'} 0%, ${card.color || '#111827'}DD 100%)` }}
+                            >
+                                {/* Glow */}
+                                <div className="absolute top-0 right-0 w-20 h-20 bg-white opacity-10 rounded-full -mr-6 -mt-6 blur-xl" />
+
+                                <div className="relative z-10 flex items-center justify-between">
+                                    <div className="flex items-center gap-2 min-w-0">
+                                        {logo ? (
+                                            <img src={logo} alt={card.name} className="h-4 object-contain filter brightness-200 contrast-200" loading="lazy" />
+                                        ) : (
+                                            <span className="font-bold text-xs uppercase truncate opacity-90">{card.name}</span>
+                                        )}
+                                        <span className="text-[9px] bg-white/20 px-1.5 py-0.5 rounded font-mono opacity-80">{card.bank}</span>
+                                    </div>
+                                    <p className="font-mono text-sm font-bold shrink-0 ml-2">
+                                        {debt != null ? showMoney(debt) : <span className="text-xs opacity-50">—</span>}
+                                    </p>
+                                </div>
+                            </div>
+                        );
+                    })}
+
+                    {/* Add card compacto */}
+                    <div
+                        onClick={() => onCardClick(null)}
+                        className="flex-shrink-0 rounded-2xl border-2 border-dashed border-gray-300 dark:border-white/20 flex items-center justify-center gap-2 py-2 cursor-pointer hover:bg-white dark:hover:bg-white/5 active:scale-95 transition-all snap-center"
+                    >
+                        <Plus size={14} className="text-gray-400 dark:text-white/40" />
+                        <span className="text-gray-400 dark:text-white/40 text-xs font-bold">Agregar</span>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // ─── Modo COMPLETO (full): layout horizontal original ────────────────────────────────
     return (
         <div>
             <div className="flex justify-between items-center px-2 mb-3">
-                <h3 className="font-bold text-gray-800 dark:text-white text-sm flex items-center gap-2"><CreditCard size={18} /> Tus Tarjetas <span className="text-[9px] bg-gray-100 dark:bg-white/10 px-1.5 rounded text-gray-400 dark:text-white/40 font-normal">Desliza</span></h3>
+                <h3 className="font-bold text-gray-800 dark:text-white text-sm flex items-center gap-2">
+                    <CreditCard size={18} /> Tus Tarjetas <span className="text-[9px] bg-gray-100 dark:bg-white/10 px-1.5 rounded text-gray-400 dark:text-white/40 font-normal">Desliza</span>
+                </h3>
             </div>
 
             <div className="flex overflow-x-auto gap-3 pb-8 px-2 snap-x snap-mandatory hide-scrollbar">
