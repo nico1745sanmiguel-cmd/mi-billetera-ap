@@ -6,6 +6,7 @@ import { subscribeToNotes, addNote, deleteNote } from '../../../repositories/not
 export default function FloatingNotes({ user }) {
     const [notes, setNotes] = useState([]);
     const [inputValue, setInputValue] = useState('');
+    const [isAdding, setIsAdding] = useState(false);
     const containerRef = useRef(null);
     const inputRef = useRef(null);
 
@@ -21,9 +22,13 @@ export default function FloatingNotes({ user }) {
 
     useEffect(() => {
         const handleOpenNotes = () => {
-            if (inputRef.current) {
-                inputRef.current.focus();
-            }
+            setIsAdding(true);
+            // Pequeño timeout para asegurar que el input se renderice antes de hacer focus
+            setTimeout(() => {
+                if (inputRef.current) {
+                    inputRef.current.focus();
+                }
+            }, 100);
         };
         window.addEventListener('openNotes', handleOpenNotes);
         return () => window.removeEventListener('openNotes', handleOpenNotes);
@@ -39,18 +44,23 @@ export default function FloatingNotes({ user }) {
             checked: false
         });
         setInputValue('');
+        setIsAdding(false);
     };
 
     const handleCheck = async (id) => {
-        // We delete it so it disappears
         await deleteNote(id);
-        
-        // If it was the last note and forceOpen is false, it will naturally hide.
+        if (notes.length <= 1) {
+            setIsAdding(false);
+        }
     };
+
+    // Si hay notas, siempre se muestra. Si no hay, solo se muestra si isAdding es true.
+    const isVisible = notes.length > 0 || isAdding;
 
     return (
         <AnimatePresence>
-            <m.div
+            {isVisible && (
+                <m.div
                 drag
                 dragMomentum={false}
                 initial={{ opacity: 0, scale: 0.8, rotate: 0 }}
@@ -113,7 +123,8 @@ export default function FloatingNotes({ user }) {
                             <Plus size={20} />
                         </button>
                     </form>
-            </m.div>
+                </m.div>
+            )}
         </AnimatePresence>
     );
 }

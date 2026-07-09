@@ -9,6 +9,7 @@ import InstallPrompt from './Components/UI/InstallPrompt';
 import SkeletonDashboard from './Components/UI/SkeletonDashboard';
 import Toast from './Components/UI/Toast';
 import DraggableFAB from './Components/Dashboard/Widgets/DraggableFAB';
+import FloatingNotes from './Components/Dashboard/Widgets/FloatingNotes';
 import { auth } from './firebase';
 import { signOut } from 'firebase/auth';
 import { useFinancial } from './context/FinancialContext';
@@ -251,6 +252,7 @@ export default function App() {
                         </Suspense>
                     </main>
                     <DraggableFAB />
+                    {isModuleEnabled('notes') && <FloatingNotes user={user} />}
                 </div>
             </div>
         </div>

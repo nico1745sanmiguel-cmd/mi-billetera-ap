@@ -33,6 +33,10 @@ service cloud.firestore {
       allow create: if isAuthenticated();
       // Solo pueden leer/escribir si el ID del hogar coincide con el del usuario
       allow read, update, delete: if isAuthenticated() && householdId == getUserHouseholdId();
+      
+      match /notifications/{document=**} {
+        allow read, write: if isAuthenticated() && householdId == getUserHouseholdId();
+      }
     }
 
     // Regla general para colecciones que comparten el campo householdId:

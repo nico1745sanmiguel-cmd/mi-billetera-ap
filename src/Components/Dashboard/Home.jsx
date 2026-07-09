@@ -30,7 +30,6 @@ import CardsWidget from './Widgets/CardsWidget';
 import AgendaWidget from './Widgets/AgendaWidget';
 import SuperActionsWidget from './Widgets/SuperActionsWidget';
 import NotificationsModal from './Widgets/NotificationsModal';
-import FloatingNotes from './Widgets/FloatingNotes';
 import MobilityWidget from './Widgets/MobilityWidget';
 import SalaryWidget from './Widgets/SalaryWidget';
 import PlannerWidget from './Widgets/PlannerWidget';
@@ -377,10 +376,6 @@ const Home = memo(({ onLogout, notifications = EMPTY_ARRAY, onCardClick }) => {
                     setIsNotificationsOpen={setIsNotificationsOpen} 
                     handleMarkAsRead={handleMarkAsRead} 
                 />
-            )}
-
-            {isModuleEnabled('notes') && (
-                <FloatingNotes user={user} />
             )}
         </div>
     );
