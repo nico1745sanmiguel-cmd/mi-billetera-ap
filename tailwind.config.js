@@ -17,12 +17,14 @@ export default {
         'pulse-soft': 'pulseSoft 3s ease-in-out infinite',
         'float': 'float 3s ease-in-out infinite',
         'float-delay': 'float 3s ease-in-out infinite 1.5s',
+        'slide-in-right': 'slideInRight 0.3s ease-out forwards',
       },
       keyframes: {
         fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
         slideUp: { '0%': { opacity: '0', transform: 'translateY(20px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } },
         pulseSoft: { '0%, 100%': { opacity: '1' }, '50%': { opacity: '0.8' } },
-        float: { '0%, 100%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(-10px)' } }
+        float: { '0%, 100%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(-10px)' } },
+        slideInRight: { '0%': { transform: 'translateX(100%)' }, '100%': { transform: 'translateX(0)' } }
       },
       colors: {
         brand: {

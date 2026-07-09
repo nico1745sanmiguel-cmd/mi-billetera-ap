@@ -226,3 +226,61 @@ exports.analyzeStatement = functions.https.onCall(async (data, context) => {
 
     throw new functions.https.HttpsError('internal', `Todos los modelos fallaron. Último error: ${lastError?.message}`);
 });
+
+// ─── ENDPOINT 3: NOTIFICACIONES PUSH (FCM) ───
+exports.onNotificationCreated = functions.firestore
+    .document('households/{householdId}/notifications/{notificationId}')
+    .onCreate(async (snap, context) => {
+        const notification = snap.data();
+        const householdId = context.params.householdId;
+        
+        const senderId = notification.paidBy || notification.userId;
+        const senderName = notification.paidByName || notification.userName || "Alguien";
+        const amount = notification.amount || 0;
+        const itemName = notification.itemName || "un servicio";
+
+        try {
+            // Obtener todos los usuarios del hogar excepto el que hizo el pago
+            const usersSnapshot = await admin.firestore().collection('users')
+                .where('householdId', '==', householdId)
+                .get();
+
+            let tokens = [];
+            usersSnapshot.forEach(doc => {
+                const userData = doc.data();
+                if (doc.id !== senderId && userData.fcmTokens && Array.isArray(userData.fcmTokens)) {
+                    tokens.push(...userData.fcmTokens);
+                }
+            });
+
+            if (tokens.length === 0) {
+                console.log('No hay tokens a los que enviar notificaciones para el hogar:', householdId);
+                return null;
+            }
+
+            const payload = {
+                notification: {
+                    title: 'Nuevo pago registrado',
+                    body: `${senderName} acaba de pagar ${itemName} por $${amount}.`,
+                },
+                data: {
+                    householdId: householdId,
+                    click_action: "FLUTTER_NOTIFICATION_CLICK" // opcional, para manejar clics
+                }
+            };
+
+            const response = await admin.messaging().sendToDevice(tokens, payload);
+            console.log(`Notificaciones enviadas. Éxito: ${response.successCount}, Fallos: ${response.failureCount}`);
+            
+            // Limpieza de tokens inválidos
+            if (response.failureCount > 0) {
+                // Aquí podrías implementar la lógica para eliminar tokens expirados
+                // iterando sobre response.results y buscando errores de 'messaging/invalid-registration-token'
+            }
+
+            return null;
+        } catch (error) {
+            console.error('Error al enviar notificaciones Push:', error);
+            return null;
+        }
+    });

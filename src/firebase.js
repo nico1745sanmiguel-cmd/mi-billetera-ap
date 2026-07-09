@@ -3,6 +3,7 @@ import { initializeApp } from "firebase/app";
 import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from "firebase/firestore";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { getFunctions } from "firebase/functions";
+import { getMessaging } from "firebase/messaging";
 
 const firebaseConfig = {
   ['api' + 'Key']: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -30,5 +31,8 @@ const auth = getAuth(app);
 const googleProvider = new GoogleAuthProvider();
 const functions = getFunctions(app);
 
+// Inicializar Messaging (solo si el navegador lo soporta, la comprobación se hará al usarlo)
+const messaging = typeof window !== 'undefined' ? getMessaging(app) : null;
+
 // 3. Exportamos todo
-export { db, auth, googleProvider, functions };
+export { db, auth, googleProvider, functions, messaging };

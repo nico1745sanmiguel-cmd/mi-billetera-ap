@@ -1,11 +1,54 @@
-import React from 'react';
-import { Bell, X, Wallet, CheckCheck } from 'lucide-react';
+import React, { useState } from 'react';
+import { Bell, X, Wallet, CheckCheck, Loader2 } from 'lucide-react';
 import { formatMoney } from '../../../utils';
+import { messaging, db } from '../../../firebase';
+import { getToken } from 'firebase/messaging';
+import { doc, updateDoc, arrayUnion } from 'firebase/firestore';
+import toast from 'react-hot-toast';
 
 export default function NotificationsModal({ notifications, user, privacyMode, setIsNotificationsOpen, handleMarkAsRead }) {
+    const [isPushLoading, setIsPushLoading] = useState(false);
+
+    const handleEnablePush = async () => {
+        if (!messaging) {
+            toast.error("Tu navegador no soporta notificaciones Push.");
+            return;
+        }
+
+        const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY;
+        if (!vapidKey) {
+            toast.error("Falta configurar la clave VAPID de notificaciones.");
+            return;
+        }
+
+        try {
+            setIsPushLoading(true);
+            const permission = await Notification.requestPermission();
+            
+            if (permission === 'granted') {
+                const token = await getToken(messaging, { vapidKey });
+                if (token) {
+                    // Guardar el token en el perfil del usuario
+                    const userRef = doc(db, 'users', user.uid);
+                    await updateDoc(userRef, {
+                        fcmTokens: arrayUnion(token)
+                    });
+                    toast.success("¡Notificaciones Push activadas con éxito!");
+                }
+            } else {
+                toast.error("Permiso denegado para notificaciones.");
+            }
+        } catch (error) {
+            console.error("Error al habilitar notificaciones push:", error);
+            toast.error("Hubo un error al activar las notificaciones.");
+        } finally {
+            setIsPushLoading(false);
+        }
+    };
+
     return (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[70] flex items-end sm:items-center justify-center animate-fade-in" onClick={() => setIsNotificationsOpen(false)}>
-            <div className="w-full max-w-md bg-[#f3f4f6] dark:bg-[#1a1b4b] rounded-t-[30px] sm:rounded-[30px] p-6 pb-12 shadow-2xl animate-slide-up max-h-[85vh] flex flex-col" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[70] flex justify-end animate-fade-in" onClick={() => setIsNotificationsOpen(false)}>
+            <div className="w-full sm:w-[400px] h-full bg-[#f3f4f6] dark:bg-[#1a1b4b] p-6 shadow-2xl animate-slide-in-right flex flex-col border-l border-white/10" onClick={e => e.stopPropagation()}>
                 <div className="flex justify-between items-center mb-6">
                     <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
                         <Bell className="text-indigo-500" /> Notificaciones
@@ -15,7 +58,18 @@ export default function NotificationsModal({ notifications, user, privacyMode, s
                     </button>
                 </div>
                 
-                <div className="overflow-y-auto space-y-3 pr-2 custom-scrollbar">
+                <div className="mb-4">
+                    <button 
+                        onClick={handleEnablePush} 
+                        disabled={isPushLoading}
+                        className="w-full bg-indigo-100 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 py-3 px-4 rounded-xl font-bold text-sm hover:bg-indigo-200 dark:hover:bg-indigo-500/30 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        {isPushLoading ? <Loader2 size={16} className="animate-spin" /> : <Bell size={16} />} 
+                        {isPushLoading ? 'Activando...' : 'Activar Notificaciones en el celular'}
+                    </button>
+                </div>
+                
+                <div className="overflow-y-auto space-y-3 pr-2 custom-scrollbar flex-1">
                     {(!notifications || notifications.length === 0) ? (
                         <div className="text-center py-10 opacity-50">
                             <Bell size={40} className="mx-auto mb-3" />
