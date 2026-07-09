@@ -3,10 +3,11 @@ import { m, AnimatePresence } from 'framer-motion';
 import { Plus, Check } from 'lucide-react';
 import { subscribeToNotes, addNote, deleteNote } from '../../../repositories/notesRepository';
 
-export default function FloatingNotes({ forceOpen, onClose, user }) {
+export default function FloatingNotes({ user }) {
     const [notes, setNotes] = useState([]);
     const [inputValue, setInputValue] = useState('');
     const containerRef = useRef(null);
+    const inputRef = useRef(null);
 
     useEffect(() => {
         if (!user?.uid) return;
@@ -18,16 +19,15 @@ export default function FloatingNotes({ forceOpen, onClose, user }) {
         return () => unsubscribe();
     }, [user]);
 
-    // Handle click outside to remove forceOpen (but keep visible if notes exist)
     useEffect(() => {
-        const handleClickOutside = (e) => {
-            if (forceOpen && containerRef.current && !containerRef.current.contains(e.target)) {
-                onClose();
+        const handleOpenNotes = () => {
+            if (inputRef.current) {
+                inputRef.current.focus();
             }
         };
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, [forceOpen, onClose]);
+        window.addEventListener('openNotes', handleOpenNotes);
+        return () => window.removeEventListener('openNotes', handleOpenNotes);
+    }, []);
 
     const handleAdd = async (e) => {
         e.preventDefault();
@@ -48,19 +48,18 @@ export default function FloatingNotes({ forceOpen, onClose, user }) {
         // If it was the last note and forceOpen is false, it will naturally hide.
     };
 
-    const isVisible = forceOpen || notes.length > 0;
-
     return (
         <AnimatePresence>
-            {isVisible && (
-                <m.div
-                    initial={{ opacity: 0, scale: 0.8, rotate: 0 }}
-                    animate={{ opacity: 1, scale: 1, rotate: -2 }}
-                    exit={{ opacity: 0, scale: 0.8, rotate: -5 }}
-                    transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-                    ref={containerRef}
-                    className="fixed top-24 right-4 sm:right-10 z-40 w-64 md:w-72 shadow-xl p-4 flex flex-col"
-                    style={{
+            <m.div
+                drag
+                dragMomentum={false}
+                initial={{ opacity: 0, scale: 0.8, rotate: 0 }}
+                animate={{ opacity: 1, scale: 1, rotate: -2 }}
+                exit={{ opacity: 0, scale: 0.8, rotate: -5 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+                ref={containerRef}
+                className="fixed top-24 right-4 sm:right-10 z-40 w-64 md:w-72 shadow-xl p-4 flex flex-col cursor-grab active:cursor-grabbing"
+                style={{
                         backgroundColor: '#fef3c7', // amber-100 / light yellow post-it
                         boxShadow: '3px 5px 15px rgba(0,0,0,0.2)',
                         borderBottomRightRadius: '20px 10px',
@@ -103,19 +102,18 @@ export default function FloatingNotes({ forceOpen, onClose, user }) {
 
                     <form onSubmit={handleAdd} className="mt-auto border-t border-amber-300/50 pt-2 flex items-center gap-1">
                         <input 
+                            ref={inputRef}
                             type="text"
                             value={inputValue}
                             onChange={(e) => setInputValue(e.target.value)}
                             placeholder="Escribí acá..."
                             className="flex-1 bg-transparent border-none outline-none text-amber-900 placeholder-amber-700/50 text-sm"
-                            autoFocus={forceOpen}
                         />
                         <button type="submit" disabled={!inputValue.trim()} className="text-amber-700 hover:text-amber-900 disabled:opacity-50 transition-colors">
                             <Plus size={20} />
                         </button>
                     </form>
-                </m.div>
-            )}
+            </m.div>
         </AnimatePresence>
     );
 }

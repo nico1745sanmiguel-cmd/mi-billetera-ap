@@ -64,11 +64,11 @@ service cloud.firestore {
     }
 
     // Regla general para colecciones que son personales (solo requieren coincidir el userId)
-    // mobility_sessions, mobility_expenses
+    // mobility_sessions, mobility_expenses, notes
     match /{collection}/{document} {
       allow read, write: if isAuthenticated() && 
                             // Aseguramos que solo afecte a colecciones personales
-                            collection in ['mobility_sessions', 'mobility_expenses'] &&
+                            collection in ['mobility_sessions', 'mobility_expenses', 'notes'] &&
                             // Validamos que el recurso pertenezca al usuario
                             (
                               (resource == null && request.resource.data.userId == request.auth.uid) || 
