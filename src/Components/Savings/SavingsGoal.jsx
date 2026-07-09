@@ -134,10 +134,10 @@ export default function SavingsGoal() {
                 <div className="space-y-4">
                     {/* Nombre */}
                     <div>
-                        <label className={`text-xs font-bold uppercase tracking-wider mb-1.5 block ${isGlass ? 'text-white/60' : 'text-gray-500'}`}>
+                        <label htmlFor="input-field" className={`text-xs font-bold uppercase tracking-wider mb-1.5 block ${isGlass ? 'text-white/60' : 'text-gray-500'}`}>
                             ¿Para qué estás ahorrando?
                         </label>
-                        <input
+                        <input id="input-field"
                             type="text"
                             value={form.name}
                             onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
@@ -148,10 +148,10 @@ export default function SavingsGoal() {
 
                     {/* Monto */}
                     <div>
-                        <label className={`text-xs font-bold uppercase tracking-wider mb-1.5 block ${isGlass ? 'text-white/60' : 'text-gray-500'}`}>
+                        <label htmlFor="input-field" className={`text-xs font-bold uppercase tracking-wider mb-1.5 block ${isGlass ? 'text-white/60' : 'text-gray-500'}`}>
                             Monto objetivo (ARS)
                         </label>
-                        <input
+                        <input id="input-field"
                             type="number"
                             value={form.amount}
                             onChange={e => setForm(f => ({ ...f, amount: e.target.value }))}
@@ -162,12 +162,12 @@ export default function SavingsGoal() {
 
                     {/* URL de imagen */}
                     <div>
-                        <label className={`text-xs font-bold uppercase tracking-wider mb-1.5 block ${isGlass ? 'text-white/60' : 'text-gray-500'}`}>
+                        <label htmlFor="input-field" className={`text-xs font-bold uppercase tracking-wider mb-1.5 block ${isGlass ? 'text-white/60' : 'text-gray-500'}`}>
                             Link de imagen (opcional)
                         </label>
                         <div className="relative">
                             <Link size={15} className={`absolute left-3 top-1/2 -translate-y-1/2 ${isGlass ? 'text-white/40' : 'text-gray-400'}`} />
-                            <input
+                            <input id="input-field"
                                 type="url"
                                 value={form.imageUrl}
                                 onChange={e => { setForm(f => ({ ...f, imageUrl: e.target.value })); setImageError(false); }}
@@ -203,7 +203,7 @@ export default function SavingsGoal() {
 
                     {/* Acciones */}
                     <div className="flex gap-3 pt-2">
-                        <button type="button"
+                        <button aria-label="Acción" type="button"
                             onClick={handleSave}
                             disabled={!form.name || !form.amount || saving}
                             className="flex-1 bg-amber-500 hover:bg-amber-600 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2"
@@ -212,7 +212,7 @@ export default function SavingsGoal() {
                             {savingsGoal ? 'Guardar cambios' : 'Crear objetivo'}
                         </button>
                         {savingsGoal && (
-                            <button type="button"
+                            <button aria-label="Acción" type="button"
                                 onClick={handleCancel}
                                 className={`px-4 py-3 rounded-xl font-bold transition-colors ${isGlass ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-600'}`}
                             >
@@ -282,7 +282,7 @@ export default function SavingsGoal() {
                             className="absolute inset-0 w-full h-full object-cover"
                             style={{
                                 clipPath: `inset(${(100 - progress).toFixed(2)}% 0 0 0)`,
-                                transition: 'clip-path 1.2s cubic-bezier(0.22, 1, 0.36, 1)',
+                                transition: 'clip-path 0.8s cubic-bezier(0.22, 1, 0.36, 1)',
                             }}
                         />
                     )}
@@ -295,7 +295,7 @@ export default function SavingsGoal() {
                                 height: '2px',
                                 background: 'rgba(255,255,255,0.85)',
                                 boxShadow: '0 0 8px 2px rgba(255,255,255,0.5)',
-                                transition: 'top 1.2s cubic-bezier(0.22, 1, 0.36, 1)',
+                                transition: 'top 0.8s cubic-bezier(0.22, 1, 0.36, 1)',
                             }}
                         />
                     )}
@@ -370,7 +370,7 @@ export default function SavingsGoal() {
             </div>
 
             {/* Borrar objetivo */}
-            <button type="button"
+            <button aria-label="Acción" type="button"
                 onClick={handleDelete}
                 disabled={saving}
                 className={`w-full py-3 text-xs font-bold uppercase tracking-wider transition-colors border-t ${

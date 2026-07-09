@@ -138,7 +138,7 @@ export default function FinancialTarget({
             {/* ── TABS ── */}
             <div className="flex items-center gap-1 px-4 pt-4 pb-2">
                 {[{ id: 'resumen', label: 'Resumen' }, { id: 'desglose', label: 'Desglose' }].map(t => (
-                    <button type="button"
+                    <button aria-label="Acción" type="button"
                         key={t.id}
                         onClick={() => setTab(t.id)}
                         className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all duration-200 ${
@@ -209,7 +209,7 @@ export default function FinancialTarget({
 
                     {/* CTA compacto */}
                     {showStats && (
-                        <button type="button"
+                        <button aria-label="Acción" type="button"
                             onClick={onNavigateStats}
                             className="mt-4 w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-300 text-xs font-bold hover:bg-indigo-100 dark:hover:bg-indigo-500/20 transition-colors group"
                         >
@@ -231,7 +231,7 @@ export default function FinancialTarget({
                             const Icon = cat.icon;
                             const active = categoryFilter === cat.key;
                             return (
-                                <button type="button"
+                                <button aria-label="Acción" type="button"
                                     key={cat.key}
                                     onClick={() => setCategoryFilter(cat.key)}
                                     className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold transition-all duration-150 ${
@@ -298,7 +298,7 @@ export default function FinancialTarget({
 
                     {/* CTA Ver Análisis */}
                     {showStats && (
-                        <button type="button"
+                        <button aria-label="Acción" type="button"
                             onClick={onNavigateStats}
                             className="mt-5 w-full h-14 rounded-2xl relative overflow-hidden group shadow-md shadow-indigo-100 dark:shadow-indigo-900/20 active:scale-95 transition-all"
                         >

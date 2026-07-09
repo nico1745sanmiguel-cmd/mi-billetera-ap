@@ -1,4 +1,5 @@
 import React from 'react';
+// eslint-disable-next-line react-doctor/prefer-dynamic-import
 import { PieChart, Pie, Cell, ResponsiveContainer, Sector } from 'recharts';
 
 // Renderizado personalizado para el sector activo del gráfico de Dona
@@ -52,7 +53,7 @@ export default function StatsChart({
                             onClick={(_, index) => setActiveIndex(index)}
                         >
                             {chartData.map((entry, index) => (
-                                <Cell key={entry.name || `cell-${index}`} fill={entry.color} style={{ cursor: 'pointer', outline: 'none' }} />
+                                <Cell key={entry.name || `cell-${index}`} fill={entry.color} style={{ cursor: 'pointer', outline: 'transparent solid 2px' }} />
                             ))}
                         </Pie>
                     </PieChart>

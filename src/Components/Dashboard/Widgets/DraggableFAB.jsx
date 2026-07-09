@@ -55,16 +55,16 @@ export default function DraggableFAB() {
                         exit={{ opacity: 0, y: 10, scale: 0.8 }}
                         className="absolute bottom-full mb-3 flex flex-col gap-2 items-end right-0 pointer-events-auto"
                     >
-                        <button onClick={handleNewNote} className="flex items-center gap-2 bg-yellow-300 text-yellow-900 px-4 py-2 rounded-full shadow-lg font-bold whitespace-nowrap active:scale-95 transition-transform border border-yellow-400">
+                        <button aria-label="Acción" type="button" onClick={handleNewNote} className="flex items-center gap-2 bg-yellow-300 text-yellow-900 px-4 py-2 rounded-full shadow-lg font-bold whitespace-nowrap active:scale-95 transition-transform border border-yellow-400">
                             Nueva Nota <StickyNote size={18} />
                         </button>
-                        <button onClick={handleNewExpense} className="flex items-center gap-2 bg-gradient-to-r from-purple-500 to-indigo-600 text-white px-4 py-2 rounded-full shadow-lg font-bold whitespace-nowrap active:scale-95 transition-transform border border-white/20">
+                        <button aria-label="Acción" type="button" onClick={handleNewExpense} className="flex items-center gap-2 bg-gradient-to-r from-purple-500 to-indigo-600 text-white px-4 py-2 rounded-full shadow-lg font-bold whitespace-nowrap active:scale-95 transition-transform border border-white/20">
                             Nuevo Gasto <Receipt size={18} />
                         </button>
                     </m.div>
                 )}
             </AnimatePresence>
-            <button
+            <button aria-label="Acción" type="button"
                 onClick={handleClick}
                 className="w-14 h-14 rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.3)] flex items-center justify-center cursor-grab active:cursor-grabbing active:scale-95 transition-transform bg-gradient-to-br from-purple-500 to-indigo-600 text-white border border-white/20 hover:shadow-purple-500/50 hover:shadow-[0_8px_30px_rgb(168,85,247,0.4)] pointer-events-auto"
             >

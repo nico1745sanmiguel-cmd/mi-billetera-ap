@@ -53,13 +53,13 @@ export default function NotificationsModal({ notifications, user, privacyMode, s
                     <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
                         <Bell className="text-indigo-500" /> Notificaciones
                     </h3>
-                    <button type="button" onClick={() => setIsNotificationsOpen(false)} className="p-2 bg-gray-200 dark:bg-white/10 rounded-full text-gray-500 dark:text-white/50 hover:bg-gray-300 dark:hover:bg-white/20 transition-colors">
+                    <button aria-label="Acción" type="button" onClick={() => setIsNotificationsOpen(false)} className="p-2 bg-gray-200 dark:bg-white/10 rounded-full text-gray-500 dark:text-white/50 hover:bg-gray-300 dark:hover:bg-white/20 transition-colors">
                         <X size={20} />
                     </button>
                 </div>
                 
                 <div className="mb-4">
-                    <button 
+                    <button aria-label="Acción" type="button" 
                         onClick={handleEnablePush} 
                         disabled={isPushLoading}
                         className="w-full bg-indigo-100 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 py-3 px-4 rounded-xl font-bold text-sm hover:bg-indigo-200 dark:hover:bg-indigo-500/30 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -94,7 +94,7 @@ export default function NotificationsModal({ notifications, user, privacyMode, s
                                             <div className="text-[10px] text-gray-400 dark:text-white/40 mt-3 flex justify-between items-center border-t border-gray-100 dark:border-white/5 pt-2">
                                                 <span>{n.createdAt ? new Date(n.createdAt.toMillis()).toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' }) : 'Reciente'}</span>
                                                 {!isRead && (
-                                                    <button type="button" 
+                                                    <button aria-label="Acción" type="button" 
                                                         onClick={() => handleMarkAsRead(n.id)}
                                                         className="flex items-center gap-1 text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 font-bold px-2 py-1 bg-indigo-50 dark:bg-indigo-500/20 rounded-lg transition-colors active:scale-95"
                                                     >

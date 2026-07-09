@@ -39,7 +39,7 @@ function DashboardContent({ onBack }) {
             }`}>
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <button type="button"
+                        <button aria-label="Acción" type="button"
                             onClick={onBack}
                             className="p-2 rounded-xl bg-white/20 hover:bg-white/30 transition-all active:scale-95 text-white"
                         >
@@ -50,7 +50,7 @@ function DashboardContent({ onBack }) {
                             <p className="text-white/70 text-xs">Uber · Didi · Cabify · Otros</p>
                         </div>
                     </div>
-                    <button type="button" 
+                    <button aria-label="Acción" type="button" 
                         onClick={() => setTab('settings')}
                         className={`p-2 rounded-xl transition-all active:scale-95 text-white ${
                             tab === 'settings' 
@@ -70,7 +70,7 @@ function DashboardContent({ onBack }) {
                     : 'bg-gray-100'
                 }`}>
                     {TABS.map(({ id, label, icon: Icon }) => (
-                        <button type="button"
+                        <button aria-label="Acción" type="button"
                             key={id}
                             onClick={() => setTab(id)}
                             className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-1 rounded-xl text-xs font-semibold transition-all ${

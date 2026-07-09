@@ -157,7 +157,7 @@ export default function FreshShop() {
             ))}
 
             {!showNewCatForm ? (
-                <button type="button"
+                <button aria-label="Acción" type="button"
                     onClick={() => setShowNewCatForm(true)}
                     className={`w-full py-4 rounded-3xl border-2 border-dashed flex items-center justify-center gap-2 font-bold transition-all ${
                         isGlass ? 'border-white/20 text-white/60 hover:text-white hover:bg-white/5' : 'border-gray-300 text-gray-500 hover:text-gray-800 hover:bg-gray-50'
@@ -169,10 +169,10 @@ export default function FreshShop() {
                 <form onSubmit={handleCreateCategory} className={`rounded-3xl border p-4 space-y-4 ${isGlass ? 'bg-black/30 border-white/20' : 'bg-white border-gray-200 shadow-md'}`}>
                     <div className="flex justify-between items-center">
                         <h3 className={`font-bold ${isGlass ? 'text-white' : 'text-gray-800'}`}>Nueva Categoría</h3>
-                        <button type="button" onClick={() => setShowNewCatForm(false)} className={isGlass ? 'text-white/50' : 'text-gray-400'}>✕</button>
+                        <button aria-label="Acción" type="button" onClick={() => setShowNewCatForm(false)} className={isGlass ? 'text-white/50' : 'text-gray-400'}>✕</button>
                     </div>
                     
-                    <input
+                    <input id="input-field"
                         type="text"
                         placeholder="Nombre (ej. Proyecto Pintura)"
                         className={`w-full px-4 py-3 rounded-xl font-bold focus:outline-none ${isGlass ? 'bg-white/10 text-white placeholder-white/30' : 'bg-gray-50 text-gray-800 border'}`}
@@ -187,7 +187,7 @@ export default function FreshShop() {
                             {Object.keys(AVAILABLE_ICONS).map(iconKey => {
                                 const IconComp = AVAILABLE_ICONS[iconKey];
                                 return (
-                                    <button
+                                    <button aria-label="Acción"
                                         key={iconKey}
                                         type="button"
                                         onClick={() => setNewCatIcon(iconKey)}
@@ -208,7 +208,7 @@ export default function FreshShop() {
                         <p className={`text-xs font-bold mb-2 uppercase ${isGlass ? 'text-white/50' : 'text-gray-400'}`}>Color</p>
                         <div className="flex flex-wrap gap-3">
                             {Object.keys(AVAILABLE_COLORS).map(colorKey => (
-                                <button
+                                <button aria-label="Acción"
                                     key={colorKey}
                                     type="button"
                                     onClick={() => setNewCatColor(colorKey)}
@@ -219,7 +219,7 @@ export default function FreshShop() {
                         </div>
                     </div>
 
-                    <button
+                    <button aria-label="Acción"
                         type="submit"
                         disabled={isSavingCat}
                         className={`w-full py-3 rounded-xl font-bold text-white shadow-lg flex items-center justify-center gap-2 ${isGlass ? 'bg-indigo-500 hover:bg-indigo-400' : 'bg-indigo-600 hover:bg-indigo-700'}`}

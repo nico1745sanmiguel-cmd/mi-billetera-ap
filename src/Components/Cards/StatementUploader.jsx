@@ -19,7 +19,7 @@ const VisaDownloadGuide = () => {
     return (
         <div className="w-full max-w-xl mx-auto mb-4 rounded-2xl border border-blue-200 dark:border-blue-800/60 bg-blue-50 dark:bg-blue-950/30 overflow-hidden shadow-sm">
             {/* Header */}
-            <button type="button"
+            <button aria-label="Acción" type="button"
                 onClick={() => setIsOpen(v => !v)}
                 className="w-full flex items-center justify-between px-5 py-3.5 text-left"
             >
@@ -221,7 +221,7 @@ const StatementUploader = ({ onAnalysisComplete }) => {
                             </p>
                         </div>
                         <div className="flex w-full gap-2 mt-2">
-                            <input
+                            <input id="input-field"
                                 type="password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
@@ -230,14 +230,14 @@ const StatementUploader = ({ onAnalysisComplete }) => {
                                 className="flex-1 px-4 py-2.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:text-white shadow-inner"
                                 autoFocus
                             />
-                            <button type="button"
+                            <button aria-label="Acción" type="button"
                                 onClick={handlePasswordSubmit}
                                 className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-medium transition-colors shadow-md hover:shadow-lg"
                             >
                                 Abrir
                             </button>
                         </div>
-                        <button type="button" 
+                        <button aria-label="Acción" type="button" 
                             onClick={() => { setNeedsPassword(false); setError(null); currentFile.current = null; }}
                             className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 mt-2 transition-colors"
                         >

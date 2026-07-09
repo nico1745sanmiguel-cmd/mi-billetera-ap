@@ -160,7 +160,7 @@ export default function MobilityImport({ isGlass, onSuccess }) {
                                 : 'border-gray-200 bg-gray-50 hover:bg-gray-100'
                     }`}
                 >
-                    <input
+                    <input id="input-field"
                         ref={fileRef}
                         type="file"
                         accept=".csv"
@@ -210,13 +210,13 @@ export default function MobilityImport({ isGlass, onSuccess }) {
                     </div>
 
                     <div className="flex gap-2">
-                        <button type="button"
+                        <button aria-label="Acción" type="button"
                             onClick={() => { setPreview(null); setResult(null); }}
                             className={`flex-1 py-3 rounded-2xl text-sm font-semibold transition-all ${isGlass ? 'bg-white/10 text-white/70 hover:bg-white/20' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
                         >
                             Cancelar
                         </button>
-                        <button type="button"
+                        <button aria-label="Acción" type="button"
                             onClick={handleImport}
                             disabled={loading || !preview.rows.length}
                             className="flex-1 py-3 rounded-2xl text-sm font-bold text-white bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 transition-all shadow-lg disabled:opacity-50 flex items-center justify-center gap-2"
@@ -241,7 +241,7 @@ export default function MobilityImport({ isGlass, onSuccess }) {
                     {result.errors > 0 && (
                         <p className="text-amber-500 text-sm">{result.errors} errores</p>
                     )}
-                    <button type="button"
+                    <button aria-label="Acción" type="button"
                         onClick={() => { setResult(null); setPreview(null); }}
                         className="mt-4 px-6 py-2 rounded-xl text-sm font-semibold bg-violet-600 text-white hover:bg-violet-700 transition-all"
                     >

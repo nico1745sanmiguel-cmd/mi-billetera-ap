@@ -93,7 +93,7 @@ export default function FloatingNotes({ user }) {
                                     exit={{ opacity: 0, scale: 0.9 }}
                                     className="flex items-start gap-2 group"
                                 >
-                                    <button 
+                                    <button aria-label="Acción" 
                                         onClick={() => handleCheck(note.id)}
                                         className="mt-1 w-5 h-5 border-2 border-amber-700/50 rounded flex items-center justify-center shrink-0 hover:bg-amber-300 transition-colors"
                                     >
@@ -111,7 +111,7 @@ export default function FloatingNotes({ user }) {
                     </div>
 
                     <form onSubmit={handleAdd} className="mt-auto border-t border-amber-300/50 pt-2 flex items-center gap-1">
-                        <input 
+                        <input id="input-field" 
                             ref={inputRef}
                             type="text"
                             value={inputValue}
@@ -119,7 +119,7 @@ export default function FloatingNotes({ user }) {
                             placeholder="Escribí acá..."
                             className="flex-1 bg-transparent border-none outline-none text-amber-900 placeholder-amber-700/50 text-sm"
                         />
-                        <button type="submit" disabled={!inputValue.trim()} className="text-amber-700 hover:text-amber-900 disabled:opacity-50 transition-colors">
+                        <button aria-label="Acción" type="submit" disabled={!inputValue.trim()} className="text-amber-700 hover:text-amber-900 disabled:opacity-50 transition-colors">
                             <Plus size={20} />
                         </button>
                     </form>

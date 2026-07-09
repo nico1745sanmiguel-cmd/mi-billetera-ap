@@ -48,7 +48,7 @@ export default function HouseholdEnvelopeSection({
                 : (isGlass ? 'bg-white/5 border-white/10' : 'bg-gray-50 border-gray-200')}`}
         >
             {/* Header */}
-            <button type="button"
+            <button aria-label="Acción" type="button"
                 onClick={() => setExpanded(e => !e)}
                 className="w-full flex items-center gap-3 p-4 text-left"
             >
@@ -93,7 +93,7 @@ export default function HouseholdEnvelopeSection({
                     {!isApproved && suggestedAmount > 0 && (
                         <div className="space-y-3">
                             {/* Opción: usar sugerido */}
-                            <button type="button"
+                            <button aria-label="Acción" type="button"
                                 onClick={() => setUseCustom(false)}
                                 className={`w-full flex items-center justify-between p-3 rounded-xl border-2 transition-all
                                     ${!useCustom
@@ -109,7 +109,7 @@ export default function HouseholdEnvelopeSection({
                             </button>
 
                             {/* Opción: personalizar */}
-                            <button type="button"
+                            <button aria-label="Acción" type="button"
                                 onClick={() => setUseCustom(true)}
                                 className={`w-full flex items-center justify-between p-3 rounded-xl border-2 transition-all
                                     ${useCustom
@@ -124,7 +124,7 @@ export default function HouseholdEnvelopeSection({
                             {useCustom && (
                                 <div className="relative">
                                     <span className={`absolute left-4 top-1/2 -translate-y-1/2 font-bold ${isGlass ? 'text-white/50' : 'text-gray-400'}`}>$</span>
-                                    <input
+                                    <input id="input-field"
                                         type="text"
                                         inputMode="numeric"
                                         placeholder="0"
@@ -137,7 +137,7 @@ export default function HouseholdEnvelopeSection({
                                 </div>
                             )}
 
-                            <button type="button"
+                            <button aria-label="Acción" type="button"
                                 onClick={handleApprove}
                                 disabled={useCustom && !customInput}
                                 className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white text-sm font-bold
@@ -154,7 +154,7 @@ export default function HouseholdEnvelopeSection({
                                 <CheckCircle2 size={16} />
                                 <span className="font-bold">{formatMoney(approvedAmount)} asignado</span>
                             </div>
-                            <button type="button"
+                            <button aria-label="Acción" type="button"
                                 onClick={onRemove}
                                 className={`flex items-center gap-1 text-xs px-3 py-1.5 rounded-xl transition-colors
                                     ${isGlass ? 'text-white/40 hover:bg-red-500/20 hover:text-red-300' : 'text-gray-400 hover:bg-red-50 hover:text-red-500'}`}

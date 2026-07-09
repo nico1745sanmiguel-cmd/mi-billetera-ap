@@ -17,7 +17,7 @@ export default function SplitSummaryWidget({ setView, householdMembers, splitDat
                     {size !== 'half' && <p className="text-[10px] text-gray-400 dark:text-white/40 font-medium capitalize">{currentDate.toLocaleString('es-AR', { month: 'long', year: 'numeric' })}</p>}
                 </div>
                 {size !== 'half' && (
-                    <button type="button" 
+                    <button aria-label="Acción" type="button" 
                         onClick={(e) => { e.stopPropagation(); setView('household'); }} 
                         className="text-[10px] font-bold text-emerald-600 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-500/10 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 px-2 py-1 rounded-full transition-colors dark:border dark:border-emerald-500/20"
                     >

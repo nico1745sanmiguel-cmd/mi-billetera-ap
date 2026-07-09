@@ -145,7 +145,7 @@ const ReconciliationDesk = ({
 
             {/* HEADER */}
             <div className="flex items-center mb-6">
-                <button type="button" onClick={onBack} className="mr-4 p-2 rounded-full hover:bg-white/10">
+                <button aria-label="Acción" type="button" onClick={onBack} className="mr-4 p-2 rounded-full hover:bg-white/10">
                     <ChevronLeft size={24} />
                 </button>
                 <h1 className="text-2xl font-bold">Conciliación Inteligente</h1>
@@ -179,7 +179,7 @@ const ReconciliationDesk = ({
                         onChange={(e) => setInputText(e.target.value)}
                     />
 
-                    <button type="button"
+                    <button aria-label="Acción" type="button"
                         onClick={handleAnalyze}
                         disabled={!inputText.trim() || isProcessing}
                         className="w-full py-4 rounded-xl bg-blue-600 hover:bg-blue-500 font-bold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
@@ -193,7 +193,7 @@ const ReconciliationDesk = ({
                 <div className="space-y-4">
                     <div className="flex justify-between items-center mb-2">
                         <h2 className="text-lg font-semibold">Resultados ({parsedItems.length})</h2>
-                        <button type="button" onClick={() => setStep('input')} className="text-sm opacity-70 hover:opacity-100">Volver</button>
+                        <button aria-label="Acción" type="button" onClick={() => setStep('input')} className="text-sm opacity-70 hover:opacity-100">Volver</button>
                     </div>
 
                     {parsedItems.map((item, index) => (
@@ -230,7 +230,7 @@ const ReconciliationDesk = ({
                                         <span className="text-blue-400">Detectado como:</span>
                                         <span className="font-bold">{item.suggestedAlias}</span>
                                     </div>
-                                    <button type="button"
+                                    <button aria-label="Acción" type="button"
                                         onClick={() => handleConfirmItem(item, index)}
                                         className="w-full py-2 bg-blue-600/20 hover:bg-blue-600/40 text-blue-300 rounded-lg text-sm font-bold transition-colors"
                                     >
@@ -245,7 +245,7 @@ const ReconciliationDesk = ({
 
                                     {/* Formulario Rápido en Línea */}
                                     <div className="grid grid-cols-2 gap-2">
-                                        <input
+                                        <input id="input-field"
                                             type="text"
                                             placeholder="Nombre (Alias)"
                                             className={`p-2 rounded-lg text-sm ${isGlass ? 'bg-black/20' : 'bg-gray-50'}`}
@@ -273,7 +273,7 @@ const ReconciliationDesk = ({
                                         </select>
                                     </div>
 
-                                    <button type="button"
+                                    <button aria-label="Acción" type="button"
                                         onClick={() => handleConfirmItem(item, index)}
                                         disabled={!item.suggestedCategory || !item.suggestedAlias}
                                         className="w-full py-2 bg-orange-500 text-white rounded-lg text-sm font-bold disabled:opacity-50"

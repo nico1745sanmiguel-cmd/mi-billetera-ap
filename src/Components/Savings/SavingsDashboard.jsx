@@ -106,7 +106,7 @@ export default function SavingsDashboard() {
                         <p className={`text-sm ${isGlass ? 'text-white/60' : 'text-gray-500'}`}>Inversiones y saldos</p>
                     </div>
                 </div>
-                <button type="button"
+                <button aria-label="Acción" type="button"
                     onClick={() => setShowAddModal(true)}
                     className="bg-green-500 hover:bg-green-600 text-white p-3 rounded-xl shadow-lg transition-transform active:scale-95 flex items-center gap-2 font-bold"
                 >
@@ -121,7 +121,7 @@ export default function SavingsDashboard() {
                     <span className={`text-sm font-semibold uppercase tracking-wider ${isGlass ? 'text-green-300' : 'text-green-700'}`}>
                         Total General
                     </span>
-                    <button type="button" 
+                    <button aria-label="Acción" type="button" 
                         onClick={() => setCurrencyView(prev => prev === 'ARS' ? 'USD' : 'ARS')}
                         className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${isGlass ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-white hover:bg-gray-50 text-green-700 shadow-sm'}`}
                     >

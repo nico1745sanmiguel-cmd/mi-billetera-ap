@@ -148,7 +148,7 @@ export default function MobilityExpenses({ isGlass, month, year }) {
 
                     <form onSubmit={handleGnc} className="space-y-2">
                         <div className="flex gap-2">
-                            <input
+                            <input id="input-field"
                                 type="date"
                                 value={gncDate}
                                 onChange={e => setGncDate(e.target.value)}
@@ -164,7 +164,7 @@ export default function MobilityExpenses({ isGlass, month, year }) {
                                 />
                             </div>
                         </div>
-                        <button
+                        <button aria-label="Acción"
                             type="submit"
                             disabled={gncSaving}
                             className="w-full py-3 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-400 hover:to-cyan-400 active:scale-95 transition-all shadow-md shadow-blue-500/30 flex items-center justify-center gap-2"
@@ -178,7 +178,7 @@ export default function MobilityExpenses({ isGlass, month, year }) {
 
             {/* ─── OTROS GASTOS (colapsable) ─── */}
             <div className={card}>
-                <button type="button"
+                <button aria-label="Acción" type="button"
                     onClick={() => setShowFull(v => !v)}
                     className={`w-full flex items-center justify-between ${text}`}
                 >
@@ -212,7 +212,7 @@ export default function MobilityExpenses({ isGlass, month, year }) {
                                         const Icon = cat.icon;
                                         const active = fullForm.category === cat.key;
                                         return [(
-                                            <button
+                                            <button aria-label="Acción"
                                                 key={cat.key}
                                                 type="button"
                                                 onClick={() => setFullForm(f => ({ ...f, category: cat.key }))}
@@ -238,8 +238,8 @@ export default function MobilityExpenses({ isGlass, month, year }) {
                         {/* Fecha + Monto */}
                         <div className="grid grid-cols-2 gap-3">
                             <div>
-                                <label className={labelCls}>Fecha</label>
-                                <input
+                                <label htmlFor="input-field" className={labelCls}>Fecha</label>
+                                <input id="input-field"
                                     type="date"
                                     value={fullForm.date}
                                     onChange={e => setFullForm(f => ({ ...f, date: e.target.value }))}
@@ -248,7 +248,7 @@ export default function MobilityExpenses({ isGlass, month, year }) {
                                 />
                             </div>
                             <div>
-                                <label className={labelCls}>Monto</label>
+                                <label htmlFor="input-field" className={labelCls}>Monto</label>
                                 <div className="relative">
                                     <span className={`absolute start-3 top-1/2 -translate-y-1/2 text-sm font-bold ${isGlass ? 'text-white/40' : 'text-gray-300'}`}>$</span>
                                     <CurrencyInput
@@ -263,8 +263,8 @@ export default function MobilityExpenses({ isGlass, month, year }) {
 
                         {/* Notas */}
                         <div>
-                            <label className={labelCls}>Notas (opcional)</label>
-                            <input
+                            <label htmlFor="input-field" className={labelCls}>Notas (opcional)</label>
+                            <input id="input-field"
                                 type="text"
                                 placeholder="Ej: cambio de aceite, filtro…"
                                 value={fullForm.notes}
@@ -273,7 +273,7 @@ export default function MobilityExpenses({ isGlass, month, year }) {
                             />
                         </div>
 
-                        <button
+                        <button aria-label="Acción"
                             type="submit"
                             disabled={fullSaving || !fullForm.category}
                             className="w-full py-3 rounded-2xl font-bold text-sm text-white bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 active:scale-98 transition-all shadow-lg shadow-violet-500/30 flex items-center justify-center gap-2 disabled:opacity-50"

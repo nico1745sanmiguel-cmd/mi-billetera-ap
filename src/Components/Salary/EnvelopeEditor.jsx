@@ -72,7 +72,7 @@ export default function EnvelopeEditor({ envelope, onSave, onClose, isGlass }) {
                     <h3 className={`text-lg font-bold ${isGlass ? 'text-white' : 'text-gray-800'}`}>
                         {isNew ? 'Nuevo sobre' : 'Editar sobre'}
                     </h3>
-                    <button type="button" onClick={onClose} className={`p-2 rounded-xl ${isGlass ? 'text-white/60 hover:bg-white/10' : 'text-gray-400 hover:bg-gray-100'}`}>
+                    <button aria-label="Acción" type="button" onClick={onClose} className={`p-2 rounded-xl ${isGlass ? 'text-white/60 hover:bg-white/10' : 'text-gray-400 hover:bg-gray-100'}`}>
                         <X size={18} />
                     </button>
                 </div>
@@ -80,10 +80,10 @@ export default function EnvelopeEditor({ envelope, onSave, onClose, isGlass }) {
                 <div className="space-y-5">
                     {/* Nombre */}
                     <div>
-                        <label className={`text-xs font-bold uppercase tracking-wider mb-2 block ${isGlass ? 'text-white/50' : 'text-gray-400'}`}>
+                        <label htmlFor="input-field" className={`text-xs font-bold uppercase tracking-wider mb-2 block ${isGlass ? 'text-white/50' : 'text-gray-400'}`}>
                             <Tag size={11} className="inline mr-1" />Nombre
                         </label>
-                        <input
+                        <input id="input-field"
                             type="text"
                             placeholder="Ej: Alquiler, Ocio, Farmacia..."
                             value={label}
@@ -94,12 +94,12 @@ export default function EnvelopeEditor({ envelope, onSave, onClose, isGlass }) {
 
                     {/* Monto */}
                     <div>
-                        <label className={`text-xs font-bold uppercase tracking-wider mb-2 block ${isGlass ? 'text-white/50' : 'text-gray-400'}`}>
+                        <label htmlFor="input-field" className={`text-xs font-bold uppercase tracking-wider mb-2 block ${isGlass ? 'text-white/50' : 'text-gray-400'}`}>
                             <Briefcase size={11} className="inline mr-1" />Monto asignado
                         </label>
                         <div className="relative">
                             <span className={`absolute left-4 top-1/2 -translate-y-1/2 font-bold ${isGlass ? 'text-white/50' : 'text-gray-400'}`}>$</span>
-                            <input
+                            <input id="input-field"
                                 type="text"
                                 inputMode="numeric"
                                 placeholder="0"
@@ -112,12 +112,12 @@ export default function EnvelopeEditor({ envelope, onSave, onClose, isGlass }) {
 
                     {/* Ícono */}
                     <div>
-                        <label className={`text-xs font-bold uppercase tracking-wider mb-2 block ${isGlass ? 'text-white/50' : 'text-gray-400'}`}>
+                        <label htmlFor="input-field" className={`text-xs font-bold uppercase tracking-wider mb-2 block ${isGlass ? 'text-white/50' : 'text-gray-400'}`}>
                             Ícono
                         </label>
                         <div className="grid grid-cols-6 gap-2">
                             {ENVELOPE_ICONS.map(ic => (
-                                <button type="button"
+                                <button aria-label="Acción" type="button"
                                     key={ic.id}
                                     onClick={() => setSelectedIcon(ic.id)}
                                     title={ic.label}
@@ -134,12 +134,12 @@ export default function EnvelopeEditor({ envelope, onSave, onClose, isGlass }) {
 
                     {/* Color */}
                     <div>
-                        <label className={`text-xs font-bold uppercase tracking-wider mb-2 block ${isGlass ? 'text-white/50' : 'text-gray-400'}`}>
+                        <label htmlFor="input-field" className={`text-xs font-bold uppercase tracking-wider mb-2 block ${isGlass ? 'text-white/50' : 'text-gray-400'}`}>
                             <Palette size={11} className="inline mr-1" />Color
                         </label>
                         <div className="flex gap-3 flex-wrap">
                             {ENVELOPE_COLORS.map(c => (
-                                <button type="button"
+                                <button aria-label="Acción" type="button"
                                     key={c.id}
                                     onClick={() => setSelectedColor(c.id)}
                                     className={`w-8 h-8 rounded-full ${c.bg} transition-all
@@ -151,7 +151,7 @@ export default function EnvelopeEditor({ envelope, onSave, onClose, isGlass }) {
                 </div>
 
                 {/* Botón guardar */}
-                <button type="button"
+                <button aria-label="Acción" type="button"
                     onClick={handleSave}
                     disabled={!label.trim() || !budgeted || saving}
                     className="mt-6 w-full py-3.5 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-bold text-sm

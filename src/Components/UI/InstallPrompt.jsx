@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 export default function InstallPrompt() {
-  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const deferredPrompt = useRef(null);
   const [show, setShow] = useState(false);
 
   useEffect(() => {
@@ -10,7 +10,7 @@ export default function InstallPrompt() {
       // 1. Evitar que Chrome muestre su barra fea automáticamente
       e.preventDefault();
       // 2. Guardar el evento para dispararlo cuando queramos
-      setDeferredPrompt(e);
+      deferredPrompt.current = e;
       // 3. Mostrar nuestro botón
       setShow(true);
     };
@@ -21,16 +21,16 @@ export default function InstallPrompt() {
   }, []);
 
   const handleInstallClick = async () => {
-    if (!deferredPrompt) return;
+    if (!deferredPrompt.current) return;
 
     // Disparar el prompt nativo
-    deferredPrompt.prompt();
+    deferredPrompt.current.prompt();
 
     // Esperar a ver qué decidió el usuario
-    await deferredPrompt.userChoice;
+    await deferredPrompt.current.userChoice;
     
     // Limpiar
-    setDeferredPrompt(null);
+    deferredPrompt.current = null;
     setShow(false);
   };
 
@@ -43,13 +43,13 @@ export default function InstallPrompt() {
         <p className="text-xs text-gray-300">Acceso rápido y sin barras.</p>
       </div>
       <div className="flex gap-3">
-        <button type="button" 
+        <button aria-label="Acción" type="button" 
             onClick={() => setShow(false)} 
             className="text-gray-400 text-xs font-bold hover:text-white"
         >
             LUEGO
         </button>
-        <button type="button" 
+        <button aria-label="Acción" type="button" 
             onClick={handleInstallClick} 
             className="bg-blue-600 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-blue-500 shadow-lg"
         >

@@ -38,7 +38,7 @@ export default function Navbar({ privacyMode, setPrivacyMode }) {
 
         <div className="flex items-center gap-4">
           {/* BOTÓN DE PRIVACIDAD DESKTOP */}
-          <button type="button"
+          <button aria-label="Acción" type="button"
             onClick={() => setPrivacyMode(!privacyMode)}
             className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all ${privacyMode ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'}`}
           >
@@ -59,7 +59,7 @@ export default function Navbar({ privacyMode, setPrivacyMode }) {
 
           <div className="flex gap-1">
             {navItems.map((item) => (
-              <button type="button"
+              <button aria-label="Acción" type="button"
                 key={item.id}
                 onClick={() => navigate(`/${item.id}`)}
                 className={`

@@ -38,13 +38,13 @@ export default function EnvelopeCard({ envelope, isGlass, onEdit, onDelete }) {
                 <div className={`flex items-center gap-1 transition-opacity ${confirmDelete ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
                     {!confirmDelete ? (
                         <>
-                            <button type="button"
+                            <button aria-label="Acción" type="button"
                                 onClick={() => onEdit(envelope)}
                                 className={`p-2 rounded-xl transition-colors ${isGlass ? 'text-white/40 hover:bg-white/10 hover:text-white' : 'text-gray-400 hover:bg-gray-100 hover:text-gray-700'}`}
                             >
                                 <Pencil size={14} />
                             </button>
-                            <button type="button"
+                            <button aria-label="Acción" type="button"
                                 onClick={() => setConfirmDelete(true)}
                                 className={`p-2 rounded-xl transition-colors ${isGlass ? 'text-white/40 hover:bg-red-500/20 hover:text-red-300' : 'text-gray-400 hover:bg-red-50 hover:text-red-500'}`}
                             >
@@ -53,13 +53,13 @@ export default function EnvelopeCard({ envelope, isGlass, onEdit, onDelete }) {
                         </>
                     ) : (
                         <div className="flex items-center gap-1">
-                            <button type="button"
+                            <button aria-label="Acción" type="button"
                                 onClick={() => { onDelete(envelope.id); setConfirmDelete(false); }}
                                 className="px-3 py-1.5 rounded-xl bg-red-500 text-white text-xs font-bold"
                             >
                                 Eliminar
                             </button>
-                            <button type="button"
+                            <button aria-label="Acción" type="button"
                                 onClick={() => setConfirmDelete(false)}
                                 className={`px-2 py-1.5 rounded-xl text-xs font-bold ${isGlass ? 'bg-white/10 text-white/70' : 'bg-gray-100 text-gray-500'}`}
                             >

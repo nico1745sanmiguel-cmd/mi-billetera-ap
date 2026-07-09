@@ -67,7 +67,7 @@ export default function AddSavingsModal({ onClose, isGlass }) {
                     <h2 className={`text-2xl font-black ${isGlass ? 'text-white' : 'text-gray-800'}`}>
                         Nuevo Movimiento
                     </h2>
-                    <button type="button" onClick={onClose} className={`p-2 rounded-full transition-colors ${isGlass ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-600'}`}>
+                    <button aria-label="Acción" type="button" onClick={onClose} className={`p-2 rounded-full transition-colors ${isGlass ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-600'}`}>
                         <X size={20} />
                     </button>
                 </div>
@@ -75,7 +75,7 @@ export default function AddSavingsModal({ onClose, isGlass }) {
                 <form onSubmit={handleSubmit} className="space-y-4">
                     {/* TIPO */}
                     <div className="grid grid-cols-2 gap-3">
-                        <button
+                        <button aria-label="Acción"
                             type="button"
                             onClick={() => setFormData({...formData, tipo: 'ingreso'})}
                             className={`flex items-center justify-center gap-2 p-3 rounded-xl font-bold transition-all ${
@@ -87,7 +87,7 @@ export default function AddSavingsModal({ onClose, isGlass }) {
                             <TrendingUp size={18} />
                             Ingreso
                         </button>
-                        <button
+                        <button aria-label="Acción"
                             type="button"
                             onClick={() => setFormData({...formData, tipo: 'egreso'})}
                             className={`flex items-center justify-center gap-2 p-3 rounded-xl font-bold transition-all ${
@@ -103,8 +103,8 @@ export default function AddSavingsModal({ onClose, isGlass }) {
 
                     {/* CARTERA */}
                     <div>
-                        <label className={`block text-sm font-bold mb-1 ${isGlass ? 'text-white/70' : 'text-gray-700'}`}>Cartera</label>
-                        <input
+                        <label htmlFor="input-field" className={`block text-sm font-bold mb-1 ${isGlass ? 'text-white/70' : 'text-gray-700'}`}>Cartera</label>
+                        <input id="input-field"
                             list="carteras-list"
                             required
                             value={formData.cartera}
@@ -120,8 +120,8 @@ export default function AddSavingsModal({ onClose, isGlass }) {
                     <div className="grid grid-cols-2 gap-4">
                         {/* ESPECIE */}
                         <div>
-                            <label className={`block text-sm font-bold mb-1 ${isGlass ? 'text-white/70' : 'text-gray-700'}`}>Especie</label>
-                            <input
+                            <label htmlFor="input-field" className={`block text-sm font-bold mb-1 ${isGlass ? 'text-white/70' : 'text-gray-700'}`}>Especie</label>
+                            <input id="input-field"
                                 list="especies-list"
                                 required
                                 value={formData.especie}
@@ -136,8 +136,8 @@ export default function AddSavingsModal({ onClose, isGlass }) {
 
                         {/* CANTIDAD */}
                         <div>
-                            <label className={`block text-sm font-bold mb-1 ${isGlass ? 'text-white/70' : 'text-gray-700'}`}>Cantidad</label>
-                            <input
+                            <label htmlFor="input-field" className={`block text-sm font-bold mb-1 ${isGlass ? 'text-white/70' : 'text-gray-700'}`}>Cantidad</label>
+                            <input id="input-field"
                                 type="number"
                                 step="any"
                                 min="0"
@@ -152,8 +152,8 @@ export default function AddSavingsModal({ onClose, isGlass }) {
 
                     {/* NOTA */}
                     <div>
-                        <label className={`block text-sm font-bold mb-1 ${isGlass ? 'text-white/70' : 'text-gray-700'}`}>Nota (Opcional)</label>
-                        <input
+                        <label htmlFor="input-field" className={`block text-sm font-bold mb-1 ${isGlass ? 'text-white/70' : 'text-gray-700'}`}>Nota (Opcional)</label>
+                        <input id="input-field"
                             type="text"
                             value={formData.nota}
                             onChange={(e) => setFormData({...formData, nota: e.target.value})}
@@ -162,7 +162,7 @@ export default function AddSavingsModal({ onClose, isGlass }) {
                         />
                     </div>
 
-                    <button
+                    <button aria-label="Acción"
                         type="submit"
                         disabled={loading}
                         className="w-full bg-green-500 hover:bg-green-600 text-white font-bold p-4 rounded-xl shadow-lg transition-transform active:scale-95 flex justify-center items-center gap-2 mt-4"

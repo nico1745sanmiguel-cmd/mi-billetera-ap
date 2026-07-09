@@ -73,7 +73,7 @@ export default function Login() {
         )}
 
         {/* Botón Google */}
-        <button type="button"
+        <button aria-label="Acción" type="button"
           onClick={handleGoogleLogin}
           className="w-full flex items-center justify-center gap-3 bg-white text-gray-800 p-3.5 rounded-xl hover:bg-gray-100 transition-all font-bold mb-8 shadow-lg active:scale-95 group"
         >
@@ -89,8 +89,8 @@ export default function Login() {
         {/* Formulario Email */}
         <form onSubmit={handleEmailAuth} className="space-y-5">
           <div className="group">
-            <label className="block text-xs font-bold text-white/50 mb-1.5 ml-1 uppercase tracking-wider group-focus-within:text-white/80 transition-colors">Email</label>
-            <input
+            <label htmlFor="input-field" className="block text-xs font-bold text-white/50 mb-1.5 ml-1 uppercase tracking-wider group-focus-within:text-white/80 transition-colors">Email</label>
+            <input id="input-field"
               type="email"
               required
               value={email}
@@ -100,8 +100,8 @@ export default function Login() {
             />
           </div>
           <div className="group">
-            <label className="block text-xs font-bold text-white/50 mb-1.5 ml-1 uppercase tracking-wider group-focus-within:text-white/80 transition-colors">Contraseña</label>
-            <input
+            <label htmlFor="input-field" className="block text-xs font-bold text-white/50 mb-1.5 ml-1 uppercase tracking-wider group-focus-within:text-white/80 transition-colors">Contraseña</label>
+            <input id="input-field"
               type="password"
               required
               value={password}
@@ -111,7 +111,7 @@ export default function Login() {
             />
           </div>
 
-          <button
+          <button aria-label="Acción"
             type="submit"
             className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-xl hover:from-blue-500 hover:to-indigo-500 transition-all active:scale-95 shadow-lg shadow-blue-900/40 mt-2 border border-blue-400/20"
           >
@@ -120,7 +120,7 @@ export default function Login() {
         </form>
 
         <div className="mt-8 text-center">
-          <button type="button"
+          <button aria-label="Acción" type="button"
             onClick={() => { setIsRegistering(!isRegistering); setError(''); }}
             className="text-sm text-white/60 font-medium hover:text-white transition-colors underline decoration-transparent hover:decoration-white/50 underline-offset-4"
           >

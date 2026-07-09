@@ -99,7 +99,7 @@ export default function PlannerSection({ catData, trips, currentMonthKey, isGlas
                 : `bg-gradient-to-b ${cfg.headerLight} border-gray-200 shadow-sm`
         }`}>
             <div className="w-full flex items-center justify-between p-4">
-                <button type="button" onClick={() => setIsOpen(o => !o)} className="flex-1 flex items-center gap-3 text-left">
+                <button aria-label="Acción" type="button" onClick={() => setIsOpen(o => !o)} className="flex-1 flex items-center gap-3 text-left">
                     <div className={`p-2 rounded-xl ${isGlass ? cfg.accentGlass : cfg.accentLight}`}>
                         <Icon size={18} />
                     </div>
@@ -120,11 +120,11 @@ export default function PlannerSection({ catData, trips, currentMonthKey, isGlas
                         </p>
                     </div>
                     {!catData.isDefault && (
-                        <button type="button" onClick={handleDeleteCategory} className={`p-1.5 rounded-lg ${isGlass ? 'text-white/20 hover:text-red-400 hover:bg-red-500/10' : 'text-gray-300 hover:text-red-500 hover:bg-red-50'}`}>
+                        <button aria-label="Acción" type="button" onClick={handleDeleteCategory} className={`p-1.5 rounded-lg ${isGlass ? 'text-white/20 hover:text-red-400 hover:bg-red-500/10' : 'text-gray-300 hover:text-red-500 hover:bg-red-50'}`}>
                             <Trash2 size={14} />
                         </button>
                     )}
-                    <button type="button" onClick={() => setIsOpen(o => !o)}>
+                    <button aria-label="Acción" type="button" onClick={() => setIsOpen(o => !o)}>
                         {isOpen
                             ? <ChevronUp size={16} className={isGlass ? 'text-white/40' : 'text-gray-400'} />
                             : <ChevronDown size={16} className={isGlass ? 'text-white/40' : 'text-gray-400'} />
@@ -162,7 +162,7 @@ export default function PlannerSection({ catData, trips, currentMonthKey, isGlas
                             </p>
                             <div className="flex items-center gap-1">
                                 <Calendar size={12} className="text-gray-400" />
-                                <input 
+                                <input id="input-field" 
                                     type="date" 
                                     className={`bg-transparent text-[10px] font-bold outline-none border-none ${isGlass ? 'text-indigo-300' : 'text-indigo-600'}`}
                                     value={addingDate}
@@ -172,7 +172,7 @@ export default function PlannerSection({ catData, trips, currentMonthKey, isGlas
                         </div>
 
                         <div className="flex flex-col gap-2">
-                            <input
+                            <input id="input-field"
                                 ref={noteRef}
                                 type="text"
                                 className={`w-full px-3 py-2.5 rounded-xl text-sm border focus:outline-none transition-colors ${
@@ -188,7 +188,7 @@ export default function PlannerSection({ catData, trips, currentMonthKey, isGlas
                                 isGlass ? 'bg-black/30 border-white/10' : 'bg-gray-50 border-gray-200'
                             }`}>
                                 <span className={`text-xs mr-2 font-bold ${isGlass ? 'text-gray-500' : 'text-gray-400'}`}>Presupuesto: $</span>
-                                <input
+                                <input id="input-field"
                                     type="tel"
                                     className={`w-full bg-transparent outline-none text-sm font-bold text-right py-2.5 ${
                                         isGlass ? 'text-white placeholder-white/30' : 'text-gray-800'
@@ -201,7 +201,7 @@ export default function PlannerSection({ catData, trips, currentMonthKey, isGlas
                         </div>
 
                         {householdId && (
-                            <button
+                            <button aria-label="Acción"
                                 type="button"
                                 onClick={() => setIsShared(s => !s)}
                                 className={`w-full flex items-center justify-between p-2 rounded-xl border transition-colors ${
@@ -220,7 +220,7 @@ export default function PlannerSection({ catData, trips, currentMonthKey, isGlas
                             </button>
                         )}
 
-                        <button
+                        <button aria-label="Acción"
                             type="submit"
                             disabled={adding}
                             className={`w-full py-2.5 rounded-xl text-white text-sm font-bold shadow-lg transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 ${

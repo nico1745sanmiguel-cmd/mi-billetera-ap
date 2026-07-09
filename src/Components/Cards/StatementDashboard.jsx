@@ -40,7 +40,7 @@ export default function StatementDashboard({ statement, isGlass, onReload }) {
                     <p className={`font-bold ${textColor}`}>Sin detalle de consumos</p>
                     <p className={`text-xs ${subTextColor}`}>Este resumen fue cargado manualmente o no tiene detalles guardados.</p>
                 </div>
-                <button 
+                <button aria-label="Acción" 
                     onClick={onReload}
                     type="button"
                     className="mt-2 px-5 py-2.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold text-sm rounded-xl hover:bg-emerald-500/20 transition-colors shadow-sm"

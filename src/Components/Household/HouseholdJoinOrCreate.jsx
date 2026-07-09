@@ -16,7 +16,7 @@ export default function HouseholdJoinOrCreate({
                     <p className={`font-bold mb-2 ${isGlass ? 'text-yellow-200' : 'text-yellow-700'}`}>¡Sin Hogar Asignado!</p>
                     <p className={`text-sm ${isGlass ? 'text-yellow-100/70' : 'text-yellow-800/70'}`}>Es necesario activar tu hogar para generar un código y compartir gastos.</p>
                 </div>
-                <button type="button"
+                <button aria-label="Acción" type="button"
                     onClick={handleCreate}
                     disabled={createStatus === 'creating'}
                     className="w-full py-3 bg-yellow-500 hover:bg-yellow-400 text-black font-bold rounded-xl transition-colors disabled:opacity-50"
@@ -30,7 +30,7 @@ export default function HouseholdJoinOrCreate({
                 <p className={`text-sm mb-4 ${isGlass ? 'text-gray-400' : 'text-gray-500'}`}>Si tu pareja creó el hogar, ingresá su código aquí para unirte.</p>
 
                 <div className="flex flex-col md:flex-row gap-3">
-                    <input
+                    <input id="input-field"
                         type="text"
                         placeholder="000-000"
                         maxLength={6}
@@ -38,7 +38,7 @@ export default function HouseholdJoinOrCreate({
                         onChange={(e) => setJoinCode(e.target.value)}
                         className={`w-full border rounded-2xl px-4 py-4 text-center tracking-widest font-mono text-lg transition-colors focus:outline-none focus:border-indigo-500 ${isGlass ? 'bg-black/50 border-white/10 text-white' : 'bg-gray-50 border-gray-200 text-gray-800'}`}
                     />
-                    <button type="button"
+                    <button aria-label="Acción" type="button"
                         onClick={handleJoin}
                         disabled={joinStatus === 'searching' || joinCode.length < 6}
                         className="w-full md:w-auto bg-indigo-600 text-white px-8 py-4 rounded-2xl font-bold disabled:opacity-50 hover:bg-indigo-500 transition-all active:scale-95 shadow-lg shadow-indigo-900/50"

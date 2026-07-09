@@ -125,14 +125,14 @@ export default function NewPurchase({ onSave }) {
 
                 {/* 1. PAYMENT METHOD (TOP) */}
                 <div className={`flex p-1 rounded-2xl mx-1 ${isGlass ? 'bg-white/5' : 'bg-gray-200'}`}>
-                    <button
+                    <button aria-label="Acción"
                         type="button"
                         onClick={() => setType('cash')}
                         className={`flex-1 py-4 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${type === 'cash' ? (isGlass ? 'bg-white/10 text-green-300 shadow-sm border border-white/5' : 'bg-white text-green-600 shadow-sm') : (isGlass ? 'text-white/30 hover:text-white/60' : 'text-gray-400')}`}
                     >
                         <Banknote size={18} /> Efectivo / Débito
                     </button>
-                    <button
+                    <button aria-label="Acción"
                         type="button"
                         onClick={() => setType('credit')}
                         className={`flex-1 py-4 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${type === 'credit' ? (isGlass ? 'bg-white/10 text-blue-300 shadow-sm border border-white/5' : 'bg-white text-blue-600 shadow-sm') : (isGlass ? 'text-white/30 hover:text-white/60' : 'text-gray-400')}`}
@@ -145,7 +145,7 @@ export default function NewPurchase({ onSave }) {
                 <div className="text-center py-4">
                     <div className="flex justify-center items-center gap-1">
                         <span className={`text-4xl font-bold ${isGlass ? 'text-white/30' : 'text-gray-300'}`}>$</span>
-                        <input
+                        <input id="input-field"
                             type="tel"
                             value={formatInputNumber(amount)}
                             onChange={(e) => setAmount(parseInputNumber(e.target.value))}
@@ -161,10 +161,10 @@ export default function NewPurchase({ onSave }) {
 
                         {/* Selector Tarjetas */}
                         <div className="mb-6">
-                            <label className={`block text-xs font-bold uppercase mb-3 ml-1 ${isGlass ? 'text-white/40' : 'text-gray-400'}`}>Seleccionar Tarjeta</label>
+                            <label htmlFor="input-field" className={`block text-xs font-bold uppercase mb-3 ml-1 ${isGlass ? 'text-white/40' : 'text-gray-400'}`}>Seleccionar Tarjeta</label>
                             <div className="flex gap-3 overflow-x-auto pb-2 hide-scrollbar">
                                 {cards.map((card) => (
-                                    <button type="button"
+                                    <button aria-label="Acción" type="button"
                                         key={card.id}
                                         onClick={() => setSelectedCardId(card.id)}
                                         className={`flex-shrink-0 cursor-pointer border-2 rounded-2xl p-4 w-40 relative transition-all text-left ${selectedCardId === card.id
@@ -195,10 +195,10 @@ export default function NewPurchase({ onSave }) {
                         {/* Slider Cuotas */}
                         <div className="mb-8">
                             <div className="flex justify-between items-end mb-2">
-                                <label className={`text-xs font-bold uppercase ${isGlass ? 'text-white/40' : 'text-gray-400'}`}>Cuotas</label>
+                                <label htmlFor="input-field" className={`text-xs font-bold uppercase ${isGlass ? 'text-white/40' : 'text-gray-400'}`}>Cuotas</label>
                                 <span className={`text-2xl font-bold ${isGlass ? 'text-blue-300' : 'text-blue-600'}`}>{installments}x</span>
                             </div>
-                            <input
+                            <input id="input-field"
                                 type="range"
                                 min="1"
                                 max="12"
@@ -241,10 +241,10 @@ export default function NewPurchase({ onSave }) {
 
                 {/* 4. DETAILS (Category & Desc) */}
                 <div className={`p-5 rounded-[30px] border ${isGlass ? 'bg-white/5 border-white/10' : 'bg-white border-gray-100'}`}>
-                    <label className={`block text-xs font-bold uppercase mb-3 ml-1 ${isGlass ? 'text-white/40' : 'text-gray-400'}`}>Categoría</label>
+                    <label htmlFor="input-field" className={`block text-xs font-bold uppercase mb-3 ml-1 ${isGlass ? 'text-white/40' : 'text-gray-400'}`}>Categoría</label>
                     <div className="flex flex-wrap gap-2">
                         {['supermarket', 'food', 'transport', 'services', 'home', 'health', 'shopping', 'education', 'varios'].map(cat => (
-                            <button
+                            <button aria-label="Acción"
                                 key={cat}
                                 type="button"
                                 onClick={() => setCategory(cat)}
@@ -258,7 +258,7 @@ export default function NewPurchase({ onSave }) {
                     </div>
 
                     <div className="mt-4">
-                        <input
+                        <input id="input-field"
                             type="text"
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
@@ -275,14 +275,14 @@ export default function NewPurchase({ onSave }) {
                             <p className={`text-sm font-bold ${isGlass ? 'text-white' : 'text-gray-800'}`}>Compartir en Hogar</p>
                             <p className={`text-[10px] ${isGlass ? 'text-white/50' : 'text-gray-500'}`}>Visible para el reparto proporcional</p>
                         </div>
-                        <button type="button" onClick={() => setIsShared(!isShared)} className={`w-12 h-7 rounded-full transition-colors relative focus:outline-none flex-shrink-0 ${isShared ? 'bg-indigo-600' : 'bg-gray-400'}`}>
+                        <button aria-label="Acción" type="button" onClick={() => setIsShared(!isShared)} className={`w-12 h-7 rounded-full transition-colors relative focus:outline-none flex-shrink-0 ${isShared ? 'bg-indigo-600' : 'bg-gray-400'}`}>
                             <div className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full transition-transform ${isShared ? 'translate-x-5' : 'translate-x-0'}`}></div>
                         </button>
                     </div>
                 )}
 
                 {/* 5. SAVE BUTTON */}
-                <button
+                <button aria-label="Acción"
                     type="submit"
                     disabled={isSaving || !amount}
                     className={`w-full py-4 rounded-[30px] font-bold shadow-lg transition-all text-lg flex justify-center items-center gap-2 ${

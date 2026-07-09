@@ -318,7 +318,7 @@ export default function SuperList() {
                 <div className={`shadow-2xl backdrop-blur-md px-6 py-3 rounded-full flex items-center gap-3 text-sm font-bold pointer-events-auto border ${isGlass ? 'bg-black/40 text-white border-white/20' : 'bg-gray-900 text-white border-gray-700/50'}`}>
                     <span>{toast?.message}</span>
                     {toast?.undoAction && (
-                        <button type="button" onClick={handleUndo} className="text-yellow-400 hover:text-yellow-300 uppercase tracking-wider ml-2 text-xs">
+                        <button aria-label="Acción" type="button" onClick={handleUndo} className="text-yellow-400 hover:text-yellow-300 uppercase tracking-wider ml-2 text-xs">
                             Deshacer
                         </button>
                     )}
@@ -332,14 +332,14 @@ export default function SuperList() {
                         <div className="flex items-center gap-3">
                             <h2 className={`text-xl font-bold ${isGlass ? 'text-white' : 'text-gray-800'}`}>Supermercado</h2>
                             <div className="flex flex-col gap-1 items-start">
-                                    <button type="button" 
+                                    <button aria-label="Acción" type="button" 
                                         onClick={() => navigate('/scanner')}
                                         className={`px-3 py-1 text-[10px] font-bold rounded-full uppercase tracking-wider flex items-center gap-1 transition-all active:scale-95 shadow-sm ${isGlass ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' : 'bg-purple-100 text-purple-700 border border-purple-200'}`}
                                     >
                                         <Camera size={12} />
                                         Escanear
                                     </button>
-                                <button type="button"
+                                <button aria-label="Acción" type="button"
                                     onClick={handleExportToAI}
                                     className={`px-3 py-1 text-[10px] font-bold rounded-full uppercase tracking-wider flex items-center gap-1 transition-all active:scale-95 shadow-sm ${isGlass ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30' : 'bg-indigo-100 text-indigo-700 border border-indigo-200'}`}
                                 >
@@ -373,7 +373,7 @@ export default function SuperList() {
                 <style>{`.hide-scrollbar::-webkit-scrollbar { display: none; }`}</style>
                 <div className="flex gap-2 overflow-x-auto mt-4 pb-1 snap-x hide-scrollbar" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                     {[...new Set(monthlyList.flatMap(i => !i.checked && i.name ? [(i.name[0] || '?').toUpperCase()] : []))].sort().map(letter => (
-                        <button
+                        <button aria-label="Acción"
                             key={letter}
                             type="button"
                             onClick={() => handleLetterClick(letter)}
@@ -427,15 +427,15 @@ export default function SuperList() {
                                         </p>
                                     )}
                                 </div>
-                                <button type="button" onClick={() => handleDelete(item.id)} className={`p-1 ${isGlass ? 'text-white/20 hover:text-red-400' : 'text-gray-300 hover:text-red-500'}`}>
+                                <button aria-label="Acción" type="button" onClick={() => handleDelete(item.id)} className={`p-1 ${isGlass ? 'text-white/20 hover:text-red-400' : 'text-gray-300 hover:text-red-500'}`}>
                                     <Trash2 size={16} />
                                 </button>
 
                                 <div className="flex gap-3 pl-9">
                                     <div className={`flex items-center rounded-2xl border h-10 ${isGlass ? 'bg-white/5 border-white/10' : 'bg-gray-50 border-gray-200'}`}>
-                                        <button type="button" onClick={() => handleUpdateQuantity(item, -1)} className={`w-8 h-full flex items-center justify-center rounded-l-2xl transition-colors text-lg font-bold ${isGlass ? 'text-white/50 hover:bg-white/10' : 'text-gray-500 hover:bg-gray-200'}`}>-</button>
+                                        <button aria-label="Acción" type="button" onClick={() => handleUpdateQuantity(item, -1)} className={`w-8 h-full flex items-center justify-center rounded-l-2xl transition-colors text-lg font-bold ${isGlass ? 'text-white/50 hover:bg-white/10' : 'text-gray-500 hover:bg-gray-200'}`}>-</button>
                                         <span className={`w-8 text-center text-sm font-bold ${isGlass ? 'text-white' : 'text-gray-700'}`}>{item.quantity}</span>
-                                        <button type="button" onClick={() => handleUpdateQuantity(item, 1)} className={`w-8 h-full flex items-center justify-center rounded-r-2xl transition-colors text-lg font-bold ${isGlass ? 'text-white/50 hover:bg-white/10' : 'text-gray-500 hover:bg-gray-200'}`}>+</button>
+                                        <button aria-label="Acción" type="button" onClick={() => handleUpdateQuantity(item, 1)} className={`w-8 h-full flex items-center justify-center rounded-r-2xl transition-colors text-lg font-bold ${isGlass ? 'text-white/50 hover:bg-white/10' : 'text-gray-500 hover:bg-gray-200'}`}>+</button>
                                     </div>
                                     <div className={`flex-1 rounded-2xl flex items-center px-3 border transition-all duration-150 h-10 ${
                                         lastAddedId === item.id
@@ -444,7 +444,7 @@ export default function SuperList() {
                                                 ? (isGlass ? 'border-purple-400/60 ring-1 ring-purple-400/30 bg-purple-500/10' : 'border-purple-400 ring-2 ring-purple-100 bg-purple-50')
                                                 : (isGlass ? 'bg-white/5 border-white/10' : 'bg-gray-50 border-gray-200')
                                     }`}>
-                                        <input
+                                        <input id="input-field"
                                             type="tel"
                                             className={`w-full bg-transparent outline-none text-sm font-bold text-right transition-colors duration-150 ${item.checked ? 'text-purple-700' : (isGlass ? 'text-white' : 'text-gray-800')}`}
                                             value={item.price ? formatInputCurrency(item.price) : ''}
@@ -487,7 +487,7 @@ export default function SuperList() {
                                     const key = s.name.toLowerCase();
                                     const isSelected = selectedSuggestions[key] ?? true;
                                     return (
-                                        <button
+                                        <button aria-label="Acción"
                                             key={key}
                                             type="button"
                                             onClick={() => setSelectedSuggestions(prev => ({ ...prev, [key]: !prev[key] }))}
@@ -512,13 +512,13 @@ export default function SuperList() {
                                 })}
                             </div>
                             <div className="flex gap-2">
-                                <button type="button"
+                                <button aria-label="Acción" type="button"
                                     onClick={() => setShowSuggestions(false)}
                                     className={`flex-1 py-2.5 rounded-2xl text-sm font-bold border transition-all ${
                                         isGlass ? 'border-white/10 text-white/50 hover:bg-white/5' : 'border-gray-200 text-gray-500 hover:bg-gray-50'
                                     }`}
                                 >Ignorar</button>
-                                <button type="button"
+                                <button aria-label="Acción" type="button"
                                     onClick={handleConfirmSuggestions}
                                     disabled={isAddingSuggestions}
                                     className={`flex-2 px-6 py-2.5 rounded-2xl text-sm font-bold text-white shadow-md transition-all active:scale-95 disabled:opacity-50 flex items-center gap-2 ${

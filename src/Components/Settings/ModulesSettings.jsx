@@ -138,7 +138,7 @@ export default function ModulesSettings({ onBack }) {
             {/* HEADER */}
             <div className={`rounded-2xl p-5 ${isGlass ? 'bg-white/10 border border-white/10' : 'bg-gradient-to-r from-gray-800 to-gray-700 text-white shadow-lg'}`}>
                 <div className="flex items-center gap-3">
-                    <button type="button"
+                    <button aria-label="Acción" type="button"
                         onClick={onBack}
                         className="p-2 rounded-xl bg-white/20 hover:bg-white/30 transition-all active:scale-95"
                     >
@@ -174,7 +174,7 @@ export default function ModulesSettings({ onBack }) {
                         { id: 'system', label: 'Sistema' },
                         { id: 'off', label: 'Apagado' }
                     ].map(option => (
-                        <button type="button"
+                        <button aria-label="Acción" type="button"
                             key={option.id}
                             onClick={() => setMotionPreference(option.id)}
                             className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all ${
@@ -252,7 +252,7 @@ export default function ModulesSettings({ onBack }) {
                                 </div>
 
                                 {/* TOGGLE */}
-                                <button type="button"
+                                <button aria-label="Acción" type="button"
                                     onClick={() => toggle(id)}
                                     className={`shrink-0 w-12 h-6 rounded-full transition-all duration-300 relative ${
                                         active

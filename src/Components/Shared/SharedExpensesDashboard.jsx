@@ -119,7 +119,7 @@ function ContributionModal({ person, totalTarget, monthKey, householdId, isGlass
                             <p className="text-2xl font-bold font-mono">{showMoney(totalPagado)}</p>
                             <p className="text-xs opacity-70 mt-0.5">de {showMoney(totalTarget)}</p>
                         </div>
-                        <button type="button" onClick={onClose} className="w-9 h-9 bg-white/20 rounded-full flex items-center justify-center">
+                        <button aria-label="Acción" type="button" onClick={onClose} className="w-9 h-9 bg-white/20 rounded-full flex items-center justify-center">
                             <X size={18} />
                         </button>
                     </div>
@@ -150,7 +150,7 @@ function ContributionModal({ person, totalTarget, monthKey, householdId, isGlass
                             isGlass ? 'bg-white/5 border-white/10' : 'bg-gray-50 border-gray-200'
                         }`}>
                             <span className={`text-sm font-bold ${isGlass ? 'text-gray-400' : 'text-gray-400'}`}>$</span>
-                            <input
+                            <input id="input-field"
                                 type="text"
                                 inputMode="numeric"
                                 placeholder="0"
@@ -162,7 +162,7 @@ function ContributionModal({ person, totalTarget, monthKey, householdId, isGlass
                                 }`}
                             />
                         </div>
-                        <button type="button"
+                        <button aria-label="Acción" type="button"
                             onClick={handleAdd}
                             disabled={!amount || saving}
                             className={`w-14 h-14 rounded-2xl flex items-center justify-center font-bold transition-all active:scale-95 bg-gradient-to-br ${colors} text-white disabled:opacity-40`}
@@ -172,7 +172,7 @@ function ContributionModal({ person, totalTarget, monthKey, householdId, isGlass
                     </div>
 
                     {/* Nota opcional */}
-                    <input
+                    <input id="input-field"
                         type="text"
                         placeholder="Nota (opcional)..."
                         value={note}
@@ -340,7 +340,7 @@ export default function SharedExpensesDashboard({ onBack }) {
         <div className="space-y-6 animate-fade-in pb-20">
             {/* HEADER */}
             <div className="flex items-center gap-4 px-2">
-                <button type="button" onClick={onBack} className={`p-2 rounded-xl transition-colors ${isGlass ? 'bg-white/10 hover:bg-white/20' : 'bg-white shadow-sm hover:bg-gray-50'}`}>
+                <button aria-label="Acción" type="button" onClick={onBack} className={`p-2 rounded-xl transition-colors ${isGlass ? 'bg-white/10 hover:bg-white/20' : 'bg-white shadow-sm hover:bg-gray-50'}`}>
                     <ChevronLeft size={24} />
                 </button>
                 <div>
@@ -364,7 +364,7 @@ export default function SharedExpensesDashboard({ onBack }) {
                         const completo = pagado >= aporte && aporte > 0;
 
                         return (
-                            <button type="button"
+                            <button aria-label="Acción" type="button"
                                 key={p.uid}
                                 onClick={() => setSelectedPerson({ ...p, totalTarget: aporte })}
                                 className={`relative overflow-hidden p-4 rounded-[24px] text-white shadow-lg bg-gradient-to-br ${colors} text-left active:scale-95 transition-transform select-none`}
@@ -472,7 +472,7 @@ export default function SharedExpensesDashboard({ onBack }) {
                             </div>
                             <div className="text-right">
                                 <p className="text-[10px] text-gray-400 font-medium">Dividido por sueldos netos</p>
-                                <button type="button" onClick={() => navigate('/household')} className="text-[10px] font-bold text-indigo-500 underline mt-1 block">Configurar Sueldos</button>
+                                <button aria-label="Acción" type="button" onClick={() => navigate('/household')} className="text-[10px] font-bold text-indigo-500 underline mt-1 block">Configurar Sueldos</button>
                             </div>
                         </div>
                     </div>
@@ -484,7 +484,7 @@ export default function SharedExpensesDashboard({ onBack }) {
                     <Users size={48} className="mx-auto mb-4 opacity-20" />
                     <h3 className="font-bold mb-2">Faltan datos de sueldos</h3>
                     <p className="text-sm opacity-60 mb-6">Para calcular el reparto proporcional, ambos miembros deben cargar su sueldo neto en Grupo Familiar.</p>
-                    <button type="button" onClick={() => navigate('/household')} className="px-6 py-3 bg-indigo-600 text-white rounded-xl font-bold active:scale-95 transition-transform">
+                    <button aria-label="Acción" type="button" onClick={() => navigate('/household')} className="px-6 py-3 bg-indigo-600 text-white rounded-xl font-bold active:scale-95 transition-transform">
                         Configurar Sueldos Ahora
                     </button>
                 </div>

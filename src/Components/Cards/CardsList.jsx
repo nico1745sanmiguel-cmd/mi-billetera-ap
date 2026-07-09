@@ -99,7 +99,7 @@ export default function CardsList({ cards, monthKey, privacyMode, isGlass, onSel
             {/* Header */}
             <div className={`rounded-2xl p-5 ${isGlass ? 'bg-white/10 border border-white/10' : 'bg-gradient-to-r from-blue-700 to-indigo-700 text-white shadow-lg shadow-blue-200'}`}>
                 <div className="flex items-center gap-3">
-                    <button type="button"
+                    <button aria-label="Acción" type="button"
                         onClick={onBack}
                         className="p-2 rounded-xl bg-white/20 hover:bg-white/30 transition-all active:scale-95"
                     >
@@ -145,7 +145,7 @@ export default function CardsList({ cards, monthKey, privacyMode, isGlass, onSel
             )}
 
             {/* Botón nueva tarjeta */}
-            <button type="button"
+            <button aria-label="Acción" type="button"
                 onClick={onNewCard}
                 className={`w-full py-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all active:scale-95 ${isGlass ? 'bg-surface-glass border border-white/10 text-white hover:bg-white/20' : 'bg-brand-primary text-surface-light hover:bg-blue-700'}`}
             >

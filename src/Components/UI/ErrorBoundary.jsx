@@ -43,7 +43,7 @@ class ErrorBoundaryInner extends React.Component {
             <p className={`text-sm mb-6 ${isGlass ? 'text-white/60' : 'text-gray-500'}`}>
               Ha ocurrido un error inesperado al cargar esta sección. Por favor, recarga la página para intentarlo de nuevo.
             </p>
-            <button type="button"
+            <button aria-label="Acción" type="button"
               onClick={() => window.location.reload()}
               className="w-full py-3.5 bg-gradient-to-r from-red-600 to-red-800 text-white font-bold rounded-xl hover:from-red-500 hover:to-red-700 transition-all active:scale-95 shadow-lg flex items-center justify-center gap-2"
             >

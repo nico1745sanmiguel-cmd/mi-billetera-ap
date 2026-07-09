@@ -44,7 +44,7 @@ export default function ServicesList({ allItems, isGlass, householdId, showMoney
                                         {item.type === 'card' && item.isManual && <span className="text-[9px] px-1.5 py-0.5 rounded font-bold border bg-yellow-100 text-yellow-700 border-yellow-200 flex items-center gap-1">Ajustado <Pencil size={10} /></span>}
 
                                         {!item.isPaid && (
-                                            <button type="button" onClick={(e) => { e.stopPropagation(); openModal(item); }} className={`p-1 rounded-full transition-colors opacity-0 group-hover:opacity-100 ${isGlass ? 'text-white/30 hover:text-blue-300 hover:bg-white/10' : 'text-gray-300 hover:text-blue-500 hover:bg-blue-50'}`}>
+                                            <button aria-label="Acción" type="button" onClick={(e) => { e.stopPropagation(); openModal(item); }} className={`p-1 rounded-full transition-colors opacity-0 group-hover:opacity-100 ${isGlass ? 'text-white/30 hover:text-blue-300 hover:bg-white/10' : 'text-gray-300 hover:text-blue-500 hover:bg-blue-50'}`}>
                                                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                                             </button>
                                         )}
@@ -60,7 +60,7 @@ export default function ServicesList({ allItems, isGlass, householdId, showMoney
 
                             <div className="text-right flex items-center gap-4">
                                 <p className={`font-mono font-bold transition-colors ${item.isPaid ? 'text-green-500' : (isGlass ? 'text-white' : 'text-gray-900')}`}>{showMoney(item.amount)}</p>
-                                <button type="button" onClick={() => togglePaid(item)} className={`w-8 h-8 rounded-full border-2 flex items-center justify-center cursor-pointer transition-all duration-300 active:scale-90 ${item.isPaid ? 'bg-green-500 border-green-500 shadow-[0_0_10px_rgba(34,197,94,0.4)] rotate-0' : (isGlass ? 'border-white/20 bg-transparent hover:border-blue-400 rotate-180' : 'border-gray-200 hover:border-blue-400 rotate-180 bg-white')}`}>
+                                <button aria-label="Acción" type="button" onClick={() => togglePaid(item)} className={`w-8 h-8 rounded-full border-2 flex items-center justify-center cursor-pointer transition-all duration-300 active:scale-90 ${item.isPaid ? 'bg-green-500 border-green-500 shadow-[0_0_10px_rgba(34,197,94,0.4)] rotate-0' : (isGlass ? 'border-white/20 bg-transparent hover:border-blue-400 rotate-180' : 'border-gray-200 hover:border-blue-400 rotate-180 bg-white')}`}>
                                     {item.isPaid && <svg className="w-5 h-5 text-white animate-fade-in" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
                                 </button>
                             </div>

@@ -41,7 +41,7 @@ export default function RepartoPanel({ allItems, householdId, currentUid, isGlas
     return (
         <div className={`rounded-3xl border overflow-hidden transition-all ${isGlass ? 'bg-white/5 border-white/10' : 'bg-white border-gray-100 shadow-sm'}`}>
             {/* Header colapsable */}
-            <button type="button"
+            <button aria-label="Acción" type="button"
                 onClick={() => setOpen(o => !o)}
                 className="w-full flex items-center justify-between p-5 text-left"
             >

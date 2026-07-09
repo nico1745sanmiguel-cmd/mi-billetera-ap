@@ -25,7 +25,7 @@ export default function ServiceModal({
                     <h3 className={`text-lg font-bold ${isGlass ? 'text-white' : 'text-gray-800'}`}>
                         {editingService?.type === 'card' ? `Ajustar Resumen ${editingService.bank}` : (editingService ? 'Editar' : 'Nuevo Fijo')}
                     </h3>
-                    <button type="button" onClick={() => setIsModalOpen(false)} className={`p-2 rounded-full transition-colors ${isGlass ? 'text-white/50 hover:bg-white/10' : 'text-gray-400 hover:text-gray-600 bg-gray-50 hover:bg-gray-100'}`}>✕</button>
+                    <button aria-label="Acción" type="button" onClick={() => setIsModalOpen(false)} className={`p-2 rounded-full transition-colors ${isGlass ? 'text-white/50 hover:bg-white/10' : 'text-gray-400 hover:text-gray-600 bg-gray-50 hover:bg-gray-100'}`}>✕</button>
                 </div>
 
                 <form onSubmit={handleSave} className="space-y-5 pb-6">
@@ -36,7 +36,7 @@ export default function ServiceModal({
                                 <p className={`text-sm font-bold ${isGlass ? 'text-white' : 'text-gray-800'}`}>Compartir en Hogar</p>
                                 <p className={`text-[10px] ${isGlass ? 'text-white/50' : 'text-gray-500'}`}>Visible para el reparto proporcional</p>
                             </div>
-                            <button type="button" onClick={() => setForm(f => ({ ...f, isShared: !f.isShared }))} className={`w-12 h-7 rounded-full transition-colors relative focus:outline-none ${form.isShared ? 'bg-indigo-600' : 'bg-gray-400'}`}>
+                            <button aria-label="Acción" type="button" onClick={() => setForm(f => ({ ...f, isShared: !f.isShared }))} className={`w-12 h-7 rounded-full transition-colors relative focus:outline-none ${form.isShared ? 'bg-indigo-600' : 'bg-gray-400'}`}>
                                 <div className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full transition-transform ${form.isShared ? 'translate-x-5' : 'translate-x-0'}`}></div>
                             </button>
                         </div>
@@ -45,8 +45,8 @@ export default function ServiceModal({
                     {editingService?.type === 'card' ? (
                         <div className="bg-blue-900/30 p-4 rounded-2xl border border-blue-500/30">
                             <p className="text-xs text-blue-300 mb-2 font-medium">Ingresa el monto exacto de tu resumen final. Esto reemplazará la suma automática.</p>
-                            <label className="block text-xs font-bold text-blue-200 uppercase mb-1">Monto Final ($)</label>
-                            <input
+                            <label htmlFor="input-field" className="block text-xs font-bold text-blue-200 uppercase mb-1">Monto Final ($)</label>
+                            <input id="input-field"
                                 type="tel"
                                 className={`w-full p-4 border rounded-xl outline-none font-bold text-center text-xl focus:ring-4 ${isGlass ? 'bg-black/20 border-white/10 text-white focus:ring-blue-500/20' : 'bg-white border-blue-200 text-gray-800 focus:ring-blue-100'}`}
                                 placeholder="0"
@@ -58,8 +58,8 @@ export default function ServiceModal({
                     ) : (
                         <>
                             <div>
-                                <label className={`block text-xs font-bold uppercase mb-1 ${isGlass ? 'text-white/40' : 'text-gray-400'}`}>Nombre</label>
-                                <input
+                                <label htmlFor="input-field" className={`block text-xs font-bold uppercase mb-1 ${isGlass ? 'text-white/40' : 'text-gray-400'}`}>Nombre</label>
+                                <input id="input-field"
                                     className={`w-full p-4 border rounded-2xl outline-none font-bold ${isGlass ? 'bg-black/20 border-white/10 text-white' : 'bg-gray-50 border-gray-200 text-gray-800'}`}
                                     placeholder="Ej: Internet..."
                                     value={form.name}
@@ -69,8 +69,8 @@ export default function ServiceModal({
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className={`block text-xs font-bold uppercase mb-1 ${isGlass ? 'text-white/40' : 'text-gray-400'}`}>Monto ($)</label>
-                                    <input
+                                    <label htmlFor="input-field" className={`block text-xs font-bold uppercase mb-1 ${isGlass ? 'text-white/40' : 'text-gray-400'}`}>Monto ($)</label>
+                                    <input id="input-field"
                                         type="tel"
                                         className={`w-full p-4 border rounded-2xl outline-none font-bold text-center ${isGlass ? 'bg-black/20 border-white/10 text-white' : 'bg-gray-50 border-gray-200 text-gray-800'}`}
                                         placeholder="0"
@@ -79,8 +79,8 @@ export default function ServiceModal({
                                     />
                                 </div>
                                 <div>
-                                    <label className={`block text-xs font-bold uppercase mb-1 ${isGlass ? 'text-white/40' : 'text-gray-400'}`}>Día Venc.</label>
-                                    <input
+                                    <label htmlFor="input-field" className={`block text-xs font-bold uppercase mb-1 ${isGlass ? 'text-white/40' : 'text-gray-400'}`}>Día Venc.</label>
+                                    <input id="input-field"
                                         type="number"
                                         max="31"
                                         className={`w-full p-4 border rounded-2xl outline-none font-bold text-center ${isGlass ? 'bg-black/20 border-white/10 text-white' : 'bg-gray-50 border-gray-200 text-gray-800'}`}
@@ -91,7 +91,7 @@ export default function ServiceModal({
                                 </div>
                             </div>
                             <div>
-                                <label className={`block text-xs font-bold uppercase mb-1 ${isGlass ? 'text-white/40' : 'text-gray-400'}`}>Frecuencia</label>
+                                <label htmlFor="input-field" className={`block text-xs font-bold uppercase mb-1 ${isGlass ? 'text-white/40' : 'text-gray-400'}`}>Frecuencia</label>
                                 <div className="relative">
                                     <select
                                         value={form.frequency}
@@ -107,11 +107,11 @@ export default function ServiceModal({
 
                     <div className="pt-4 flex gap-3">
                         {editingService && (
-                            <button type="button" onClick={handleDelete} className="p-4 bg-red-500/10 text-red-500 rounded-2xl hover:bg-red-500/20 transition-colors border border-red-500/20 flex items-center justify-center">
+                            <button aria-label="Acción" type="button" onClick={handleDelete} className="p-4 bg-red-500/10 text-red-500 rounded-2xl hover:bg-red-500/20 transition-colors border border-red-500/20 flex items-center justify-center">
                                 {editingService.type === 'card' ? 'Volver a Automático' : <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>}
                             </button>
                         )}
-                        <button type="submit" className={`flex-1 font-bold rounded-2xl py-4 shadow-lg active:scale-95 transition-transform text-lg ${isGlass ? 'bg-indigo-600 text-white hover:bg-indigo-500' : 'bg-gray-900 text-white hover:bg-black'}`}>
+                        <button aria-label="Acción" type="submit" className={`flex-1 font-bold rounded-2xl py-4 shadow-lg active:scale-95 transition-transform text-lg ${isGlass ? 'bg-indigo-600 text-white hover:bg-indigo-500' : 'bg-gray-900 text-white hover:bg-black'}`}>
                             {editingService ? (editingService.type === 'card' ? 'Confirmar Monto' : 'Actualizar') : 'Guardar'}
                         </button>
                     </div>

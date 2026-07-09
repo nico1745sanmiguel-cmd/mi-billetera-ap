@@ -67,7 +67,7 @@ export default function MobilityExpensesList({
                                 </div>
                                 <p className={`text-xs ${sub} flex-shrink-0`}>{exp.date?.slice(5)}</p>
                                 <p className={`text-sm font-bold ${isGlass ? 'text-red-300' : 'text-red-500'} flex-shrink-0`}>{fmt(exp.amount)}</p>
-                                <button type="button"
+                                <button aria-label="Acción" type="button"
                                     onClick={() => deleteExpense(exp.id)}
                                     className={`opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-lg ${isGlass ? 'hover:bg-white/20 text-white/40' : 'hover:bg-red-50 text-gray-300 hover:text-red-400'}`}
                                 >

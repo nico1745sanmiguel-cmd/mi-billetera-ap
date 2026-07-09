@@ -135,7 +135,7 @@ export default function CardDetail({ card, isNewCard, currentDate, privacyMode, 
         <div className="space-y-4">
             {/* Header / Nav */}
             <div className={`rounded-2xl p-4 flex items-center gap-3 border ${headerClass}`}>
-                <button type="button" onClick={onBack} className="p-2 rounded-xl bg-white/20 hover:bg-white/30 transition-all">
+                <button aria-label="Acción" type="button" onClick={onBack} className="p-2 rounded-xl bg-white/20 hover:bg-white/30 transition-all">
                     <ArrowLeft size={18} />
                 </button>
                 <div className="flex-1 min-w-0">
@@ -147,7 +147,7 @@ export default function CardDetail({ card, isNewCard, currentDate, privacyMode, 
                     </div>
                 </div>
                 {!isNewCard && (
-                    <button type="button" onClick={handleDelete} className="p-2 rounded-xl text-red-100 bg-red-500/20 hover:bg-red-500/40 transition-all">
+                    <button aria-label="Acción" type="button" onClick={handleDelete} className="p-2 rounded-xl text-red-100 bg-red-500/20 hover:bg-red-500/40 transition-all">
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                     </button>
                 )}
@@ -156,10 +156,10 @@ export default function CardDetail({ card, isNewCard, currentDate, privacyMode, 
             {/* Tabs */}
             {!isNewCard && (
                 <div className={`flex p-1.5 rounded-2xl border ${isGlass ? 'bg-white/5 border-white/10' : 'bg-gray-50 border-gray-100'}`}>
-                    <button type="button" onClick={() => setActiveTab('statement')} className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${tabClass(activeTab === 'statement')}`}>Resumen Actual</button>
-                    <button type="button" onClick={() => setActiveTab('pdf')} className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${tabClass(activeTab === 'pdf')}`}>PDF Automático</button>
-                    <button type="button" onClick={() => setActiveTab('history')} className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${tabClass(activeTab === 'history')}`}>Historial</button>
-                    <button type="button" onClick={() => setActiveTab('card')} className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${tabClass(activeTab === 'card')}`}>Ajustes</button>
+                    <button aria-label="Acción" type="button" onClick={() => setActiveTab('statement')} className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${tabClass(activeTab === 'statement')}`}>Resumen Actual</button>
+                    <button aria-label="Acción" type="button" onClick={() => setActiveTab('pdf')} className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${tabClass(activeTab === 'pdf')}`}>PDF Automático</button>
+                    <button aria-label="Acción" type="button" onClick={() => setActiveTab('history')} className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${tabClass(activeTab === 'history')}`}>Historial</button>
+                    <button aria-label="Acción" type="button" onClick={() => setActiveTab('card')} className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${tabClass(activeTab === 'card')}`}>Ajustes</button>
                 </div>
             )}
 
@@ -189,10 +189,10 @@ export default function CardDetail({ card, isNewCard, currentDate, privacyMode, 
                             <input id="cardBank" required value={form.bank} onChange={e => setForm({ ...form, bank: e.target.value })} className={inputClass} placeholder="Galicia, Santander, etc." />
                         </div>
                         <div>
-                            <label className={`${labelClass} mb-2`} id="cardColorLabel">Color de Tarjeta</label>
+                            <label htmlFor="input-field" className={`${labelClass} mb-2`} id="cardColorLabel">Color de Tarjeta</label>
                             <div className="flex flex-wrap gap-2 p-2" aria-labelledby="cardColorLabel">
                                 {PRESET_COLORS.map(color => (
-                                    <button key={color} type="button" onClick={() => setForm({ ...form, color })} className={`w-8 h-8 rounded-full shadow-sm transition-transform hover:scale-110 ${form.color === color ? 'ring-2 ring-offset-2 ring-blue-500 scale-110' : ''}`} style={{ backgroundColor: color }} />
+                                    <button aria-label="Acción" key={color} type="button" onClick={() => setForm({ ...form, color })} className={`w-8 h-8 rounded-full shadow-sm transition-transform hover:scale-110 ${form.color === color ? 'ring-2 ring-offset-2 ring-blue-500 scale-110' : ''}`} style={{ backgroundColor: color }} />
                                 ))}
                             </div>
                         </div>
@@ -208,11 +208,11 @@ export default function CardDetail({ card, isNewCard, currentDate, privacyMode, 
                         </div>
                         <div className="flex gap-3 pt-2">
                             {card && (
-                                <button type="button" onClick={onBack} className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all ${isGlass ? 'bg-white/10 text-white hover:bg-white/20' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
+                                <button aria-label="Acción" type="button" onClick={onBack} className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all ${isGlass ? 'bg-white/10 text-white hover:bg-white/20' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
                                     Cancelar
                                 </button>
                             )}
-                            <button type="submit" className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all ${isGlass ? 'bg-surface-light text-brand-dark hover:bg-gray-200' : 'bg-brand-primary text-surface-light hover:bg-blue-700'}`}>
+                            <button aria-label="Acción" type="submit" className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all ${isGlass ? 'bg-surface-light text-brand-dark hover:bg-gray-200' : 'bg-brand-primary text-surface-light hover:bg-blue-700'}`}>
                                 {isNewCard ? 'Crear Tarjeta' : 'Guardar Cambios'}
                             </button>
                         </div>
@@ -277,7 +277,7 @@ export default function CardDetail({ card, isNewCard, currentDate, privacyMode, 
                                     </div>
                                 </div>
 
-                                <button type="submit" className={`w-full py-3 rounded-xl font-bold text-sm transition-all ${isGlass ? 'bg-surface-light text-brand-dark hover:bg-gray-200' : 'bg-brand-primary text-surface-light hover:bg-blue-700'}`}>
+                                <button aria-label="Acción" type="submit" className={`w-full py-3 rounded-xl font-bold text-sm transition-all ${isGlass ? 'bg-surface-light text-brand-dark hover:bg-gray-200' : 'bg-brand-primary text-surface-light hover:bg-blue-700'}`}>
                                     Guardar Resumen
                                 </button>
                             </div>

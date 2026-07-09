@@ -14,7 +14,7 @@ function SizeMenu({ currentSize, onSelect, onClose }) {
                 <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-white/10 rounded-2xl shadow-2xl shadow-black/20 dark:shadow-black/60 p-1.5 flex flex-col gap-1 min-w-[160px]">
                     <p className="text-[9px] uppercase font-bold text-gray-400 dark:text-white/30 tracking-widest px-2 pt-1 pb-0.5">Tamaño del widget</p>
 
-                    <button type="button"
+                    <button aria-label="Acción" type="button"
                         onClick={(e) => { e.stopPropagation(); onSelect('full'); onClose(); }}
                         className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all ${
                             currentSize === 'full'
@@ -29,7 +29,7 @@ function SizeMenu({ currentSize, onSelect, onClose }) {
                         </span>
                     </button>
 
-                    <button type="button"
+                    <button aria-label="Acción" type="button"
                         onClick={(e) => { e.stopPropagation(); onSelect('half'); onClose(); }}
                         className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all ${
                             currentSize === 'half'

@@ -77,7 +77,7 @@ export default function SavingsCard({ cartera, items, isGlass, privacyMode }) {
                             
                             {editingIdx === idx ? (
                                 <div className="flex items-center gap-2">
-                                    <input 
+                                    <input id="input-field" 
                                         type="text"
                                         inputMode="decimal"
                                         value={editValue}
@@ -91,10 +91,10 @@ export default function SavingsCard({ cartera, items, isGlass, privacyMode }) {
                                             if (e.key === 'Escape') setEditingIdx(null);
                                         }}
                                     />
-                                    <button type="button" onClick={() => handleSaveEdit(item)} className="text-green-500 hover:text-green-600 transition-colors p-1 bg-green-500/10 rounded">
+                                    <button aria-label="Acción" type="button" onClick={() => handleSaveEdit(item)} className="text-green-500 hover:text-green-600 transition-colors p-1 bg-green-500/10 rounded">
                                         <Check size={16} strokeWidth={3} />
                                     </button>
-                                    <button type="button" onClick={() => setEditingIdx(null)} className="text-gray-400 hover:text-red-500 transition-colors p-1">
+                                    <button aria-label="Acción" type="button" onClick={() => setEditingIdx(null)} className="text-gray-400 hover:text-red-500 transition-colors p-1">
                                         <X size={16} strokeWidth={3} />
                                     </button>
                                 </div>
@@ -103,7 +103,7 @@ export default function SavingsCard({ cartera, items, isGlass, privacyMode }) {
                                     <span className={`font-bold ${textColor}`}>
                                         {formatAmount(item.cantidad)}
                                     </span>
-                                    <button type="button" 
+                                    <button aria-label="Acción" type="button" 
                                         onClick={() => {
                                             setEditValue(item.cantidad.toString());
                                             setEditingIdx(idx);
@@ -123,7 +123,7 @@ export default function SavingsCard({ cartera, items, isGlass, privacyMode }) {
             </div>
 
             {/* BOTÓN HISTORIAL */}
-            <button type="button" 
+            <button aria-label="Acción" type="button" 
                 onClick={() => setShowHistory(!showHistory)}
                 className={`w-full p-3 flex items-center justify-center gap-2 text-xs font-bold uppercase transition-colors ${
                     isGlass 

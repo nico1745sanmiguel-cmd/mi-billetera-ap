@@ -1,0 +1,518 @@
+﻿[1mReact Doctor[22m [2mv0.7.2[22m
+
+[90m  [39m
+
+  [33mÔÜá[39m [33mSecurity: BaaS authority map shipped in browser artifact[39m
+    [36mLearn more: https://react.doctor/docs/rules/react-doctor/artifact-baas-authority-surface[39m
+    A browser artifact exposes Firebase/Supabase config
+    together with sensitive collections or authorization fields.
+[2m    ÔåÆ Client BaaS config is often public, but shipped[22m
+[2m    collection names plus owner, role, tenant, or admin fields[22m
+[2m    give attackers a precise authorization map. Verify[22m
+[2m    rules/RLS enforce every boundary server-side.[22m
+
+[90m    dist/assets/index-BOfs787w.js:45[39m
+
+  [33mÔÜá[39m [33mAccessibility: Label missing associated control[39m [90m├ù27[39m
+    [36mLearn more: https://react.doctor/docs/rules/react-doctor/label-has-associated-control[39m
+    Screen reader users can't tell which input this label names
+    because it's tied to none, so add `htmlFor` or wrap the
+    input inside it.
+[2m    ÔåÆ Tie every label to a control with `htmlFor`, or by[22m
+[2m    nesting the input.[22m
+
+[90m    src/Components/Cards/CardDetail.jsx:192[39m
+
+[90m    src/Components/Login.jsx:92[39m
+
+[90m    src/Components/Login.jsx:103[39m
+
+[90m    src/Components/Mobility/MobilityExpenses.jsx:241[39m
+
+[90m    src/Components/Mobility/MobilityExpenses.jsx:251[39m
+
+[90m    src/Components/Mobility/MobilityExpenses.jsx:266[39m
+
+[90m    src/Components/Mobility/MobilitySettings.jsx:89[39m
+
+[90m    src/Components/Mobility/MobilitySettings.jsx:106[39m
+
+[90m    src/Components/Purchase/NewPurchase.jsx:164[39m
+
+[90m    src/Components/Purchase/NewPurchase.jsx:198[39m
+
+[90m    src/Components/Purchase/NewPurchase.jsx:244[39m
+
+[90m    src/Components/Salary/EnvelopeEditor.jsx:83[39m
+
+[90m    src/Components/Salary/EnvelopeEditor.jsx:97[39m
+
+[90m    src/Components/Salary/EnvelopeEditor.jsx:115[39m
+
+[90m    src/Components/Salary/EnvelopeEditor.jsx:137[39m
+
+[90m    src/Components/Savings/AddSavingsModal.jsx:106[39m
+
+[90m    src/Components/Savings/AddSavingsModal.jsx:123[39m
+
+[90m    src/Components/Savings/AddSavingsModal.jsx:139[39m
+
+[90m    src/Components/Savings/AddSavingsModal.jsx:155[39m
+
+[90m    src/Components/Savings/SavingsGoal.jsx:137[39m
+
+[90m    src/Components/Savings/SavingsGoal.jsx:151[39m
+
+[90m    src/Components/Savings/SavingsGoal.jsx:165[39m
+
+[90m    src/Components/Services/ServiceModal.jsx:48[39m
+
+[90m    src/Components/Services/ServiceModal.jsx:61[39m
+
+[90m    src/Components/Services/ServiceModal.jsx:72[39m
+
+[90m    src/Components/Services/ServiceModal.jsx:82[39m
+
+[90m    src/Components/Services/ServiceModal.jsx:94[39m
+
+  [33mÔÜá[39m [33mPerformance: Heavy library loaded eagerly[39m
+    [36mLearn more: https://react.doctor/docs/rules/react-doctor/prefer-dynamic-import[39m
+    "recharts" ships extra code to your users up front & slows
+    page load. Load it on demand with React.lazy() or
+    next/dynamic.
+[2m    ÔåÆ Load it only when needed: `const Component = dynamic(()[22m
+[2m    => import('library'), { ssr: false })` from next/dynamic,[22m
+[2m    or React.lazy().[22m
+
+[90m    src/Components/Dashboard/StatsChart.jsx:2[39m
+
+  [33mÔÜá[39m [33mAccessibility: Control missing accessible label[39m [90m├ù87[39m
+    [36mLearn more: https://react.doctor/docs/rules/react-doctor/control-has-associated-label[39m
+    Blind users can't tell what this control does because
+    screen readers find no label, so add visible text,
+    `aria-label`, or `aria-labelledby`.
+[2m    ÔåÆ Give every interactive control a label screen readers can[22m
+[2m    read.[22m
+
+[90m    src/App.jsx:133[39m
+
+[90m    src/App.jsx:142[39m
+
+[90m    src/App.jsx:146[39m
+
+[90m    src/App.jsx:153[39m
+
+[90m    src/Components/Cards/CardDetail.jsx:138[39m
+
+[90m    src/Components/Cards/CardDetail.jsx:150[39m
+
+[90m    src/Components/Cards/CardDetail.jsx:195[39m
+
+[90m    src/Components/Cards/CardsList.jsx:102[39m
+
+[90m    src/Components/Dashboard/Home.jsx:284[39m
+
+[90m    src/Components/Dashboard/Widgets/AgendaWidget.jsx:169[39m
+
+[90m    src/Components/Dashboard/Widgets/AgendaWidget.jsx:176[39m
+
+[90m    src/Components/Dashboard/Widgets/AgendaWidget.jsx:215[39m
+
+[90m    src/Components/Dashboard/Widgets/CardsWidget.jsx:119[39m
+
+[90m    src/Components/Dashboard/Widgets/DraggableFAB.jsx:67[39m
+
+[90m    src/Components/Dashboard/Widgets/FloatingNotes.jsx:96[39m
+
+[90m    src/Components/Dashboard/Widgets/FloatingNotes.jsx:122[39m
+
+[90m    src/Components/Dashboard/Widgets/MobilityWidget.jsx:64[39m
+
+[90m    src/Components/Dashboard/Widgets/NotificationsModal.jsx:56[39m
+
+[90m    src/Components/Dashboard/Widgets/SalaryWidget.jsx:30[39m
+
+[90m    src/Components/Dashboard/Widgets/SuperActionsWidget.jsx:86[39m
+
+[90m    src/Components/Dashboard/Widgets/SuperActionsWidget.jsx:107[39m
+
+[90m    src/Components/Dashboard/Widgets/SuperActionsWidget.jsx:157[39m
+
+[90m    src/Components/Household/HouseholdManager.jsx:156[39m
+
+[90m    src/Components/Household/HouseholdManager.jsx:183[39m
+
+[90m    src/Components/Household/HouseholdManager.jsx:220[39m
+
+[90m    src/Components/Household/HouseholdManager.jsx:226[39m
+
+[90m    src/Components/Household/HouseholdManager.jsx:232[39m
+
+[90m    src/Components/Mobility/MobilityDashboard.jsx:42[39m
+
+[90m    src/Components/Mobility/MobilityDashboard.jsx:53[39m
+
+[90m    src/Components/Mobility/MobilityExpenses.jsx:151[39m
+
+[90m    src/Components/Mobility/MobilityExpenses.jsx:242[39m
+
+[90m    src/Components/Mobility/MobilityExpensesList.jsx:70[39m
+
+[90m    src/Components/Mobility/MobilityForm.jsx:249[39m
+
+[90m    src/Components/Mobility/MobilityHistory.jsx:40[39m
+
+[90m    src/Components/Mobility/MobilityHistory.jsx:90-91[39m
+
+[90m    src/Components/Mobility/MobilityHistory.jsx:135[39m
+
+[90m    src/Components/Mobility/MobilityHistory.jsx:139[39m
+
+[90m    src/Components/Mobility/MobilitySettings.jsx:90[39m
+
+[90m    src/Components/Mobility/MobilitySettings.jsx:107[39m
+
+[90m    src/Components/Mobility/MobilitySettings.jsx:130[39m
+
+[90m    src/Components/Mobility/MobilitySettings.jsx:152[39m
+
+[90m    src/Components/Mobility/MobilitySettings.jsx:158[39m
+
+[90m    src/Components/Mobility/MobilitySettings.jsx:174[39m
+
+[90m    src/Components/Purchase/NewPurchase.jsx:201[39m
+
+[90m    src/Components/Purchase/NewPurchase.jsx:278[39m
+
+[90m    src/Components/ReceiptScanner/ReceiptScanner.jsx:126[39m
+
+[90m    src/Components/ReceiptScanner/ReceiptScanner.jsx:200[39m
+
+[90m    src/Components/Reconciliation/ReconciliationDesk.jsx:148[39m
+
+[90m    src/Components/Reconciliation/ReconciliationDesk.jsx:259[39m
+
+[90m    src/Components/Salary/EnvelopeCard.jsx:41[39m
+
+[90m    src/Components/Salary/EnvelopeCard.jsx:47[39m
+
+[90m    src/Components/Salary/EnvelopeEditor.jsx:75[39m
+
+[90m    src/Components/Salary/EnvelopeEditor.jsx:142[39m
+
+[90m    src/Components/Salary/SalaryDashboard.jsx:89[39m
+
+[90m    src/Components/Salary/SalaryDashboard.jsx:101[39m
+
+[90m    src/Components/Salary/SalarySourcesEditor.jsx:82[39m
+
+[90m    src/Components/Salary/SalarySourcesEditor.jsx:126-128[39m
+
+[90m    src/Components/Savings/AddSavingsModal.jsx:70[39m
+
+[90m    src/Components/Savings/SavingsCard.jsx:80[39m
+
+[90m    src/Components/Savings/SavingsCard.jsx:94-97[39m
+
+[90m    src/Components/Savings/SavingsCard.jsx:106[39m
+
+[90m    src/Components/Savings/SavingsGoal.jsx:215[39m
+
+[90m    src/Components/Savings/SavingsGoal.jsx:255[39m
+
+[90m    src/Components/Services/ServiceModal.jsx:39[39m
+
+[90m    src/Components/Services/ServiceModal.jsx:96[39m
+
+[90m    src/Components/Services/ServicesCalendarView.jsx:134[39m
+
+[90m    src/Components/Services/ServicesList.jsx:47[39m
+
+[90m    src/Components/Services/ServicesList.jsx:63[39m
+
+[90m    src/Components/Settings/ModulesSettings.jsx:141[39m
+
+[90m    src/Components/Settings/ModulesSettings.jsx:255[39m
+
+[90m    src/Components/Shared/SharedExpensesDashboard.jsx:122[39m
+
+[90m    src/Components/Shared/SharedExpensesDashboard.jsx:165[39m
+
+[90m    src/Components/Shared/SharedExpensesDashboard.jsx:343[39m
+
+[90m    src/Components/Supermarket/FreshShop.jsx:190[39m
+
+[90m    src/Components/Supermarket/FreshShop.jsx:211[39m
+
+[90m    src/Components/Supermarket/PlannerSection.jsx:123[39m
+
+[90m    src/Components/Supermarket/PlannerSection.jsx:127[39m
+
+[90m    src/Components/Supermarket/PlannerSection.jsx:165[39m
+
+[90m    src/Components/Supermarket/SuperList.jsx:430[39m
+
+[90m    src/Components/Supermarket/SupermarketAddInput.jsx:29[39m
+
+[90m    src/Components/Supermarket/TripCard.jsx:42[39m
+
+[90m    src/Components/Supermarket/TripCard.jsx:50[39m
+
+[90m    src/Components/Supermarket/TripCard.jsx:90[39m
+
+[90m    src/Components/Supermarket/TripCard.jsx:117[39m
+
+  [33mÔÜá[39m [33mAccessibility: outline:none removes focus ring[39m
+    [36mLearn more: https://react.doctor/docs/rules/react-doctor/no-outline-none[39m
+    Your keyboard users can't tell where they are because
+    outline: none hides the focus ring, so style :focus-visible
+    instead, or add a box-shadow focus ring.
+[2m    ÔåÆ Style `:focus-visible { outline: 2px solid[22m
+[2m    var(--color-accent); outline-offset: 2px }` so the focus[22m
+[2m    ring shows for keyboard users but not mouse clicks.[22m
+
+[90m    src/Components/Dashboard/StatsChart.jsx:55[39m
+
+  [33mÔÜá[39m [33mMaintainability: deslop/unused-file[39m
+    Unused file is not reachable from any entry point, so it
+    adds maintenance surface without shipping any code.
+[2m    ÔåÆ Delete the file if it is truly unreachable, or import it[22m
+[2m    from an entry point.[22m
+
+[90m    resolve.cjs[39m
+
+  [33mÔÜá[39m [33mAccessibility: Interaction on static element[39m [90m├ù25[39m
+    [36mLearn more: https://react.doctor/docs/rules/react-doctor/no-static-element-interactions[39m
+    Screen reader users can't tell this click handler is
+    interactive because it has no `role`, so add a `role` or
+    use a button or link.
+[2m    ÔåÆ Give clickable static elements a `role`, or use a button[22m
+[2m    or link.[22m
+
+[90m    src/Components/Dashboard/Home.jsx:297[39m
+
+[90m    src/Components/Dashboard/Widgets/CardsWidget.jsx:33[39m
+
+[90m    src/Components/Dashboard/Widgets/CardsWidget.jsx:61[39m
+
+[90m    src/Components/Dashboard/Widgets/CardsWidget.jsx:86[39m
+
+[90m    src/Components/Dashboard/Widgets/CardsWidget.jsx:128[39m
+
+[90m    src/Components/Dashboard/Widgets/MobilityWidget.jsx:47[39m
+
+[90m    src/Components/Dashboard/Widgets/NotificationsModal.jsx:50[39m
+
+[90m    src/Components/Dashboard/Widgets/PlannerWidget.jsx:39[39m
+
+[90m    src/Components/Dashboard/Widgets/PlannerWidget.jsx:79[39m
+
+[90m    src/Components/Dashboard/Widgets/PlannerWidget.jsx:121[39m
+
+[90m    src/Components/Dashboard/Widgets/SalaryWidget.jsx:13[39m
+
+[90m    src/Components/Dashboard/Widgets/SavingsWidget.jsx:102[39m
+
+[90m    src/Components/Dashboard/Widgets/SplitSummaryWidget.jsx:9[39m
+
+[90m    src/Components/Dashboard/Widgets/SuperActionsWidget.jsx:58[39m
+
+[90m    src/Components/Dashboard/Widgets/SuperActionsWidget.jsx:124[39m
+
+[90m    src/Components/Mobility/MobilityImport.jsx:150[39m
+
+[90m    src/Components/Salary/EnvelopeEditor.jsx:63[39m
+
+[90m    src/Components/Salary/SalarySourcesEditor.jsx:72[39m
+
+[90m    src/Components/Savings/AddSavingsModal.jsx:63[39m
+
+[90m    src/Components/Services/ServicesCalendarView.jsx:40[39m
+
+[90m    src/Components/Services/ServicesCalendarView.jsx:89[39m
+
+[90m    src/Components/Services/ServicesCalendarView.jsx:113[39m
+
+[90m    src/Components/Services/ServicesCalendarView.jsx:181[39m
+
+[90m    src/Components/Shared/SharedExpensesDashboard.jsx:91[39m
+
+[90m    src/Components/Supermarket/SuperList.jsx:410[39m
+
+  [33mÔÜá[39m [33mBugs: Button missing explicit type[39m [90m├ù8[39m
+    [36mLearn more: https://react.doctor/docs/rules/react-doctor/button-has-type[39m
+    Your users can submit the form by accident because a
+    `<button>` with no `type` defaults to submit.
+[2m    ÔåÆ Set an explicit button `type` so plain buttons do not[22m
+[2m    submit forms by accident: `type="button"`, `"submit"`, or[22m
+[2m    `"reset"`.[22m
+
+[90m    src/Components/Dashboard/Widgets/DraggableFAB.jsx:58-61[39m
+
+[90m    src/Components/Dashboard/Widgets/DraggableFAB.jsx:67[39m
+
+[90m    src/Components/Dashboard/Widgets/FloatingNotes.jsx:96[39m
+
+[90m    src/Components/Dashboard/Widgets/NotificationsModal.jsx:62[39m
+
+[90m    src/Components/Dashboard/Widgets/SuperActionsWidget.jsx:86[39m
+
+[90m    src/Components/Dashboard/Widgets/SuperActionsWidget.jsx:107[39m
+
+[90m    src/Components/Dashboard/Widgets/SuperActionsWidget.jsx:157[39m
+
+  [33mÔÜá[39m [33mAccessibility: Media missing captions[39m
+    [36mLearn more: https://react.doctor/docs/rules/react-doctor/media-has-caption[39m
+    Deaf and hard-of-hearing users need captions for this
+    media. Add a `<track kind="captions">` inside the `<audio>`
+    or `<video>`.
+[2m    ÔåÆ Add `<track kind="captions">` inside every `<audio>` /[22m
+[2m    `<video>`.[22m
+
+[90m    src/Components/ReceiptScanner/ReceiptScanner.jsx:177[39m
+
+  [33mÔÜá[39m [33mPerformance: State only used in handlers[39m
+    [36mLearn more: https://react.doctor/docs/rules/react-doctor/rerender-state-only-in-handlers[39m
+    Each update to "deferredPrompt" redraws your component for
+    nothing because this useState is set but never shown on
+    screen.
+[2m    ÔåÆ Use useRef instead of useState when the value is only set[22m
+[2m    and never shown on screen. `ref.current = ...` updates it[22m
+[2m    without redrawing the component.[22m
+
+[90m    src/Components/UI/InstallPrompt.jsx:4[39m
+
+  [33mÔÜá[39m [33mAccessibility: Click handler missing keyboard handler[39m [90m├ù15[39m
+    [36mLearn more: https://react.doctor/docs/rules/react-doctor/click-events-have-key-events[39m
+    Keyboard users can't trigger this click handler because
+    there's no keyboard one, so add `onKeyUp`, `onKeyDown`, or
+    `onKeyPress`.
+[2m    ÔåÆ Pair `onClick` with a key handler so keyboard users can[22m
+[2m    trigger it.[22m
+
+[90m    src/Components/Dashboard/Home.jsx:297[39m
+
+[90m    src/Components/Dashboard/Home.jsx:335[39m
+
+[90m    src/Components/Dashboard/Widgets/CardsWidget.jsx:33[39m
+
+[90m    src/Components/Dashboard/Widgets/CardsWidget.jsx:61[39m
+
+[90m    src/Components/Dashboard/Widgets/CardsWidget.jsx:128[39m
+
+[90m    src/Components/Dashboard/Widgets/PlannerWidget.jsx:39[39m
+
+[90m    src/Components/Dashboard/Widgets/PlannerWidget.jsx:79[39m
+
+[90m    src/Components/Dashboard/Widgets/PlannerWidget.jsx:121[39m
+
+[90m    src/Components/Dashboard/Widgets/SplitSummaryWidget.jsx:9[39m
+
+[90m    src/Components/Dashboard/Widgets/SuperActionsWidget.jsx:58[39m
+
+[90m    src/Components/Savings/AddSavingsModal.jsx:63[39m
+
+[90m    src/Components/Services/ServicesCalendarView.jsx:40[39m
+
+[90m    src/Components/Services/ServicesCalendarView.jsx:89[39m
+
+[90m    src/Components/Services/ServicesCalendarView.jsx:181[39m
+
+[90m    src/Components/Supermarket/SuperList.jsx:410[39m
+
+  [33mÔÜá[39m [33mMaintainability: deslop/unused-export[39m [90m├ù10[39m
+    Unused export: `ENABLE_MOBILITY` is exported but no module
+    imports it, so it expands the public surface and can
+    mislead callers about supported API.
+[2m    ÔåÆ Drop the `export` keyword (or remove the declaration) if[22m
+[2m    no other module uses this symbol.[22m
+
+[90m    src/config/constants.js:18[39m
+
+[90m    src/config/constants.js:67[39m
+
+[90m    src/config/constants.js:79[39m
+
+[90m    src/context/SalaryContext.jsx:26[39m
+
+[90m    src/repositories/notesRepository.js:16[39m
+
+[90m    src/repositories/plannerCategoriesRepository.js:16[39m
+
+[90m    src/repositories/supermarketRepository.js:60[39m
+
+[90m    src/utils/cardDebtUtils.js:19[39m
+
+[90m    src/utils/cardDebtUtils.js:26[39m
+
+[90m    src/utils/salaryUtils.js:75[39m
+
+  [33mÔÜá[39m [33mAccessibility: Handler on non-interactive element[39m
+    [36mLearn more: https://react.doctor/docs/rules/react-doctor/no-noninteractive-element-interactions[39m
+    Keyboard & screen reader users can't trigger this `<p>`
+    because it isn't interactive, so use a button or link or
+    add an interactive role.
+[2m    ÔåÆ Put interactions on a button or link, or add an[22m
+[2m    interactive role.[22m
+
+[90m    src/Components/Dashboard/Home.jsx:335[39m
+
+  [33mÔÜá[39m [33mMaintainability: Large component is hard to read and change[39m [90m├ù4[39m
+    [36mLearn more: https://react.doctor/docs/rules/react-doctor/no-giant-component[39m
+    Component "Home" is 327 lines long, which is hard to read &
+    change. Split it into a few smaller components.
+[2m    ÔåÆ Pull each section into its own component so the parent is[22m
+[2m    easier to read, test, and change.[22m
+
+[90m    src/Components/Dashboard/Home.jsx:83[39m
+
+[90m    src/Components/Mobility/MobilityStats.jsx:23[39m
+
+[90m    src/Components/Savings/SavingsGoal.jsx:9[39m
+
+[90m    src/Components/Supermarket/SuperList.jsx:37[39m
+
+  [33mÔÜá[39m [33mPerformance: Transition duration too long[39m [90m├ù2[39m
+    [36mLearn more: https://react.doctor/docs/rules/react-doctor/no-long-transition-duration[39m
+    Your users wait through a sluggish 1200ms transition, so
+    keep UI transitions under 1000ms & save longer ones for big
+    page-load animations.
+[2m    ÔåÆ Keep UI transitions under 1s. Use about 100 to 150ms for[22m
+[2m    instant feedback, 200 to 300ms for state changes, and 300[22m
+[2m    to 500ms for layout. Save longer ones for big page-load[22m
+[2m    animations.[22m
+
+[90m    src/Components/Savings/SavingsGoal.jsx:285[39m
+
+[90m    src/Components/Savings/SavingsGoal.jsx:298[39m
+
+
+[2m  ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ[22m
+
+  [1mAll 185 issues[22m
+
+  [1mSecurity[22m [2m>[22m [33m[2m1 warning[22m[39m
+  [1mBugs[22m [2m>[22m [33m[2m8 warnings[22m[39m
+  [1mPerformance[22m [2m>[22m [33m[2m4 warnings[22m[39m
+  [1mAccessibility[22m [2m>[22m [33m[2m157 warnings[22m[39m
+  [1mMaintainability[22m [2m>[22m [33m[2m15 warnings[22m[39m
+
+  [33mÔöîÔöÇÔöÇÔöÇÔöÇÔöÇÔöÉ[39m  [33m59[39m [2m/ 100[22m [33mCritical[39m
+  [33mÔöé ÔÇó ÔÇó Ôöé[39m  [33mÔûêÔûêÔûêÔûêÔûêÔûêÔûêÔûêÔûêÔûêÔûêÔûêÔûêÔûêÔûêÔûêÔûêÔûêÔûêÔûêÔûêÔûêÔûêÔûêÔûêÔûêÔûêÔûêÔûêÔûê[39m[2mÔûæÔûæÔûæÔûæÔûæÔûæÔûæÔûæÔûæÔûæÔûæÔûæÔûæÔûæÔûæÔûæÔûæÔûæÔûæÔûæ[22m
+  [33mÔöé  ÔöÇ  Ôöé[39m  React Doctor [2m(https://react.doctor)[22m
+  [33mÔööÔöÇÔöÇÔöÇÔöÇÔöÇÔöÿ[39m
+
+[90m  Full diagnostics written to C:\Users\Nico\AppData\Local\Temp\react-doctor-156fd6ae-ec2a-4424-9873-028b5269c252[39m
+
+[2m  ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ[22m
+
+  [1mShare:[22m [36mhttps://react.doctor/share?p=billetera-app&s=59&w=185&f=56[39m
+[2m  Tell others how you did on socials[22m
+
+  [1mDocs:[22m [36mhttps://react.doctor/docs[39m
+[2m  Learn more about fixing issues, setting up CI/CD, and[22m
+[2m  configuring rules with a config file[22m
+
+  [1mGitHub:[22m [36mhttps://github.com/millionco/react-doctor[39m
+[2m  Report issues and star the repository![22m
+

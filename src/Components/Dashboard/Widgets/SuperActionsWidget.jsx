@@ -83,7 +83,7 @@ export default function SuperActionsWidget({ superData, privacyMode, setView, si
                     </div>
 
                     {!isAdding && (
-                        <button 
+                        <button aria-label="Acción" 
                             onClick={(e) => { e.stopPropagation(); setIsAdding(true); }}
                             className="bg-gray-50 text-gray-400 hover:text-purple-600 dark:bg-white/5 dark:text-white/40 dark:hover:text-purple-300 p-2 rounded-full transition-colors"
                         >
@@ -94,7 +94,7 @@ export default function SuperActionsWidget({ superData, privacyMode, setView, si
 
                 {isAdding ? (
                     <div className="relative z-10 mt-2 flex items-center" onClick={(e) => e.stopPropagation()}>
-                        <input
+                        <input id="input-field"
                             type="text"
                             placeholder="Producto..."
                             value={inputValue}
@@ -104,7 +104,7 @@ export default function SuperActionsWidget({ superData, privacyMode, setView, si
                             onBlur={() => setTimeout(() => setIsAdding(false), 200)}
                             className="w-full bg-gray-50 dark:bg-black/20 text-xs px-2 py-1.5 rounded-lg border border-gray-200 dark:border-white/10 text-gray-700 dark:text-white focus:outline-none focus:border-purple-400 pr-8"
                         />
-                        <button onClick={handleQuickAdd} className="absolute right-1 text-purple-500 p-1">
+                        <button aria-label="Acción" onClick={handleQuickAdd} className="absolute right-1 text-purple-500 p-1">
                             <Check size={14} />
                         </button>
                     </div>
@@ -146,7 +146,7 @@ export default function SuperActionsWidget({ superData, privacyMode, setView, si
             
             <div className="mt-auto" onClick={(e) => e.stopPropagation()}>
                 <div className="relative">
-                    <input
+                    <input id="input-field"
                         type="text"
                         placeholder="Agregar rápido al súper..."
                         value={inputValue}
@@ -154,7 +154,7 @@ export default function SuperActionsWidget({ superData, privacyMode, setView, si
                         onKeyDown={handleKeyDown}
                         className="w-full bg-gray-50 dark:bg-black/20 text-sm px-4 py-2.5 rounded-xl border border-gray-200 dark:border-white/10 text-gray-700 dark:text-white focus:outline-none focus:border-purple-400 pr-10"
                     />
-                    <button 
+                    <button aria-label="Acción" type="button" 
                         onClick={handleQuickAdd}
                         disabled={!inputValue.trim()}
                         className="absolute right-2 top-1/2 -translate-y-1/2 text-white bg-purple-500 hover:bg-purple-600 p-1.5 rounded-lg disabled:opacity-50 disabled:bg-gray-300 transition-colors"

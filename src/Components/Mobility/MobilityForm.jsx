@@ -246,7 +246,7 @@ export default function MobilityForm({ isGlass, onSuccess, initialData = null, o
 
                                 {/* Botón guardar individual */}
                                 {!isEdit && (
-                                    <button
+                                    <button aria-label="Acción"
                                         type="button"
                                         onClick={() => confirmPlatform(key)}
                                         disabled={!hasValue || isConfirmed}
@@ -310,7 +310,7 @@ export default function MobilityForm({ isGlass, onSuccess, initialData = null, o
 
             <div className={`flex gap-2 ${isEdit ? 'grid grid-cols-2' : ''}`}>
                 {isEdit && (
-                    <button
+                    <button aria-label="Acción"
                         type="button"
                         onClick={onCancel}
                         className={`w-full py-3 rounded-2xl font-semibold text-sm transition-all ${isGlass ? 'bg-white/10 text-white/70 hover:bg-white/20' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
@@ -318,7 +318,7 @@ export default function MobilityForm({ isGlass, onSuccess, initialData = null, o
                         Cancelar
                     </button>
                 )}
-                <button
+                <button aria-label="Acción"
                     type="submit"
                     disabled={saving}
                     className="w-full py-3 rounded-2xl font-bold text-sm text-white bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 active:scale-98 transition-all shadow-lg shadow-violet-500/30 flex items-center justify-center gap-2"
