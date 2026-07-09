@@ -30,6 +30,7 @@ import CardsWidget from './Widgets/CardsWidget';
 import AgendaWidget from './Widgets/AgendaWidget';
 import SuperActionsWidget from './Widgets/SuperActionsWidget';
 import NotificationsModal from './Widgets/NotificationsModal';
+import FloatingNotes from './Widgets/FloatingNotes';
 import MobilityWidget from './Widgets/MobilityWidget';
 import SalaryWidget from './Widgets/SalaryWidget';
 import PlannerWidget from './Widgets/PlannerWidget';
@@ -89,6 +90,13 @@ const Home = memo(({ onLogout, notifications = EMPTY_ARRAY, onCardClick }) => {
     const { superItems: supermarketItems, freshItems, plannerCategories } = useSupermarket();
     const { services } = useServices();
     const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+    const [showNotes, setShowNotes] = useState(false);
+
+    useEffect(() => {
+        const handleOpenNotes = () => setShowNotes(true);
+        window.addEventListener('openNotes', handleOpenNotes);
+        return () => window.removeEventListener('openNotes', handleOpenNotes);
+    }, []);
 
     const unreadNotifsCount = useMemo(() => {
         if (!user || !notifications) return 0;
@@ -375,6 +383,14 @@ const Home = memo(({ onLogout, notifications = EMPTY_ARRAY, onCardClick }) => {
                     privacyMode={privacyMode} 
                     setIsNotificationsOpen={setIsNotificationsOpen} 
                     handleMarkAsRead={handleMarkAsRead} 
+                />
+            )}
+
+            {isModuleEnabled('notes') && (
+                <FloatingNotes 
+                    forceOpen={showNotes} 
+                    onClose={() => setShowNotes(false)} 
+                    user={user} 
                 />
             )}
         </div>

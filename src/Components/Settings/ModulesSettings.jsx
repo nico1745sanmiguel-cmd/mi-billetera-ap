@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Briefcase, Car, Puzzle, ShoppingCart, CreditCard, TrendingUp, Users, CalendarDays, ListTodo, PieChart, Sparkles } from 'lucide-react';
+import { ArrowLeft, Briefcase, Car, Puzzle, ShoppingCart, CreditCard, TrendingUp, Users, CalendarDays, ListTodo, PieChart, Sparkles, StickyNote } from 'lucide-react';
 import { CACHE_KEYS } from '../../config/constants';
 import { setCache } from '../../utils/cache';
 import { useUI } from '../../context/UIContext';
@@ -96,6 +96,16 @@ const AVAILABLE_MODULES = [
         iconBg: 'bg-indigo-100',
         iconColor: 'text-indigo-600',
         badge: null,
+    },
+    {
+        id: 'notes',
+        label: 'Notas Rápidas',
+        description: 'Post-it flotante para llevar una lista rápida de tareas pendientes (estilo Google Keep).',
+        icon: StickyNote,
+        color: 'from-yellow-400 to-amber-500',
+        iconBg: 'bg-yellow-100',
+        iconColor: 'text-yellow-600',
+        badge: 'Nuevo',
     },
 ];
 

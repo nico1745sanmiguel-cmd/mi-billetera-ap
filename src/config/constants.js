@@ -111,6 +111,7 @@ export const COLLECTIONS = {
     SAVINGS_GOALS:        'savings_goals',
     MOBILITY_SESSIONS:  'mobility_sessions',
     MOBILITY_EXPENSES:  'mobility_expenses',
+    NOTES:            'notes',
 };
 
 // ─── CACHE KEYS ───────────────────────────────────────────────────────────────
@@ -127,4 +128,5 @@ export const CACHE_KEYS = {
     SAVINGS_TRANSACTIONS: 'savingsTransactions',
     MOBILITY_SESSIONS: 'mobilitySessions',
     ENABLED_MODULES: 'enabled_modules',
+    NOTES:        'notes',
 };
