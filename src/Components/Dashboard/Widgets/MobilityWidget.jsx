@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { Car, TrendingUp, ChevronRight, Target } from 'lucide-react';
 import { useMobilityState, MobilityProvider } from '../../../context/MobilityContext';
+import Skeleton from '../../UI/Skeleton';
 
 function MobilityWidgetInner({ setView, currentDate, privacyMode }) {
     const { sessions, loading } = useMobilityState();
@@ -69,8 +70,9 @@ function MobilityWidgetInner({ setView, currentDate, privacyMode }) {
             {/* Monto actual */}
             <div className="relative z-10">
                 {loading && sessions.length === 0 ? (
-                    <div className="animate-pulse flex gap-2 items-center">
-                        <div className="h-8 w-24 bg-violet-200/50 dark:bg-white/10 rounded-lg" />
+                    <div className="flex flex-col gap-2">
+                        <Skeleton type="title" width="120px" className="!h-10" />
+                        <Skeleton type="text" width="80px" />
                     </div>
                 ) : (
                     <>

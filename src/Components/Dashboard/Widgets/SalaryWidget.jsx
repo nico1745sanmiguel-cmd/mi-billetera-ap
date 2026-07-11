@@ -1,6 +1,7 @@
 import React from 'react';
 import { Briefcase, ChevronRight, Wallet } from 'lucide-react';
 import { SalaryProvider, useSalaryState } from '../../../context/SalaryContext';
+import Skeleton from '../../UI/Skeleton';
 import { formatMoney } from '../../../utils';
 
 function SalaryWidgetInner({ setView, privacyMode }) {
@@ -34,8 +35,9 @@ function SalaryWidgetInner({ setView, privacyMode }) {
 
             <div className="relative z-10">
                 {loading && totalIncome === 0 ? (
-                    <div className="animate-pulse flex gap-2 items-center">
-                        <div className="h-8 w-24 bg-violet-200/50 dark:bg-white/10 rounded-lg" />
+                    <div className="flex flex-col gap-2">
+                        <Skeleton type="title" width="120px" className="!h-10" />
+                        <Skeleton type="text" width="100%" />
                     </div>
                 ) : totalIncome === 0 ? (
                     <p className="text-sm text-gray-400 dark:text-white/40 font-medium">Sin configurar · Tocá para empezar</p>
