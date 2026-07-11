@@ -93,24 +93,12 @@ export default function App() {
     }, [loadingUser]);
 
 
-    if (loadingUser) {
-        return (
-            <div className={`min-h-screen ${isGlass ? 'bg-[#0f0c29]' : 'bg-gray-50'}`}>
-                <SkeletonDashboard isGlass={isGlass} />
-                {showReload && (
-                    <div className="fixed bottom-10 left-0 right-0 flex justify-center z-50 animate-fade-in">
-                        <button aria-label="Acción" type="button" onClick={() => window.location.reload()} className="px-6 py-3 bg-white/20 backdrop-blur-md text-white rounded-full shadow-lg border border-white/20 active:scale-95 transition-transform">
-                            La conexión está lenta. Toca para recargar.
-                        </button>
-                    </div>
-                )}
-            </div>
-        );
-    }
-
-    if (!user) {
+    if (!loadingUser && !user) {
         return <Login />;
     }
+
+    // Permitimos renderizar la UI principal incluso durante loadingUser 
+    // para que se dibuje el Home real de forma instantánea usando el caché.
 
     const reducedMotionSetting = motionPreference === 'system' ? 'user' : (motionPreference === 'off' ? 'always' : 'never');
 
