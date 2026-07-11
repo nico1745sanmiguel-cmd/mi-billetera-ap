@@ -89,28 +89,23 @@ function ContributionModal({ person, totalTarget, monthKey, householdId, isGlass
 
     return (
         <div
-            className="fixed inset-0 z-50 flex items-end justify-center p-0"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
             onClick={onClose}
         >
             {/* Fondo oscuro */}
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
 
-            {/* Panel deslizante desde abajo */}
+            {/* Panel centrado */}
             <div
-                className={`relative w-full max-w-lg rounded-t-3xl shadow-2xl overflow-hidden animate-slide-up max-h-[90vh] overflow-y-auto ${
+                className={`relative w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden animate-fade-in max-h-[90vh] overflow-y-auto ${
                     isGlass
-                        ? 'bg-gray-900 text-white border-t border-white/10'
+                        ? 'bg-gray-900 text-white border border-white/10'
                         : 'bg-white text-gray-900'
                 }`}
                 onClick={e => e.stopPropagation()}
             >
-                {/* Tirador */}
-                <div className="flex justify-center pt-3 pb-1">
-                    <div className={`w-10 h-1 rounded-full ${isGlass ? 'bg-white/20' : 'bg-gray-200'}`} />
-                </div>
-
                 {/* Encabezado con gradiente */}
-                <div className={`bg-gradient-to-br ${colors} p-5 mx-4 mt-2 rounded-2xl text-white`}>
+                <div className={`bg-gradient-to-br ${colors} p-5 mx-4 mt-4 rounded-2xl text-white`}>
                     <div className="flex items-center justify-between mb-3">
                         <div>
                             <p className="text-xs font-bold uppercase opacity-70 tracking-widest">

@@ -111,7 +111,7 @@ export default function CurrencyInput({
     };
 
     return (
-        <input id="input-field"
+        <input
             type="text"
             inputMode="numeric"
             value={display}
