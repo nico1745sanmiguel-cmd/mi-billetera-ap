@@ -33,6 +33,7 @@ const MobilityDashboard = lazy(() => import('./Components/Mobility/MobilityDashb
 const SalaryDashboard   = lazy(() => import('./Components/Salary/SalaryDashboard'));
 const CardsDashboard    = lazy(() => import('./Components/Cards/CardsDashboard'));
 const ModulesSettings   = lazy(() => import('./Components/Settings/ModulesSettings'));
+const ModuleDetailSettings = lazy(() => import('./Components/Settings/ModuleDetailSettings'));
 
 const LazyLoader = () => (
     <div className="flex justify-center items-center h-40 animate-pulse">
@@ -242,6 +243,12 @@ export default function App() {
                                     <Route path="/settings_modules" element={
                                         <m.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.2 }}>
                                             <ModulesSettings onBack={() => navigate('/dashboard')} />
+                                        </m.div>
+                                    } />
+
+                                    <Route path="/settings_modules/:moduleId" element={
+                                        <m.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.2 }}>
+                                            <ModuleDetailSettings onBack={() => navigate('/settings_modules')} />
                                         </m.div>
                                     } />
                                     

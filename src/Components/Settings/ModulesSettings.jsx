@@ -1,114 +1,10 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Briefcase, Car, Puzzle, ShoppingCart, CreditCard, TrendingUp, Users, CalendarDays, ListTodo, PieChart, Sparkles, StickyNote } from 'lucide-react';
+import { ArrowLeft, Puzzle, Sparkles, Settings } from 'lucide-react';
 import { CACHE_KEYS } from '../../config/constants';
 import { setCache } from '../../utils/cache';
 import { useUI } from '../../context/UIContext';
-
-// ─── Definición de módulos disponibles ────────────────────────────────────────
-// Para agregar un módulo nuevo, solo hay que añadir un objeto acá.
-const AVAILABLE_MODULES = [
-    {
-        id: 'mobility',
-        label: 'Movilidad',
-        description: 'Registrá tus ingresos por Uber, Didi, Cabify y otros. Calculá cuánto ganás por hora y por kilómetro.',
-        icon: Car,
-        color: 'from-violet-600 to-indigo-600',
-        iconBg: 'bg-violet-100',
-        iconColor: 'text-violet-600',
-        badge: 'Nuevo',
-    },
-    {
-        id: 'supermarket',
-        label: 'Supermercado',
-        description: 'Gestioná tu lista de compras, registrá gastos del super y escaneá tickets para llevar el historial mensual.',
-        icon: ShoppingCart,
-        color: 'from-emerald-500 to-teal-600',
-        iconBg: 'bg-emerald-100',
-        iconColor: 'text-emerald-600',
-        badge: null,
-    },
-    {
-        id: 'cards',
-        label: 'Tarjetas de Crédito',
-        description: 'Administrá tus tarjetas, cargá resúmenes del mes (con IA), marcá pagos y visualizá tus cuotas pendientes.',
-        icon: CreditCard,
-        color: 'from-blue-600 to-indigo-600',
-        iconBg: 'bg-blue-100',
-        iconColor: 'text-blue-600',
-        badge: null,
-    },
-    {
-        id: 'savings',
-        label: 'Ahorros e Inversiones',
-        description: 'Gestioná tus metas de ahorro, registrá tus saldos y seguí el rendimiento de tus inversiones.',
-        icon: TrendingUp,
-        color: 'from-amber-500 to-orange-600',
-        iconBg: 'bg-amber-100',
-        iconColor: 'text-amber-600',
-        badge: null,
-    },
-    {
-        id: 'salary',
-        label: 'Sueldo Mensual',
-        description: 'Planificá cómo distribuir tu sueldo mes a mes. Configurá fuentes de ingreso, creá sobres por categoría y conectá tus gastos familiares.',
-        icon: Briefcase,
-        color: 'from-violet-600 to-indigo-600',
-        iconBg: 'bg-violet-100',
-        iconColor: 'text-violet-600',
-        badge: 'Nuevo',
-    },
-    {
-        id: 'household',
-        label: 'Grupo Familiar y Reparto',
-        description: 'Gestioná los miembros de tu hogar, sus sueldos y calculá el reparto proporcional de los gastos compartidos.',
-        icon: Users,
-        color: 'from-pink-500 to-rose-600',
-        iconBg: 'bg-pink-100',
-        iconColor: 'text-pink-600',
-        badge: null,
-    },
-    {
-        id: 'agenda',
-        label: 'Agenda de Vencimientos',
-        description: 'Calendario de servicios fijos, tarjetas de crédito y recordatorios de pagos.',
-        icon: CalendarDays,
-        color: 'from-cyan-500 to-blue-600',
-        iconBg: 'bg-cyan-100',
-        iconColor: 'text-cyan-600',
-        badge: null,
-    },
-    {
-        id: 'planner',
-        label: 'Planificador Financiero',
-        description: 'Organizá tu presupuesto mensual, definí objetivos y planificá tus compras (ferias, etc.).',
-        icon: ListTodo,
-        color: 'from-fuchsia-500 to-purple-600',
-        iconBg: 'bg-fuchsia-100',
-        iconColor: 'text-fuchsia-600',
-        badge: null,
-    },
-    {
-        id: 'stats',
-        label: 'Estadísticas y Análisis',
-        description: 'Visualizá gráficos detallados de tus finanzas y proyecciones a futuro.',
-        icon: PieChart,
-        color: 'from-indigo-500 to-blue-600',
-        iconBg: 'bg-indigo-100',
-        iconColor: 'text-indigo-600',
-        badge: null,
-    },
-    {
-        id: 'notes',
-        label: 'Notas Rápidas',
-        description: 'Post-it flotante para llevar una lista rápida de tareas pendientes (estilo Google Keep).',
-        icon: StickyNote,
-        color: 'from-yellow-400 to-amber-500',
-        iconBg: 'bg-yellow-100',
-        iconColor: 'text-yellow-600',
-        badge: 'Nuevo',
-    },
-];
-
+import { AVAILABLE_MODULES } from '../../config/modules';
+import { useNavigate } from 'react-router-dom';
 import { loadModules } from '../../utils/modulesUtils';
 
 const saveModules = (state) => {
@@ -120,6 +16,7 @@ const saveModules = (state) => {
 export default function ModulesSettings({ onBack }) {
     const { isGlass, motionPreference, setMotionPreference } = useUI();
     const [enabled, setEnabled] = useState(loadModules);
+    const navigate = useNavigate();
 
     const toggle = (id) => {
         setEnabled(prev => {
@@ -251,19 +148,30 @@ export default function ModulesSettings({ onBack }) {
                                     <p className={`text-xs leading-relaxed ${sub}`}>{description}</p>
                                 </div>
 
-                                {/* TOGGLE */}
-                                <button aria-label="Acción" type="button"
-                                    onClick={() => toggle(id)}
-                                    className={`shrink-0 w-12 h-6 rounded-full transition-all duration-300 relative ${
-                                        active
-                                            ? `bg-gradient-to-r ${color}`
-                                            : isGlass ? 'bg-white/20' : 'bg-gray-200'
-                                    }`}
-                                >
-                                    <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all duration-300 ${
-                                        active ? 'left-7' : 'left-1'
-                                    }`} />
-                                </button>
+                                {/* ACTIONS: Settings & Toggle */}
+                                <div className="flex flex-col items-center gap-2 shrink-0">
+                                    <button aria-label="Acción" type="button"
+                                        onClick={() => toggle(id)}
+                                        className={`w-12 h-6 rounded-full transition-all duration-300 relative ${
+                                            active
+                                                ? `bg-gradient-to-r ${color}`
+                                                : isGlass ? 'bg-white/20' : 'bg-gray-200'
+                                        }`}
+                                    >
+                                        <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all duration-300 ${
+                                            active ? 'left-7' : 'left-1'
+                                        }`} />
+                                    </button>
+
+                                    <button aria-label="Acción" type="button"
+                                        onClick={() => navigate(`/settings_modules/${id}`)}
+                                        className={`p-1.5 rounded-lg transition-colors ${
+                                            isGlass ? 'text-white/50 hover:text-white/80 hover:bg-white/10' : 'text-gray-400 hover:text-gray-700 hover:bg-gray-100'
+                                        }`}
+                                    >
+                                        <Settings size={18} />
+                                    </button>
+                                </div>
                             </div>
 
                             {active && (
