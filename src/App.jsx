@@ -246,8 +246,12 @@ export default function App() {
                             </AnimatePresence>
                         </Suspense>
                     </main>
-                    <DraggableFAB />
-                    {isModuleEnabled('notes') && <FloatingNotes user={user} />}
+                    {(location.pathname === '/dashboard' || location.pathname === '/') && (
+                        <>
+                            <DraggableFAB />
+                            {isModuleEnabled('notes') && <FloatingNotes user={user} />}
+                        </>
+                    )}
                 </div>
             </div>
         </div>
