@@ -73,7 +73,15 @@ export default function App() {
     const navigate = useNavigate();
     const location = useLocation();
 
+    // ─── ESTADO LOCAL (solo afecta a App.jsx, no necesita contexto) ─────
+    const [modulesTick, setModulesTick] = useState(0);
+    const [selectedCard, setSelectedCard] = useState(null);
 
+    useEffect(() => {
+        const handler = () => setModulesTick(t => t + 1);
+        window.addEventListener('modulesChanged', handler);
+        return () => window.removeEventListener('modulesChanged', handler);
+    }, []);
 
     if (!loadingUser && !user) {
         return <Login />;
