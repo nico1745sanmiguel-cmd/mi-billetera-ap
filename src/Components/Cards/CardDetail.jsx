@@ -288,13 +288,50 @@ export default function CardDetail({ card, isNewCard, currentDate, privacyMode, 
                 {/* Tab: PDF Parsing */}
                 {activeTab === 'pdf' && (
                     <div className="max-w-md mx-auto py-2">
-                        <StatementUploader card={card} currentMonthKey={monthKey} onBack={onBack} />
+                        <StatementUploader 
+                            card={card} 
+                            currentMonthKey={monthKey} 
+                            onBack={onBack} 
+                            onAnalysisComplete={async (result) => {
+                                if (result && result.summary) {
+                                    try {
+                                        const cardRef = doc(db, 'cards', card.id);
+                                        const updates = {
+                                            [`monthlyStatements.${monthKey}`]: {
+                                                totalDue: Number(result.summary.totalConsumption) || 0,
+                                                dueDate: result.summary.dueDate || '',
+                                                nextCloseDate: result.summary.nextClosingDate || '',
+                                                nextDueDate: result.summary.nextDueDate || '',
+                                                transactions: result.transactions || [],
+                                                updatedAt: new Date().toISOString()
+                                            }
+                                        };
+                                        await updateDoc(cardRef, updates);
+                                        // Actualizamos el estado local del form manual también
+                                        setStatement(prev => ({
+                                            ...prev,
+                                            totalDue: result.summary.totalConsumption || '',
+                                            dueDate: result.summary.dueDate || '',
+                                            nextCloseDate: result.summary.nextClosingDate || '',
+                                            nextDueDate: result.summary.nextDueDate || ''
+                                        }));
+                                        setActiveTab('history');
+                                    } catch (err) {
+                                        console.error('Error guardando análisis:', err);
+                                    }
+                                }
+                            }}
+                        />
                     </div>
                 )}
 
                 {/* Tab: History */}
                 {activeTab === 'history' && (
-                    <StatementDashboard card={card} />
+                    <StatementDashboard 
+                        statement={card?.monthlyStatements?.[monthKey]} 
+                        isGlass={isGlass}
+                        onReload={() => setActiveTab('pdf')}
+                    />
                 )}
             </div>
         </div>
