@@ -104,8 +104,7 @@ export default function SuperList() {
     }, [items, currentMonthKey]);
 
     // Ref para que el auto-add solo se ejecute una vez por mes
-    const autoAddRunRef = useRef(null);
-    if (!autoAddRunRef.current) autoAddRunRef.current = new Set();
+    const autoAddRunRef = useRef(new Set());
 
     // Auto-agregar ítems de frecuencia mensual cuando el carrito está vacío
     useEffect(() => {

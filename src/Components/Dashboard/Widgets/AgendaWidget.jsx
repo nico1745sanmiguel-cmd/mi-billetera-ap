@@ -32,7 +32,7 @@ function UndoToast({ toast, onUndo, onDismiss }) {
         const step = (interval / duration) * 100;
         const timer = setInterval(() => {
             setProgress(prev => {
-                if (prev <= 0) { clearInterval(timer); return 0; }
+                if (prev <= 0) return 0;
                 return prev - step;
             });
         }, interval);

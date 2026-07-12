@@ -73,24 +73,6 @@ export default function App() {
     const navigate = useNavigate();
     const location = useLocation();
 
-    // ─── ESTADO LOCAL (solo afecta a App.jsx, no necesita contexto) ─────
-    const [showReload, setShowReload] = useState(false);
-    const [modulesTick, setModulesTick] = useState(0);
-    const [selectedCard, setSelectedCard] = useState(null);
-
-    useEffect(() => {
-        const handler = () => setModulesTick(t => t + 1);
-        window.addEventListener('modulesChanged', handler);
-        return () => window.removeEventListener('modulesChanged', handler);
-    }, []);
-
-    // Mostrar botón de recarga si tarda demasiado
-    useEffect(() => {
-        if (loadingUser) {
-            const timer = setTimeout(() => setShowReload(true), SLOW_CONNECTION_TIMEOUT_MS);
-            return () => clearTimeout(timer);
-        }
-    }, [loadingUser]);
 
 
     if (!loadingUser && !user) {

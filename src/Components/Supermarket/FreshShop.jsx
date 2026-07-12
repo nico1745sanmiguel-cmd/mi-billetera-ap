@@ -47,8 +47,7 @@ export default function FreshShop() {
 
     // Ref para evitar que la herencia de presupuesto se dispare múltiples veces
     // mientras Firestore está sincronizando los ítems recién copiados.
-    const inheritanceRunRef = useRef(null);
-    if (!inheritanceRunRef.current) inheritanceRunRef.current = new Set();
+    const inheritanceRunRef = useRef(new Set());
 
     useEffect(() => {
         // Esperamos a tener un mes válido y ítems cargados

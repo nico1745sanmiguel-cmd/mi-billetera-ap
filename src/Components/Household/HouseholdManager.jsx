@@ -62,6 +62,7 @@ export default function HouseholdManager({ onBack }) {
             }
         };
         fetchHousehold();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [householdId]);
 
     const handleToggleShare = async (key) => {

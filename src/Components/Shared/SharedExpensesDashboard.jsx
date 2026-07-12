@@ -306,6 +306,7 @@ export default function SharedExpensesDashboard({ onBack }) {
             finally { setLoadingProps(false); }
         };
         loadProps();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [householdId]);
 
     // 3. ESCUCHAR TODOS LOS APORTES DEL MES (tiempo real, para las barras de las tarjetas)
@@ -320,6 +321,7 @@ export default function SharedExpensesDashboard({ onBack }) {
             setAllContributions(snap.docs.map(d => ({ id: d.id, ...d.data() })));
         });
         return () => unsub();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [householdId, currentMonthKey]);
 
     // Total pagado por persona (para las barras)

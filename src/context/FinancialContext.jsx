@@ -69,6 +69,7 @@ export const FinancialProvider = ({ children }) => {
         });
 
         return () => unsubNotifications();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [user, currentHouseholdId, showToast]);
 
     const value = useMemo(() => ({
