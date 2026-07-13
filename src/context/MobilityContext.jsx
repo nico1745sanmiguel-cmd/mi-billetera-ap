@@ -43,7 +43,8 @@ const DEFAULT_SETTINGS = {
         { id: 'repuestos', label: 'Repuestos', iconName: 'Wrench', color: '#ef4444', active: true },
         { id: 'lavadero', label: 'Lavadero', iconName: 'Droplets', color: '#14b8a6', active: true },
     ],
-    defaultTab: 'expenses'
+    defaultTab: 'expenses',
+    widgetTitle: 'Movilidad'
 };
 
 export const MobilityProvider = ({ children }) => {
@@ -69,7 +70,8 @@ export const MobilityProvider = ({ children }) => {
             activePlatforms: cached.activePlatforms || DEFAULT_SETTINGS.activePlatforms,
             expenseCategories: cached.expenseCategories || DEFAULT_SETTINGS.expenseCategories,
             weekStartDay: cached.weekStartDay !== undefined ? cached.weekStartDay : DEFAULT_SETTINGS.weekStartDay,
-            defaultTab: cached.defaultTab || DEFAULT_SETTINGS.defaultTab
+            defaultTab: cached.defaultTab || DEFAULT_SETTINGS.defaultTab,
+            widgetTitle: cached.widgetTitle || DEFAULT_SETTINGS.widgetTitle
         };
     });
 

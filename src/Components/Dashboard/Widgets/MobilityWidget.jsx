@@ -4,7 +4,7 @@ import { useMobilityState, MobilityProvider } from '../../../context/MobilityCon
 import Skeleton from '../../UI/Skeleton';
 
 function MobilityWidgetInner({ setView, currentDate, privacyMode }) {
-    const { sessions, loading } = useMobilityState();
+    const { sessions, loading, settings } = useMobilityState();
 
     const monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
 
@@ -58,7 +58,9 @@ function MobilityWidgetInner({ setView, currentDate, privacyMode }) {
                         <Car size={22} />
                     </div>
                     <div>
-                        <h3 className="font-bold text-base text-gray-800 dark:text-white leading-tight">Movilidad</h3>
+                        <h3 className="font-bold text-base text-gray-800 dark:text-white leading-tight">
+                            {settings?.widgetTitle || 'Movilidad'}
+                        </h3>
                         <p className="text-[10px] uppercase font-bold text-gray-500 dark:text-white/50 tracking-wider">Ingresos del mes</p>
                     </div>
                 </div>

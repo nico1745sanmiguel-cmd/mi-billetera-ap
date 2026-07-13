@@ -11,6 +11,7 @@ export default function MobilitySettings({ isGlass, onBack }) {
     const [activePlatforms, setActivePlatforms] = useState(settings.activePlatforms);
     const [expenseCategories, setExpenseCategories] = useState(settings.expenseCategories);
     const [defaultTab, setDefaultTab] = useState(settings.defaultTab);
+    const [widgetTitle, setWidgetTitle] = useState(settings.widgetTitle || 'Movilidad');
 
     const [newCategory, setNewCategory] = useState('');
     
@@ -23,7 +24,8 @@ export default function MobilitySettings({ isGlass, onBack }) {
             weekStartDay: Number(weekStartDay),
             activePlatforms,
             expenseCategories,
-            defaultTab
+            defaultTab,
+            widgetTitle
         });
         showToast('Ajustes de Movilidad guardados', 'success');
         onBack();
@@ -102,6 +104,18 @@ export default function MobilitySettings({ isGlass, onBack }) {
                                 </select>
                             </div>
                             
+                            <div>
+                                <label htmlFor="input-field" className={`block text-xs font-medium mb-1 ${sub}`}>Título del Widget</label>
+                                <input 
+                                    type="text" 
+                                    value={widgetTitle}
+                                    onChange={(e) => setWidgetTitle(e.target.value)}
+                                    placeholder="Ej. Movilidad"
+                                    className={inputStyle}
+                                    maxLength={20}
+                                />
+                            </div>
+
                             <div>
                                 <label htmlFor="input-field" className={`block text-xs font-medium mb-1 ${sub}`}>Pestaña por defecto</label>
                                 <select 
