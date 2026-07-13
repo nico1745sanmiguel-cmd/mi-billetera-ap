@@ -4,20 +4,19 @@ import { formatMoney } from '../../../utils';
 import { messaging, db } from '../../../firebase';
 import { getToken } from 'firebase/messaging';
 import { doc, updateDoc, arrayUnion } from 'firebase/firestore';
-import toast from 'react-hot-toast';
 
-export default function NotificationsModal({ notifications, user, privacyMode, setIsNotificationsOpen, handleMarkAsRead }) {
+export default function NotificationsModal({ notifications, user, privacyMode, setIsNotificationsOpen, handleMarkAsRead, showToast }) {
     const [isPushLoading, setIsPushLoading] = useState(false);
 
     const handleEnablePush = async () => {
         if (!messaging) {
-            toast.error("Tu navegador no soporta notificaciones Push.");
+            showToast("Tu navegador no soporta notificaciones Push.", "error");
             return;
         }
 
         const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY;
         if (!vapidKey) {
-            toast.error("Falta configurar la clave VAPID de notificaciones.");
+            showToast("Falta configurar la clave VAPID de notificaciones.", "error");
             return;
         }
 
@@ -33,14 +32,14 @@ export default function NotificationsModal({ notifications, user, privacyMode, s
                     await updateDoc(userRef, {
                         fcmTokens: arrayUnion(token)
                     });
-                    toast.success("¡Notificaciones Push activadas con éxito!");
+                    showToast("¡Notificaciones Push activadas con éxito!", "success");
                 }
             } else {
-                toast.error("Permiso denegado para notificaciones.");
+                showToast("Permiso denegado para notificaciones.", "error");
             }
         } catch (error) {
             console.error("Error al habilitar notificaciones push:", error);
-            toast.error("Hubo un error al activar las notificaciones.");
+            showToast("Hubo un error al activar las notificaciones.", "error");
         } finally {
             setIsPushLoading(false);
         }

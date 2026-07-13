@@ -16,6 +16,7 @@ import {
 import { useUI } from '../../context/UIContext';
 import { analyzePurchaseFrequency } from '../../utils/purchasePrediction';
 import SupermarketAddInput from './SupermarketAddInput';
+import ConfirmDialog from '../UI/ConfirmDialog';
 
 // FORMATOS
 const formatInputCurrency = (val) => val ? '$ ' + Number(val).toLocaleString('es-AR') : '';
@@ -23,10 +24,6 @@ const parseCurrencyInput = (val) => val.replace(/\D/g, '');
 
 const handleToggle = async (item) => {
     await toggleSuperChecked(item.id, !item.checked);
-};
-
-const handleDelete = async (id) => {
-    if (window.confirm('¿Borrar item?')) await deleteSuperItem(id);
 };
 
 const handleUpdatePrice = async (item, rawValue) => {
@@ -46,6 +43,9 @@ export default function SuperList() {
     // ESTADO LETRAS 📜
     const [activeLetter, setActiveLetter] = useState(null);
     const itemsRefs = useRef({});
+    
+    // CONFIRM DIALOG
+    const [itemToDelete, setItemToDelete] = useState(null);
 
     // TOAST STATE 🍞
     const [toast, setToast] = useState(null);
@@ -61,6 +61,13 @@ export default function SuperList() {
         if (toast?.undoAction) {
             await toast.undoAction();
             setToast(null);
+        }
+    };
+
+    const confirmDelete = async () => {
+        if (itemToDelete) {
+            await deleteSuperItem(itemToDelete);
+            setItemToDelete(null);
         }
     };
 
@@ -312,6 +319,14 @@ export default function SuperList() {
 
     return (
         <>
+            <ConfirmDialog 
+                isOpen={!!itemToDelete} 
+                onClose={() => setItemToDelete(null)} 
+                onConfirm={confirmDelete} 
+                title="Eliminar producto" 
+                message="¿Estás seguro que querés eliminar este producto de la lista?" 
+            />
+
             {/* 1. TOAST GLOBAL (Portal-like, arriba de todo) */}
             <div className={`fixed top-4 left-0 right-0 flex justify-center transition-all duration-300 z-[100] pointer-events-none ${toast ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'}`}>
                 <div className={`shadow-2xl backdrop-blur-md px-6 py-3 rounded-full flex items-center gap-3 text-sm font-bold pointer-events-auto border ${isGlass ? 'bg-black/40 text-white border-white/20' : 'bg-gray-900 text-white border-gray-700/50'}`}>
@@ -426,11 +441,11 @@ export default function SuperList() {
                                         </p>
                                     )}
                                 </div>
-                                <button aria-label="Acción" type="button" onClick={() => handleDelete(item.id)} className={`p-1 ${isGlass ? 'text-white/20 hover:text-red-400' : 'text-gray-300 hover:text-red-500'}`}>
+                            <div className="flex flex-col items-center justify-center min-w-[24px]">
+                                <button aria-label="Acción" type="button" onClick={() => setItemToDelete(item.id)} className={`p-1 ${isGlass ? 'text-white/20 hover:text-red-400' : 'text-gray-300 hover:text-red-500'}`}>
                                     <Trash2 size={16} />
                                 </button>
-
-                                <div className="flex gap-3 pl-9">
+                            </div>      <div className="flex gap-3 pl-9">
                                     <div className={`flex items-center rounded-2xl border h-10 ${isGlass ? 'bg-white/5 border-white/10' : 'bg-gray-50 border-gray-200'}`}>
                                         <button aria-label="Acción" type="button" onClick={() => handleUpdateQuantity(item, -1)} className={`w-8 h-full flex items-center justify-center rounded-l-2xl transition-colors text-lg font-bold ${isGlass ? 'text-white/50 hover:bg-white/10' : 'text-gray-500 hover:bg-gray-200'}`}>-</button>
                                         <span className={`w-8 text-center text-sm font-bold ${isGlass ? 'text-white' : 'text-gray-700'}`}>{item.quantity}</span>

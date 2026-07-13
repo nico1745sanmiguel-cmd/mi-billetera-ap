@@ -4,10 +4,11 @@ import { useAuth } from '../../context/AuthContext';
 import { useCards } from '../../context/CardsContext';
 import { useSupermarket } from '../../context/SupermarketContext';
 import { useServices } from '../../context/ServicesContext';
-import { collection, addDoc, deleteDoc, doc, updateDoc, setDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { collection, addDoc, deleteDoc, doc, updateDoc, setDoc, arrayUnion, arrayRemove, deleteField, serverTimestamp } from 'firebase/firestore';
 import { formatMoney } from '../../utils';
 import { isModuleEnabled } from '../../utils/modulesUtils';
 import { useUI } from '../../context/UIContext';
+import ConfirmDialog from '../UI/ConfirmDialog';
 
 import RepartoPanel from './RepartoPanel';
 import ServiceModal from './ServiceModal';
@@ -48,6 +49,7 @@ export default function ServicesManager() {
     
     const [viewMode, setViewMode] = useState('list');
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isDeleteOpen, setIsDeleteOpen] = useState(false);
     const [editingService, setEditingService] = useState(null);
 
     const [form, setForm] = useState({ name: '', amount: '', day: '', frequency: 'Mensual', isShared: true });
@@ -177,20 +179,19 @@ export default function ServicesManager() {
         } catch (error) { alert("Error al guardar"); console.error(error); }
     };
 
-    const handleDelete = async () => {
+    const handleDeleteRequest = () => {
+        setIsDeleteOpen(true);
+    };
+
+    const confirmDelete = async () => {
         if (editingService.type === 'card') {
-            if (window.confirm("¿Quitar ajuste manual?")) {
-                const { deleteField } = await import('firebase/firestore');
-                const cardRef = doc(db, 'cards', editingService.id);
-                await updateDoc(cardRef, { [`adjustments.${currentMonthKey}`]: deleteField(), [`monthlyStatements.${currentMonthKey}.totalDue`]: deleteField() });
-                setIsModalOpen(false);
-            }
-            return;
-        }
-        if (window.confirm("¿Eliminar servicio?")) {
+            const cardRef = doc(db, 'cards', editingService.id);
+            await updateDoc(cardRef, { [`adjustments.${currentMonthKey}`]: deleteField(), [`monthlyStatements.${currentMonthKey}.totalDue`]: deleteField() });
+        } else {
             await deleteDoc(doc(db, 'services', editingService.id));
-            setIsModalOpen(false);
         }
+        setIsDeleteOpen(false);
+        setIsModalOpen(false);
     };
 
     const togglePaid = async (item) => {
@@ -202,7 +203,6 @@ export default function ServicesManager() {
             await updateDoc(ref, { paidPeriods: arrayUnion(currentMonthKey) });
             if (householdId && auth.currentUser) {
                 try {
-                    const { serverTimestamp } = await import('firebase/firestore');
                     await addDoc(collection(db, 'households', householdId, 'notifications'), {
                         type: 'payment', itemName: item.name, amount: item.amount, dueDate: item.day, itemType: item.type, paidByUid: auth.currentUser.uid, paidByName: auth.currentUser.displayName || 'Alguien', createdAt: serverTimestamp(), readBy: [auth.currentUser.uid]
                     });

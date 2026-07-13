@@ -81,7 +81,7 @@ const THEME_OPTIONS = [
 
 const EMPTY_ARRAY = [];
 const Home = memo(({ onLogout, notifications = EMPTY_ARRAY, onCardClick }) => {
-    const { privacyMode, currentDate, isGlass, theme, setTheme } = useUI();
+    const { privacyMode, currentDate, isGlass, theme, setTheme, showToast } = useUI();
     const navigate = useNavigate();
     const { user, userData, householdMembers } = useAuth();
     const householdId = userData?.householdId;
@@ -402,7 +402,8 @@ const Home = memo(({ onLogout, notifications = EMPTY_ARRAY, onCardClick }) => {
                     user={user} 
                     privacyMode={privacyMode} 
                     setIsNotificationsOpen={setIsNotificationsOpen} 
-                    handleMarkAsRead={handleMarkAsRead} 
+                    handleMarkAsRead={handleMarkAsRead}
+                    showToast={showToast} 
                 />
             )}
         </div>

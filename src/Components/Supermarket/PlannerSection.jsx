@@ -5,13 +5,8 @@ import { addFreshItem, deleteFreshItem, updateFreshTotal, toggleFreshCompleted }
 import { deletePlannerCategory } from '../../repositories/plannerCategoriesRepository';
 import { AVAILABLE_COLORS, AVAILABLE_ICONS } from './constants';
 import { auth } from '../../firebase';
+import ConfirmDialog from '../UI/ConfirmDialog';
 import TripCard from './TripCard';
-
-const handleDelete = async (id) => {
-    if (window.confirm('¿Borrar este ítem?')) {
-        await deleteFreshItem(id);
-    }
-};
 
 export default function PlannerSection({ catData, trips, currentMonthKey, isGlass, householdId }) {
     const cfg = AVAILABLE_COLORS[catData.colorName] || AVAILABLE_COLORS.blue;
@@ -35,6 +30,11 @@ export default function PlannerSection({ catData, trips, currentMonthKey, isGlas
     });
     const [isShared, setIsShared] = useState(true);
     const [adding, setAdding] = useState(false);
+    
+    // States for ConfirmDialog
+    const [itemToDelete, setItemToDelete] = useState(null);
+    const [isDeleteCatOpen, setIsDeleteCatOpen] = useState(false);
+
     const noteRef = useRef(null);
 
     const monthTrips = useMemo(() => {
@@ -84,11 +84,21 @@ export default function PlannerSection({ catData, trips, currentMonthKey, isGlas
     };
 
 
-    const handleDeleteCategory = async () => {
-        if (window.confirm(`¿Seguro que querés eliminar la categoría "${catData.label}" y todos sus gastos internos?`)) {
-            const itemsToDelete = trips.filter(t => t.category === catData.id);
-            await Promise.all(itemsToDelete.map(item => deleteFreshItem(item.id)));
-            await deletePlannerCategory(catData.id);
+    const handleDeleteCategoryRequest = () => {
+        setIsDeleteCatOpen(true);
+    };
+
+    const confirmDeleteCategory = async () => {
+        const itemsToDelete = trips.filter(t => t.category === catData.id);
+        await Promise.all(itemsToDelete.map(item => deleteFreshItem(item.id)));
+        await deletePlannerCategory(catData.id);
+        setIsDeleteCatOpen(false);
+    };
+
+    const confirmDeleteItem = async () => {
+        if (itemToDelete) {
+            await deleteFreshItem(itemToDelete);
+            setItemToDelete(null);
         }
     };
 
@@ -120,7 +130,7 @@ export default function PlannerSection({ catData, trips, currentMonthKey, isGlas
                         </p>
                     </div>
                     {!catData.isDefault && (
-                        <button aria-label="Acción" type="button" onClick={handleDeleteCategory} className={`p-1.5 rounded-lg ${isGlass ? 'text-white/20 hover:text-red-400 hover:bg-red-500/10' : 'text-gray-300 hover:text-red-500 hover:bg-red-50'}`}>
+                        <button aria-label="Acción" type="button" onClick={handleDeleteCategoryRequest} className={`p-1.5 rounded-lg ${isGlass ? 'text-white/20 hover:text-red-400 hover:bg-red-500/10' : 'text-gray-300 hover:text-red-500 hover:bg-red-50'}`}>
                             <Trash2 size={14} />
                         </button>
                     )}
@@ -139,7 +149,7 @@ export default function PlannerSection({ catData, trips, currentMonthKey, isGlas
                         <div className="space-y-2">
                             <p className={`text-[10px] font-bold uppercase tracking-widest ${isGlass ? 'text-white/30' : 'text-gray-400'}`}>Pendiente / Presupuesto</p>
                             {budgetTrips.map(trip => (
-                                <TripCard key={trip.id} trip={trip} cfg={cfg} isGlass={isGlass} onDelete={handleDelete} onUpdateTotal={updateFreshTotal} onToggleCompleted={toggleFreshCompleted} />
+                                <TripCard key={trip.id} trip={trip} cfg={cfg} isGlass={isGlass} onDelete={setItemToDelete} onUpdateTotal={updateFreshTotal} onToggleCompleted={toggleFreshCompleted} />
                             ))}
                         </div>
                     )}
@@ -148,7 +158,7 @@ export default function PlannerSection({ catData, trips, currentMonthKey, isGlas
                         <div className="space-y-2">
                             <p className={`text-[10px] font-bold uppercase tracking-widest ${isGlass ? 'text-white/30' : 'text-gray-400'}`}>Completado / Historial</p>
                             {completedTrips.map(trip => (
-                                <TripCard key={trip.id} trip={trip} cfg={cfg} isGlass={isGlass} onDelete={handleDelete} onUpdateTotal={updateFreshTotal} onToggleCompleted={toggleFreshCompleted} />
+                                <TripCard key={trip.id} trip={trip} cfg={cfg} isGlass={isGlass} onDelete={setItemToDelete} onUpdateTotal={updateFreshTotal} onToggleCompleted={toggleFreshCompleted} />
                             ))}
                         </div>
                     )}
@@ -233,6 +243,26 @@ export default function PlannerSection({ catData, trips, currentMonthKey, isGlas
                     </form>
                 </div>
             )}
+            
+            <ConfirmDialog
+                isOpen={isDeleteCatOpen}
+                title="¿Eliminar categoría?"
+                message={`¿Seguro que querés eliminar la categoría "${catData.label}" y todos sus gastos internos?`}
+                confirmText="Eliminar"
+                isDanger={true}
+                onConfirm={confirmDeleteCategory}
+                onCancel={() => setIsDeleteCatOpen(false)}
+            />
+
+            <ConfirmDialog
+                isOpen={!!itemToDelete}
+                title="¿Borrar ítem?"
+                message="Esta acción no se puede deshacer."
+                confirmText="Borrar"
+                isDanger={true}
+                onConfirm={confirmDeleteItem}
+                onCancel={() => setItemToDelete(null)}
+            />
         </div>
     );
 }

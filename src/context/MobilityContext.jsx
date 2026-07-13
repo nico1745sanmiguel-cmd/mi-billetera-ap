@@ -56,13 +56,13 @@ export const MobilityProvider = ({ children }) => {
     const [loadingSessions, setLoadingSessions] = useState(true);
 
     // ─── GASTOS DEL VEHÍCULO ──────────────────────────────────────────────────
-    const [expenses, setExpenses] = useState(() => getCache('mobility_expenses') || []);
+    const [expenses, setExpenses] = useState(() => getCache(CACHE_KEYS.MOBILITY_EXPENSES) || []);
     const [loadingExpenses, setLoadingExpenses] = useState(true);
 
     // ─── AJUSTES ──────────────────────────────────────────────────────────────
     
     const [settings, setSettings] = useState(() => {
-        const cached = getCache('mobility_settings');
+        const cached = getCache(CACHE_KEYS.MOBILITY_SETTINGS);
         if (!cached) return DEFAULT_SETTINGS;
         return {
             ...DEFAULT_SETTINGS,
@@ -78,7 +78,7 @@ export const MobilityProvider = ({ children }) => {
     const updateSettings = useCallback((newSettings) => {
         setSettings(prev => {
             const updated = { ...prev, ...newSettings };
-            setCache('mobility_settings', updated);
+            setCache(CACHE_KEYS.MOBILITY_SETTINGS, updated);
             return updated;
         });
     }, []);

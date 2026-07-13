@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useCallback } from 'react';
 import { ShoppingCart, Stethoscope, Utensils, CarFront, Lightbulb, ShoppingBag, Home, BookOpen, Package, CreditCard, Apple, Wallet } from 'lucide-react';
 
 const CAT_LABELS = {
@@ -35,12 +35,12 @@ export const useStatsData = ({
     freshItems,
     filter
 }) => {
-    const filterByScope = (item) => {
+    const filterByScope = useCallback((item) => {
         if (expenseScope === 'all') return true;
         if (expenseScope === 'family') return item.isShared !== false;
         if (expenseScope === 'personal') return item.isShared === false;
         return true;
-    };
+    }, [expenseScope]);
 
     // 1. CLAVE DEL MES
     const currentMonthKey = useMemo(() => {

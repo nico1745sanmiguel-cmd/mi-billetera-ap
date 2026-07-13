@@ -98,7 +98,7 @@ export const CARD_LOGO_MAP = [
 // ─── COLECCIONES DE FIRESTORE ────────────────────────────────────────────────
 // Centralizar los nombres de colecciones evita typos y facilita una futura migración de backend.
 export const COLLECTIONS = {
-    USERS:            ['us', 'ers'].join(''),
+    USERS:            'users',
     HOUSEHOLDS:       'households',
     CARDS:            'cards',
     TRANSACTIONS:     'transactions',
@@ -127,6 +127,8 @@ export const CACHE_KEYS = {
     GLASS_MODE:   'glass_mode',
     SAVINGS_TRANSACTIONS: 'savingsTransactions',
     MOBILITY_SESSIONS: 'mobilitySessions',
+    MOBILITY_EXPENSES: 'mobility_expenses',
+    MOBILITY_SETTINGS: 'mobility_settings',
     ENABLED_MODULES: 'enabled_modules',
     NOTES:        'notes',
 };

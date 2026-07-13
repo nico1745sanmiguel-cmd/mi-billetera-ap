@@ -1,6 +1,5 @@
 import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
-// eslint-disable-next-line no-unused-vars
 import { AnimatePresence, m, LazyMotion, domMax, MotionConfig } from 'framer-motion';
 import Navbar from './Components/Layout/Navbar';
 import Home from './Components/Dashboard/Home';
@@ -8,6 +7,7 @@ import Login from './Components/Login';
 import InstallPrompt from './Components/UI/InstallPrompt';
 import SkeletonDashboard from './Components/UI/SkeletonDashboard';
 import Toast from './Components/UI/Toast';
+import ConfirmDialog from './Components/UI/ConfirmDialog';
 import DraggableFAB from './Components/Dashboard/Widgets/DraggableFAB';
 import FloatingNotes from './Components/Dashboard/Widgets/FloatingNotes';
 import { auth } from './firebase';
@@ -48,12 +48,6 @@ const getFormattedDate = (date) => {
     return text.charAt(0).toUpperCase() + text.slice(1);
 };
 
-const handleLogout = () => {
-    if (window.confirm('¿Cerrar sesión?')) {
-        signOut(auth);
-    }
-};
-
 export default function App() {
     // ─── DATOS FINANCIEROS ───────────────────────────────────────────────────
     const { user, loadingUser, notifications } = useFinancial();
@@ -76,6 +70,15 @@ export default function App() {
     // ─── ESTADO LOCAL (solo afecta a App.jsx, no necesita contexto) ─────
     const [modulesTick, setModulesTick] = useState(0);
     const [selectedCard, setSelectedCard] = useState(null);
+    const [isLogoutOpen, setIsLogoutOpen] = useState(false);
+
+    const handleLogout = () => {
+        setIsLogoutOpen(true);
+    };
+
+    const confirmLogout = () => {
+        signOut(auth);
+    };
 
     useEffect(() => {
         const handler = () => setModulesTick(t => t + 1);
@@ -109,7 +112,7 @@ export default function App() {
 
                     {/* HEADER MÓVIL */}
                     <div className={`md:hidden px-4 py-3 shadow-sm sticky top-0 z-40 flex items-center justify-between gap-3 transition-colors duration-300 ${isGlass ? 'bg-[#0f0c29]/90 backdrop-blur-md text-white border-b border-white/5' : 'bg-white text-gray-800'}`}>
-                        <button aria-label="Acción" type="button"
+                        <button aria-label="Ir al inicio" type="button"
                             onClick={() => navigate('/dashboard')}
                             className={`p-2 rounded-xl transition-all active:scale-95 ${location.pathname === '/dashboard' || location.pathname === '/' ? (isGlass ? 'bg-white/20 text-white' : 'bg-blue-50 text-blue-600') : (isGlass ? 'bg-transparent text-white/60' : 'bg-gray-100 text-gray-500')}`}
                         >
@@ -118,18 +121,18 @@ export default function App() {
 
                         {/* SELECTOR DE MES */}
                         <div className={`flex-1 flex items-center justify-between rounded-xl p-1 max-w-[180px] transition-colors ${isGlass ? 'bg-white/10 border border-white/10 text-white' : 'bg-gray-50 text-gray-800'}`}>
-                            <button aria-label="Acción" type="button" onClick={() => changeMonth(-1)} className={`p-2 rounded-lg active:scale-95 transition-colors ${isGlass ? 'text-white/70 hover:bg-white/10' : 'text-gray-400 hover:bg-gray-200'}`}>
+                            <button aria-label="Mes anterior" type="button" onClick={() => changeMonth(-1)} className={`p-2 rounded-lg active:scale-95 transition-colors ${isGlass ? 'text-white/70 hover:bg-white/10' : 'text-gray-400 hover:bg-gray-200'}`}>
                                 <ChevronLeft size={16} strokeWidth={2.5} />
                             </button>
                             <span className="font-bold text-sm capitalize">{getFormattedDate(currentDate)}</span>
-                            <button aria-label="Acción" type="button" onClick={() => changeMonth(1)} className={`p-2 rounded-lg active:scale-95 transition-colors ${isGlass ? 'text-white/70 hover:bg-white/10' : 'text-gray-400 hover:bg-gray-200'}`}>
+                            <button aria-label="Mes siguiente" type="button" onClick={() => changeMonth(1)} className={`p-2 rounded-lg active:scale-95 transition-colors ${isGlass ? 'text-white/70 hover:bg-white/10' : 'text-gray-400 hover:bg-gray-200'}`}>
                                 <ChevronRight size={16} strokeWidth={2.5} />
                             </button>
                         </div>
 
                         <div className="flex gap-1">
                             {/* BOTÓN PRIVACIDAD */}
-                            <button aria-label="Acción" type="button" onClick={() => setPrivacyMode(!privacyMode)} className={`p-2 rounded-xl transition-all active:scale-95 ${privacyMode ? 'bg-indigo-50 text-indigo-600' : 'bg-gray-100 text-gray-400'}`}>
+                            <button aria-label="Alternar modo privacidad" type="button" onClick={() => setPrivacyMode(!privacyMode)} className={`p-2 rounded-xl transition-all active:scale-95 ${privacyMode ? 'bg-indigo-50 text-indigo-600' : 'bg-gray-100 text-gray-400'}`}>
                                 {privacyMode ? <EyeOff size={24} /> : <Eye size={24} />}
                             </button>
                         </div>
@@ -242,6 +245,16 @@ export default function App() {
                             {isModuleEnabled('notes') && <FloatingNotes user={user} />}
                         </>
                     )}
+                    
+                    <ConfirmDialog
+                        isOpen={isLogoutOpen}
+                        title="¿Cerrar sesión?"
+                        message="Vas a tener que volver a ingresar con tu cuenta."
+                        confirmText="Cerrar sesión"
+                        isDanger={true}
+                        onConfirm={confirmLogout}
+                        onCancel={() => setIsLogoutOpen(false)}
+                    />
                 </div>
             </div>
         </div>

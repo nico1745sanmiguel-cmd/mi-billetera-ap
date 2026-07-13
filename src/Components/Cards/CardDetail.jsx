@@ -5,7 +5,10 @@ import { formatInputNumber, parseInputNumber } from '../../utils';
 import StatementUploader from './StatementUploader';
 import StatementDashboard from './StatementDashboard';
 import CardVisual from './CardVisual';
-import { Sparkles, ArrowLeft, CreditCard as CreditCardIcon } from 'lucide-react';
+import ConfirmDialog from '../UI/ConfirmDialog';
+import { useAuth } from '../../context/AuthContext';
+import { useUI } from '../../context/UIContext';
+import { Sparkles, ArrowLeft, CreditCard as CreditCardIcon, Trash2 } from 'lucide-react';
 import { formatMonthKey } from '../../utils/cardDebtUtils';
 
 const PRESET_COLORS = [
@@ -13,8 +16,12 @@ const PRESET_COLORS = [
     '#6a4c93', '#ca6702', '#2d3277', '#e63946', '#457b9d', '#ff006e'
 ];
 
-export default function CardDetail({ card, isNewCard, currentDate, privacyMode, isGlass, householdId, onBack }) {
+export default function CardDetail({ card, isNewCard, currentDate, onBack }) {
+    const { householdId } = useAuth();
+    const { isGlass, privacyMode } = useUI();
     const [activeTab, setActiveTab] = useState(isNewCard ? 'card' : 'statement');
+    const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+    
     const [form, setForm] = useState({
         name: card?.name || '',
         bank: card?.bank || '',
@@ -89,9 +96,9 @@ export default function CardDetail({ card, isNewCard, currentDate, privacyMode, 
     };
 
     const handleDelete = async () => {
-        if (!window.confirm(`¿Eliminar la tarjeta ${card.name}? Se borrará el historial de resúmenes.`)) return;
         try {
             await deleteDoc(doc(db, 'cards', card.id));
+            setIsDeleteOpen(false);
             onBack();
         } catch (error) {
             console.error('Error eliminando:', error);
@@ -147,8 +154,8 @@ export default function CardDetail({ card, isNewCard, currentDate, privacyMode, 
                     </div>
                 </div>
                 {!isNewCard && (
-                    <button aria-label="Acción" type="button" onClick={handleDelete} className="p-2 rounded-xl text-red-100 bg-red-500/20 hover:bg-red-500/40 transition-all">
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                    <button aria-label="Eliminar tarjeta" type="button" onClick={() => setIsDeleteOpen(true)} className="p-2 rounded-xl bg-red-500/20 text-red-100 hover:bg-red-500/40 transition-all">
+                        <Trash2 size={18} />
                     </button>
                 )}
             </div>
@@ -307,7 +314,6 @@ export default function CardDetail({ card, isNewCard, currentDate, privacyMode, 
                                             }
                                         };
                                         await updateDoc(cardRef, updates);
-                                        // Actualizamos el estado local del form manual también
                                         setStatement(prev => ({
                                             ...prev,
                                             totalDue: result.summary.totalConsumption || '',
@@ -334,6 +340,16 @@ export default function CardDetail({ card, isNewCard, currentDate, privacyMode, 
                     />
                 )}
             </div>
+            
+            <ConfirmDialog
+                isOpen={isDeleteOpen}
+                title="¿Eliminar tarjeta?"
+                message={`¿Eliminar la tarjeta ${card?.name}? Se borrará todo el historial de resúmenes.`}
+                confirmText="Eliminar"
+                isDanger={true}
+                onConfirm={handleDelete}
+                onCancel={() => setIsDeleteOpen(false)}
+            />
         </div>
     );
 }

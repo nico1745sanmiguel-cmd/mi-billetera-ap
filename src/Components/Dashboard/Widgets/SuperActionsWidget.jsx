@@ -3,9 +3,10 @@ import { ShoppingCart, Plus, Check } from 'lucide-react';
 import { formatMoney } from '../../../utils';
 import { addSuperItem } from '../../../repositories/supermarketRepository';
 import { useAuth } from '../../../context/AuthContext';
-import { toast } from 'react-hot-toast';
+import { useUIDispatch } from '../../../context/UIContext';
 
 export default function SuperActionsWidget({ superData, privacyMode, setView, size = '1x1', targetMonthKey }) {
+    const { showToast } = useUIDispatch();
     const showMoney = (amount) => privacyMode ? '****' : formatMoney(amount);
     const { user, userData } = useAuth();
     
@@ -33,11 +34,11 @@ export default function SuperActionsWidget({ superData, privacyMode, setView, si
                 isShared: !!userData?.householdId
             });
             setInputValue('');
-            toast.success('Agregado al changuito');
+            showToast('Agregado al changuito', 'success');
             if (isAdding) setIsAdding(false);
         } catch (error) {
             console.error('Error adding item:', error);
-            toast.error('Error al agregar');
+            showToast('Error al agregar', 'error');
         }
     };
 

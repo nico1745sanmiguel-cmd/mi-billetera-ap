@@ -6,6 +6,7 @@ import { checkAndMigrateToHousehold } from '../../utils/householdMigration';
 import { useAuth } from '../../context/AuthContext';
 import { useUI } from '../../context/UIContext';
 import LoadingState from '../UI/LoadingState';
+import ConfirmDialog from '../UI/ConfirmDialog';
 
 import HouseholdMembersList from './HouseholdMembersList';
 import SalarySection from './SalarySection';
@@ -26,6 +27,7 @@ export default function HouseholdManager({ onBack }) {
     const householdId = userData?.householdId;
     const [household, setHousehold] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [isLeaveOpen, setIsLeaveOpen] = useState(false);
     const [copyFeedback, setCopyFeedback] = useState("");
     const [createStatus, setCreateStatus] = useState("idle");
     const [joinCode, setJoinCode] = useState("");
@@ -132,8 +134,11 @@ export default function HouseholdManager({ onBack }) {
         }
     };
 
-    const handleLeave = async () => {
-        if (!window.confirm("¿Seguro que querés salir de este grupo? Volverás a ver solo tus datos individuales.")) return;
+    const handleLeaveRequest = () => {
+        setIsLeaveOpen(true);
+    };
+
+    const confirmLeave = async () => {
         setLoading(true);
         try {
             await updateDoc(doc(db, 'users', user.uid), { householdId: null });
@@ -238,7 +243,7 @@ export default function HouseholdManager({ onBack }) {
                         </div>
 
                         <div className="pt-4">
-                            <button aria-label="Acción" type="button" onClick={handleLeave} className="w-full py-4 text-red-500 font-bold text-sm tracking-widest hover:bg-red-50 rounded-2xl transition-colors border border-transparent hover:border-red-100">
+                            <button aria-label="Acción" type="button" onClick={handleLeaveRequest} className="w-full py-4 text-red-500 font-bold text-sm tracking-widest hover:bg-red-50 rounded-2xl transition-colors border border-transparent hover:border-red-100">
                                 Salir del Grupo de Hogar
                             </button>
                         </div>
@@ -247,6 +252,16 @@ export default function HouseholdManager({ onBack }) {
                     <HouseholdJoinOrCreate isGlass={isGlass} handleCreate={handleCreate} createStatus={createStatus} joinCode={joinCode} setJoinCode={setJoinCode} handleJoin={handleJoin} joinStatus={joinStatus} />
                 )}
             </div>
+
+            <ConfirmDialog
+                isOpen={isLeaveOpen}
+                title="¿Salir del grupo?"
+                message="¿Seguro que querés salir de este grupo? Volverás a ver solo tus datos individuales."
+                confirmText="Salir del grupo"
+                isDanger={true}
+                onConfirm={confirmLeave}
+                onCancel={() => setIsLeaveOpen(false)}
+            />
         </div>
     );
 }
