@@ -33,26 +33,63 @@ export default function PlannerWidget({ setView, size }) {
         return pendingItems.reduce((acc, t) => acc + (t.total || 0), 0);
     }, [pendingItems]);
 
-    // ---- MODO COMPACTO (Opción B) ----
+    // ---- MODO COMPACTO: mismo diseño pero sin lista de tareas ----
+    // Calcular categorías aquí también para el modo half
+    const categoryCountsHalf = pendingItems.reduce((acc, item) => {
+        acc[item.category] = (acc[item.category] || 0) + 1;
+        return acc;
+    }, {});
+    const sortedActiveCatsHalf = allCategories
+        .filter(c => categoryCountsHalf[c.id] > 0)
+        .sort((a, b) => categoryCountsHalf[b.id] - categoryCountsHalf[a.id])
+        .slice(0, 3);
+    const displayCategoriesHalf = sortedActiveCatsHalf.length > 0 ? sortedActiveCatsHalf : allCategories.slice(0, 3);
+
     if (size === 'half') {
         return (
             <div
                 onClick={() => setView('fresh')}
-                className="h-full bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-900/30 dark:to-blue-900/30 border border-indigo-200 dark:border-indigo-500/20 p-4 rounded-[24px] cursor-pointer hover:from-indigo-100 hover:to-blue-100 dark:hover:from-indigo-900/50 dark:hover:to-blue-900/50 active:scale-95 transition-all flex flex-col items-center justify-center group shadow-sm dark:backdrop-blur-md text-center gap-2"
+                className="h-full bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-900/30 dark:to-blue-900/30 border border-indigo-200 dark:border-indigo-500/20 p-3 rounded-[24px] cursor-pointer active:scale-95 transition-all flex flex-col justify-between group shadow-sm dark:backdrop-blur-md"
             >
-                <div className="relative bg-indigo-100 text-indigo-600 dark:bg-indigo-500/30 dark:text-indigo-300 p-3 rounded-2xl group-hover:scale-110 transition-transform shadow-inner">
-                    <LayoutList size={24} />
-                    {pendingItems.length > 0 && (
-                        <div className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center shadow-lg border-2 border-white dark:border-[#1a1b4b]">
-                            {pendingItems.length}
-                        </div>
-                    )}
+                {/* Header compacto */}
+                <div className="flex items-center gap-2">
+                    <div className="relative bg-indigo-100 text-indigo-600 dark:bg-indigo-500/30 dark:text-indigo-300 p-2 rounded-xl shrink-0 transition-transform group-hover:scale-105">
+                        <LayoutList size={16} />
+                        {pendingItems.length > 0 && (
+                            <div className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center border border-white dark:border-[#1a1b4b]">
+                                {pendingItems.length}
+                            </div>
+                        )}
+                    </div>
+                    <div className="min-w-0">
+                        <p className="font-bold text-gray-800 dark:text-white text-xs leading-none mb-0.5 truncate">Planificador</p>
+                        <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate">
+                            Faltan: <span className="font-semibold text-gray-700 dark:text-gray-200">{formatMoney(faltante)}</span>
+                        </p>
+                    </div>
                 </div>
-                <div>
-                    <p className="font-bold text-gray-800 dark:text-white text-sm">Planificador</p>
-                    <p className="text-[10px] text-indigo-600 dark:text-indigo-400 font-medium leading-tight mt-0.5 whitespace-nowrap">
-                        {pendingItems.length > 0 ? `Faltan ${pendingItems.length} tareas` : 'Todo al día 🎉'}
-                    </p>
+
+                {/* Shortcuts de categorías */}
+                <div className="flex gap-1.5 pt-2 border-t border-indigo-200/50 dark:border-indigo-500/20">
+                    {displayCategoriesHalf.map(cat => {
+                        const hasPending = categoryCountsHalf[cat.id] > 0;
+                        const IconComponent = AVAILABLE_ICONS[cat.iconName] || LayoutList;
+                        return (
+                            <div
+                                key={cat.id}
+                                className="flex-1 flex flex-col items-center gap-0.5 bg-white/70 dark:bg-white/5 py-1.5 rounded-xl border border-white/50 dark:border-white/5 relative"
+                                onClick={(e) => { e.stopPropagation(); setView('fresh'); }}
+                            >
+                                {hasPending && (
+                                    <div className="absolute top-0.5 right-0.5 w-1.5 h-1.5 bg-red-400 rounded-full" />
+                                )}
+                                <IconComponent size={12} className={hasPending ? 'text-indigo-600 dark:text-indigo-300' : 'text-gray-400 dark:text-gray-500'} />
+                                <span className="text-[8px] font-semibold text-gray-600 dark:text-gray-400 truncate w-full text-center px-0.5">
+                                    {cat.label}
+                                </span>
+                            </div>
+                        );
+                    })}
                 </div>
             </div>
         );
