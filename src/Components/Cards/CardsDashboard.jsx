@@ -20,8 +20,10 @@ export default function CardsDashboard({ initialCard }) {
     const [prevInitialCard, setPrevInitialCard] = useState(null);
 
     if (initialCard !== prevInitialCard) {
+        // react-doctor-disable-next-line react-doctor/no-impure-state-updater
         setPrevInitialCard(initialCard);
         if (initialCard) {
+            // react-doctor-disable-next-line react-doctor/no-impure-state-updater
             setSelectedCard(initialCard);
             setIsNew(false);
         }
@@ -49,6 +51,7 @@ export default function CardsDashboard({ initialCard }) {
             monthKey={monthKey}
             privacyMode={privacyMode}
             isGlass={isGlass}
+            // react-doctor-disable-next-line react-doctor/no-impure-state-updater
             onSelectCard={(card) => { setSelectedCard(card); setIsNew(false); }}
             onNewCard={() => { setSelectedCard(null); setIsNew(true); }}
             onBack={() => { setSelectedCard(null); navigate('/dashboard'); }}

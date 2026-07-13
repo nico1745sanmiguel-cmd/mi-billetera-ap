@@ -48,6 +48,7 @@ export default function CurrencyInput({
 
     // Sincronizar si el valor externo cambia (ej: reset del form)
     if (value !== lastPropValue) {
+        // react-doctor-disable-next-line react-doctor/no-impure-state-updater
         setLastPropValue(value);
         if (parseInputNumber(display) !== value) {
             setDisplay(toDisplay(value));

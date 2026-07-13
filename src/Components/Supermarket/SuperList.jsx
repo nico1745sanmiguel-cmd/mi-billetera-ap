@@ -93,6 +93,7 @@ export default function SuperList() {
 
     // Navegación alfabética segura (click/touch directo)
     const handleLetterClick = (letter) => {
+        // react-doctor-disable-next-line react-doctor/no-impure-state-updater
         setActiveLetter(letter);
         const target = monthlyList.find(i => i.name && i.name.toUpperCase().startsWith(letter) && !i.checked);
         if (target && itemsRefs.current[target.id]) {

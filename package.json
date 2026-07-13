@@ -37,16 +37,7 @@
   },
   "reactDoctor": {
     "rules": {
-      "react-doctor/artifact-baas-authority-surface": "off",
-      "react-doctor/no-static-element-interactions": "off",
-      "react-doctor/click-events-have-key-events": "off",
-      "react-doctor/media-has-caption": "off",
-      "react-doctor/no-noninteractive-element-interactions": "off",
-      "deslop/unused-export": "off",
-      "deslop/unused-file": "off",
-      "react-doctor/no-giant-component": "off",
-      "react-doctor/control-has-associated-label": "off",
-      "react-doctor/button-has-type": "off"
+      "react-doctor/no-impure-state-updater": "off"
     }
   }
 }

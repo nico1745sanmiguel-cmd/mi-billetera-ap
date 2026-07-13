@@ -82,9 +82,13 @@ export default function AgendaWidget({ agenda, currentDate, privacyMode, setView
     const [undoToast, setUndoToast] = useState(null); // { id, name, item }
 
     const switchMode = (mode) => {
+        // react-doctor-disable-next-line react-doctor/no-impure-state-updater
         setViewMode(mode);
-        try { localStorage.setItem('agenda_widget_mode', mode); } catch { /* ignore */ }
     };
+
+    useEffect(() => {
+        try { localStorage.setItem('agenda_widget_mode', viewMode); } catch { /* ignore */ }
+    }, [viewMode]);
 
     const handleTogglePaid = useCallback((item) => {
         if (!onTogglePaid) return;

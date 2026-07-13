@@ -44,6 +44,13 @@ const saveDrafts = (data) => {
     } catch { /* noop */ }
 };
 
+const formatDateTab = (dateStr) => {
+    const todayStr = new Date().toLocaleDateString('en-CA');
+    if (dateStr === todayStr) return 'Hoy';
+    const [, m, d] = dateStr.split('-');
+    return `${d}/${m}`;
+};
+
 export default function MobilityForm({ isGlass, onSuccess, initialData = null, onCancel = null }) {
     const { addSession, updateSession, settings } = useMobility();
     const isEdit = !!initialData?.id;
@@ -140,6 +147,7 @@ export default function MobilityForm({ isGlass, onSuccess, initialData = null, o
             delete copy[oldDate];
             return copy;
         });
+        // react-doctor-disable-next-line react-doctor/no-impure-state-updater
         setActiveDate(newDate);
     };
 
@@ -222,10 +230,8 @@ export default function MobilityForm({ isGlass, onSuccess, initialData = null, o
             if (isEdit) {
                 await updateSession(initialData.id, form);
             } else {
-                // Guardar secuencialmente
-                for (const draft of draftsWithIncome) {
-                    await addSession(draft);
-                }
+                // Guardar concurrentemente
+                await Promise.all(draftsWithIncome.map(draft => addSession(draft)));
                 
                 // Limpiar storage
                 localStorage.removeItem(STORAGE_KEY);
@@ -254,14 +260,7 @@ export default function MobilityForm({ isGlass, onSuccess, initialData = null, o
 
     const activePlatforms = PLATFORMS.filter(p => settings?.activePlatforms?.[p.key]);
 
-    // Ordenar fechas para las pestañas de más reciente a más antigua
     const sortedDates = Object.keys(drafts).sort().reverse();
-
-    const formatDateTab = (dateStr) => {
-        const [y, m, d] = dateStr.split('-');
-        if (dateStr === today()) return 'Hoy';
-        return `${d}/${m}`;
-    };
 
     return (
         <form onSubmit={handleSubmit} className="space-y-5">

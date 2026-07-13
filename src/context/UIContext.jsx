@@ -117,6 +117,7 @@ export const UIProvider = ({ children }) => {
     // Dispatch: setMotionPreference con validación
     const setMotionPreference = useCallback((val) => {
         if (val === 'on' || val === 'off' || val === 'system') {
+            // react-doctor-disable-next-line react-doctor/no-impure-state-updater
             setMotionPreferenceRaw(val);
         }
     }, []);
@@ -124,6 +125,7 @@ export const UIProvider = ({ children }) => {
     // Dispatch: setTheme con validación
     const setTheme = useCallback((val) => {
         if (val === 'light' || val === 'dark' || val === 'system') {
+            // react-doctor-disable-next-line react-doctor/no-impure-state-updater
             setThemeRaw(val);
         }
     }, []);

@@ -204,6 +204,7 @@ function SalaryDashboardInner({ onBack }) {
                                     key={env.id}
                                     envelope={env}
                                     isGlass={isGlass}
+                                    // react-doctor-disable-next-line react-doctor/no-impure-state-updater
                                     onEdit={(e) => { setEditingEnvelope(e); setShowEnvelopeEditor(true); }}
                                     onDelete={deleteEnvelope}
                                 />

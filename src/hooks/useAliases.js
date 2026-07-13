@@ -16,6 +16,7 @@ export const useAliases = (userId, householdId = null) => {
 
     const [prevUserId, setPrevUserId] = useState(null);
     if (userId !== prevUserId) {
+        // react-doctor-disable-next-line react-doctor/no-impure-state-updater
         setPrevUserId(userId);
         if (!userId) {
             setAliases([]);

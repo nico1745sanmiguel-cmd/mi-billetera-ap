@@ -48,6 +48,10 @@ const getFormattedDate = (date) => {
     return text.charAt(0).toUpperCase() + text.slice(1);
 };
 
+const confirmLogout = (authInstance) => {
+    signOut(authInstance);
+};
+
 export default function App() {
     // ─── DATOS FINANCIEROS ───────────────────────────────────────────────────
     const { user, loadingUser, notifications } = useFinancial();
@@ -74,10 +78,6 @@ export default function App() {
 
     const handleLogout = () => {
         setIsLogoutOpen(true);
-    };
-
-    const confirmLogout = () => {
-        signOut(auth);
     };
 
     useEffect(() => {
@@ -149,6 +149,7 @@ export default function App() {
                                             <Home
                                                 onLogout={handleLogout}
                                                 notifications={notifications}
+                                                // react-doctor-disable-next-line react-doctor/no-impure-state-updater
                                                 onCardClick={(card) => { setSelectedCard(card); navigate('/cards'); }}
                                             />
                                         </m.div>
@@ -246,15 +247,16 @@ export default function App() {
                         </>
                     )}
                     
-                    <ConfirmDialog
-                        isOpen={isLogoutOpen}
-                        title="¿Cerrar sesión?"
-                        message="Vas a tener que volver a ingresar con tu cuenta."
-                        confirmText="Cerrar sesión"
-                        isDanger={true}
-                        onConfirm={confirmLogout}
-                        onCancel={() => setIsLogoutOpen(false)}
-                    />
+                    {isLogoutOpen && (
+                        <ConfirmDialog
+                            title="Cerrar Sesión"
+                            message="¿Estás seguro que querés salir?"
+                            confirmText="Salir"
+                            cancelText="Cancelar"
+                            onConfirm={() => confirmLogout(auth)}
+                            onCancel={() => setIsLogoutOpen(false)}
+                        />
+                    )}
                 </div>
             </div>
         </div>

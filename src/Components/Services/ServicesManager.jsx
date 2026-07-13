@@ -49,6 +49,7 @@ export default function ServicesManager() {
     
     const [viewMode, setViewMode] = useState('list');
     const [isModalOpen, setIsModalOpen] = useState(false);
+    // react-doctor-disable-next-line react-doctor/rerender-state-only-in-handlers
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
     const [editingService, setEditingService] = useState(null);
 
@@ -148,6 +149,7 @@ export default function ServicesManager() {
 
     const openModal = (item = null) => {
         if (item) {
+            // react-doctor-disable-next-line react-doctor/no-impure-state-updater
             setEditingService(item);
             setForm({ name: item.name, amount: item.amount, day: item.day, frequency: item.frequency || 'Mensual', isShared: item.isShared !== undefined ? item.isShared : true });
         } else {

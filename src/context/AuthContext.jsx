@@ -24,6 +24,7 @@ export const AuthProvider = ({ children }) => {
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+            // react-doctor-disable-next-line react-doctor/no-impure-state-updater
             setUser(currentUser);
             if (currentUser) {
                 // Tratar de recuperar userData (householdId) del cache

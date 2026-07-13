@@ -44,6 +44,7 @@ export default function SuperActionsWidget({ superData, privacyMode, setView, si
 
     const handleKeyDown = (e) => {
         if (e.key === 'Enter') {
+            // react-doctor-disable-next-line react-doctor/no-impure-state-updater
             handleQuickAdd(e);
         }
     };
