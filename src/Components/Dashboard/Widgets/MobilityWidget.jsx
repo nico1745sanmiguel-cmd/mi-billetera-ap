@@ -50,35 +50,50 @@ function MobilityWidgetInner({ setView, currentDate, privacyMode, size }) {
         return (
             <div
                 onClick={() => setView('mobility')}
-                className="h-full flex flex-col items-center justify-center rounded-2xl p-3 shadow-sm border border-violet-100 bg-gradient-to-br from-violet-50 to-indigo-50 dark:from-white/10 dark:to-white/5 dark:border-white/10 relative overflow-hidden cursor-pointer transition-all active:scale-95 group text-center gap-2"
+                className="h-full flex flex-col justify-center rounded-2xl p-3 shadow-sm border border-violet-100 bg-gradient-to-r from-violet-50 to-indigo-50 dark:from-white/10 dark:to-white/5 dark:border-white/10 relative overflow-hidden group cursor-pointer transition-all active:scale-95"
             >
-                <div className="absolute right-0 top-0 w-24 h-24 bg-gradient-to-br from-violet-200/40 to-indigo-200/40 dark:from-violet-500/10 dark:to-indigo-500/10 rounded-full -mr-8 -mt-8 blur-2xl" />
-                <div className="relative z-10 bg-violet-200 dark:bg-violet-500/20 p-2.5 rounded-xl text-violet-700 dark:text-violet-300">
-                    <Car size={18} />
+                <div className="absolute right-0 top-0 w-28 h-28 bg-gradient-to-br from-violet-200/50 to-indigo-200/50 dark:from-violet-500/10 dark:to-indigo-500/10 rounded-full -mr-8 -mt-8 blur-2xl transition-all group-hover:scale-110" />
+
+                {/* Header comprimido */}
+                <div className="relative z-10 flex items-center gap-2 mb-2.5">
+                    <div className="bg-violet-200 dark:bg-violet-500/20 p-2 rounded-xl text-violet-700 dark:text-violet-300 shrink-0">
+                        <Car size={16} />
+                    </div>
+                    <div className="min-w-0">
+                        <h3 className="font-bold text-xs text-gray-800 dark:text-white leading-tight truncate">
+                            {settings?.widgetTitle || 'Movilidad'}
+                        </h3>
+                        <p className="text-[9px] uppercase font-bold text-gray-500 dark:text-white/50 tracking-wider">Ingresos del mes</p>
+                    </div>
                 </div>
-                <div className="relative z-10 w-full min-w-0">
-                    <p className="text-[10px] uppercase font-bold text-gray-500 dark:text-white/50 tracking-wider mb-0.5">
-                        {settings?.widgetTitle || 'Movilidad'}
-                    </p>
+
+                {/* Monto + barra */}
+                <div className="relative z-10">
                     {loading && sessions.length === 0 ? (
-                        <Skeleton type="title" width="80px" className="!h-6 mx-auto" />
+                        <Skeleton type="title" width="90px" className="!h-7" />
                     ) : (
                         <>
-                            <p className="text-lg font-extrabold text-violet-700 dark:text-violet-300 font-mono truncate w-full">
+                            <p className="text-xl font-extrabold text-violet-700 dark:text-violet-300 font-mono truncate mb-2">
                                 {fmt(total)}
                             </p>
                             {hasPrevData && (
-                                <>
-                                    <div className="h-1 rounded-full bg-violet-100 dark:bg-white/10 overflow-hidden mt-1.5">
+                                <div>
+                                    <div className="h-1.5 rounded-full bg-violet-100 dark:bg-white/10 overflow-hidden">
                                         <div
                                             className={`h-full rounded-full bg-gradient-to-r ${barColor} transition-all duration-700`}
                                             style={{ width: `${progress}%` }}
                                         />
                                     </div>
-                                    <p className="text-[9px] text-gray-400 dark:text-white/30 mt-0.5">
-                                        {exceeded ? '¡Meta superada!' : `${Math.round(progress)}%`}
-                                    </p>
-                                </>
+                                    <div className="flex items-center justify-between mt-1">
+                                        <p className={`text-[9px] font-semibold ${exceeded ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-500 dark:text-white/40'}`}>
+                                            {exceeded ? '¡Meta superada!' : 'VS mes ant.'}
+                                        </p>
+                                        <p className="text-[9px] text-gray-400 dark:text-white/30 font-mono">{Math.round(progress)}%</p>
+                                    </div>
+                                </div>
+                            )}
+                            {!hasPrevData && (
+                                <p className="text-[9px] text-gray-400 dark:text-white/30">Sin datos anteriores</p>
                             )}
                         </>
                     )}

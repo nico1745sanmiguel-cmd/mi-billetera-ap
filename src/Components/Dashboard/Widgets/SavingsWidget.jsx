@@ -104,45 +104,65 @@ export default function SavingsWidget({ setView, privacyMode, size }) {
         return (
             <div
                 onClick={() => setView('savings')}
-                className={`h-full flex flex-col justify-between rounded-3xl overflow-hidden cursor-pointer transition-all group relative ${hasGoalImage ? 'bg-gray-800 dark:bg-gray-900' : 'bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 shadow-sm'}`}
+                className={`h-full flex flex-col justify-between rounded-3xl overflow-hidden cursor-pointer transition-all group relative ${hasGoalImage ? 'bg-gray-800 dark:bg-gray-900' : ''}`}
             >
-                {/* Fondo imagen (si hay) */}
+                {/* Fondo imagen (idéntico al full) */}
                 {hasGoalImage && (
                     <>
                         <img src={savingsGoal.imageUrl} alt="" aria-hidden="true" className="absolute inset-0 w-full h-full object-cover" style={{ filter: 'grayscale(100%) brightness(0.45)' }} onError={() => setImgError(true)} />
                         {progress > 0 && (
                             <img src={savingsGoal.imageUrl} alt="" aria-hidden="true" className="absolute inset-0 w-full h-full object-cover" style={{ clipPath: `inset(${(100 - progress).toFixed(2)}% 0 0 0)`, transition: 'clip-path 0.8s cubic-bezier(0.22, 1, 0.36, 1)', filter: 'brightness(0.6)' }} />
                         )}
+                        {progress > 1 && progress < 99 && (
+                            <div className="absolute left-0 right-0 pointer-events-none z-10" style={{ top: `${(100 - progress).toFixed(2)}%`, height: '1.5px', background: 'rgba(255,255,255,0.7)', boxShadow: '0 0 6px 2px rgba(255,255,255,0.4)', transition: 'top 0.8s cubic-bezier(0.22, 1, 0.36, 1)' }} />
+                        )}
                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/20 z-10" />
                     </>
                 )}
 
-                {/* Contenido compacto */}
-                <div className="relative z-20 flex flex-col items-center justify-center h-full p-3 text-center gap-1.5">
-                    <div className="flex items-center gap-1.5">
-                        <TrendingUp size={14} className="text-green-400 flex-shrink-0" />
-                        <p className={`text-[10px] uppercase font-bold tracking-wider ${hasGoalImage ? 'text-white/70' : 'text-gray-500 dark:text-white/50'}`}>Ahorros</p>
+                {/* Contenido */}
+                <div className={`relative z-20 h-full flex flex-col justify-between ${hasGoalImage ? '' : 'bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 shadow-sm dark:backdrop-blur-md'}`}>
+                    {/* Header */}
+                    <div className={`px-3 py-2.5 flex justify-between items-center ${hasGoalImage ? 'border-b border-white/10' : 'border-b border-gray-50 dark:border-white/5'}`}>
+                        <h3 className={`font-bold text-xs flex items-center gap-1.5 ${hasGoalImage ? 'text-white' : 'text-gray-800 dark:text-white/90'}`}>
+                            <TrendingUp size={13} className="text-green-400" />
+                            Mis Ahorros
+                        </h3>
+                        <button aria-label="Acción" type="button"
+                            onClick={(e) => { e.stopPropagation(); setCurrencyView(prev => prev === 'ARS' ? 'USD' : 'ARS'); }}
+                            className={`flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full transition-colors ${hasGoalImage ? 'text-white/70 bg-white/10 hover:bg-white/20' : 'text-gray-400 dark:text-white/40 bg-gray-50 dark:bg-white/5 hover:text-green-600 dark:hover:text-green-400'}`}
+                        >
+                            <ArrowRightLeft size={10} />
+                            {currencyView === 'ARS' ? 'USD' : 'ARS'}
+                        </button>
                     </div>
-                    <p className={`text-xl font-black truncate w-full ${hasGoalImage ? 'text-white' : `${privacyMode ? 'blur-sm' : ''} text-gray-900 dark:text-white`}`}>
-                        {formatCurrency(total, currencyView)}
-                    </p>
-                    <button
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); setCurrencyView(prev => prev === 'ARS' ? 'USD' : 'ARS'); }}
-                        className={`text-[9px] font-bold px-2 py-0.5 rounded-full transition-colors ${hasGoalImage ? 'text-white/60 bg-white/10' : 'text-gray-400 dark:text-white/40 bg-gray-50 dark:bg-white/5'}`}
-                    >
-                        {currencyView}
-                    </button>
-                    {savingsGoal && (
-                        <div className="w-full mt-0.5">
-                            <div className={`h-1 rounded-full overflow-hidden ${hasGoalImage ? 'bg-white/20' : 'bg-gray-100 dark:bg-white/10'}`}>
-                                <div className="h-full rounded-full bg-gradient-to-r from-amber-400 to-amber-500 transition-all duration-1000" style={{ width: `${progress}%` }} />
-                            </div>
-                            <p className={`text-[9px] mt-0.5 font-bold ${hasGoalImage ? 'text-white/60' : 'text-amber-600 dark:text-amber-400'}`}>
-                                {privacyMode ? '**%' : `${progress.toFixed(0)}%`}
-                            </p>
+
+                    {/* Monto + objetivo */}
+                    <div className="px-3 py-2.5 flex flex-col justify-center flex-1">
+                        <div className={`text-xl font-black truncate ${hasGoalImage ? 'text-white' : `${privacyMode ? 'blur-sm' : ''} text-gray-900 dark:text-white`}`}>
+                            {formatCurrency(total, currencyView)}
                         </div>
-                    )}
+                        <p className={`text-[9px] uppercase tracking-wider font-bold mt-0.5 ${hasGoalImage ? 'text-white/60' : 'text-gray-400 dark:text-white/40'}`}>
+                            Total Acumulado
+                        </p>
+
+                        {savingsGoal && (
+                            <div className="mt-2.5">
+                                <div className="flex justify-between items-center mb-1">
+                                    <span className={`text-[9px] font-bold flex items-center gap-0.5 truncate pr-1 ${hasGoalImage ? 'text-white/70' : 'text-amber-600 dark:text-amber-400'}`}>
+                                        <Target size={9} />
+                                        <span className="truncate">{savingsGoal.name}</span>
+                                    </span>
+                                    <span className={`text-[9px] font-black shrink-0 ${hasGoalImage ? 'text-white/90' : 'text-amber-600 dark:text-amber-400'}`}>
+                                        {privacyMode ? '**%' : `${progress.toFixed(0)}%`}
+                                    </span>
+                                </div>
+                                <div className={`h-1.5 rounded-full overflow-hidden ${hasGoalImage ? 'bg-white/20' : 'bg-gray-100 dark:bg-white/10'}`}>
+                                    <div className="h-full rounded-full bg-gradient-to-r from-amber-400 to-amber-500 transition-all duration-1000" style={{ width: `${progress}%` }} />
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
         );
