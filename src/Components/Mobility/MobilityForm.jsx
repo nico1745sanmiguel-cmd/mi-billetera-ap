@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Save, RefreshCw, CheckCircle2 } from 'lucide-react';
+import { Save, RefreshCw, CheckCircle2, Plus, X } from 'lucide-react';
 import { useMobility } from '../../context/MobilityContext';
 import CurrencyInput from '../Shared/CurrencyInput';
 
@@ -12,58 +12,67 @@ const PLATFORMS = [
     { key: 'others', label: 'Otros',  color: 'from-gray-500 to-gray-600',      emoji: '⚪', accentBg: 'bg-gray-500', accentText: 'text-white' },
 ];
 
-const STORAGE_KEY = 'mobility_draft:v1';
+const STORAGE_KEY = 'mobility_multi_draft:v2';
+const CONFIRM_KEY = STORAGE_KEY + '_confirmed';
 
-// Lee el borrador del día de hoy de localStorage
-const loadDraft = (date) => {
-    try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (!raw) return null;
-        const draft = JSON.parse(raw);
-        if (draft.date !== date) return null; // borrador de otro día → ignorar
-        return draft;
-    } catch {
-        return null;
-    }
-};
-
-// Escribe el borrador completo
-const saveDraft = (data) => {
-    try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    } catch { /* noop */ }
-};
-
-const clearDraft = () => {
-    try { localStorage.removeItem(STORAGE_KEY); } catch { /* noop */ }
-};
-
-const emptyForm = {
-    date: today(),
+const emptyForm = (date) => ({
+    date: date || today(),
     hoursWorked: '',
     kilometers: '',
     uber: '',
     didi: '',
     cabify: '',
     others: '',
+});
+
+// Devuelve el objeto de borradores. Clave: fecha, Valor: form.
+const loadDrafts = () => {
+    try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return null;
+        const drafts = JSON.parse(raw);
+        if (Object.keys(drafts).length === 0) return null;
+        return drafts;
+    } catch {
+        return null;
+    }
+};
+
+const saveDrafts = (data) => {
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    } catch { /* noop */ }
 };
 
 export default function MobilityForm({ isGlass, onSuccess, initialData = null, onCancel = null }) {
     const { addSession, updateSession, settings } = useMobility();
     const isEdit = !!initialData?.id;
 
-    // En modo edición no usamos localStorage
-    const [form, setForm] = useState(() => {
-        if (isEdit) return initialData;
-        const draft = loadDraft(today());
-        return draft ? { ...emptyForm, ...draft } : emptyForm;
+    // ESTADO: drafts es un objeto con clave = fecha (ej. "2024-07-13")
+    const [drafts, setDrafts] = useState(() => {
+        if (isEdit) {
+            return { [initialData.date]: initialData };
+        }
+        const saved = loadDrafts();
+        if (saved) return saved;
+        return { [today()]: emptyForm(today()) };
     });
 
-    // Qué plataformas ya fueron "confirmadas" con el botón individual
+    const [activeDate, setActiveDate] = useState(() => {
+        if (isEdit) return initialData.date;
+        const saved = loadDrafts();
+        if (saved) {
+            const keys = Object.keys(saved).sort().reverse();
+            return keys.includes(today()) ? today() : keys[0];
+        }
+        return today();
+    });
+
+    // En formato de { [date]: { uber: true, didi: false } }
     const [confirmed, setConfirmed] = useState(() => {
         if (isEdit) return {};
         try {
-            const raw = localStorage.getItem(STORAGE_KEY + '_confirmed');
+            const raw = localStorage.getItem(CONFIRM_KEY);
             return raw ? JSON.parse(raw) : {};
         } catch { return {}; }
     });
@@ -71,21 +80,23 @@ export default function MobilityForm({ isGlass, onSuccess, initialData = null, o
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
 
-    // Persistir borrador automáticamente cuando cambian los valores
+    // Persistir borradores y confirmaciones automáticamente (solo si no es edición)
     useEffect(() => {
         if (isEdit) return;
-        saveDraft(form);
-    }, [form, isEdit]);
+        saveDrafts(drafts);
+    }, [drafts, isEdit]);
 
-    // Persistir confirmaciones
     useEffect(() => {
         if (isEdit) return;
         try {
-            localStorage.setItem(STORAGE_KEY + '_confirmed', JSON.stringify(confirmed));
+            localStorage.setItem(CONFIRM_KEY, JSON.stringify(confirmed));
         } catch { /* noop */ }
     }, [confirmed, isEdit]);
 
-    // Calcular previews en tiempo real
+    // Referencia al formulario activo
+    const form = drafts[activeDate] || emptyForm(activeDate);
+    const activeConfirmed = confirmed[activeDate] || {};
+
     const uber   = parseFloat(form.uber)   || 0;
     const didi   = parseFloat(form.didi)   || 0;
     const cabify = parseFloat(form.cabify) || 0;
@@ -96,37 +107,132 @@ export default function MobilityForm({ isGlass, onSuccess, initialData = null, o
     const perHour = hours > 0 ? (total / hours).toFixed(0) : '—';
     const perKm   = km    > 0 ? (total / km).toFixed(2)    : '—';
 
-    const set = useCallback((field, val) => {
-        setForm(prev => ({ ...prev, [field]: val }));
-        // Si el usuario edita el monto, la confirmación previa ya no es válida
+    const setField = useCallback((field, val) => {
+        setDrafts(prev => ({
+            ...prev,
+            [activeDate]: { ...prev[activeDate], [field]: val }
+        }));
+        
+        // Si edita plataforma, quitar el tick de confirmación
         if (PLATFORMS.find(p => p.key === field)) {
-            setConfirmed(prev => ({ ...prev, [field]: false }));
+            setConfirmed(prev => ({
+                ...prev,
+                [activeDate]: { ...(prev[activeDate] || {}), [field]: false }
+            }));
         }
-    }, []);
+    }, [activeDate]);
 
-    // Guardar una plataforma individualmente
+    // Cambiar la fecha global del borrador activo si el usuario edita el input date
+    const handleDateChange = (oldDate, newDate) => {
+        if (!newDate || oldDate === newDate) return;
+        setDrafts(prev => {
+            const copy = { ...prev };
+            // Si ya existe la nueva fecha en los drafts, no sobreescribir
+            if (copy[newDate]) return prev;
+            
+            copy[newDate] = { ...copy[oldDate], date: newDate };
+            delete copy[oldDate];
+            return copy;
+        });
+        setConfirmed(prev => {
+            const copy = { ...prev };
+            copy[newDate] = copy[oldDate] || {};
+            delete copy[oldDate];
+            return copy;
+        });
+        setActiveDate(newDate);
+    };
+
     const confirmPlatform = (key) => {
         const val = parseFloat(form[key]);
         if (!val || val <= 0) return;
-        setConfirmed(prev => ({ ...prev, [key]: true }));
-        saveDraft(form); // aseguramos persistencia inmediata
+        setConfirmed(prev => ({
+            ...prev,
+            [activeDate]: { ...(prev[activeDate] || {}), [key]: true }
+        }));
+    };
+
+    const handleAddTab = () => {
+        // Encontrar una fecha libre hacia atrás
+        let target = new Date();
+        target.setDate(target.getDate() - 1); // empezamos probando con ayer
+        
+        // Buscar un día libre
+        let dateStr = target.toISOString().slice(0, 10);
+        let attempts = 0;
+        while (drafts[dateStr] && attempts < 30) {
+            target.setDate(target.getDate() - 1);
+            dateStr = target.toISOString().slice(0, 10);
+            attempts++;
+        }
+
+        if (!drafts[dateStr]) {
+            setDrafts(prev => ({ ...prev, [dateStr]: emptyForm(dateStr) }));
+            setActiveDate(dateStr);
+        }
+    };
+
+    const handleRemoveTab = (dateToRemove, e) => {
+        e.stopPropagation();
+        setDrafts(prev => {
+            const copy = { ...prev };
+            delete copy[dateToRemove];
+            
+            // Si nos quedamos sin tabs, creamos uno nuevo
+            if (Object.keys(copy).length === 0) {
+                copy[today()] = emptyForm(today());
+            }
+            return copy;
+        });
+        setConfirmed(prev => {
+            const copy = { ...prev };
+            delete copy[dateToRemove];
+            return copy;
+        });
+        
+        if (activeDate === dateToRemove) {
+            const remainingDates = Object.keys(drafts).filter(d => d !== dateToRemove).sort().reverse();
+            setActiveDate(remainingDates.length > 0 ? remainingDates[0] : today());
+        }
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (total <= 0) { setError('Ingresá al menos un ingreso.'); return; }
-        if (!form.date)  { setError('La fecha es obligatoria.');    return; }
+        
+        const allDrafts = Object.values(drafts);
+        // Validar que al menos uno tenga ingresos
+        const draftsWithIncome = allDrafts.filter(d => {
+            const t = (parseFloat(d.uber)||0) + (parseFloat(d.didi)||0) + (parseFloat(d.cabify)||0) + (parseFloat(d.others)||0);
+            return t > 0;
+        });
+
+        if (draftsWithIncome.length === 0 && !isEdit) {
+            setError('Ingresá montos en al menos un día.');
+            return;
+        }
+
+        if (isEdit && total <= 0) {
+            setError('Ingresá al menos un ingreso.');
+            return;
+        }
+
         setError('');
         setSaving(true);
         try {
             if (isEdit) {
                 await updateSession(initialData.id, form);
             } else {
-                await addSession(form);
-                clearDraft();
-                localStorage.removeItem(STORAGE_KEY + '_confirmed');
-                setForm(emptyForm);
+                // Guardar secuencialmente
+                for (const draft of draftsWithIncome) {
+                    await addSession(draft);
+                }
+                
+                // Limpiar storage
+                localStorage.removeItem(STORAGE_KEY);
+                localStorage.removeItem(CONFIRM_KEY);
+                setDrafts({ [today()]: emptyForm(today()) });
                 setConfirmed({});
+                setActiveDate(today());
             }
             onSuccess?.();
         } catch (err) {
@@ -148,11 +254,57 @@ export default function MobilityForm({ isGlass, onSuccess, initialData = null, o
 
     const activePlatforms = PLATFORMS.filter(p => settings?.activePlatforms?.[p.key]);
 
+    // Ordenar fechas para las pestañas de más reciente a más antigua
+    const sortedDates = Object.keys(drafts).sort().reverse();
+
+    const formatDateTab = (dateStr) => {
+        const [y, m, d] = dateStr.split('-');
+        if (dateStr === today()) return 'Hoy';
+        return `${d}/${m}`;
+    };
+
     return (
         <form onSubmit={handleSubmit} className="space-y-5">
+            {/* TABS DE FECHAS */}
+            {!isEdit && (
+                <div className="flex items-center gap-2 overflow-x-auto pb-1 hide-scrollbar">
+                    {sortedDates.map(d => (
+                        <div
+                            key={d}
+                            onClick={() => setActiveDate(d)}
+                            className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-bold cursor-pointer transition-all flex-shrink-0 ${
+                                activeDate === d
+                                    ? (isGlass ? 'bg-violet-500/80 text-white shadow-md' : 'bg-violet-100 text-violet-700 shadow-sm')
+                                    : (isGlass ? 'bg-white/10 text-white/50 hover:bg-white/20' : 'bg-gray-100 text-gray-500 hover:bg-gray-200')
+                            }`}
+                        >
+                            {formatDateTab(d)}
+                            {Object.keys(drafts).length > 1 && (
+                                <button type="button" 
+                                    onClick={(e) => handleRemoveTab(d, e)} 
+                                    className={`p-0.5 rounded-full ${activeDate === d ? 'hover:bg-black/10' : 'hover:bg-black/10'}`}
+                                >
+                                    <X size={14} />
+                                </button>
+                            )}
+                        </div>
+                    ))}
+                    <button
+                        type="button"
+                        onClick={handleAddTab}
+                        title="Agregar día"
+                        className={`flex items-center justify-center p-2 rounded-xl cursor-pointer transition-all flex-shrink-0 ${
+                            isGlass ? 'bg-white/10 text-white/70 hover:bg-white/20' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                        }`}
+                    >
+                        <Plus size={18} />
+                    </button>
+                </div>
+            )}
+
             {/* FECHA Y LOGÍSTICA */}
             <div className={`rounded-2xl p-4 space-y-4 ${isGlass ? 'bg-white/10 border border-white/10' : 'bg-white shadow-sm border border-gray-100'}`}>
-                <h3 className={`font-bold text-sm ${isGlass ? 'text-white' : 'text-gray-700'}`}>📅 Jornada</h3>
+                <h3 className={`font-bold text-sm ${isGlass ? 'text-white' : 'text-gray-700'}`}>📅 {isEdit ? 'Jornada' : 'Datos del día'}</h3>
                 <div className="grid grid-cols-3 gap-3">
                     <div className="col-span-1">
                         <label className={labelCls} htmlFor="mobDate">Fecha</label>
@@ -160,7 +312,7 @@ export default function MobilityForm({ isGlass, onSuccess, initialData = null, o
                             id="mobDate"
                             type="date"
                             value={form.date}
-                            onChange={e => set('date', e.target.value)}
+                            onChange={e => handleDateChange(form.date, e.target.value)}
                             className={inputCls}
                             required
                         />
@@ -170,7 +322,7 @@ export default function MobilityForm({ isGlass, onSuccess, initialData = null, o
                         <CurrencyInput
                             id="mobHours"
                             value={form.hoursWorked}
-                            onChange={val => set('hoursWorked', val)}
+                            onChange={val => setField('hoursWorked', val)}
                             placeholder="8"
                             allowDecimals={true}
                             className={inputCls}
@@ -181,7 +333,7 @@ export default function MobilityForm({ isGlass, onSuccess, initialData = null, o
                         <CurrencyInput
                             id="mobKm"
                             value={form.kilometers}
-                            onChange={val => set('kilometers', val)}
+                            onChange={val => setField('kilometers', val)}
                             placeholder="120"
                             allowDecimals={false}
                             className={inputCls}
@@ -190,20 +342,20 @@ export default function MobilityForm({ isGlass, onSuccess, initialData = null, o
                 </div>
             </div>
 
-            {/* PLATAFORMAS — cada una con su botón de guardar */}
+            {/* PLATAFORMAS */}
             <div className={`rounded-2xl p-4 space-y-3 ${isGlass ? 'bg-white/10 border border-white/10' : 'bg-white shadow-sm border border-gray-100'}`}>
                 <div className="flex items-center justify-between mb-1">
                     <h3 className={`font-bold text-sm ${isGlass ? 'text-white' : 'text-gray-700'}`}>💰 Ingresos por plataforma</h3>
                     {!isEdit && (
                         <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${isGlass ? 'bg-white/10 text-white/50' : 'bg-violet-50 text-violet-400'}`}>
-                            Guardado automático
+                            Guardado auto
                         </span>
                     )}
                 </div>
 
                 <div className="space-y-2">
                     {activePlatforms.map(({ key, label, emoji, accentBg }) => {
-                        const isConfirmed = confirmed[key] && parseFloat(form[key]) > 0;
+                        const isConfirmed = activeConfirmed[key] && parseFloat(form[key]) > 0;
                         const hasValue = parseFloat(form[key]) > 0;
 
                         return (
@@ -234,7 +386,7 @@ export default function MobilityForm({ isGlass, onSuccess, initialData = null, o
                                     <CurrencyInput
                                         id={`mob_${key}`}
                                         value={form[key]}
-                                        onChange={val => set(key, val)}
+                                        onChange={val => setField(key, val)}
                                         placeholder="0"
                                         className={`w-full rounded-lg px-3 py-2 ps-7 text-sm font-medium outline-none transition-all ${
                                             isGlass
@@ -273,11 +425,11 @@ export default function MobilityForm({ isGlass, onSuccess, initialData = null, o
                         <div className={`flex-1 h-1 rounded-full overflow-hidden ${isGlass ? 'bg-white/10' : 'bg-gray-100'}`}>
                             <div
                                 className="h-full bg-gradient-to-r from-violet-500 to-green-500 rounded-full transition-all duration-500"
-                                style={{ width: `${(Object.values(confirmed).filter(Boolean).length / activePlatforms.length) * 100}%` }}
+                                style={{ width: `${(Object.values(activeConfirmed).filter(Boolean).length / activePlatforms.length) * 100}%` }}
                             />
                         </div>
                         <span className={`text-xs font-medium ${isGlass ? 'text-white/40' : 'text-gray-400'}`}>
-                            {Object.values(confirmed).filter(Boolean).length}/{activePlatforms.length} plataformas
+                            {Object.values(activeConfirmed).filter(Boolean).length}/{activePlatforms.length} plataformas
                         </span>
                     </div>
                 )}
@@ -286,7 +438,7 @@ export default function MobilityForm({ isGlass, onSuccess, initialData = null, o
             {/* PREVIEW DE TOTALES */}
             {total > 0 && (
                 <div className={`rounded-2xl p-4 ${isGlass ? 'bg-violet-500/20 border border-violet-400/30' : 'bg-violet-50 border border-violet-100'}`}>
-                    <p className={`text-xs font-semibold uppercase mb-3 ${isGlass ? 'text-violet-300' : 'text-violet-500'}`}>Vista previa</p>
+                    <p className={`text-xs font-semibold uppercase mb-3 ${isGlass ? 'text-violet-300' : 'text-violet-500'}`}>Vista previa del día</p>
                     <div className="grid grid-cols-3 gap-2 text-center">
                         <div>
                             <p className={`text-lg font-bold ${isGlass ? 'text-white' : 'text-gray-800'}`}>${total.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</p>
@@ -325,7 +477,7 @@ export default function MobilityForm({ isGlass, onSuccess, initialData = null, o
                 >
                     {saving
                         ? <><RefreshCw size={15} className="animate-spin" /> Guardando...</>
-                        : <><Save size={15} /> {isEdit ? 'Guardar cambios' : '✅ Registrar jornada'}</>
+                        : <><Save size={15} /> {isEdit ? 'Guardar cambios' : (Object.keys(drafts).length > 1 ? `✅ Registrar ${Object.keys(drafts).length} días` : '✅ Registrar jornada')}</>
                     }
                 </button>
             </div>
