@@ -3,6 +3,7 @@ import { Target, Edit3, Check, X, Link, Sparkles, Trophy, ImageOff, Loader2 } fr
 import { useSavings } from '../../context/SavingsContext';
 import { useFinancial } from '../../context/FinancialContext';
 import { useUI } from '../../context/UIContext';
+import { formatInputNumber, parseInputNumber } from '../../utils';
 
 const arsFormatter = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 });
 
@@ -137,7 +138,7 @@ export default function SavingsGoal() {
                         <label htmlFor="input-field" className={`text-xs font-bold uppercase tracking-wider mb-1.5 block ${isGlass ? 'text-white/60' : 'text-gray-500'}`}>
                             ¿Para qué estás ahorrando?
                         </label>
-                        <input id="input-field"
+                        <input autoComplete="off" id="input-field"
                             type="text"
                             value={form.name}
                             onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
@@ -151,11 +152,11 @@ export default function SavingsGoal() {
                         <label htmlFor="input-field" className={`text-xs font-bold uppercase tracking-wider mb-1.5 block ${isGlass ? 'text-white/60' : 'text-gray-500'}`}>
                             Monto objetivo (ARS)
                         </label>
-                        <input id="input-field"
-                            type="number"
-                            value={form.amount}
-                            onChange={e => setForm(f => ({ ...f, amount: e.target.value }))}
-                            placeholder="Ej: 500000"
+                        <input autoComplete="off" id="input-field"
+                            type="tel"
+                            value={formatInputNumber(form.amount)}
+                            onChange={e => setForm(f => ({ ...f, amount: parseInputNumber(e.target.value) }))}
+                            placeholder="Ej: 500.000"
                             className={`w-full px-4 py-3 rounded-xl font-semibold outline-none transition-all ${inputClass}`}
                         />
                     </div>
@@ -167,7 +168,7 @@ export default function SavingsGoal() {
                         </label>
                         <div className="relative">
                             <Link size={15} className={`absolute left-3 top-1/2 -translate-y-1/2 ${isGlass ? 'text-white/40' : 'text-gray-400'}`} />
-                            <input id="input-field"
+                            <input autoComplete="off" id="input-field"
                                 type="url"
                                 value={form.imageUrl}
                                 onChange={e => { setForm(f => ({ ...f, imageUrl: e.target.value })); setImageError(false); }}

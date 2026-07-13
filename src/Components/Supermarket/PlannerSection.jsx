@@ -162,7 +162,7 @@ export default function PlannerSection({ catData, trips, currentMonthKey, isGlas
                             </p>
                             <div className="flex items-center gap-1">
                                 <Calendar size={12} className="text-gray-400" />
-                                <input id="input-field" 
+                                <input autoComplete="off" id="input-field" 
                                     type="date" 
                                     className={`bg-transparent text-[10px] font-bold outline-none border-none ${isGlass ? 'text-indigo-300' : 'text-indigo-600'}`}
                                     value={addingDate}
@@ -172,7 +172,7 @@ export default function PlannerSection({ catData, trips, currentMonthKey, isGlas
                         </div>
 
                         <div className="flex flex-col gap-2">
-                            <input id="input-field"
+                            <input autoComplete="off" id="input-field"
                                 ref={noteRef}
                                 type="text"
                                 className={`w-full px-3 py-2.5 rounded-xl text-sm border focus:outline-none transition-colors ${
@@ -188,7 +188,7 @@ export default function PlannerSection({ catData, trips, currentMonthKey, isGlas
                                 isGlass ? 'bg-black/30 border-white/10' : 'bg-gray-50 border-gray-200'
                             }`}>
                                 <span className={`text-xs mr-2 font-bold ${isGlass ? 'text-gray-500' : 'text-gray-400'}`}>Presupuesto: $</span>
-                                <input id="input-field"
+                                <input autoComplete="off" id="input-field"
                                     type="tel"
                                     className={`w-full bg-transparent outline-none text-sm font-bold text-right py-2.5 ${
                                         isGlass ? 'text-white placeholder-white/30' : 'text-gray-800'

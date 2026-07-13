@@ -83,7 +83,7 @@ export default function EnvelopeEditor({ envelope, onSave, onClose, isGlass }) {
                         <label htmlFor="input-field" className={`text-xs font-bold uppercase tracking-wider mb-2 block ${isGlass ? 'text-white/50' : 'text-gray-400'}`}>
                             <Tag size={11} className="inline mr-1" />Nombre
                         </label>
-                        <input id="input-field"
+                        <input autoComplete="off" id="input-field"
                             type="text"
                             placeholder="Ej: Alquiler, Ocio, Farmacia..."
                             value={label}
@@ -99,7 +99,7 @@ export default function EnvelopeEditor({ envelope, onSave, onClose, isGlass }) {
                         </label>
                         <div className="relative">
                             <span className={`absolute left-4 top-1/2 -translate-y-1/2 font-bold ${isGlass ? 'text-white/50' : 'text-gray-400'}`}>$</span>
-                            <input id="input-field"
+                            <input autoComplete="off" id="input-field"
                                 type="text"
                                 inputMode="numeric"
                                 placeholder="0"

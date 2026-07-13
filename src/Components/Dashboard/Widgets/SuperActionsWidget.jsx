@@ -94,7 +94,7 @@ export default function SuperActionsWidget({ superData, privacyMode, setView, si
 
                 {isAdding ? (
                     <div className="relative z-10 mt-2 flex items-center" onClick={(e) => e.stopPropagation()}>
-                        <input id="input-field"
+                        <input autoComplete="off" id="input-field"
                             type="text"
                             placeholder="Producto..."
                             value={inputValue}
@@ -146,7 +146,7 @@ export default function SuperActionsWidget({ superData, privacyMode, setView, si
             
             <div className="mt-auto" onClick={(e) => e.stopPropagation()}>
                 <div className="relative">
-                    <input id="input-field"
+                    <input autoComplete="off" id="input-field"
                         type="text"
                         placeholder="Agregar rápido al súper..."
                         value={inputValue}

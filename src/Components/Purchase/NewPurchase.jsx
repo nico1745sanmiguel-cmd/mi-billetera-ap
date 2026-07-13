@@ -145,7 +145,7 @@ export default function NewPurchase({ onSave }) {
                 <div className="text-center py-4">
                     <div className="flex justify-center items-center gap-1">
                         <span className={`text-4xl font-bold ${isGlass ? 'text-white/30' : 'text-gray-300'}`}>$</span>
-                        <input id="input-field"
+                        <input autoComplete="off" id="input-field"
                             type="tel"
                             value={formatInputNumber(amount)}
                             onChange={(e) => setAmount(parseInputNumber(e.target.value))}
@@ -198,7 +198,7 @@ export default function NewPurchase({ onSave }) {
                                 <label htmlFor="input-field" className={`text-xs font-bold uppercase ${isGlass ? 'text-white/40' : 'text-gray-400'}`}>Cuotas</label>
                                 <span className={`text-2xl font-bold ${isGlass ? 'text-blue-300' : 'text-blue-600'}`}>{installments}x</span>
                             </div>
-                            <input id="input-field"
+                            <input autoComplete="off" id="input-field"
                                 type="range"
                                 min="1"
                                 max="12"
@@ -258,7 +258,7 @@ export default function NewPurchase({ onSave }) {
                     </div>
 
                     <div className="mt-4">
-                        <input id="input-field"
+                        <input autoComplete="off" id="input-field"
                             type="text"
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}

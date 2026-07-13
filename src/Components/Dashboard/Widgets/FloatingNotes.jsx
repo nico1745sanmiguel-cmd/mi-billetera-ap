@@ -111,7 +111,7 @@ export default function FloatingNotes({ user }) {
                     </div>
 
                     <form onSubmit={handleAdd} className="mt-auto border-t border-amber-300/50 pt-2 flex items-center gap-1">
-                        <input id="input-field" 
+                        <input autoComplete="off" id="input-field" 
                             ref={inputRef}
                             type="text"
                             value={inputValue}

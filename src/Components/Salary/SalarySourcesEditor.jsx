@@ -93,7 +93,7 @@ export default function SalarySourcesEditor({ onClose, isGlass }) {
                         <div key={source.id} className={`rounded-xl border p-3 ${isGlass ? 'bg-white/5 border-white/10' : 'bg-gray-50 border-gray-200'}`}>
                             {editingId === source.id ? (
                                 <div className="space-y-2">
-                                    <input id="input-field"
+                                    <input autoComplete="off" id="input-field"
                                         type="text"
                                         value={editLabel}
                                         onChange={e => setEditLabel(e.target.value)}
@@ -102,7 +102,7 @@ export default function SalarySourcesEditor({ onClose, isGlass }) {
                                     />
                                     <div className="relative">
                                         <span className={`absolute left-3 top-1/2 -translate-y-1/2 font-bold text-sm ${isGlass ? 'text-white/50' : 'text-gray-400'}`}>$</span>
-                                        <input id="input-field"
+                                        <input autoComplete="off" id="input-field"
                                             type="text"
                                             inputMode="numeric"
                                             value={editAmount ? formatInputNumber(editAmount) : ''}
@@ -136,7 +136,7 @@ export default function SalarySourcesEditor({ onClose, isGlass }) {
                     {/* Formulario nueva fuente */}
                     {addingNew && (
                         <div className={`rounded-xl border p-3 space-y-2 ${isGlass ? 'bg-white/5 border-violet-500/40' : 'bg-violet-50 border-violet-200'}`}>
-                            <input id="input-field"
+                            <input autoComplete="off" id="input-field"
                                 type="text"
                                 autoFocus
                                 placeholder="Ej: Freelance, Alquiler cobrado..."
@@ -146,7 +146,7 @@ export default function SalarySourcesEditor({ onClose, isGlass }) {
                             />
                             <div className="relative">
                                 <span className={`absolute left-3 top-1/2 -translate-y-1/2 font-bold text-sm ${isGlass ? 'text-white/50' : 'text-gray-400'}`}>$</span>
-                                <input id="input-field"
+                                <input autoComplete="off" id="input-field"
                                     type="text"
                                     inputMode="numeric"
                                     placeholder="Monto"

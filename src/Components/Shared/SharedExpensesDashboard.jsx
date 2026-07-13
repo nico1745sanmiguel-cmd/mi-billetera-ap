@@ -145,7 +145,7 @@ function ContributionModal({ person, totalTarget, monthKey, householdId, isGlass
                             isGlass ? 'bg-white/5 border-white/10' : 'bg-gray-50 border-gray-200'
                         }`}>
                             <span className={`text-sm font-bold ${isGlass ? 'text-gray-400' : 'text-gray-400'}`}>$</span>
-                            <input id="input-field"
+                            <input autoComplete="off" id="input-field"
                                 type="text"
                                 inputMode="numeric"
                                 placeholder="0"
@@ -167,7 +167,7 @@ function ContributionModal({ person, totalTarget, monthKey, householdId, isGlass
                     </div>
 
                     {/* Nota opcional */}
-                    <input id="input-field"
+                    <input autoComplete="off" id="input-field"
                         type="text"
                         placeholder="Nota (opcional)..."
                         value={note}

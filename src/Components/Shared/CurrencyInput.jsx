@@ -8,7 +8,7 @@ import { parseInputNumber } from '../../utils';
  *   value        — número (o string parseable) controlado desde afuera
  *   onChange     — fn(rawNumber: number) — devuelve el número sin formato
  *   placeholder  — string
- *   className    — clases extra para el <input id="input-field">
+ *   className    — clases extra para el <input autoComplete="off" id="input-field">
  *   prefix       — si true, el padre maneja el $ afuera (default: false)
  *   disabled     — boolean
  *   allowDecimals — si false, solo enteros (default: true)
@@ -111,7 +111,7 @@ export default function CurrencyInput({
     };
 
     return (
-        <input
+        <input autoComplete="off"
             type="text"
             inputMode="numeric"
             value={display}

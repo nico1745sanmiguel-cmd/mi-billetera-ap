@@ -47,7 +47,7 @@ export default function TripCard({ trip, cfg, isGlass, onDelete, onUpdateTotal, 
             </button>
 
             {editingDate ? (
-                <input id="input-field"
+                <input autoComplete="off" id="input-field"
                     ref={dateInputRef}
                     type="date"
                     defaultValue={trip.date || ''}
@@ -87,7 +87,7 @@ export default function TripCard({ trip, cfg, isGlass, onDelete, onUpdateTotal, 
                         isGlass ? 'bg-black/40 border-white/20' : 'bg-white border-gray-300'
                     }`}>
                         <span className={`text-sm mr-1 ${isGlass ? 'text-gray-400' : 'text-gray-400'}`}>$</span>
-                        <input id="input-field"
+                        <input autoComplete="off" id="input-field"
                             ref={inputRef}
                             type="tel"
                             className={`w-full bg-transparent outline-none text-sm font-bold text-right ${

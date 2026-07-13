@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { X, Save, TrendingUp, TrendingDown } from 'lucide-react';
 import { useSavings } from '../../context/SavingsContext';
+import { formatInputNumber, parseInputNumber } from '../../utils';
 
 export default function AddSavingsModal({ onClose, isGlass }) {
     const { addSavingsTransaction, savingsTransactions } = useSavings();
@@ -104,7 +105,7 @@ export default function AddSavingsModal({ onClose, isGlass }) {
                     {/* CARTERA */}
                     <div>
                         <label htmlFor="input-field" className={`block text-sm font-bold mb-1 ${isGlass ? 'text-white/70' : 'text-gray-700'}`}>Cartera</label>
-                        <input id="input-field"
+                        <input autoComplete="off" id="input-field"
                             list="carteras-list"
                             required
                             value={formData.cartera}
@@ -121,7 +122,7 @@ export default function AddSavingsModal({ onClose, isGlass }) {
                         {/* ESPECIE */}
                         <div>
                             <label htmlFor="input-field" className={`block text-sm font-bold mb-1 ${isGlass ? 'text-white/70' : 'text-gray-700'}`}>Especie</label>
-                            <input id="input-field"
+                            <input autoComplete="off" id="input-field"
                                 list="especies-list"
                                 required
                                 value={formData.especie}
@@ -137,14 +138,12 @@ export default function AddSavingsModal({ onClose, isGlass }) {
                         {/* CANTIDAD */}
                         <div>
                             <label htmlFor="input-field" className={`block text-sm font-bold mb-1 ${isGlass ? 'text-white/70' : 'text-gray-700'}`}>Cantidad</label>
-                            <input id="input-field"
-                                type="number"
-                                step="any"
-                                min="0"
+                            <input autoComplete="off" id="input-field"
+                                type="tel"
                                 required
-                                value={formData.cantidad}
-                                onChange={(e) => setFormData({...formData, cantidad: e.target.value})}
-                                placeholder="0.00"
+                                value={formatInputNumber(formData.cantidad)}
+                                onChange={(e) => setFormData({...formData, cantidad: parseInputNumber(e.target.value)})}
+                                placeholder="0"
                                 className={inputClasses}
                             />
                         </div>
@@ -153,7 +152,7 @@ export default function AddSavingsModal({ onClose, isGlass }) {
                     {/* NOTA */}
                     <div>
                         <label htmlFor="input-field" className={`block text-sm font-bold mb-1 ${isGlass ? 'text-white/70' : 'text-gray-700'}`}>Nota (Opcional)</label>
-                        <input id="input-field"
+                        <input autoComplete="off" id="input-field"
                             type="text"
                             value={formData.nota}
                             onChange={(e) => setFormData({...formData, nota: e.target.value})}

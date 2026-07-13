@@ -106,7 +106,7 @@ export default function MobilitySettings({ isGlass, onBack }) {
                             
                             <div>
                                 <label htmlFor="input-field" className={`block text-xs font-medium mb-1 ${sub}`}>Título del Widget</label>
-                                <input 
+                                <input autoComplete="off" 
                                     type="text" 
                                     value={widgetTitle}
                                     onChange={(e) => setWidgetTitle(e.target.value)}
@@ -178,7 +178,7 @@ export default function MobilitySettings({ isGlass, onBack }) {
                         </div>
                         
                         <div className="flex items-center gap-2">
-                            <input id="input-field" 
+                            <input autoComplete="off" id="input-field" 
                                 type="text" 
                                 value={newCategory}
                                 onChange={(e) => setNewCategory(e.target.value)}

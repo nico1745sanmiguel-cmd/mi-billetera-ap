@@ -148,7 +148,7 @@ export default function MobilityExpenses({ isGlass, month, year }) {
 
                     <form onSubmit={handleGnc} className="space-y-2">
                         <div className="flex gap-2">
-                            <input
+                            <input autoComplete="off"
                                 type="date"
                                 value={gncDate}
                                 onChange={e => setGncDate(e.target.value)}
@@ -156,7 +156,7 @@ export default function MobilityExpenses({ isGlass, month, year }) {
                             />
                             <div className="relative flex-1 min-w-0">
                                 <span className={`absolute start-3 top-1/2 -translate-y-1/2 text-sm font-bold ${isGlass ? 'text-white/40' : 'text-gray-300'}`}>$</span>
-                                <CurrencyInput
+                                <CurrencyInput autoComplete="off"
                                     id="gnc-amount"
                                     value={gncAmount}
                                     onChange={setGncAmount}
@@ -240,7 +240,7 @@ export default function MobilityExpenses({ isGlass, month, year }) {
                         <div className="grid grid-cols-2 gap-3">
                             <div>
                                 <label htmlFor="full-date" className={labelCls}>Fecha</label>
-                                <input id="full-date"
+                                <input autoComplete="off" id="full-date"
                                     type="date"
                                     value={fullForm.date}
                                     onChange={e => setFullForm(f => ({ ...f, date: e.target.value }))}
@@ -252,7 +252,7 @@ export default function MobilityExpenses({ isGlass, month, year }) {
                                 <label htmlFor="full-amount" className={labelCls}>Monto</label>
                                 <div className="relative">
                                     <span className={`absolute start-3 top-1/2 -translate-y-1/2 text-sm font-bold ${isGlass ? 'text-white/40' : 'text-gray-300'}`}>$</span>
-                                    <CurrencyInput
+                                    <CurrencyInput autoComplete="off"
                                         id="full-amount"
                                         value={fullForm.amount}
                                         onChange={val => setFullForm(f => ({ ...f, amount: val }))}
@@ -266,7 +266,7 @@ export default function MobilityExpenses({ isGlass, month, year }) {
                         {/* Notas */}
                         <div>
                             <label htmlFor="full-notes" className={labelCls}>Notas (opcional)</label>
-                            <input id="full-notes"
+                            <input autoComplete="off" id="full-notes"
                                 type="text"
                                 placeholder="Ej: cambio de aceite, filtro…"
                                 value={fullForm.notes}

@@ -77,7 +77,7 @@ export default function SavingsCard({ cartera, items, isGlass, privacyMode }) {
                             
                             {editingIdx === idx ? (
                                 <div className="flex items-center gap-2">
-                                    <input id="input-field" 
+                                    <input autoComplete="off" id="input-field" 
                                         type="text"
                                         inputMode="decimal"
                                         value={editValue}

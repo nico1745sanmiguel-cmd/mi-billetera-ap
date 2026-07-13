@@ -90,7 +90,7 @@ export default function Login() {
         <form onSubmit={handleEmailAuth} className="space-y-5">
           <div className="group">
             <label htmlFor="input-field" className="block text-xs font-bold text-white/50 mb-1.5 ml-1 uppercase tracking-wider group-focus-within:text-white/80 transition-colors">Email</label>
-            <input id="input-field"
+            <input autoComplete="off" id="input-field"
               type="email"
               required
               value={email}
@@ -101,7 +101,7 @@ export default function Login() {
           </div>
           <div className="group">
             <label htmlFor="input-field" className="block text-xs font-bold text-white/50 mb-1.5 ml-1 uppercase tracking-wider group-focus-within:text-white/80 transition-colors">Contraseña</label>
-            <input id="input-field"
+            <input autoComplete="off" id="input-field"
               type="password"
               required
               value={password}

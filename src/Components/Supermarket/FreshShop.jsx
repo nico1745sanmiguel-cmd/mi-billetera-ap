@@ -171,7 +171,7 @@ export default function FreshShop() {
                         <button aria-label="Acción" type="button" onClick={() => setShowNewCatForm(false)} className={isGlass ? 'text-white/50' : 'text-gray-400'}>✕</button>
                     </div>
                     
-                    <input id="input-field"
+                    <input autoComplete="off" id="input-field"
                         type="text"
                         placeholder="Nombre (ej. Proyecto Pintura)"
                         className={`w-full px-4 py-3 rounded-xl font-bold focus:outline-none ${isGlass ? 'bg-white/10 text-white placeholder-white/30' : 'bg-gray-50 text-gray-800 border'}`}

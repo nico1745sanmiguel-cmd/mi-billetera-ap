@@ -308,7 +308,7 @@ export default function MobilityForm({ isGlass, onSuccess, initialData = null, o
                 <div className="grid grid-cols-3 gap-3">
                     <div className="col-span-1">
                         <label className={labelCls} htmlFor="mobDate">Fecha</label>
-                        <input
+                        <input autoComplete="off"
                             id="mobDate"
                             type="date"
                             value={form.date}
@@ -319,7 +319,7 @@ export default function MobilityForm({ isGlass, onSuccess, initialData = null, o
                     </div>
                     <div>
                         <label className={labelCls} htmlFor="mobHours">Horas</label>
-                        <CurrencyInput
+                        <CurrencyInput autoComplete="off"
                             id="mobHours"
                             value={form.hoursWorked}
                             onChange={val => setField('hoursWorked', val)}
@@ -330,7 +330,7 @@ export default function MobilityForm({ isGlass, onSuccess, initialData = null, o
                     </div>
                     <div>
                         <label className={labelCls} htmlFor="mobKm">KM</label>
-                        <CurrencyInput
+                        <CurrencyInput autoComplete="off"
                             id="mobKm"
                             value={form.kilometers}
                             onChange={val => setField('kilometers', val)}
@@ -383,7 +383,7 @@ export default function MobilityForm({ isGlass, onSuccess, initialData = null, o
                                 {/* Input */}
                                 <div className="relative flex-1 min-w-0">
                                     <span className={`absolute start-3 top-1/2 -translate-y-1/2 text-sm font-bold ${isGlass ? 'text-white/40' : 'text-gray-300'}`}>$</span>
-                                    <CurrencyInput
+                                    <CurrencyInput autoComplete="off"
                                         id={`mob_${key}`}
                                         value={form[key]}
                                         onChange={val => setField(key, val)}

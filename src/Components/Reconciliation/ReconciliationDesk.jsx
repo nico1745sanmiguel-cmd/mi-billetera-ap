@@ -245,7 +245,7 @@ const ReconciliationDesk = ({
 
                                     {/* Formulario Rápido en Línea */}
                                     <div className="grid grid-cols-2 gap-2">
-                                        <input id="input-field"
+                                        <input autoComplete="off" id="input-field"
                                             type="text"
                                             placeholder="Nombre (Alias)"
                                             className={`p-2 rounded-lg text-sm ${isGlass ? 'bg-black/20' : 'bg-gray-50'}`}

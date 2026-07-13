@@ -194,7 +194,7 @@ const StatementUploader = ({ onAnalysisComplete }) => {
                     bg-white dark:bg-slate-900 backdrop-blur-sm shadow-sm
                 `}
             >
-                <input
+                <input autoComplete="off"
                     type="file"
                     id="pdf-upload"
                     className="hidden"
@@ -221,7 +221,7 @@ const StatementUploader = ({ onAnalysisComplete }) => {
                             </p>
                         </div>
                         <div className="flex w-full gap-2 mt-2">
-                            <input id="input-field"
+                            <input autoComplete="off" id="input-field"
                                 type="password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}

@@ -102,7 +102,7 @@ export default function SalarySection({ memberIds, currentUserUid, isGlass }) {
                         {isMe ? (
                             editingUid === member.id ? (
                                 <div className="flex gap-2">
-                                    <input id="input-field"
+                                    <input autoComplete="off" id="input-field"
                                         type="text"
                                         inputMode="numeric"
                                         placeholder="Ej: 500.000"

@@ -124,7 +124,7 @@ export default function HouseholdEnvelopeSection({
                             {useCustom && (
                                 <div className="relative">
                                     <span className={`absolute left-4 top-1/2 -translate-y-1/2 font-bold ${isGlass ? 'text-white/50' : 'text-gray-400'}`}>$</span>
-                                    <input id="input-field"
+                                    <input autoComplete="off" id="input-field"
                                         type="text"
                                         inputMode="numeric"
                                         placeholder="0"

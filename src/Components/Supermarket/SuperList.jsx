@@ -443,7 +443,7 @@ export default function SuperList() {
                                                 ? (isGlass ? 'border-purple-400/60 ring-1 ring-purple-400/30 bg-purple-500/10' : 'border-purple-400 ring-2 ring-purple-100 bg-purple-50')
                                                 : (isGlass ? 'bg-white/5 border-white/10' : 'bg-gray-50 border-gray-200')
                                     }`}>
-                                        <input id="input-field"
+                                        <input autoComplete="off" id="input-field"
                                             type="tel"
                                             className={`w-full bg-transparent outline-none text-sm font-bold text-right transition-colors duration-150 ${item.checked ? 'text-purple-700' : (isGlass ? 'text-white' : 'text-gray-800')}`}
                                             value={item.price ? formatInputCurrency(item.price) : ''}

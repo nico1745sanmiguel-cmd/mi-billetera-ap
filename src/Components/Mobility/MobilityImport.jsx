@@ -160,7 +160,7 @@ export default function MobilityImport({ isGlass, onSuccess }) {
                                 : 'border-gray-200 bg-gray-50 hover:bg-gray-100'
                     }`}
                 >
-                    <input id="input-field"
+                    <input autoComplete="off" id="input-field"
                         ref={fileRef}
                         type="file"
                         accept=".csv"

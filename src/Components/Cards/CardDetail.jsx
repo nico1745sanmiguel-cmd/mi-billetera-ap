@@ -182,11 +182,11 @@ export default function CardDetail({ card, isNewCard, currentDate, privacyMode, 
 
                         <div>
                             <label className={labelClass} htmlFor="cardName">Nombre (ej. Visa Oro)</label>
-                            <input id="cardName" required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className={inputClass} placeholder="Descripción corta" />
+                            <input autoComplete="off" id="cardName" required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className={inputClass} placeholder="Descripción corta" />
                         </div>
                         <div>
                             <label className={labelClass} htmlFor="cardBank">Banco Emisor</label>
-                            <input id="cardBank" required value={form.bank} onChange={e => setForm({ ...form, bank: e.target.value })} className={inputClass} placeholder="Galicia, Santander, etc." />
+                            <input autoComplete="off" id="cardBank" required value={form.bank} onChange={e => setForm({ ...form, bank: e.target.value })} className={inputClass} placeholder="Galicia, Santander, etc." />
                         </div>
                         <div>
                             <label htmlFor="input-field" className={`${labelClass} mb-2`} id="cardColorLabel">Color de Tarjeta</label>
@@ -199,11 +199,11 @@ export default function CardDetail({ card, isNewCard, currentDate, privacyMode, 
                         <div className="grid grid-cols-2 gap-3">
                             <div>
                                 <label className={labelClass} htmlFor="cardCloseDay">Día de Cierre</label>
-                                <input id="cardCloseDay" required type="number" min="1" max="31" value={form.closeDay} onChange={e => setForm({ ...form, closeDay: e.target.value })} className={`${inputClass} text-center`} placeholder="Ej: 5" />
+                                <input autoComplete="off" id="cardCloseDay" required type="number" min="1" max="31" value={form.closeDay} onChange={e => setForm({ ...form, closeDay: e.target.value })} className={`${inputClass} text-center`} placeholder="Ej: 5" />
                             </div>
                             <div>
                                 <label className={labelClass} htmlFor="cardDueDay">Día de Vencimiento</label>
-                                <input id="cardDueDay" required type="number" min="1" max="31" value={form.dueDay} onChange={e => setForm({ ...form, dueDay: e.target.value })} className={`${inputClass} text-center`} placeholder="Ej: 20" />
+                                <input autoComplete="off" id="cardDueDay" required type="number" min="1" max="31" value={form.dueDay} onChange={e => setForm({ ...form, dueDay: e.target.value })} className={`${inputClass} text-center`} placeholder="Ej: 20" />
                             </div>
                         </div>
                         <div className="flex gap-3 pt-2">
@@ -250,7 +250,7 @@ export default function CardDetail({ card, isNewCard, currentDate, privacyMode, 
 
                                 <div>
                                     <label className={labelClass} htmlFor="statementTotalDue">Total a Pagar ($)</label>
-                                    <input
+                                    <input autoComplete="off"
                                         id="statementTotalDue"
                                         type="text" inputMode="numeric"
                                         value={formatInputNumber(statement.totalDue)}
@@ -260,7 +260,7 @@ export default function CardDetail({ card, isNewCard, currentDate, privacyMode, 
                                 </div>
                                 <div>
                                     <label className={labelClass} htmlFor="statementDueDate">Fecha de Vencimiento</label>
-                                    <input id="statementDueDate" type="date" value={statement.dueDate} onChange={e => setStatement({ ...statement, dueDate: e.target.value })} className={inputClass} />
+                                    <input autoComplete="off" id="statementDueDate" type="date" value={statement.dueDate} onChange={e => setStatement({ ...statement, dueDate: e.target.value })} className={inputClass} />
                                 </div>
 
                                 <div className={`p-3 rounded-xl border ${isGlass ? 'bg-white/5 border-white/10' : 'bg-gray-50 border-gray-100'}`}>
@@ -268,11 +268,11 @@ export default function CardDetail({ card, isNewCard, currentDate, privacyMode, 
                                     <div className="grid grid-cols-2 gap-3">
                                         <div>
                                             <label className={labelClass} htmlFor="statementNextCloseDate">Próximo Cierre</label>
-                                            <input id="statementNextCloseDate" type="date" value={statement.nextCloseDate} onChange={e => setStatement({ ...statement, nextCloseDate: e.target.value })} className={inputClass} />
+                                            <input autoComplete="off" id="statementNextCloseDate" type="date" value={statement.nextCloseDate} onChange={e => setStatement({ ...statement, nextCloseDate: e.target.value })} className={inputClass} />
                                         </div>
                                         <div>
                                             <label className={labelClass} htmlFor="statementNextDueDate">Próximo Vencimiento</label>
-                                            <input id="statementNextDueDate" type="date" value={statement.nextDueDate} onChange={e => setStatement({ ...statement, nextDueDate: e.target.value })} className={inputClass} />
+                                            <input autoComplete="off" id="statementNextDueDate" type="date" value={statement.nextDueDate} onChange={e => setStatement({ ...statement, nextDueDate: e.target.value })} className={inputClass} />
                                         </div>
                                     </div>
                                 </div>
