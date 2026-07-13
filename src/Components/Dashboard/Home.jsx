@@ -255,12 +255,12 @@ const Home = memo(({ onLogout, notifications = EMPTY_ARRAY, onCardClick }) => {
                 {privacyMode && <div className="absolute inset-0 flex items-center justify-center font-bold text-gray-500 z-10">Vista Privada</div>}
             </div>
         ) } : {}),
-        ...(isModuleEnabled('savings') ? { savings_summary: () => <SavingsWidget setView={(path) => navigate(`/${path}`)} privacyMode={privacyMode} /> } : {}),
-        ...(isModuleEnabled('mobility') ? { mobility: () => <MobilityWidget setView={(path) => navigate(`/${path}`)} currentDate={currentDate} privacyMode={privacyMode} /> } : {}),
-        ...(isModuleEnabled('salary') ? { salary: () => <SalaryWidget setView={(path) => navigate(`/${path}`)} privacyMode={privacyMode} /> } : {}),
+        ...(isModuleEnabled('savings') ? { savings_summary: (size) => <SavingsWidget setView={(path) => navigate(`/${path}`)} privacyMode={privacyMode} size={size} /> } : {}),
+        ...(isModuleEnabled('mobility') ? { mobility: (size) => <MobilityWidget setView={(path) => navigate(`/${path}`)} currentDate={currentDate} privacyMode={privacyMode} size={size} /> } : {}),
+        ...(isModuleEnabled('salary') ? { salary: (size) => <SalaryWidget setView={(path) => navigate(`/${path}`)} privacyMode={privacyMode} size={size} /> } : {}),
         ...(isModuleEnabled('household') ? { split_summary: (size) => <SplitSummaryWidget setView={(path) => navigate(`/${path}`)} householdMembers={householdMembers} splitData={splitData} currentDate={currentDate} privacyMode={privacyMode} user={user} size={size} /> } : {}),
         ...(isModuleEnabled('cards') ? { cards: (size) => <CardsWidget cards={cards} targetMonthKey={targetMonthKey} privacyMode={privacyMode} onCardClick={openCardModal} size={size} /> } : {}),
-        ...(isModuleEnabled('agenda') ? { agenda: () => <AgendaWidget agenda={agenda} currentDate={currentDate} privacyMode={privacyMode} setView={(path) => navigate(`/${path}`)} freshItems={freshItems} plannerCategories={plannerCategories} onTogglePaid={handleToggleAgendaPaid} /> } : {}),
+        ...(isModuleEnabled('agenda') ? { agenda: (size) => <AgendaWidget agenda={agenda} currentDate={currentDate} privacyMode={privacyMode} setView={(path) => navigate(`/${path}`)} freshItems={freshItems} plannerCategories={plannerCategories} onTogglePaid={handleToggleAgendaPaid} size={size} /> } : {}),
         ...(isModuleEnabled('supermarket') ? { super_actions: (size) => <SuperActionsWidget size={size} superData={superData} privacyMode={privacyMode} setView={(path) => navigate(`/${path}`)} targetMonthKey={targetMonthKey} /> } : {}),
         ...(isModuleEnabled('planner') ? { planner_access: (size) => <PlannerWidget setView={(path) => navigate(`/${path}`)} size={size} /> } : {}),
     };

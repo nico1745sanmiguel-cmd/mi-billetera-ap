@@ -4,12 +4,50 @@ import { SalaryProvider, useSalaryState } from '../../../context/SalaryContext';
 import Skeleton from '../../UI/Skeleton';
 import { formatMoney } from '../../../utils';
 
-function SalaryWidgetInner({ setView, privacyMode }) {
+function SalaryWidgetInner({ setView, privacyMode, size }) {
     const { totalIncome, totalBudgeted, totalFree, loading } = useSalaryState();
 
     const percent = totalIncome > 0 ? Math.min(100, Math.round((totalBudgeted / totalIncome) * 100)) : 0;
     const showMoney = (v) => privacyMode ? '••••' : formatMoney(v);
+    const isHalf = size === 'half';
 
+    // ─── Modo COMPACTO ────────────────────────────────────────────────────────
+    if (isHalf) {
+        return (
+            <div
+                onClick={() => setView('salary')}
+                className="h-full flex flex-col items-center justify-center rounded-2xl p-3 shadow-sm border border-violet-100 bg-gradient-to-br from-violet-50 to-indigo-50 dark:from-white/10 dark:to-white/5 dark:border-white/10 relative overflow-hidden cursor-pointer transition-all active:scale-95 group text-center gap-2"
+            >
+                <div className="absolute right-0 top-0 w-24 h-24 bg-gradient-to-br from-violet-200/40 to-indigo-200/40 dark:from-violet-500/10 dark:to-indigo-500/10 rounded-full -mr-8 -mt-8 blur-2xl" />
+                <div className="relative z-10 bg-violet-200 dark:bg-violet-500/20 p-2.5 rounded-xl text-violet-700 dark:text-violet-300">
+                    <Briefcase size={18} />
+                </div>
+                <div className="relative z-10 w-full min-w-0">
+                    <p className="text-[10px] uppercase font-bold text-gray-500 dark:text-white/50 tracking-wider mb-0.5">Sueldo</p>
+                    {loading && totalIncome === 0 ? (
+                        <Skeleton type="title" width="80px" className="!h-6 mx-auto" />
+                    ) : totalIncome === 0 ? (
+                        <p className="text-xs text-gray-400 dark:text-white/40 font-medium">Sin configurar</p>
+                    ) : (
+                        <>
+                            <p className="text-lg font-extrabold text-violet-700 dark:text-violet-300 font-mono truncate w-full">
+                                {showMoney(totalIncome)}
+                            </p>
+                            <div className="h-1 rounded-full bg-violet-100 dark:bg-white/10 overflow-hidden mt-1.5">
+                                <div
+                                    className={`h-full rounded-full transition-all duration-700 ${totalFree < 0 ? 'bg-red-500' : 'bg-gradient-to-r from-violet-500 to-indigo-500'}`}
+                                    style={{ width: `${percent}%` }}
+                                />
+                            </div>
+                            <p className="text-[9px] text-gray-400 dark:text-white/30 mt-0.5">{percent}% asig.</p>
+                        </>
+                    )}
+                </div>
+            </div>
+        );
+    }
+
+    // ─── Modo COMPLETO ────────────────────────────────────────────────────────
     return (
         <div
             onClick={() => setView('salary')}

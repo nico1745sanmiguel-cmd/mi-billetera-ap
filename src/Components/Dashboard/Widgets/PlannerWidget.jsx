@@ -89,7 +89,7 @@ export default function PlannerWidget({ setView, size }) {
                     <div className="min-w-0">
                         <p className="font-bold text-gray-800 dark:text-white text-sm leading-none mb-1 truncate">Planificador</p>
                         <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                            Faltan: <span className="font-semibold text-gray-700 dark:text-gray-200">{formatMoney(faltante)}</span>
+                            Faltan: <span className="font-semibold text-gray-700 dark:text-gray-200 truncate">{formatMoney(faltante)}</span>
                         </p>
                     </div>
                 </div>

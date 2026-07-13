@@ -71,7 +71,7 @@ function UndoToast({ toast, onUndo, onDismiss }) {
 
 const EMPTY_ARRAY = [];
 
-export default function AgendaWidget({ agenda, currentDate, privacyMode, setView, freshItems = EMPTY_ARRAY, plannerCategories = EMPTY_ARRAY, onTogglePaid }) {
+export default function AgendaWidget({ agenda, currentDate, privacyMode, setView, freshItems = EMPTY_ARRAY, plannerCategories = EMPTY_ARRAY, onTogglePaid, size }) {
     const showMoney = (amount) => privacyMode ? '****' : formatMoney(amount);
 
     const [viewMode, setViewMode] = useState(() => {
@@ -152,6 +152,72 @@ export default function AgendaWidget({ agenda, currentDate, privacyMode, setView
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
+    const isHalf = size === 'half';
+
+    // ─── Modo COMPACTO ────────────────────────────────────────────────────────
+    if (isHalf) {
+        const compactItems = agenda.slice(0, 3);
+        return (
+            <>
+                <div className="h-full flex flex-col bg-white dark:bg-white/5 rounded-3xl border border-gray-100 dark:border-white/10 shadow-sm overflow-hidden dark:backdrop-blur-md">
+                    {/* Header compacto */}
+                    <button
+                        type="button"
+                        className="px-3 py-2.5 border-b border-gray-50 dark:border-white/5 flex items-center gap-2 bg-gray-50/50 dark:bg-transparent w-full cursor-pointer hover:opacity-80 transition-opacity"
+                        onClick={() => setView('services_manager')}
+                    >
+                        <CalendarDays size={14} className="text-indigo-500 dark:text-indigo-300 flex-shrink-0" />
+                        <p className="font-bold text-gray-800 dark:text-white text-xs truncate">
+                            Agenda — {currentDate.toLocaleString('es-AR', { month: 'short' })}
+                        </p>
+                    </button>
+
+                    {/* Lista compacta: máx 3 items */}
+                    <div className="flex-1 overflow-hidden">
+                        {compactItems.length === 0 ? (
+                            <div className="h-full flex items-center justify-center">
+                                <p className="text-[10px] text-gray-400 dark:text-white/40 flex items-center gap-1">
+                                    <PartyPopper size={12} /> Sin pendientes
+                                </p>
+                            </div>
+                        ) : (
+                            compactItems.map((item) => (
+                                <div
+                                    key={item.id}
+                                    className="flex items-center justify-between px-3 py-2 border-b border-gray-50 dark:border-white/5 last:border-0"
+                                >
+                                    <div className="flex items-center gap-2 min-w-0">
+                                        <div className={`w-6 h-6 rounded-lg flex flex-col items-center justify-center flex-shrink-0 ${item.day <= 5 ? 'bg-red-50 text-red-600 dark:bg-red-500/20 dark:text-red-300' : 'bg-gray-100 text-gray-500 dark:bg-white/10 dark:text-white/70'}`}>
+                                            <span className="text-[10px] font-bold leading-none">{item.day}</span>
+                                        </div>
+                                        <p className="text-xs font-semibold text-gray-800 dark:text-white/90 truncate">{item.name}</p>
+                                    </div>
+                                    <p className="font-mono text-xs font-bold text-gray-700 dark:text-white flex-shrink-0 ml-1">{showMoney(item.amount)}</p>
+                                </div>
+                            ))
+                        )}
+                    </div>
+
+                    {/* Footer: indicador si hay más items */}
+                    {agenda.length > 3 && (
+                        <div className="px-3 py-1.5 border-t border-gray-50 dark:border-white/5 text-center">
+                            <p className="text-[9px] font-bold text-indigo-400 dark:text-indigo-300">
+                                +{agenda.length - 3} más →
+                            </p>
+                        </div>
+                    )}
+                </div>
+
+                <UndoToast
+                    toast={undoToast}
+                    onUndo={handleUndo}
+                    onDismiss={() => setUndoToast(null)}
+                />
+            </>
+        );
+    }
+
+    // ─── Modo COMPLETO ────────────────────────────────────────────────────────
     return (
         <>
             <div className="h-full flex flex-col bg-white dark:bg-white/5 rounded-3xl border border-gray-100 dark:border-white/10 shadow-sm overflow-hidden mx-1 dark:backdrop-blur-md">

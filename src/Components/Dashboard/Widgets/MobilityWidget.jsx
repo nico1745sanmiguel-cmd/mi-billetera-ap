@@ -3,7 +3,7 @@ import { Car, TrendingUp, ChevronRight, Target } from 'lucide-react';
 import { useMobilityState, MobilityProvider } from '../../../context/MobilityContext';
 import Skeleton from '../../UI/Skeleton';
 
-function MobilityWidgetInner({ setView, currentDate, privacyMode }) {
+function MobilityWidgetInner({ setView, currentDate, privacyMode, size }) {
     const { sessions, loading, settings } = useMobilityState();
 
     const monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
@@ -43,7 +43,51 @@ function MobilityWidgetInner({ setView, currentDate, privacyMode }) {
         : 'from-violet-500 to-indigo-500';
 
     const fmt = (v) => privacyMode ? '••••' : `$${v.toLocaleString('es-AR')}`;
+    const isHalf = size === 'half';
 
+    // ─── Modo COMPACTO ────────────────────────────────────────────────────────
+    if (isHalf) {
+        return (
+            <div
+                onClick={() => setView('mobility')}
+                className="h-full flex flex-col items-center justify-center rounded-2xl p-3 shadow-sm border border-violet-100 bg-gradient-to-br from-violet-50 to-indigo-50 dark:from-white/10 dark:to-white/5 dark:border-white/10 relative overflow-hidden cursor-pointer transition-all active:scale-95 group text-center gap-2"
+            >
+                <div className="absolute right-0 top-0 w-24 h-24 bg-gradient-to-br from-violet-200/40 to-indigo-200/40 dark:from-violet-500/10 dark:to-indigo-500/10 rounded-full -mr-8 -mt-8 blur-2xl" />
+                <div className="relative z-10 bg-violet-200 dark:bg-violet-500/20 p-2.5 rounded-xl text-violet-700 dark:text-violet-300">
+                    <Car size={18} />
+                </div>
+                <div className="relative z-10 w-full min-w-0">
+                    <p className="text-[10px] uppercase font-bold text-gray-500 dark:text-white/50 tracking-wider mb-0.5">
+                        {settings?.widgetTitle || 'Movilidad'}
+                    </p>
+                    {loading && sessions.length === 0 ? (
+                        <Skeleton type="title" width="80px" className="!h-6 mx-auto" />
+                    ) : (
+                        <>
+                            <p className="text-lg font-extrabold text-violet-700 dark:text-violet-300 font-mono truncate w-full">
+                                {fmt(total)}
+                            </p>
+                            {hasPrevData && (
+                                <>
+                                    <div className="h-1 rounded-full bg-violet-100 dark:bg-white/10 overflow-hidden mt-1.5">
+                                        <div
+                                            className={`h-full rounded-full bg-gradient-to-r ${barColor} transition-all duration-700`}
+                                            style={{ width: `${progress}%` }}
+                                        />
+                                    </div>
+                                    <p className="text-[9px] text-gray-400 dark:text-white/30 mt-0.5">
+                                        {exceeded ? '¡Meta superada!' : `${Math.round(progress)}%`}
+                                    </p>
+                                </>
+                            )}
+                        </>
+                    )}
+                </div>
+            </div>
+        );
+    }
+
+    // ─── Modo COMPLETO ────────────────────────────────────────────────────────
     return (
         <div
             onClick={() => setView('mobility')}
@@ -135,3 +179,4 @@ function MobilityWidgetInner({ setView, currentDate, privacyMode }) {
 export default function MobilityWidget(props) {
     return <MobilityWidgetInner {...props} />;
 }
+

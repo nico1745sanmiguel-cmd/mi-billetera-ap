@@ -1,0 +1,447 @@
+c:/Users/Nico/.gemini/antigravity/scratch/mi-billetera-ap/src/Components/Cards/CardDetail.jsx
+<input id="cardName" required value={form.name} onChange={e =>
+
+c:/Users/Nico/.gemini/antigravity/scratch/mi-billetera-ap/src/Components/Cards/CardDetail.jsx
+<input id="cardBank" required value={form.bank} onChange={e =>
+
+c:/Users/Nico/.gemini/antigravity/scratch/mi-billetera-ap/src/Components/Cards/CardDetail.jsx
+<input id="cardCloseDay" required type="number" min="1" max="31" value={form.closeDay} onChange={e =>
+
+c:/Users/Nico/.gemini/antigravity/scratch/mi-billetera-ap/src/Components/Cards/CardDetail.jsx
+<input id="cardDueDay" required type="number" min="1" max="31" value={form.dueDay} onChange={e =>
+
+c:/Users/Nico/.gemini/antigravity/scratch/mi-billetera-ap/src/Components/Cards/CardDetail.jsx
+<input
+                                        id="statementTotalDue"
+                                        type="text" inputMode="numeric"
+                                        value={formatInputNumber(statement.totalDue)}
+                                        onChange={e =>
+
+c:/Users/Nico/.gemini/antigravity/scratch/mi-billetera-ap/src/Components/Cards/CardDetail.jsx
+<input id="statementDueDate" type="date" value={statement.dueDate} onChange={e =>
+
+c:/Users/Nico/.gemini/antigravity/scratch/mi-billetera-ap/src/Components/Cards/CardDetail.jsx
+<input id="statementNextCloseDate" type="date" value={statement.nextCloseDate} onChange={e =>
+
+c:/Users/Nico/.gemini/antigravity/scratch/mi-billetera-ap/src/Components/Cards/CardDetail.jsx
+<input id="statementNextDueDate" type="date" value={statement.nextDueDate} onChange={e =>
+
+c:/Users/Nico/.gemini/antigravity/scratch/mi-billetera-ap/src/Components/Cards/StatementUploader.jsx
+<input
+                    type="file"
+                    id="pdf-upload"
+                    className="hidden"
+                    accept=".pdf"
+                    onChange={handleChange}
+                />
+
+c:/Users/Nico/.gemini/antigravity/scratch/mi-billetera-ap/src/Components/Cards/StatementUploader.jsx
+<input id="input-field"
+                                type="password"
+                                value={password}
+                                onChange={(e) =>
+
+c:/Users/Nico/.gemini/antigravity/scratch/mi-billetera-ap/src/Components/Dashboard/Widgets/FloatingNotes.jsx
+<input id="input-field" 
+                            ref={inputRef}
+                            type="text"
+                            value={inputValue}
+                            onChange={(e) =>
+
+c:/Users/Nico/.gemini/antigravity/scratch/mi-billetera-ap/src/Components/Dashboard/Widgets/SuperActionsWidget.jsx
+<input id="input-field"
+                            type="text"
+                            placeholder="Producto..."
+                            value={inputValue}
+                            onChange={(e) =>
+
+c:/Users/Nico/.gemini/antigravity/scratch/mi-billetera-ap/src/Components/Dashboard/Widgets/SuperActionsWidget.jsx
+<input id="input-field"
+                        type="text"
+                        placeholder="Agregar rápido al súper..."
+                        value={inputValue}
+                        onChange={(e) =>
+
+c:/Users/Nico/.gemini/antigravity/scratch/mi-billetera-ap/src/Components/Household/HouseholdJoinOrCreate.jsx
+<input id="input-field"
+                        type="text"
+                        placeholder="000-000"
+                        maxLength={6}
+                        value={joinCode}
+                        onChange={(e) =>
+
+c:/Users/Nico/.gemini/antigravity/scratch/mi-billetera-ap/src/Components/Household/SalarySection.jsx
+<input id="input-field"
+                                        type="text"
+                                        inputMode="numeric"
+                                        placeholder="Ej: 500.000"
+                                        value={formatInputNumber(inputValue)}
+                                        onChange={(e) =>
+
+c:/Users/Nico/.gemini/antigravity/scratch/mi-billetera-ap/src/Components/Login.jsx
+<input id="input-field"
+              type="email"
+              required
+              value={email}
+              onChange={e =>
+
+c:/Users/Nico/.gemini/antigravity/scratch/mi-billetera-ap/src/Components/Login.jsx
+<input id="input-field"
+              type="password"
+              required
+              value={password}
+              onChange={e =>
+
+c:/Users/Nico/.gemini/antigravity/scratch/mi-billetera-ap/src/Components/Mobility/MobilityExpenses.jsx
+<input
+                                type="date"
+                                value={gncDate}
+                                onChange={e =>
+
+c:/Users/Nico/.gemini/antigravity/scratch/mi-billetera-ap/src/Components/Mobility/MobilityExpenses.jsx
+<CurrencyInput
+                                    id="gnc-amount"
+                                    value={gncAmount}
+                                    onChange={setGncAmount}
+                                    placeholder="Monto"
+                                    className={`${inputCls} ps-7`}
+                                />
+
+c:/Users/Nico/.gemini/antigravity/scratch/mi-billetera-ap/src/Components/Mobility/MobilityExpenses.jsx
+<input id="full-date"
+                                    type="date"
+                                    value={fullForm.date}
+                                    onChange={e =>
+
+c:/Users/Nico/.gemini/antigravity/scratch/mi-billetera-ap/src/Components/Mobility/MobilityExpenses.jsx
+<CurrencyInput
+                                        id="full-amount"
+                                        value={fullForm.amount}
+                                        onChange={val =>
+
+c:/Users/Nico/.gemini/antigravity/scratch/mi-billetera-ap/src/Components/Mobility/MobilityExpenses.jsx
+<input id="full-notes"
+                                type="text"
+                                placeholder="Ej: cambio de aceite, filtro…"
+                                value={fullForm.notes}
+                                onChange={e =>
+
+c:/Users/Nico/.gemini/antigravity/scratch/mi-billetera-ap/src/Components/Mobility/MobilityForm.jsx
+<input
+                            id="mobDate"
+                            type="date"
+                            value={form.date}
+                            onChange={e =>
+
+c:/Users/Nico/.gemini/antigravity/scratch/mi-billetera-ap/src/Components/Mobility/MobilityForm.jsx
+<CurrencyInput
+                            id="mobHours"
+                            value={form.hoursWorked}
+                            onChange={val =>
+
+c:/Users/Nico/.gemini/antigravity/scratch/mi-billetera-ap/src/Components/Mobility/MobilityForm.jsx
+<CurrencyInput
+                            id="mobKm"
+                            value={form.kilometers}
+                            onChange={val =>
+
+c:/Users/Nico/.gemini/antigravity/scratch/mi-billetera-ap/src/Components/Mobility/MobilityForm.jsx
+<CurrencyInput
+                                        id={`mob_${key}`}
+                                        value={form[key]}
+                                        onChange={val =>
+
+c:/Users/Nico/.gemini/antigravity/scratch/mi-billetera-ap/src/Components/Mobility/MobilityImport.jsx
+<input id="input-field"
+                        ref={fileRef}
+                        type="file"
+                        accept=".csv"
+                        className="hidden"
+                        onChange={e =>
+
+c:/Users/Nico/.gemini/antigravity/scratch/mi-billetera-ap/src/Components/Mobility/MobilitySettings.jsx
+<input 
+                                    type="text" 
+                                    value={widgetTitle}
+                                    onChange={(e) =>
+
+c:/Users/Nico/.gemini/antigravity/scratch/mi-billetera-ap/src/Components/Mobility/MobilitySettings.jsx
+<input id="input-field" 
+                                type="text" 
+                                value={newCategory}
+                                onChange={(e) =>
+
+c:/Users/Nico/.gemini/antigravity/scratch/mi-billetera-ap/src/Components/Purchase/NewPurchase.jsx
+<input id="input-field"
+                            type="tel"
+                            value={formatInputNumber(amount)}
+                            onChange={(e) =>
+
+c:/Users/Nico/.gemini/antigravity/scratch/mi-billetera-ap/src/Components/Purchase/NewPurchase.jsx
+<input id="input-field"
+                                type="range"
+                                min="1"
+                                max="12"
+                                step="1"
+                                value={installments}
+                                onChange={(e) =>
+
+c:/Users/Nico/.gemini/antigravity/scratch/mi-billetera-ap/src/Components/Purchase/NewPurchase.jsx
+<input id="input-field"
+                            type="text"
+                            value={description}
+                            onChange={(e) =>
+
+c:/Users/Nico/.gemini/antigravity/scratch/mi-billetera-ap/src/Components/Reconciliation/ReconciliationDesk.jsx
+<input id="input-field"
+                                            type="text"
+                                            placeholder="Nombre (Alias)"
+                                            className={`p-2 rounded-lg text-sm ${isGlass ? 'bg-black/20' : 'bg-gray-50'}`}
+                                            onChange={(e) =>
+
+c:/Users/Nico/.gemini/antigravity/scratch/mi-billetera-ap/src/Components/Salary/EnvelopeEditor.jsx
+<input id="input-field"
+                            type="text"
+                            placeholder="Ej: Alquiler, Ocio, Farmacia..."
+                            value={label}
+                            onChange={e =>
+
+c:/Users/Nico/.gemini/antigravity/scratch/mi-billetera-ap/src/Components/Salary/EnvelopeEditor.jsx
+<input id="input-field"
+                                type="text"
+                                inputMode="numeric"
+                                placeholder="0"
+                                value={budgeted ? formatInputNumber(budgeted) : ''}
+                                onChange={e =>
+
+c:/Users/Nico/.gemini/antigravity/scratch/mi-billetera-ap/src/Components/Salary/HouseholdEnvelopeSection.jsx
+<input id="input-field"
+                                        type="text"
+                                        inputMode="numeric"
+                                        placeholder="0"
+                                        autoFocus
+                                        value={customInput ? formatInputNumber(customInput) : ''}
+                                        onChange={e =>
+
+c:/Users/Nico/.gemini/antigravity/scratch/mi-billetera-ap/src/Components/Salary/SalarySourcesEditor.jsx
+<input id="input-field"
+                                        type="text"
+                                        value={editLabel}
+                                        onChange={e =>
+
+c:/Users/Nico/.gemini/antigravity/scratch/mi-billetera-ap/src/Components/Salary/SalarySourcesEditor.jsx
+<input id="input-field"
+                                            type="text"
+                                            inputMode="numeric"
+                                            value={editAmount ? formatInputNumber(editAmount) : ''}
+                                            onChange={e =>
+
+c:/Users/Nico/.gemini/antigravity/scratch/mi-billetera-ap/src/Components/Salary/SalarySourcesEditor.jsx
+<input id="input-field"
+                                type="text"
+                                autoFocus
+                                placeholder="Ej: Freelance, Alquiler cobrado..."
+                                value={newLabel}
+                                onChange={e =>
+
+c:/Users/Nico/.gemini/antigravity/scratch/mi-billetera-ap/src/Components/Salary/SalarySourcesEditor.jsx
+<input id="input-field"
+                                    type="text"
+                                    inputMode="numeric"
+                                    placeholder="Monto"
+                                    value={newAmount ? formatInputNumber(newAmount) : ''}
+                                    onChange={e =>
+
+c:/Users/Nico/.gemini/antigravity/scratch/mi-billetera-ap/src/Components/Savings/AddSavingsModal.jsx
+<input id="input-field"
+                            list="carteras-list"
+                            required
+                            value={formData.cartera}
+                            onChange={(e) =>
+
+c:/Users/Nico/.gemini/antigravity/scratch/mi-billetera-ap/src/Components/Savings/AddSavingsModal.jsx
+<input id="input-field"
+                                list="especies-list"
+                                required
+                                value={formData.especie}
+                                onChange={(e) =>
+
+c:/Users/Nico/.gemini/antigravity/scratch/mi-billetera-ap/src/Components/Savings/AddSavingsModal.jsx
+<input id="input-field"
+                                type="number"
+                                step="any"
+                                min="0"
+                                required
+                                value={formData.cantidad}
+                                onChange={(e) =>
+
+c:/Users/Nico/.gemini/antigravity/scratch/mi-billetera-ap/src/Components/Savings/AddSavingsModal.jsx
+<input id="input-field"
+                            type="text"
+                            value={formData.nota}
+                            onChange={(e) =>
+
+c:/Users/Nico/.gemini/antigravity/scratch/mi-billetera-ap/src/Components/Savings/SavingsCard.jsx
+<input id="input-field" 
+                                        type="text"
+                                        inputMode="decimal"
+                                        value={editValue}
+                                        onChange={(e) =>
+
+c:/Users/Nico/.gemini/antigravity/scratch/mi-billetera-ap/src/Components/Savings/SavingsGoal.jsx
+<input id="input-field"
+                            type="text"
+                            value={form.name}
+                            onChange={e =>
+
+c:/Users/Nico/.gemini/antigravity/scratch/mi-billetera-ap/src/Components/Savings/SavingsGoal.jsx
+<input id="input-field"
+                            type="number"
+                            value={form.amount}
+                            onChange={e =>
+
+c:/Users/Nico/.gemini/antigravity/scratch/mi-billetera-ap/src/Components/Savings/SavingsGoal.jsx
+<input id="input-field"
+                                type="url"
+                                value={form.imageUrl}
+                                onChange={e =>
+
+c:/Users/Nico/.gemini/antigravity/scratch/mi-billetera-ap/src/Components/Services/ServiceModal.jsx
+<input id="input-field"
+                                type="tel"
+                                className={`w-full p-4 border rounded-xl outline-none font-bold text-center text-xl focus:ring-4 ${isGlass ? 'bg-black/20 border-white/10 text-white focus:ring-blue-500/20' : 'bg-white border-blue-200 text-gray-800 focus:ring-blue-100'}`}
+                                placeholder="0"
+                                value={formatInputNumber(form.amount)}
+                                onChange={e =>
+
+c:/Users/Nico/.gemini/antigravity/scratch/mi-billetera-ap/src/Components/Services/ServiceModal.jsx
+<input id="input-field"
+                                    className={`w-full p-4 border rounded-2xl outline-none font-bold ${isGlass ? 'bg-black/20 border-white/10 text-white' : 'bg-gray-50 border-gray-200 text-gray-800'}`}
+                                    placeholder="Ej: Internet..."
+                                    value={form.name}
+                                    onChange={e =>
+
+c:/Users/Nico/.gemini/antigravity/scratch/mi-billetera-ap/src/Components/Services/ServiceModal.jsx
+<input id="input-field"
+                                        type="tel"
+                                        className={`w-full p-4 border rounded-2xl outline-none font-bold text-center ${isGlass ? 'bg-black/20 border-white/10 text-white' : 'bg-gray-50 border-gray-200 text-gray-800'}`}
+                                        placeholder="0"
+                                        value={formatInputNumber(form.amount)}
+                                        onChange={e =>
+
+c:/Users/Nico/.gemini/antigravity/scratch/mi-billetera-ap/src/Components/Services/ServiceModal.jsx
+<input id="input-field"
+                                        type="number"
+                                        max="31"
+                                        className={`w-full p-4 border rounded-2xl outline-none font-bold text-center ${isGlass ? 'bg-black/20 border-white/10 text-white' : 'bg-gray-50 border-gray-200 text-gray-800'}`}
+                                        placeholder="10"
+                                        value={form.day}
+                                        onChange={e =>
+
+c:/Users/Nico/.gemini/antigravity/scratch/mi-billetera-ap/src/Components/Shared/CurrencyInput.jsx
+<input id="input-field">
+
+c:/Users/Nico/.gemini/antigravity/scratch/mi-billetera-ap/src/Components/Shared/CurrencyInput.jsx
+<input
+            type="text"
+            inputMode="numeric"
+            value={display}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            placeholder={placeholder}
+            disabled={disabled}
+            className={className}
+            {...rest}
+        />
+
+c:/Users/Nico/.gemini/antigravity/scratch/mi-billetera-ap/src/Components/Shared/SharedExpensesDashboard.jsx
+<input id="input-field"
+                                type="text"
+                                inputMode="numeric"
+                                placeholder="0"
+                                value={amount}
+                                onChange={handleAmountChange}
+                                onKeyDown={handleKeyDown}
+                                className={`flex-1 bg-transparent font-mono font-bold text-base outline-none ${
+                                    isGlass ? 'text-white placeholder-gray-600' : 'text-gray-900 placeholder-gray-300'
+                                }`}
+                            />
+
+c:/Users/Nico/.gemini/antigravity/scratch/mi-billetera-ap/src/Components/Shared/SharedExpensesDashboard.jsx
+<input id="input-field"
+                        type="text"
+                        placeholder="Nota (opcional)..."
+                        value={note}
+                        onChange={e =>
+
+c:/Users/Nico/.gemini/antigravity/scratch/mi-billetera-ap/src/Components/Supermarket/FreshShop.jsx
+<input id="input-field"
+                        type="text"
+                        placeholder="Nombre (ej. Proyecto Pintura)"
+                        className={`w-full px-4 py-3 rounded-xl font-bold focus:outline-none ${isGlass ? 'bg-white/10 text-white placeholder-white/30' : 'bg-gray-50 text-gray-800 border'}`}
+                        value={newCatLabel}
+                        onChange={e =>
+
+c:/Users/Nico/.gemini/antigravity/scratch/mi-billetera-ap/src/Components/Supermarket/PlannerSection.jsx
+<input id="input-field" 
+                                    type="date" 
+                                    className={`bg-transparent text-[10px] font-bold outline-none border-none ${isGlass ? 'text-indigo-300' : 'text-indigo-600'}`}
+                                    value={addingDate}
+                                    onChange={e =>
+
+c:/Users/Nico/.gemini/antigravity/scratch/mi-billetera-ap/src/Components/Supermarket/PlannerSection.jsx
+<input id="input-field"
+                                ref={noteRef}
+                                type="text"
+                                className={`w-full px-3 py-2.5 rounded-xl text-sm border focus:outline-none transition-colors ${
+                                    isGlass
+                                        ? 'bg-black/30 border-white/10 text-white placeholder-white/30 focus:border-white/30'
+                                        : 'bg-gray-50 border-gray-200 text-gray-800 focus:border-gray-400'
+                                }`}
+                                placeholder="Qué agregar? (ej: Comprar pintura)"
+                                value={addingNote}
+                                onChange={e =>
+
+c:/Users/Nico/.gemini/antigravity/scratch/mi-billetera-ap/src/Components/Supermarket/PlannerSection.jsx
+<input id="input-field"
+                                    type="tel"
+                                    className={`w-full bg-transparent outline-none text-sm font-bold text-right py-2.5 ${
+                                        isGlass ? 'text-white placeholder-white/30' : 'text-gray-800'
+                                    }`}
+                                    placeholder="0"
+                                    value={formatInputNumber(addingTotal)}
+                                    onChange={e =>
+
+c:/Users/Nico/.gemini/antigravity/scratch/mi-billetera-ap/src/Components/Supermarket/SuperList.jsx
+<input id="input-field"
+                                            type="tel"
+                                            className={`w-full bg-transparent outline-none text-sm font-bold text-right transition-colors duration-150 ${item.checked ? 'text-purple-700' : (isGlass ? 'text-white' : 'text-gray-800')}`}
+                                            value={item.price ? formatInputCurrency(item.price) : ''}
+                                            onChange={(e) =>
+
+c:/Users/Nico/.gemini/antigravity/scratch/mi-billetera-ap/src/Components/Supermarket/SupermarketAddInput.jsx
+<input id="input-field"
+                        type="text"
+                        className={`w-full bg-transparent outline-none text-sm font-bold py-3 ${isGlass ? 'text-white placeholder-white/30' : 'text-gray-800'}`}
+                        placeholder="¿Qué falta comprar?"
+                        value={newItem}
+                        onChange={(e) =>
+
+c:/Users/Nico/.gemini/antigravity/scratch/mi-billetera-ap/src/Components/Supermarket/TripCard.jsx
+<input id="input-field"
+                    ref={dateInputRef}
+                    type="date"
+                    defaultValue={trip.date || ''}
+                    onChange={handleDateChange}
+                    onBlur={() =>
+
+c:/Users/Nico/.gemini/antigravity/scratch/mi-billetera-ap/src/Components/Supermarket/TripCard.jsx
+<input id="input-field"
+                            ref={inputRef}
+                            type="tel"
+                            className={`w-full bg-transparent outline-none text-sm font-bold text-right ${
+                                isGlass ? 'text-white' : 'text-gray-800'
+                            }`}
+                            value={formatInputNumber(inputVal)}
+                            onChange={e =>
+

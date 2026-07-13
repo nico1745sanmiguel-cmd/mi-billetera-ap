@@ -6,7 +6,7 @@ import { useSavings } from '../../../context/SavingsContext';
 const arsFormatter = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 });
 const usdFormatter = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
 
-export default function SavingsWidget({ setView, privacyMode }) {
+export default function SavingsWidget({ setView, privacyMode, size }) {
     const { dolarBlue } = useFinancial();
     const { savingsTransactions, savingsGoal } = useSavings();
     const [currencyView, setCurrencyView] = useState('ARS');
@@ -97,7 +97,58 @@ export default function SavingsWidget({ setView, privacyMode }) {
         : 0;
 
     const hasGoalImage = savingsGoal?.imageUrl && !imgError;
+    const isHalf = size === 'half';
 
+    // ─── Modo COMPACTO ────────────────────────────────────────────────────────
+    if (isHalf) {
+        return (
+            <div
+                onClick={() => setView('savings')}
+                className={`h-full flex flex-col justify-between rounded-3xl overflow-hidden cursor-pointer transition-all group relative ${hasGoalImage ? 'bg-gray-800 dark:bg-gray-900' : 'bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 shadow-sm'}`}
+            >
+                {/* Fondo imagen (si hay) */}
+                {hasGoalImage && (
+                    <>
+                        <img src={savingsGoal.imageUrl} alt="" aria-hidden="true" className="absolute inset-0 w-full h-full object-cover" style={{ filter: 'grayscale(100%) brightness(0.45)' }} onError={() => setImgError(true)} />
+                        {progress > 0 && (
+                            <img src={savingsGoal.imageUrl} alt="" aria-hidden="true" className="absolute inset-0 w-full h-full object-cover" style={{ clipPath: `inset(${(100 - progress).toFixed(2)}% 0 0 0)`, transition: 'clip-path 0.8s cubic-bezier(0.22, 1, 0.36, 1)', filter: 'brightness(0.6)' }} />
+                        )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/20 z-10" />
+                    </>
+                )}
+
+                {/* Contenido compacto */}
+                <div className="relative z-20 flex flex-col items-center justify-center h-full p-3 text-center gap-1.5">
+                    <div className="flex items-center gap-1.5">
+                        <TrendingUp size={14} className="text-green-400 flex-shrink-0" />
+                        <p className={`text-[10px] uppercase font-bold tracking-wider ${hasGoalImage ? 'text-white/70' : 'text-gray-500 dark:text-white/50'}`}>Ahorros</p>
+                    </div>
+                    <p className={`text-xl font-black truncate w-full ${hasGoalImage ? 'text-white' : `${privacyMode ? 'blur-sm' : ''} text-gray-900 dark:text-white`}`}>
+                        {formatCurrency(total, currencyView)}
+                    </p>
+                    <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); setCurrencyView(prev => prev === 'ARS' ? 'USD' : 'ARS'); }}
+                        className={`text-[9px] font-bold px-2 py-0.5 rounded-full transition-colors ${hasGoalImage ? 'text-white/60 bg-white/10' : 'text-gray-400 dark:text-white/40 bg-gray-50 dark:bg-white/5'}`}
+                    >
+                        {currencyView}
+                    </button>
+                    {savingsGoal && (
+                        <div className="w-full mt-0.5">
+                            <div className={`h-1 rounded-full overflow-hidden ${hasGoalImage ? 'bg-white/20' : 'bg-gray-100 dark:bg-white/10'}`}>
+                                <div className="h-full rounded-full bg-gradient-to-r from-amber-400 to-amber-500 transition-all duration-1000" style={{ width: `${progress}%` }} />
+                            </div>
+                            <p className={`text-[9px] mt-0.5 font-bold ${hasGoalImage ? 'text-white/60' : 'text-amber-600 dark:text-amber-400'}`}>
+                                {privacyMode ? '**%' : `${progress.toFixed(0)}%`}
+                            </p>
+                        </div>
+                    )}
+                </div>
+            </div>
+        );
+    }
+
+    // ─── Modo COMPLETO ────────────────────────────────────────────────────────
     return (
         <div
             onClick={() => setView('savings')}
