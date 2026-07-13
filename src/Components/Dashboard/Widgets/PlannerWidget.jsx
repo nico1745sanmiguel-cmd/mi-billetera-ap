@@ -34,7 +34,7 @@ export default function PlannerWidget({ setView, size }) {
     }, [pendingItems]);
 
     // ---- MODO COMPACTO (Opción B) ----
-    if (size === 'compact') {
+    if (size === 'half') {
         return (
             <div
                 onClick={() => setView('fresh')}
