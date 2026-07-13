@@ -106,7 +106,7 @@ export default function SavingsGoal() {
         : 'bg-gray-50 text-gray-800 placeholder-gray-400 border border-gray-200 focus:border-amber-400 focus:bg-white';
 
     // ─── Loading ───────────────────────────────────────────────────────────────
-    if (goalLoading) {
+    if (goalLoading && !savingsGoal) {
         return (
             <div className={`rounded-3xl p-6 flex items-center justify-center gap-3 ${cardBg}`}>
                 <Loader2 size={20} className="animate-spin text-amber-400" />
@@ -265,7 +265,7 @@ export default function SavingsGoal() {
 
             {/* Imagen con revelado de color */}
             {hasImage ? (
-                <div className="mx-5 relative overflow-hidden rounded-2xl" style={{ height: '220px' }}>
+                <div className="mx-5 relative overflow-hidden rounded-2xl bg-gray-800 dark:bg-gray-900" style={{ height: '220px' }}>
                     {/* Capa B&N (fondo) */}
                     <img
                         src={savingsGoal.imageUrl}

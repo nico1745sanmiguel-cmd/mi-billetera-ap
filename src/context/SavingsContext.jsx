@@ -22,7 +22,7 @@ export const SavingsProvider = ({ children }) => {
     const { user, userData } = useAuth();
 
     const [savingsTransactions, setSavingsTransactions] = useState(() => getCache(CACHE_KEYS.SAVINGS_TRANSACTIONS, []));
-    const [savingsGoal, setSavingsGoalState] = useState(null);
+    const [savingsGoal, setSavingsGoalState] = useState(() => getCache('savings_goal_data', null));
     const [goalLoading, setGoalLoading] = useState(true);
 
     // ─── Listener de transacciones ────────────────────────────────────────────
@@ -60,9 +60,12 @@ export const SavingsProvider = ({ children }) => {
         const unsub = onSnapshot(q, (snap) => {
             if (snap.empty) {
                 setSavingsGoalState(null);
+                setCache('savings_goal_data', null);
             } else {
                 const d = snap.docs[0];
-                setSavingsGoalState({ id: d.id, ...d.data() });
+                const goalData = { id: d.id, ...d.data() };
+                setSavingsGoalState(goalData);
+                setCache('savings_goal_data', goalData);
             }
             setGoalLoading(false);
         }, (error) => {
