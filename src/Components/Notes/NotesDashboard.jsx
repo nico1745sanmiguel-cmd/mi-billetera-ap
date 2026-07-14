@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { m, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Plus, Edit2, Trash2, Pin, Check, X, Search, Tag } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { ArrowLeft, Plus, Edit2, Trash2, Pin, Check, X, Search, Tag, Settings } from 'lucide-react';
 import { subscribeToNotes, addNote, deleteNote, updateNote } from '../../repositories/notesRepository';
 import { useNotes } from '../../context/NotesContext';
 import { useFinancial } from '../../context/FinancialContext';
@@ -107,6 +108,7 @@ export default function NotesDashboard({ onBack }) {
     const { user } = useFinancial();
     const { settings } = useNotes();
     const { showToast } = useUIDispatch();
+    const navigate = useNavigate();
     const [notes, setNotes] = useState([]);
     const [filterCategory, setFilterCategory] = useState('All');
     const [searchTerm, setSearchTerm] = useState('');
@@ -198,6 +200,9 @@ export default function NotesDashboard({ onBack }) {
                 </div>
 
                 <div className="flex gap-2 w-full sm:w-auto">
+                    <button aria-label="Ajustes de Notas" onClick={() => navigate('/settings_modules/notes')} className="p-2 rounded-xl bg-gray-500/10 hover:bg-gray-500/20 transition-all active:scale-95 shrink-0 transition-colors">
+                        <Settings size={20} />
+                    </button>
                     <div className="relative flex-1 sm:w-64">
                         <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 opacity-50" />
                         <input 
