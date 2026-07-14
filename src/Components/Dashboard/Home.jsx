@@ -137,7 +137,7 @@ const Home = memo(({ onLogout, notifications = EMPTY_ARRAY, onCardClick }) => {
                 } catch (e) { console.error('Error saving notification', e); }
             }
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+         
     }, [targetMonthKey, householdId]);
 
 

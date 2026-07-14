@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+// eslint-disable-next-line no-unused-vars
 import { m, AnimatePresence } from 'framer-motion';
 import { Plus, Check, ExternalLink } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';

@@ -1,5 +1,5 @@
 import React from 'react';
-// eslint-disable-next-line react-doctor/prefer-dynamic-import
+
 import { PieChart, Pie, Cell, ResponsiveContainer, Sector } from 'recharts';
 
 // Renderizado personalizado para el sector activo del gráfico de Dona

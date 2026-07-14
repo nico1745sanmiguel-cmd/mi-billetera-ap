@@ -34,7 +34,7 @@ export default function ModuleDetailSettings({ onBack }) {
         );
     }
 
-    const { label, description, icon: Icon, color, iconBg, iconColor } = moduleInfo;
+    const { label, description, icon: Icon, color: _color, iconBg: _iconBg, iconColor: _iconColor } = moduleInfo;
 
     const renderSpecificSettings = () => {
         switch (moduleId) {

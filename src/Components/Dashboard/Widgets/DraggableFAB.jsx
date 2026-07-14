@@ -1,4 +1,5 @@
 import React, { useRef, useState } from 'react';
+// eslint-disable-next-line no-unused-vars
 import { m, AnimatePresence } from 'framer-motion';
 import { Plus, Receipt, StickyNote } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';

@@ -1,5 +1,5 @@
 import { db } from '../firebase';
-import { collection, addDoc, deleteDoc, doc, updateDoc, query, where, getDocs, onSnapshot } from 'firebase/firestore';
+import { collection, addDoc, deleteDoc, doc, updateDoc, query, where, onSnapshot } from 'firebase/firestore';
 import { COLLECTIONS } from '../config/constants';
 
 const COL = COLLECTIONS.NOTES;

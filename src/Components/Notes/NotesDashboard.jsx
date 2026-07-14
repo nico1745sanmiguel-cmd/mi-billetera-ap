@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+// eslint-disable-next-line no-unused-vars
 import { m, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Plus, Edit2, Trash2, Pin, Check, X, Search, Tag, Settings } from 'lucide-react';
@@ -142,7 +143,7 @@ export default function NotesDashboard({ onBack }) {
             }
             setIsEditing(false);
             setCurrentNote(null);
-        } catch (error) {
+        } catch {
             showToast('Error al guardar la nota', 'error');
         }
     };
@@ -151,7 +152,7 @@ export default function NotesDashboard({ onBack }) {
         try {
             await deleteNote(id);
             showToast('Nota eliminada', 'success');
-        } catch (error) {
+        } catch {
             showToast('Error al eliminar', 'error');
         }
     };
@@ -159,7 +160,7 @@ export default function NotesDashboard({ onBack }) {
     const handleTogglePin = async (note) => {
         try {
             await updateNote(note.id, { ...note, isPinned: note.isPinned === false ? true : false });
-        } catch (error) {
+        } catch {
             showToast('Error al actualizar', 'error');
         }
     };
@@ -167,7 +168,7 @@ export default function NotesDashboard({ onBack }) {
     const handleToggleCheck = async (note) => {
         try {
             await updateNote(note.id, { ...note, checked: !note.checked });
-        } catch (error) {
+        } catch {
             showToast('Error al actualizar', 'error');
         }
     };

@@ -293,7 +293,7 @@ export const MobilityProvider = ({ children }) => {
         expenses,
         loading,
         settings,
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+         
     }), [sessions, expenses, loading, settings]);
 
     const dispatchValue = useMemo(() => ({
@@ -307,7 +307,7 @@ export const MobilityProvider = ({ children }) => {
         deleteExpense,
         getDayOfWeek,
         updateSettings,
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+         
     }), [addSession, updateSession, deleteSession, deleteAllSessions, importSessions, addExpense, updateExpense, deleteExpense, updateSettings]);
 
     return (

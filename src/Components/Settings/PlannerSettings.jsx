@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Settings, Save, LayoutList, EyeOff, FolderOpen, ArrowDownUp, AlertTriangle } from 'lucide-react';
 import { CACHE_KEYS } from '../../config/constants';
 import { getCache, setCache } from '../../utils/cache';
-import { formatMoney, formatInputNumber, parseInputNumber } from '../../utils';
+import { formatInputNumber, parseInputNumber } from '../../utils';
 
 export const getPlannerSettings = () => {
     return getCache(CACHE_KEYS.PLANNER_SETTINGS) || {
@@ -14,7 +14,7 @@ export const getPlannerSettings = () => {
     };
 };
 
-export default function PlannerSettings({ isGlass, onBack }) {
+export default function PlannerSettings({ isGlass, onBack: _onBack }) {
     const [settings, setSettings] = useState(getPlannerSettings());
     const [saved, setSaved] = useState(false);
 

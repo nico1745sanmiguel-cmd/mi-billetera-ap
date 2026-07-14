@@ -1,5 +1,6 @@
 import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
+// eslint-disable-next-line no-unused-vars
 import { AnimatePresence, m, LazyMotion, domMax, MotionConfig } from 'framer-motion';
 import Navbar from './Components/Layout/Navbar';
 import Home from './Components/Dashboard/Home';
