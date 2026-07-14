@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { auth } from '../../firebase';
-import { Plus, LayoutList } from 'lucide-react';
+import { Plus, LayoutList, Settings } from 'lucide-react';
 import { formatMoney } from '../../utils';
 import { deleteFreshItem, copyItemsToMonth } from '../../repositories/freshRepository';
 import { addPlannerCategory } from '../../repositories/plannerCategoriesRepository';
@@ -11,6 +12,7 @@ import { AVAILABLE_ICONS, AVAILABLE_COLORS, DEFAULT_CATEGORIES } from './constan
 import PlannerSection from './PlannerSection';
 
 export default function FreshShop() {
+    const navigate = useNavigate();
     const { isGlass, currentDate } = useUI();
     const { userData } = useAuth();
     const householdId = userData?.householdId;
@@ -138,8 +140,13 @@ export default function FreshShop() {
                             {currentDate.toLocaleString('es-AR', { month: 'long' })}
                         </p>
                     </div>
-                    <div className="text-right">
-                        <p className={`text-[10px] uppercase font-bold ${isGlass ? 'text-white/50' : 'text-gray-400'}`}>Real / Presupuesto</p>
+                    <div className="text-right flex flex-col items-end gap-1">
+                        <div className="flex items-center gap-2">
+                            <p className={`text-[10px] uppercase font-bold ${isGlass ? 'text-white/50' : 'text-gray-400'}`}>Real / Presupuesto</p>
+                            <button aria-label="Acción" type="button" onClick={() => navigate('/settings_modules/planner')} className={`p-1 rounded-lg transition-colors ${isGlass ? 'text-white/50 hover:bg-white/10 hover:text-white' : 'text-gray-400 hover:bg-gray-100 hover:text-gray-700'}`}>
+                                <Settings size={14} />
+                            </button>
+                        </div>
                         <p className={`text-2xl font-bold font-mono ${isGlass ? 'text-white' : 'text-gray-900'}`}>
                             {formatMoney(totals.spent)} <span className="text-xs opacity-40">/ {formatMoney(totals.budget)}</span>
                         </p>

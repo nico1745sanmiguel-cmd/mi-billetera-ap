@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { ChevronDown, ChevronUp, Users, Lock, Calendar, Plus, Trash2, LayoutList, Leaf, Beef } from 'lucide-react';
 import { formatMoney, formatInputNumber, parseInputNumber } from '../../utils';
 import { addFreshItem, deleteFreshItem, updateFreshTotal, toggleFreshCompleted } from '../../repositories/freshRepository';
@@ -7,6 +7,7 @@ import { AVAILABLE_COLORS, AVAILABLE_ICONS } from './constants';
 import { auth } from '../../firebase';
 import ConfirmDialog from '../UI/ConfirmDialog';
 import TripCard from './TripCard';
+import { getPlannerSettings } from '../Settings/PlannerSettings';
 
 export default function PlannerSection({ catData, trips, currentMonthKey, isGlass, householdId }) {
     const cfg = AVAILABLE_COLORS[catData.colorName] || AVAILABLE_COLORS.blue;
@@ -15,12 +16,26 @@ export default function PlannerSection({ catData, trips, currentMonthKey, isGlas
         Icon = catData.id === 'verduleria' ? Leaf : Beef;
     }
 
+    const [settings, setSettings] = useState(getPlannerSettings());
+
+    useEffect(() => {
+        const handleSettingsChange = () => setSettings(getPlannerSettings());
+        window.addEventListener('plannerSettingsChanged', handleSettingsChange);
+        return () => window.removeEventListener('plannerSettingsChanged', handleSettingsChange);
+    }, []);
+
+    const getInitialOpenState = () => {
+        if (settings.initialState === 'expanded') return true;
+        if (settings.initialState === 'collapsed') return false;
+        return catData.isDefault;
+    };
+
     const [prevCatId, setPrevCatId] = useState(catData.id);
-    const [isOpen, setIsOpen] = useState(catData.isDefault);
+    const [isOpen, setIsOpen] = useState(getInitialOpenState());
     
     if (catData.id !== prevCatId) {
         setPrevCatId(catData.id);
-        setIsOpen(catData.isDefault);
+        setIsOpen(getInitialOpenState());
     }
     const [addingNote, setAddingNote] = useState('');
     const [addingTotal, setAddingTotal] = useState('');
@@ -40,14 +55,23 @@ export default function PlannerSection({ catData, trips, currentMonthKey, isGlas
     const monthTrips = useMemo(() => {
         return trips
             .filter(t => t.category === catData.id && t.month === currentMonthKey)
-            .sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0));
-    }, [trips, catData.id, currentMonthKey]);
+            .sort((a, b) => {
+                if (settings.sortBy === 'price_desc') {
+                    return (b.total || 0) - (a.total || 0);
+                }
+                if (settings.sortBy === 'alpha') {
+                    return (a.note || '').localeCompare(b.note || '');
+                }
+                return new Date(a.date || 0) - new Date(b.date || 0);
+            });
+    }, [trips, catData.id, currentMonthKey, settings.sortBy]);
 
     const budgetTrips = monthTrips.filter(t => !t.completed);
     const completedTrips = monthTrips.filter(t => t.completed);
 
     const totalReal = useMemo(() => completedTrips.reduce((acc, t) => acc + (t.total || 0), 0), [completedTrips]);
     const totalBudget = useMemo(() => monthTrips.reduce((acc, t) => acc + (t.total || 0), 0), [monthTrips]);
+    const isOverBudget = settings.budgetAlert > 0 && totalBudget > settings.budgetAlert;
     
     const tripCount = monthTrips.length;
 
@@ -104,9 +128,11 @@ export default function PlannerSection({ catData, trips, currentMonthKey, isGlas
 
     return (
         <div className={`rounded-3xl border overflow-hidden ${
-            isGlass
-                ? `bg-gradient-to-b ${cfg.headerGlass} border-white/10`
-                : `bg-gradient-to-b ${cfg.headerLight} border-gray-200 shadow-sm`
+            isOverBudget
+                ? (isGlass ? 'bg-red-500/10 border-red-500/50' : 'bg-red-50 border-red-200 shadow-sm')
+                : (isGlass
+                    ? `bg-gradient-to-b ${cfg.headerGlass} border-white/10`
+                    : `bg-gradient-to-b ${cfg.headerLight} border-gray-200 shadow-sm`)
         }`}>
             <div className="w-full flex items-center justify-between p-4">
                 <button aria-label="Acción" type="button" onClick={() => setIsOpen(o => !o)} className="flex-1 flex items-center gap-3 text-left">
@@ -125,7 +151,7 @@ export default function PlannerSection({ catData, trips, currentMonthKey, isGlas
                         <p className={`font-mono font-bold ${isGlass ? 'text-white' : 'text-gray-900'}`}>
                             {formatMoney(totalReal)}
                         </p>
-                        <p className={`text-[9px] font-bold ${isGlass ? 'text-white/40' : 'text-gray-400'}`}>
+                        <p className={`text-[9px] font-bold ${isOverBudget ? (isGlass ? 'text-red-400' : 'text-red-500') : (isGlass ? 'text-white/40' : 'text-gray-400')}`}>
                             Presup: {formatMoney(totalBudget)}
                         </p>
                     </div>
@@ -149,16 +175,16 @@ export default function PlannerSection({ catData, trips, currentMonthKey, isGlas
                         <div className="space-y-2">
                             <p className={`text-[10px] font-bold uppercase tracking-widest ${isGlass ? 'text-white/30' : 'text-gray-400'}`}>Pendiente / Presupuesto</p>
                             {budgetTrips.map(trip => (
-                                <TripCard key={trip.id} trip={trip} cfg={cfg} isGlass={isGlass} onDelete={setItemToDelete} onUpdateTotal={updateFreshTotal} onToggleCompleted={toggleFreshCompleted} />
+                                <TripCard key={trip.id} trip={trip} cfg={cfg} isGlass={isGlass} onDelete={setItemToDelete} onUpdateTotal={updateFreshTotal} onToggleCompleted={toggleFreshCompleted} compactView={settings.compactView} />
                             ))}
                         </div>
                     )}
 
-                    {completedTrips.length > 0 && (
+                    {!settings.hideCompleted && completedTrips.length > 0 && (
                         <div className="space-y-2">
                             <p className={`text-[10px] font-bold uppercase tracking-widest ${isGlass ? 'text-white/30' : 'text-gray-400'}`}>Completado / Historial</p>
                             {completedTrips.map(trip => (
-                                <TripCard key={trip.id} trip={trip} cfg={cfg} isGlass={isGlass} onDelete={setItemToDelete} onUpdateTotal={updateFreshTotal} onToggleCompleted={toggleFreshCompleted} />
+                                <TripCard key={trip.id} trip={trip} cfg={cfg} isGlass={isGlass} onDelete={setItemToDelete} onUpdateTotal={updateFreshTotal} onToggleCompleted={toggleFreshCompleted} compactView={settings.compactView} />
                             ))}
                         </div>
                     )}

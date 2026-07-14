@@ -131,4 +131,5 @@ export const CACHE_KEYS = {
     MOBILITY_SETTINGS: 'mobility_settings',
     ENABLED_MODULES: 'enabled_modules',
     NOTES:        'notes',
+    PLANNER_SETTINGS: 'planner_settings',
 };
