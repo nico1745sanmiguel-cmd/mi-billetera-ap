@@ -111,11 +111,11 @@ export default function ServicesCalendarView({
             {/* ── MODAL ZOOM DE DÍA ── */}
             {selectedDay !== null && (
                 <div
-                    className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-fade-in"
+                    className="fixed inset-0 z-[100] flex items-start justify-center p-4 pt-10 sm:pt-16 animate-fade-in"
                     onClick={() => setSelectedDay(null)}
                 >
                     {/* Backdrop */}
-                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+                    <div className="absolute inset-0 bg-black/60 backdrop-blur-md" />
 
                     {/* Modal centrado */}
                     <div

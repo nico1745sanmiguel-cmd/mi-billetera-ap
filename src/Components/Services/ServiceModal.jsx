@@ -19,7 +19,7 @@ export default function ServiceModal({
     if (!isModalOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-fade-in">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[100] flex items-start justify-center p-4 pt-10 sm:pt-16 animate-fade-in">
             <div className={`w-full max-w-sm rounded-3xl p-6 shadow-2xl animate-scale-in max-h-[90vh] overflow-y-auto ${isGlass ? 'bg-[#1a1b4b] border border-white/10' : 'bg-white'}`}>
                 <div className={`flex justify-between items-center mb-6 border-b pb-4 sticky top-0 z-10 ${isGlass ? 'border-white/10 bg-[#1a1b4b]' : 'border-gray-100 bg-white'}`}>
                     <h3 className={`text-lg font-bold ${isGlass ? 'text-white' : 'text-gray-800'}`}>
