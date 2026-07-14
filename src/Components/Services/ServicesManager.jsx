@@ -277,7 +277,17 @@ export default function ServicesManager() {
                 <ServicesCalendarView daysOfWeek={daysOfWeek} calendarDays={calendarDays} calendarItemsByDay={calendarItemsByDay} currentDate={currentDate} isGlass={isGlass} PLANNER_COLOR_MAP={PLANNER_COLOR_MAP} DEFAULT_PLANNER_COLORS={DEFAULT_PLANNER_COLORS} showMoney={showMoney} openModal={openModal} />
             )}
 
-            <ServiceModal isModalOpen={isModalOpen} setIsModalOpen={setIsModalOpen} editingService={editingService} form={form} setForm={setForm} handleSave={handleSave} handleDelete={handleDelete} isGlass={isGlass} householdId={householdId} />
+            <ServiceModal isModalOpen={isModalOpen} setIsModalOpen={setIsModalOpen} editingService={editingService} form={form} setForm={setForm} handleSave={handleSave} handleDelete={handleDeleteRequest} isGlass={isGlass} householdId={householdId} />
+
+            <ConfirmDialog 
+                isOpen={isDeleteOpen}
+                title="Eliminar registro"
+                message="¿Estás seguro de que deseas eliminar este ítem? Esta acción no se puede deshacer."
+                onConfirm={confirmDelete}
+                onCancel={() => setIsDeleteOpen(false)}
+                isDanger={true}
+                confirmText="Eliminar"
+            />
         </div>
     );
 }
