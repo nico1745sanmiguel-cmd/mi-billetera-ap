@@ -32,12 +32,10 @@ const fetchWithRetry = async (url, options, maxRetries = 3) => {
 
 // ─── ENDPOINT 1: ESCÁNER DE TICKETS (Imagen a JSON) ───
 exports.analyzeReceipt = functions.https.onCall(async (data, context) => {
-    // 1. Verificación de Seguridad
     if (!context.auth) {
         throw new functions.https.HttpsError('unauthenticated', 'El usuario debe estar autenticado.');
     }
 
-    // 2. Obtención de la clave secreta desde las variables de entorno de Firebase
     const GROQ_API_KEY = process.env.GROQ_API_KEY || functions.config().groq?.apikey;
     if (!GROQ_API_KEY) {
         console.error("GROQ_API_KEY no está configurada en el servidor.");
@@ -87,7 +85,6 @@ Cada objeto del array debe tener:
         const result = await response.json();
         let content = result.choices[0].message.content.trim();
         
-        // Limpiar markdown residual
         if (content.startsWith('```json')) {
             content = content.replace(/^```json/, '').replace(/```$/, '').trim();
         } else if (content.startsWith('```')) {
@@ -104,12 +101,10 @@ Cada objeto del array debe tener:
 });
 
 // ─── ENDPOINT 2: ESCÁNER DE RESÚMENES PDF (Texto a JSON) ───
-
-// Fallback cascade para asegurar la respuesta si un modelo falla
 const MODELS_TO_TRY = [
-    'llama-3.1-8b-instant',      // Rápido y barato (Prioridad 1)
-    'llama-3.3-70b-versatile',   // Potente (Fallback 1)
-    'mixtral-8x7b-32768'         // Arquitectura diferente (Fallback 2)
+    'llama-3.1-8b-instant',
+    'llama-3.3-70b-versatile',
+    'mixtral-8x7b-32768'
 ];
 
 const SYSTEM_PROMPT = `Eres un experto en extracción de datos financieros de resúmenes de tarjetas de crédito.
@@ -180,7 +175,6 @@ exports.analyzeStatement = functions.https.onCall(async (data, context) => {
         throw new functions.https.HttpsError('invalid-argument', 'Falta el texto a analizar');
     }
 
-    // Limpieza de inputs (sin romper caracteres especiales)
     const cleanText = rawText
       .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')
       .replace(/[\u200B-\u200D\uFEFF]/g, '')
@@ -227,7 +221,152 @@ exports.analyzeStatement = functions.https.onCall(async (data, context) => {
     throw new functions.https.HttpsError('internal', `Todos los modelos fallaron. Último error: ${lastError?.message}`);
 });
 
-// ─── ENDPOINT 3: NOTIFICACIONES PUSH (FCM) ───
+// ─── ENDPOINT 3: ESCÁNER DE CAPTURAS DE INVERSIONES (Imagen → JSON transacciones) ───
+exports.analyzeSavingsCapture = functions.https.onCall(async (data, context) => {
+    if (!context.auth) {
+        throw new functions.https.HttpsError('unauthenticated', 'El usuario debe estar autenticado.');
+    }
+
+    const GROQ_API_KEY = process.env.GROQ_API_KEY || functions.config().groq?.apikey;
+    if (!GROQ_API_KEY) {
+        throw new functions.https.HttpsError('internal', 'La API Key de IA no está configurada.');
+    }
+
+    const { base64Image, carteraHint } = data;
+    if (!base64Image) {
+        throw new functions.https.HttpsError('invalid-argument', 'Falta la imagen base64');
+    }
+
+    const carteraCtx = carteraHint
+        ? `La cartera sugerida por el usuario es: "${carteraHint}".`
+        : 'No hay cartera sugerida; intentá inferirla del contexto visual (nombre de app, logo, etc.).';
+
+    const promptText = `Sos un experto en finanzas personales e inversiones latinoamericanas. Analizá esta captura de pantalla de una app de inversiones o cripto.
+${carteraCtx}
+
+OBJETIVO: Extraer todas las transacciones o tenencias visibles para registrarlas en un portafolio personal.
+
+CASOS POSIBLES:
+1. TRANSACCIÓN INDIVIDUAL: Una operación puntual (compra, venta, conversión, depósito, retiro). Ej: "Compraste 0.467 MSFT por 182.81 USDT".
+2. RESUMEN DE TENENCIA: Vista de una posición abierta. Ej: "Tenés 408 BYMA, precio actual $308.25 ARS, precio promedio de compra $288 ARS".
+
+REGLAS DE EXTRACCIÓN:
+- Para CONVERSIONES (intercambio de un activo por otro): generá DOS transacciones: egreso del activo que salió + ingreso del activo que entró.
+- SIEMPRE incluí el "apiTicker" normalizado para Yahoo Finance:
+  * Acciones USA (MSFT, AAPL, GOOGL, etc.): ticker sin sufijo → "MSFT"
+  * CEDEARs y acciones argentinas en pesos: agregar ".BA" → "BYMA.BA", "GGAL.BA", "YPF.BA"
+  * Cripto major: agregar "-USD" → "BTC-USD", "ETH-USD"
+  * Stablecoins (USDT, USDC, DAI, USDP): apiTicker = null (valen 1 USD)
+  * ARS, USD efectivo: apiTicker = null
+- "precioCompra": precio unitario al que SE REALIZÓ la operación, o precio promedio de compra histórico si está visible. Crítico para calcular rendimientos.
+- "precioActual": precio de mercado actual si está visible en la imagen (puede ser null).
+- "cantidad": SIEMPRE número positivo. El tipo "ingreso"/"egreso" indica la dirección.
+- "moneda": la moneda en que está expresado el precio (USD, ARS, USDT, etc.).
+- Si no podés determinar un campo con certeza, usá null. NO inventes datos.
+
+Respondé ÚNICAMENTE con JSON válido sin markdown. Formato exacto:
+{
+  "carteraInferida": "string o vacío si no se puede inferir",
+  "transacciones": [
+    {
+      "tipo": "ingreso",
+      "especie": "MSFT",
+      "apiTicker": "MSFT",
+      "cantidad": 0.46799756,
+      "precioCompra": 391.24,
+      "precioActual": null,
+      "moneda": "USD",
+      "nota": "Compra MSFT via conversión desde USDT",
+      "fecha": "2026-07-02"
+    }
+  ]
+}`;
+
+    try {
+        const response = await fetchWithRetry('https://api.groq.com/openai/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${GROQ_API_KEY}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+                messages: [
+                    {
+                        role: "user",
+                        content: [
+                            { type: "text", text: promptText },
+                            { type: "image_url", image_url: { url: base64Image } }
+                        ]
+                    }
+                ],
+                temperature: 0.05,
+                max_tokens: 2000
+            })
+        });
+
+        const result = await response.json();
+        let content = result.choices[0].message.content.trim();
+        
+        if (content.startsWith('```json')) {
+            content = content.replace(/^```json/, '').replace(/```$/, '').trim();
+        } else if (content.startsWith('```')) {
+            content = content.replace(/^```/, '').replace(/```$/, '').trim();
+        }
+
+        return JSON.parse(content);
+
+    } catch (error) {
+        console.error("Error en analyzeSavingsCapture:", error);
+        throw new functions.https.HttpsError('internal', `Error al analizar captura: ${error.message}`);
+    }
+});
+
+// ─── ENDPOINT 4: COTIZACIONES EN TIEMPO REAL (Proxy Yahoo Finance) ───
+exports.getQuotes = functions.https.onCall(async (data, context) => {
+    if (!context.auth) {
+        throw new functions.https.HttpsError('unauthenticated', 'El usuario debe estar autenticado.');
+    }
+
+    const { tickers } = data;
+    if (!tickers || !Array.isArray(tickers) || tickers.length === 0) {
+        throw new functions.https.HttpsError('invalid-argument', 'Falta el array de tickers');
+    }
+
+    const validTickers = tickers.filter(t => t && typeof t === 'string' && t.trim() !== '');
+    if (validTickers.length === 0) return {};
+
+    try {
+        const yahooFinance = require('yahoo-finance2').default;
+        
+        const results = {};
+        const promises = validTickers.map(ticker =>
+            yahooFinance.quote(ticker, {}, { validateResult: false })
+                .then(q => {
+                    if (q && q.regularMarketPrice != null) {
+                        results[ticker] = {
+                            price: q.regularMarketPrice,
+                            currency: q.currency || 'USD',
+                            changePercent: q.regularMarketChangePercent || 0,
+                            name: q.longName || q.shortName || ticker
+                        };
+                    }
+                })
+                .catch(err => {
+                    console.warn(`No se pudo obtener cotización para ${ticker}:`, err.message);
+                })
+        );
+
+        await Promise.allSettled(promises);
+        return results;
+
+    } catch (error) {
+        console.error("Error en getQuotes:", error);
+        throw new functions.https.HttpsError('internal', `Error al consultar cotizaciones: ${error.message}`);
+    }
+});
+
+// ─── ENDPOINT 5: NOTIFICACIONES PUSH (FCM) ───
 exports.onNotificationCreated = functions.firestore
     .document('households/{householdId}/notifications/{notificationId}')
     .onCreate(async (snap, context) => {
@@ -240,7 +379,6 @@ exports.onNotificationCreated = functions.firestore
         const itemName = notification.itemName || "un servicio";
 
         try {
-            // Obtener todos los usuarios del hogar excepto el que hizo el pago
             const usersSnapshot = await admin.firestore().collection('users')
                 .where('householdId', '==', householdId)
                 .get();
@@ -265,19 +403,13 @@ exports.onNotificationCreated = functions.firestore
                 },
                 data: {
                     householdId: householdId,
-                    click_action: "FLUTTER_NOTIFICATION_CLICK" // opcional, para manejar clics
+                    click_action: "FLUTTER_NOTIFICATION_CLICK"
                 }
             };
 
             const response = await admin.messaging().sendToDevice(tokens, payload);
             console.log(`Notificaciones enviadas. Éxito: ${response.successCount}, Fallos: ${response.failureCount}`);
             
-            // Limpieza de tokens inválidos
-            if (response.failureCount > 0) {
-                // Aquí podrías implementar la lógica para eliminar tokens expirados
-                // iterando sobre response.results y buscando errores de 'messaging/invalid-registration-token'
-            }
-
             return null;
         } catch (error) {
             console.error('Error al enviar notificaciones Push:', error);

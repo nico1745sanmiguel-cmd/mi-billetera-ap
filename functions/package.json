@@ -15,7 +15,8 @@
   "dependencies": {
     "firebase-admin": "^11.8.0",
     "firebase-functions": "^4.3.1",
-    "node-fetch": "^2.6.12"
+    "node-fetch": "^2.6.12",
+    "yahoo-finance2": "^4.0.0"
   },
   "devDependencies": {
     "firebase-functions-test": "^3.1.0"
