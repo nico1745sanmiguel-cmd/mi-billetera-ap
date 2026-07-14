@@ -40,7 +40,7 @@ const WPTile = ({ color, size = '1x1', front, back, onClick, delay = 0, label = 
             type="button"
             onClick={onClick}
             aria-label={label}
-            className={`wp-tile relative overflow-hidden ${SIZE_COLS[size]} h-[132px] wp-tile-appear`}
+            className={`wp-tile relative w-full text-left overflow-hidden ${SIZE_COLS[size]} h-[132px] wp-tile-appear`}
             style={{
                 backgroundColor: color,
                 animationDelay: `${animDelay}ms`,
