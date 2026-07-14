@@ -75,7 +75,7 @@ export default function NotesSettings({ isGlass, onBack }) {
             <div className="space-y-6">
                 {/* SKIN DEL POST-IT FRONTAL */}
                 <div>
-                    <label className={labelCls}>Estilo del Post-it Frontal</label>
+                    <div className={labelCls}>Estilo del Post-it Frontal</div>
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
                         {POST_IT_SKINS.map(skin => (
                             <button aria-label={`Seleccionar ${skin.label}`} key={skin.id} type="button"
@@ -93,7 +93,7 @@ export default function NotesSettings({ isGlass, onBack }) {
 
                 {/* SKIN DE NOTAS INTERNAS */}
                 <div>
-                    <label className={labelCls}>Tema de la Vista Ampliada (Keep)</label>
+                    <div className={labelCls}>Tema de la Vista Ampliada (Keep)</div>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         {NOTES_SKINS.map(skin => (
                             <button aria-label={`Seleccionar ${skin.label}`} key={skin.id} type="button"
@@ -108,7 +108,7 @@ export default function NotesSettings({ isGlass, onBack }) {
 
                 {/* CATEGORÍAS */}
                 <div>
-                    <label className={labelCls}>Categorías de Notas</label>
+                    <div className={labelCls}>Categorías de Notas</div>
                     <div className="flex gap-2 mb-3">
                         <input
                             type="text"
@@ -124,8 +124,8 @@ export default function NotesSettings({ isGlass, onBack }) {
                         </button>
                     </div>
                     <div className="flex flex-wrap gap-2 mt-3">
-                        {categories.map((cat, idx) => (
-                            <div key={idx} className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium ${isGlass ? 'bg-white/10 text-white' : 'bg-gray-100 text-gray-700'}`}>
+                        {categories.map((cat) => (
+                            <div key={cat} className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium ${isGlass ? 'bg-white/10 text-white' : 'bg-gray-100 text-gray-700'}`}>
                                 {cat}
                                 <button aria-label="Eliminar" onClick={() => handleRemoveCategory(cat)} className="text-red-400 hover:text-red-500 transition-colors">
                                     <X size={14} />

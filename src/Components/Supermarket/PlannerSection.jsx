@@ -16,7 +16,7 @@ export default function PlannerSection({ catData, trips, currentMonthKey, isGlas
         Icon = catData.id === 'verduleria' ? Leaf : Beef;
     }
 
-    const [settings, setSettings] = useState(getPlannerSettings());
+    const [settings, setSettings] = useState(() => getPlannerSettings());
 
     useEffect(() => {
         const handleSettingsChange = () => setSettings(getPlannerSettings());
@@ -31,7 +31,7 @@ export default function PlannerSection({ catData, trips, currentMonthKey, isGlas
     };
 
     const [prevCatId, setPrevCatId] = useState(catData.id);
-    const [isOpen, setIsOpen] = useState(getInitialOpenState());
+    const [isOpen, setIsOpen] = useState(() => getInitialOpenState());
     
     if (catData.id !== prevCatId) {
         setPrevCatId(catData.id);

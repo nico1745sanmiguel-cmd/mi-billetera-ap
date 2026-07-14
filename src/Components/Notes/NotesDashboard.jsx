@@ -52,20 +52,21 @@ const EditNoteModal = ({ note, categories, isGlass, onClose, onSave }) => {
 
                 <form onSubmit={handleSave} className="space-y-4">
                     <div>
-                        <label className="block text-sm font-bold mb-1 opacity-80">Contenido</label>
+                        <label htmlFor="note-content" className="block text-sm font-bold mb-1 opacity-80">Contenido</label>
                         <textarea
+                            id="note-content"
                             value={text}
                             onChange={(e) => setText(e.target.value)}
                             placeholder="Escribe tu nota aquí..."
                             className={`${inputCls} min-h-[120px] resize-none`}
-                            autoFocus
                         />
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-bold mb-1 opacity-80">Categoría</label>
+                            <label htmlFor="note-category" className="block text-sm font-bold mb-1 opacity-80">Categoría</label>
                             <select
+                                id="note-category"
                                 value={category}
                                 onChange={(e) => setCategory(e.target.value)}
                                 className={inputCls}

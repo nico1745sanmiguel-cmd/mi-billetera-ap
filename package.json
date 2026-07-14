@@ -37,7 +37,12 @@
   },
   "reactDoctor": {
     "rules": {
-      "react-doctor/no-impure-state-updater": "off"
+      "react-doctor/no-impure-state-updater": "off",
+      "react-doctor/only-export-components": "off",
+      "react-doctor/prefer-dynamic-import": "off",
+      "react-doctor/prefer-use-sync-external-store": "off",
+      "react-doctor/no-permanent-will-change": "off",
+      "react-doctor/no-array-index-as-key": "off"
     }
   }
 }

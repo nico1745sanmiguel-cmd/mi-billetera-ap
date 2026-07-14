@@ -15,7 +15,7 @@ export const getPlannerSettings = () => {
 };
 
 export default function PlannerSettings({ isGlass, onBack: _onBack }) {
-    const [settings, setSettings] = useState(getPlannerSettings());
+    const [settings, setSettings] = useState(() => getPlannerSettings());
     const [saved, setSaved] = useState(false);
 
     const updateSetting = (key, value) => {
