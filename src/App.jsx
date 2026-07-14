@@ -75,6 +75,28 @@ export default function App() {
     const [modulesTick, setModulesTick] = useState(0);
     const [selectedCard, setSelectedCard] = useState(null);
     const [isLogoutOpen, setIsLogoutOpen] = useState(false);
+    const [isHeaderVisible, setIsHeaderVisible] = useState(true);
+
+    useEffect(() => {
+        let lastScrollY = window.scrollY;
+        
+        const handleScroll = () => {
+            const currentScrollY = window.scrollY;
+            if (currentScrollY > 50) {
+                if (currentScrollY > lastScrollY) {
+                    setIsHeaderVisible(false);
+                } else {
+                    setIsHeaderVisible(true);
+                }
+            } else {
+                setIsHeaderVisible(true);
+            }
+            lastScrollY = currentScrollY;
+        };
+
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
 
     const handleLogout = () => {
         setIsLogoutOpen(true);
@@ -111,7 +133,7 @@ export default function App() {
                     </div>
 
                     {/* HEADER MÓVIL */}
-                    <div className={`md:hidden px-4 py-3 shadow-sm sticky top-0 z-40 flex items-center justify-between gap-3 transition-colors duration-300 ${isGlass ? 'bg-[#0f0c29]/90 backdrop-blur-md text-white border-b border-white/5' : 'bg-white text-gray-800'}`}>
+                    <div className={`md:hidden px-4 py-3 shadow-sm sticky top-0 z-40 flex items-center justify-between gap-3 transition-all duration-300 ${isGlass ? 'bg-[#0f0c29]/90 backdrop-blur-md text-white border-b border-white/5' : 'bg-white text-gray-800'} ${isHeaderVisible ? 'translate-y-0' : '-translate-y-full'}`}>
                         <button aria-label="Ir al inicio" type="button"
                             onClick={() => navigate('/dashboard')}
                             className={`p-2 rounded-xl transition-all active:scale-95 ${location.pathname === '/dashboard' || location.pathname === '/' ? (isGlass ? 'bg-white/20 text-white' : 'bg-blue-50 text-blue-600') : (isGlass ? 'bg-transparent text-white/60' : 'bg-gray-100 text-gray-500')}`}
