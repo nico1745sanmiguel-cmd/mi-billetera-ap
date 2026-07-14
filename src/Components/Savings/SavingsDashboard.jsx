@@ -1,12 +1,10 @@
 import React, { useState, useMemo } from 'react';
 import { useSavings } from '../../context/SavingsContext';
 import { useFinancial } from '../../context/FinancialContext';
-import { Plus, Wallet, ArrowRightLeft, TrendingUp, Sparkles } from 'lucide-react';
+import { Plus, Wallet, ArrowRightLeft, TrendingUp } from 'lucide-react';
 import SavingsCard from './SavingsCard';
 import AddSavingsModal from './AddSavingsModal';
 import SavingsGoal from './SavingsGoal';
-import SavingsScannerModal from './SavingsScannerModal';
-import PerformanceDashboard from './PerformanceDashboard';
 import { useUI } from '../../context/UIContext';
 
 const arsFormatter = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 });
@@ -17,8 +15,7 @@ export default function SavingsDashboard() {
     const { savingsTransactions } = useSavings();
     const { dolarBlue } = useFinancial();
     const [showAddModal, setShowAddModal] = useState(false);
-    const [showScannerModal, setShowScannerModal] = useState(false);
-    const [currencyView, setCurrencyView] = useState('ARS');
+    const [currencyView, setCurrencyView] = useState('ARS'); // 'ARS' or 'USD'
     const [customQuotes] = useState(() => {
         const saved = localStorage.getItem('savings_custom_quotes:v1');
         if (saved) {
@@ -59,7 +56,7 @@ export default function SavingsDashboard() {
     const total = useMemo(() => {
         let totalUSD = 0;
         let totalARS = 0;
-        const rate = dolarBlue || 1000;
+        const rate = dolarBlue || 1000; // fallback si falla la API
 
         balances.forEach(cartera => {
             cartera.items.forEach(item => {
@@ -73,8 +70,10 @@ export default function SavingsDashboard() {
                     totalARS += cant;
                     totalUSD += cant / rate;
                 } else {
+                    // Usar cotización personalizada (se asume que la ingresan en USD para unificar)
                     let userQuote = parseFloat(customQuotes[es]);
                     if (isNaN(userQuote)) {
+                        // Por defecto, las stablecoins valen 1 USD. Otras criptos u activos, 0 si no se ingresa nada.
                         userQuote = ['USDT', 'USDC', 'DAI', 'USDP'].includes(es) ? 1 : 0;
                     }
                     totalUSD += (cant * userQuote);
@@ -107,36 +106,13 @@ export default function SavingsDashboard() {
                         <p className={`text-sm ${isGlass ? 'text-white/60' : 'text-gray-500'}`}>Inversiones y saldos</p>
                     </div>
                 </div>
-
-                {/* Botones de acción */}
-                <div className="flex items-center gap-2">
-                    {/* Botón Scanner IA */}
-                    <button
-                        aria-label="Escanear captura con IA"
-                        type="button"
-                        onClick={() => setShowScannerModal(true)}
-                        className={`flex items-center gap-2 p-3 rounded-xl font-bold transition-all active:scale-95 border ${
-                            isGlass
-                                ? 'bg-violet-500/20 border-violet-500/30 text-violet-300 hover:bg-violet-500/30'
-                                : 'bg-violet-50 border-violet-200 text-violet-700 hover:bg-violet-100'
-                        }`}
-                        title="Escanear captura con IA"
-                    >
-                        <Sparkles size={20} />
-                        <span className="hidden sm:inline text-sm">Escanear</span>
-                    </button>
-
-                    {/* Botón Nuevo Movimiento */}
-                    <button
-                        aria-label="Nuevo movimiento manual"
-                        type="button"
-                        onClick={() => setShowAddModal(true)}
-                        className="bg-green-500 hover:bg-green-600 text-white p-3 rounded-xl shadow-lg transition-transform active:scale-95 flex items-center gap-2 font-bold"
-                    >
-                        <Plus size={20} />
-                        <span className="hidden sm:inline text-sm">Manual</span>
-                    </button>
-                </div>
+                <button aria-label="Acción" type="button"
+                    onClick={() => setShowAddModal(true)}
+                    className="bg-green-500 hover:bg-green-600 text-white p-3 rounded-xl shadow-lg transition-transform active:scale-95 flex items-center gap-2 font-bold"
+                >
+                    <Plus size={20} />
+                    <span className="hidden sm:inline">Nuevo Movimiento</span>
+                </button>
             </div>
 
             {/* TOTAL CARD */}
@@ -145,7 +121,7 @@ export default function SavingsDashboard() {
                     <span className={`text-sm font-semibold uppercase tracking-wider ${isGlass ? 'text-green-300' : 'text-green-700'}`}>
                         Total General
                     </span>
-                    <button aria-label="Cambiar moneda" type="button" 
+                    <button aria-label="Acción" type="button" 
                         onClick={() => setCurrencyView(prev => prev === 'ARS' ? 'USD' : 'ARS')}
                         className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${isGlass ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-white hover:bg-gray-50 text-green-700 shadow-sm'}`}
                     >
@@ -163,11 +139,10 @@ export default function SavingsDashboard() {
                 )}
             </div>
 
+            {/* COTIZACIONES MANUALES (Removido a petición del usuario) */}
+
             {/* OBJETIVO DE AHORRO */}
             <SavingsGoal />
-
-            {/* DASHBOARD DE RENDIMIENTO */}
-            <PerformanceDashboard balances={balances} />
 
             {/* CARTERAS LIST */}
             <div className="space-y-4">
@@ -178,11 +153,8 @@ export default function SavingsDashboard() {
                 
                 {balances.length === 0 ? (
                     <div className={`text-center p-8 rounded-2xl ${cardBg}`}>
-                        <Sparkles size={32} className={`mx-auto mb-3 ${isGlass ? 'text-white/20' : 'text-gray-300'}`} />
                         <p className={isGlass ? 'text-white/60' : 'text-gray-500'}>
-                            Todavía no agregaste ningún ahorro.<br/>
-                            Usá <strong>Escanear</strong> para subir una captura de tu app,<br/>
-                            o <strong>Manual</strong> para ingresar datos a mano.
+                            Todavía no agregaste ningún ahorro.<br/>Hacé clic en "Nuevo Movimiento" para empezar.
                         </p>
                     </div>
                 ) : (
@@ -203,13 +175,6 @@ export default function SavingsDashboard() {
             {showAddModal && (
                 <AddSavingsModal 
                     onClose={() => setShowAddModal(false)}
-                    isGlass={isGlass}
-                />
-            )}
-
-            {showScannerModal && (
-                <SavingsScannerModal
-                    onClose={() => setShowScannerModal(false)}
                     isGlass={isGlass}
                 />
             )}
