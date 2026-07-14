@@ -111,9 +111,9 @@ export default function SuperActionsWidget({ superData, privacyMode, setView, si
                         </button>
                     </div>
                 ) : (
-                    <div className="relative z-10 mt-2 min-w-0">
+                    <div className="relative z-10 mt-2 min-w-0 overflow-hidden">
                         <p className="text-[10px] text-gray-400 dark:text-white/40 font-bold uppercase mb-0.5 truncate">{superData.label}</p>
-                        <p className={`text-base font-bold leading-none truncate ${superData.statusColor === 'text-gray-900' ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-white/40'}`}>
+                        <p className={`text-sm font-bold leading-none truncate ${superData.statusColor === 'text-gray-900' ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-white/40'}`}>
                             {showMoney(superData.showAmount)}
                         </p>
                     </div>

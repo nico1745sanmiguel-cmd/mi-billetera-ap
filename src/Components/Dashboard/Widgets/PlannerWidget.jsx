@@ -84,8 +84,8 @@ export default function PlannerWidget({ setView, size }) {
                                     <div className="absolute top-0.5 right-0.5 w-1.5 h-1.5 bg-red-400 rounded-full" />
                                 )}
                                 <IconComponent size={12} className={hasPending ? 'text-indigo-600 dark:text-indigo-300' : 'text-gray-400 dark:text-gray-500'} />
-                                <span className="text-[8px] font-semibold text-gray-600 dark:text-gray-400 truncate w-full text-center px-0.5">
-                                    {cat.label}
+                                <span className="text-[8px] font-semibold text-gray-600 dark:text-gray-400 truncate w-full text-center px-0.5" title={cat.label}>
+                                    {cat.label.split(/[\s/]/)[0]}
                                 </span>
                             </div>
                         );

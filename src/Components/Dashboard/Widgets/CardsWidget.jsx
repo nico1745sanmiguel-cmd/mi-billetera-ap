@@ -40,16 +40,16 @@ export default function CardsWidget({ cards, targetMonthKey, privacyMode, onCard
                                 {/* Glow */}
                                 <div className="absolute top-0 right-0 w-20 h-20 bg-white opacity-10 rounded-full -mr-6 -mt-6 blur-xl" />
 
-                                <div className="relative z-10 flex items-center justify-between">
-                                    <div className="flex items-center gap-2 min-w-0">
+                                <div className="relative z-10 flex items-center justify-between gap-2">
+                                    <div className="flex items-center gap-1.5 min-w-0 overflow-hidden">
                                         {logo ? (
-                                            <img src={logo} alt={card.name} className="h-4 object-contain filter brightness-200 contrast-200" loading="lazy" />
+                                            <img src={logo} alt={card.name} className="h-4 shrink-0 object-contain filter brightness-200 contrast-200" loading="lazy" />
                                         ) : (
                                             <span className="font-bold text-xs uppercase truncate opacity-90">{card.name}</span>
                                         )}
-                                        <span className="text-[9px] bg-white/20 px-1.5 py-0.5 rounded font-mono opacity-80">{card.bank}</span>
+                                        <span className="text-[9px] bg-white/20 px-1.5 py-0.5 rounded font-mono opacity-80 truncate max-w-[70px] shrink">{card.bank}</span>
                                     </div>
-                                    <p className="font-mono text-sm font-bold shrink-0 ml-2">
+                                    <p className="font-mono text-sm font-bold shrink-0">
                                         {debt != null ? showMoney(debt) : <span className="text-xs opacity-50">—</span>}
                                     </p>
                                 </div>
