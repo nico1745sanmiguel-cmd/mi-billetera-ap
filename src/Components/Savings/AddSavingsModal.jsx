@@ -60,10 +60,10 @@ export default function AddSavingsModal({ onClose, isGlass }) {
     }`;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 sm:p-0 animate-fade-in">
-            <div className={`absolute inset-0 ${isGlass ? 'bg-black/60 backdrop-blur-sm' : 'bg-black/40 backdrop-blur-sm'}`} onClick={onClose}></div>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-fade-in">
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose}></div>
             
-            <div className={`relative w-full max-w-md w-full rounded-3xl p-6 sm:p-8 animate-slide-up shadow-2xl ${isGlass ? 'bg-[#0f0c29]/90 border border-white/20 backdrop-blur-xl' : 'bg-white'}`}>
+            <div className={`relative w-full max-w-md rounded-3xl p-6 sm:p-8 animate-scale-in shadow-2xl ${isGlass ? 'bg-[#0f0c29]/90 border border-white/20 backdrop-blur-xl' : 'bg-white'}`}>
                 <div className="flex justify-between items-center mb-6">
                     <h2 className={`text-2xl font-black ${isGlass ? 'text-white' : 'text-gray-800'}`}>
                         Nuevo Movimiento

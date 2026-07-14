@@ -69,12 +69,12 @@ export default function SalarySourcesEditor({ onClose, isGlass }) {
         ${isGlass ? 'bg-white/10 border border-white/20 text-white placeholder-white/40' : 'bg-gray-50 border border-gray-200 text-gray-800 placeholder-gray-400'}`;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-end justify-center" onClick={onClose}>
-            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-fade-in" onClick={onClose}>
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
             <div
                 onClick={e => e.stopPropagation()}
-                className={`relative w-full max-w-md rounded-t-3xl p-6 pb-10 shadow-2xl
-                    ${isGlass ? 'bg-[#12133a]/95 border-t border-white/10' : 'bg-white border-t border-gray-100'}`}
+                className={`relative w-full max-w-md rounded-3xl p-6 pb-10 shadow-2xl animate-scale-in max-h-[85vh] overflow-hidden flex flex-col
+                    ${isGlass ? 'bg-[#12133a]/95 border border-white/10' : 'bg-white border border-gray-100'}`}
             >
                 {/* Header */}
                 <div className="flex items-center justify-between mb-1">

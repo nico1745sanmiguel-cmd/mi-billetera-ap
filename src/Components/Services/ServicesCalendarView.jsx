@@ -111,7 +111,7 @@ export default function ServicesCalendarView({
             {/* ── MODAL ZOOM DE DÍA ── */}
             {selectedDay !== null && (
                 <div
-                    className="fixed inset-0 z-50 flex items-center justify-center p-4"
+                    className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-fade-in"
                     onClick={() => setSelectedDay(null)}
                 >
                     {/* Backdrop */}
@@ -119,7 +119,7 @@ export default function ServicesCalendarView({
 
                     {/* Modal centrado */}
                     <div
-                        className={`relative w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden animate-fade-in ${isGlass ? 'bg-[#1a1b4b]/95 border border-white/20' : 'bg-white border border-gray-100'}`}
+                        className={`relative w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden animate-scale-in ${isGlass ? 'bg-[#1a1b4b]/95 border border-white/20' : 'bg-white border border-gray-100'}`}
                         onClick={e => e.stopPropagation()}
                         style={{ maxHeight: '80vh' }}
                     >

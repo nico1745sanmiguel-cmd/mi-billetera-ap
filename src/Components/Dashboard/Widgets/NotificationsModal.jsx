@@ -46,8 +46,8 @@ export default function NotificationsModal({ notifications, user, privacyMode, s
     };
 
     return (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[70] flex justify-end animate-fade-in" onClick={() => setIsNotificationsOpen(false)}>
-            <div className="w-full sm:w-[400px] h-full bg-[#f3f4f6] dark:bg-[#1a1b4b] p-6 shadow-2xl animate-slide-in-right flex flex-col border-l border-white/10" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-fade-in" onClick={() => setIsNotificationsOpen(false)}>
+            <div className="relative w-full max-w-md max-h-[85vh] bg-[#f3f4f6] dark:bg-[#1a1b4b] p-6 rounded-3xl shadow-2xl animate-scale-in flex flex-col" onClick={e => e.stopPropagation()}>
                 <div className="flex justify-between items-center mb-6">
                     <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
                         <Bell className="text-indigo-500" /> Notificaciones

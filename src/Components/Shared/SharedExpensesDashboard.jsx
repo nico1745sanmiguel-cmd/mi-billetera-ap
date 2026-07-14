@@ -89,7 +89,7 @@ function ContributionModal({ person, totalTarget, monthKey, householdId, isGlass
 
     return (
         <div
-            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-fade-in"
             onClick={onClose}
         >
             {/* Fondo oscuro */}
@@ -97,7 +97,7 @@ function ContributionModal({ person, totalTarget, monthKey, householdId, isGlass
 
             {/* Panel centrado */}
             <div
-                className={`relative w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden animate-fade-in max-h-[90vh] overflow-y-auto ${
+                className={`relative w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden animate-scale-in max-h-[90vh] overflow-y-auto ${
                     isGlass
                         ? 'bg-gray-900 text-white border border-white/10'
                         : 'bg-white text-gray-900'

@@ -5,7 +5,7 @@ export default function ConfirmDialog({ isOpen, title, message, onConfirm, onCan
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-fade-in" onClick={onCancel}>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-fade-in" onClick={onCancel}>
             <div 
                 className="bg-white dark:bg-[#1a1b4b] w-full max-w-sm rounded-3xl p-6 shadow-2xl animate-scale-in"
                 onClick={e => e.stopPropagation()}

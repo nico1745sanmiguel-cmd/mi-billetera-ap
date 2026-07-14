@@ -20,13 +20,16 @@ const SkinsModal = ({ isOpen, onClose, currentSkin, onSelectSkin }) => {
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-[60] flex flex-col justify-end">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-fade-in">
             <div 
-                className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity" 
+                className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" 
                 onClick={onClose}
             ></div>
             
-            <div className="relative bg-white dark:bg-[#1a1b4b] w-full max-h-[85vh] rounded-t-3xl shadow-2xl animate-slide-up flex flex-col">
+            <div 
+                className="relative bg-white dark:bg-[#1a1b4b] w-full max-w-md max-h-[85vh] rounded-3xl shadow-2xl animate-scale-in flex flex-col"
+                onClick={e => e.stopPropagation()}
+            >
                 <div className="p-4 flex items-center justify-between border-b border-gray-100 dark:border-white/10 shrink-0">
                     <div>
                         <h2 className="text-xl font-bold text-gray-800 dark:text-white">Personalización</h2>
