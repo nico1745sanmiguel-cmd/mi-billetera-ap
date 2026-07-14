@@ -34,6 +34,7 @@ const SalaryDashboard   = lazy(() => import('./Components/Salary/SalaryDashboard
 const CardsDashboard    = lazy(() => import('./Components/Cards/CardsDashboard'));
 const ModulesSettings   = lazy(() => import('./Components/Settings/ModulesSettings'));
 const ModuleDetailSettings = lazy(() => import('./Components/Settings/ModuleDetailSettings'));
+const NotesDashboard = lazy(() => import('./Components/Notes/NotesDashboard'));
 
 const LazyLoader = () => (
     <div className="flex justify-center items-center h-40 animate-pulse">
@@ -254,6 +255,11 @@ export default function App() {
                                         <m.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.2 }}>
                                             <ModuleDetailSettings onBack={() => navigate('/settings_modules')} />
                                         </m.div>
+                                    } />
+
+                                    <Route path="/notes" element={
+                                        isModuleEnabled('notes') ? 
+                                        <m.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.2 }}><NotesDashboard onBack={() => navigate('/dashboard')} /></m.div> : <Navigate to="/dashboard" replace />
                                     } />
                                     
                                     {/* Fallback temporal a dashboard */}

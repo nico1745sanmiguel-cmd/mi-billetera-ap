@@ -16,6 +16,9 @@ export const deleteNote = (id) =>
 export const toggleNoteChecked = (id, checked) =>
     updateDoc(doc(db, COL, id), { checked });
 
+export const updateNote = (id, payload) =>
+    updateDoc(doc(db, COL, id), payload);
+
 export const subscribeToNotes = (uid, callback) => {
     const q = query(collection(db, COL), where("userId", "==", uid));
     return onSnapshot(q, (snapshot) => {
@@ -23,3 +26,4 @@ export const subscribeToNotes = (uid, callback) => {
         callback(notes);
     });
 };
+

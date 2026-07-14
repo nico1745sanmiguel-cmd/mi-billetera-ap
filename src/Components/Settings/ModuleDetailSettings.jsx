@@ -7,6 +7,7 @@ import { AVAILABLE_MODULES } from '../../config/modules';
 // Importación lazy de las configuraciones específicas de cada módulo
 // A medida que agreguemos más configuraciones, las importamos acá
 const MobilitySettings = lazy(() => import('../Mobility/MobilitySettings'));
+const NotesSettings = lazy(() => import('../Notes/NotesSettings'));
 
 const LazyLoader = () => (
     <div className="flex justify-center items-center h-40 animate-pulse">
@@ -42,6 +43,12 @@ export default function ModuleDetailSettings({ onBack }) {
                 return (
                     <Suspense fallback={<LazyLoader />}>
                         <MobilitySettings isGlass={isGlass} onBack={onBack || (() => navigate(-1))} />
+                    </Suspense>
+                );
+            case 'notes':
+                return (
+                    <Suspense fallback={<LazyLoader />}>
+                        <NotesSettings isGlass={isGlass} onBack={onBack || (() => navigate(-1))} />
                     </Suspense>
                 );
             default:

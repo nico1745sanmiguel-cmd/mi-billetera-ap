@@ -9,6 +9,7 @@ import { ServicesProvider } from './context/ServicesContext';
 import { SavingsProvider } from './context/SavingsContext';
 import { MobilityProvider } from './context/MobilityContext';
 import { SalaryProvider } from './context/SalaryContext';
+import { NotesProvider } from './context/NotesContext';
 import ErrorBoundary from './Components/UI/ErrorBoundary';
 
 export default function AppProviders({ children }) {
@@ -22,11 +23,13 @@ export default function AppProviders({ children }) {
                                 <FinancialProvider>
                                     <MobilityProvider>
                                         <SalaryProvider>
-                                            <BrowserRouter>
-                                                <ErrorBoundary>
-                                                    {children}
-                                                </ErrorBoundary>
-                                            </BrowserRouter>
+                                            <NotesProvider>
+                                                <BrowserRouter>
+                                                    <ErrorBoundary>
+                                                        {children}
+                                                    </ErrorBoundary>
+                                                </BrowserRouter>
+                                            </NotesProvider>
                                         </SalaryProvider>
                                     </MobilityProvider>
                                 </FinancialProvider>
