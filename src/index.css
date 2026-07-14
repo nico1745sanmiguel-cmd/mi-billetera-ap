@@ -53,3 +53,36 @@ input, textarea {
 .animate-fade-in {
   animation: fade-in 0.25s ease-out forwards;
 }
+
+/* ── WINDOWS PHONE SKIN ───────────────────────────────────────── */
+/* Fuente Metro UI */
+.wp-grid {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+/* Efecto de entrada del grid de tiles */
+@keyframes wp-grid-in {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.wp-grid-animate {
+  animation: wp-grid-in 0.35s ease-out forwards;
+}
+
+/* Entrada escalonada de tiles */
+@keyframes wp-tile-in {
+  from { opacity: 0; transform: scale(0.92); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.wp-tile-appear {
+  animation: wp-tile-in 0.3s ease-out forwards;
+}
+
+/* Ripple táctil en tiles */
+.wp-tile:active::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,0.15);
+  pointer-events: none;
+}

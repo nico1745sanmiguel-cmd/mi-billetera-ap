@@ -1,5 +1,5 @@
 import React, { useMemo, useEffect, useState, memo, useCallback } from 'react';
-import { Users, LogOut, AlertCircle, Moon, Sun, Monitor, RefreshCw, Bell, Puzzle, Maximize2, Minimize2, GripVertical, MoreVertical } from 'lucide-react';
+import { Users, LogOut, AlertCircle, Moon, Sun, Monitor, RefreshCw, Bell, Puzzle, Maximize2, Minimize2, GripVertical, MoreVertical, Palette } from 'lucide-react';
 import { useWidgetSizes } from '../../hooks/useWidgetSizes';
 import { useNavigate } from 'react-router-dom';
 import { db, auth } from '../../firebase';
@@ -35,6 +35,9 @@ import SalaryWidget from './Widgets/SalaryWidget';
 import PlannerWidget from './Widgets/PlannerWidget';
 import { isModuleEnabled } from '../../utils/modulesUtils';
 import { WidgetGrid } from './WidgetSystem';
+
+import SkinsModal from './Skins/SkinsModal';
+import WPTileGrid from './Skins/WindowsPhone/WPTileGrid';
 
 const handleCacheRefresh = async () => {
     if ('serviceWorker' in navigator) {
@@ -81,7 +84,7 @@ const THEME_OPTIONS = [
 
 const EMPTY_ARRAY = [];
 const Home = memo(({ onLogout, notifications = EMPTY_ARRAY, onCardClick }) => {
-    const { privacyMode, currentDate, isGlass, theme, setTheme, showToast } = useUI();
+    const { privacyMode, currentDate, isGlass, theme, setTheme, skin, setSkin, showToast } = useUI();
     const navigate = useNavigate();
     const { user, userData, householdMembers } = useAuth();
     const householdId = userData?.householdId;
@@ -90,6 +93,7 @@ const Home = memo(({ onLogout, notifications = EMPTY_ARRAY, onCardClick }) => {
     const { services } = useServices();
     const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [isSkinsOpen, setIsSkinsOpen] = useState(false);
 
     const unreadNotifsCount = useMemo(() => {
         if (!user || !notifications) return 0;
@@ -319,6 +323,10 @@ const Home = memo(({ onLogout, notifications = EMPTY_ARRAY, onCardClick }) => {
                                         <div className="bg-violet-100/50 dark:bg-violet-500/20 p-1.5 rounded-lg text-violet-500 dark:text-violet-300"><Puzzle size={16} /></div>
                                         Módulos
                                     </button>
+                                    <button aria-label="Acción" type="button" onClick={() => { setIsSkinsOpen(true); setIsMenuOpen(false); }} className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-500/20 dark:hover:text-emerald-300 rounded-xl transition-colors">
+                                        <div className="bg-emerald-100/50 dark:bg-emerald-500/20 p-1.5 rounded-lg text-emerald-500 dark:text-emerald-300"><Palette size={16} /></div>
+                                        Skins
+                                    </button>
                                     <div className="h-px bg-gray-100 dark:bg-white/10 my-1 mx-2"></div>
                                     <button aria-label="Acción" type="button" onClick={() => { onLogout(); setIsMenuOpen(false); }} className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/20 dark:hover:text-red-300 rounded-xl transition-colors">
                                         <div className="bg-red-100/50 dark:bg-red-500/20 p-1.5 rounded-lg text-red-500 dark:text-red-300"><LogOut size={16} /></div>
@@ -337,14 +345,30 @@ const Home = memo(({ onLogout, notifications = EMPTY_ARRAY, onCardClick }) => {
                 </div>
             )}
 
-            <WidgetGrid
-                order={order}
-                getWidgetNode={getWidgetNode}
-                getSize={getSize}
-                toggleSize={toggleSize}
-                getDragProps={getDragProps}
-                draggingItem={draggingItem}
-            />
+            {skin === 'windowsphone' ? (
+                <WPTileGrid 
+                    navigate={navigate}
+                    privacyMode={privacyMode}
+                    showMoney={showMoney}
+                    totalNeed={totalNeed}
+                    totalPaid={totalPaid}
+                    cardsWithDebt={cardsWithDebt}
+                    agenda={agenda}
+                    services={services}
+                    superData={superData}
+                    currentDate={currentDate}
+                    splitData={splitData}
+                />
+            ) : (
+                <WidgetGrid
+                    order={order}
+                    getWidgetNode={getWidgetNode}
+                    getSize={getSize}
+                    toggleSize={toggleSize}
+                    getDragProps={getDragProps}
+                    draggingItem={draggingItem}
+                />
+            )}
 
 
 
@@ -406,6 +430,13 @@ const Home = memo(({ onLogout, notifications = EMPTY_ARRAY, onCardClick }) => {
                     showToast={showToast} 
                 />
             )}
+
+            <SkinsModal 
+                isOpen={isSkinsOpen}
+                onClose={() => setIsSkinsOpen(false)}
+                currentSkin={skin}
+                onSelectSkin={setSkin}
+            />
         </div>
     );
 });

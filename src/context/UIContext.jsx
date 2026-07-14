@@ -63,6 +63,19 @@ export const UIProvider = ({ children }) => {
         return localStorage.getItem('app_motion') || 'system';
     });
 
+    // Skin: 'default' | 'windowsphone'
+    const [skin, setSkinRaw] = useState(() => {
+        const saved = localStorage.getItem('app_skin');
+        return saved === 'windowsphone' ? 'windowsphone' : 'default';
+    });
+
+    const setSkin = useCallback((val) => {
+        if (val === 'default' || val === 'windowsphone') {
+            setSkinRaw(val);
+            localStorage.setItem('app_skin', val);
+        }
+    }, []);
+
     // Nuevo estado: 'light' | 'dark' | 'system'
     const [theme, setThemeRaw] = useState(() => {
         const cached = getCache(CACHE_KEYS.GLASS_MODE, null);
@@ -156,22 +169,24 @@ export const UIProvider = ({ children }) => {
         expenseScope,
         isGlass,
         theme,
+        skin,
         motionPreference,
         currentDate,
         toast,
-    }), [privacyMode, expenseScope, isGlass, theme, motionPreference, currentDate, toast]);
+    }), [privacyMode, expenseScope, isGlass, theme, skin, motionPreference, currentDate, toast]);
 
     const dispatchValue = useMemo(() => ({
         setPrivacyMode,
         setExpenseScope,
         setIsGlass,
         setTheme,
+        setSkin,
         setMotionPreference,
         setCurrentDate,
         changeMonth,
         showToast,
         hideToast,
-    }), [setPrivacyMode, setExpenseScope, setIsGlass, setTheme, setMotionPreference, changeMonth, showToast, hideToast]);
+    }), [setPrivacyMode, setExpenseScope, setIsGlass, setTheme, setSkin, setMotionPreference, changeMonth, showToast, hideToast]);
 
     return (
         <UIDispatchContext.Provider value={dispatchValue}>
