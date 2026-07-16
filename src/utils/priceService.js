@@ -95,10 +95,11 @@ export const fetchAssetPrices = async (especies, dolarBlue) => {
             const processData = (list) => {
                 if (Array.isArray(list)) {
                     list.forEach(item => {
-                        if (item.ticker && item.price) {
+                        // Data912 returns { symbol: "AAPL", c: 15000, ... }
+                        if (item.symbol && item.c) {
                             // Limpiar posibles sufijos si vinieran
-                            const cleanTicker = item.ticker.replace('.BA', '').toUpperCase();
-                            priceMapARS[cleanTicker] = parseFloat(item.price);
+                            const cleanTicker = item.symbol.replace('.BA', '').toUpperCase();
+                            priceMapARS[cleanTicker] = parseFloat(item.c);
                         }
                     });
                 }
