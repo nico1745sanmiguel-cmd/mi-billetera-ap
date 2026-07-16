@@ -152,13 +152,9 @@ export const fetchAssetPrices = async (especiesWithCarteras, dolarBlue) => {
                     
                     const isBond = /^[a-zA-Z]{2,4}\d{2}[a-zA-Z]?$/.test(cleanEsp);
                     if (isBond) {
+                        // Data912 devuelve todos los bonos en ARS (precio técnico × 100)
+                        // incluso los dolarizados (sufijo D/C). Siempre dividimos por dolarBlue.
                         priceARS = priceARS / 100;
-                        const isUSDQuote = cleanEsp.endsWith('D') || cleanEsp.endsWith('C');
-                        if (isUSDQuote) {
-                            result[esp] = { price: priceARS, change };
-                            setCache(`price_${esp}`, { price: priceARS, change, timestamp: now });
-                            continue;
-                        }
                     }
 
                     const priceUSD = priceARS / dolarBlue; 

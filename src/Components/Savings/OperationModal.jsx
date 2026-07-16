@@ -43,13 +43,17 @@ export default function OperationModal({ onClose, isGlass, initialData }) {
     }, [savingsTransactions]);
 
     const isMovimientoFiat = formData.tipo === 'deposito' || formData.tipo === 'retiro';
+    // cobro_cupon y amortizacion: solo registran el monto total recibido, sin modificar cantidad
+    const isCobro = formData.tipo === 'cobro_cupon' || formData.tipo === 'amortizacion';
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!formData.cartera || !formData.especie || !formData.cantidad || !formData.fecha) return;
+        if (!formData.cartera || !formData.especie || !formData.fecha) return;
         
-        // Si no es un movimiento de caja puro, validamos precio
-        if (!isMovimientoFiat && !formData.precioUnitario && formData.tipo !== 'ajuste') return;
+        // cobros solo requieren monto total; el resto requieren cantidad
+        if (!isCobro && !formData.cantidad) return;
+        // Si no es fiat ni cobro, necesita precio
+        if (!isMovimientoFiat && !isCobro && !formData.precioUnitario && formData.tipo !== 'ajuste') return;
 
         const parseNumber = (val) => {
             if (!val) return 0;
@@ -85,19 +89,37 @@ export default function OperationModal({ onClose, isGlass, initialData }) {
 
         const cantidadParsed = parseNumber(formData.cantidad);
         const precioParsed = parseNumber(formData.precioUnitario);
+        const montoTotalParsed = parseNumber(formData.montoTotal);
 
         setLoading(true);
         try {
-            const payload = {
-                tipo: formData.tipo,
-                cartera: formData.cartera.trim(),
-                especie: formData.especie.trim().toUpperCase(),
-                cantidad: cantidadParsed,
-                precioUnitario: isMovimientoFiat ? 1 : precioParsed,
-                monedaPrecio: isMovimientoFiat ? formData.especie.toUpperCase() : formData.monedaPrecio,
-                fecha: new Date(formData.fecha).toISOString(),
-                nota: formData.nota.trim()
-            };
+            let payload;
+
+            if (isCobro) {
+                // Para cobros: cantidad = 1, precioUnitario = monto total recibido
+                // Así el contexto calcula valorOperacionUSD = 1 * montoTotal = montoTotal
+                payload = {
+                    tipo: formData.tipo,
+                    cartera: formData.cartera.trim(),
+                    especie: formData.especie.trim().toUpperCase(),
+                    cantidad: 1,
+                    precioUnitario: montoTotalParsed,
+                    monedaPrecio: formData.monedaPrecio,
+                    fecha: new Date(formData.fecha).toISOString(),
+                    nota: formData.nota.trim()
+                };
+            } else {
+                payload = {
+                    tipo: formData.tipo,
+                    cartera: formData.cartera.trim(),
+                    especie: formData.especie.trim().toUpperCase(),
+                    cantidad: cantidadParsed,
+                    precioUnitario: isMovimientoFiat ? 1 : precioParsed,
+                    monedaPrecio: isMovimientoFiat ? formData.especie.toUpperCase() : formData.monedaPrecio,
+                    fecha: new Date(formData.fecha).toISOString(),
+                    nota: formData.nota.trim()
+                };
+            }
 
             if (initialData?.id) {
                 await updateSavingsTransaction(initialData.id, payload);
@@ -136,7 +158,7 @@ export default function OperationModal({ onClose, isGlass, initialData }) {
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     
-                    {/* Tipo de Operación */}
+                    {/* Tipo de Operación — fila 1: compra/venta/deposito/retiro */}
                     <div className="grid grid-cols-2 gap-2">
                         {['compra', 'venta', 'deposito', 'retiro'].map(t => (
                             <button aria-label="Acción" type="button" key={t}
@@ -153,6 +175,28 @@ export default function OperationModal({ onClose, isGlass, initialData }) {
                             </button>
                         ))}
                     </div>
+                    {/* Tipos especiales de bono — fila 2 */}
+                    <div className="grid grid-cols-2 gap-2">
+                        {[{ id: 'cobro_cupon', label: '🏦 Cobro Cupón' }, { id: 'amortizacion', label: '📉 Amortización' }].map(({ id, label }) => (
+                            <button aria-label="Acción" type="button" key={id}
+                                onClick={() => setFormData({...formData, tipo: id})}
+                                className={`p-2 text-sm font-bold rounded-xl border transition-all ${
+                                    formData.tipo === id
+                                    ? 'bg-amber-500 border-amber-500 text-white shadow-md'
+                                    : isGlass 
+                                        ? 'border-white/20 text-white/60 hover:bg-white/10' 
+                                        : 'border-gray-200 text-gray-500 hover:bg-gray-50'
+                                }`}
+                            >
+                                {label}
+                            </button>
+                        ))}
+                    </div>
+                    {isCobro && (
+                        <p className={`text-xs px-1 -mt-2 ${isGlass ? 'text-amber-300/80' : 'text-amber-600'}`}>
+                            Registrá el dinero recibido. No modifica la cantidad del activo.
+                        </p>
+                    )}
 
                     {/* Fecha */}
                     <div>
@@ -237,6 +281,8 @@ export default function OperationModal({ onClose, isGlass, initialData }) {
                         </div>
                     </div>
 
+                    {/* Cantidad — solo para operaciones normales */}
+                    {!isCobro && (
                     <div>
                         <label className={`block text-xs font-bold mb-2 ${isGlass ? 'text-white/70' : 'text-gray-500'}`}>
                             CANTIDAD
@@ -247,12 +293,41 @@ export default function OperationModal({ onClose, isGlass, initialData }) {
                             placeholder="Ej: 15.5 o 15,5"
                             value={formData.cantidad}
                             onChange={(e) => setFormData({...formData, cantidad: e.target.value})}
-                            required
+                            required={!isCobro}
                             className={inputClasses}
                         />
                     </div>
+                    )}
 
-                    {!isMovimientoFiat && (
+                    {/* Monto total recibido — solo para cobros */}
+                    {isCobro && (
+                    <div>
+                        <label className={`block text-xs font-bold mb-2 ${isGlass ? 'text-white/70' : 'text-gray-500'}`}>
+                            MONTO TOTAL RECIBIDO
+                        </label>
+                        <div className="flex gap-3">
+                            <input
+                                type="text"
+                                inputMode="decimal"
+                                placeholder="Ej: 850 o 850,50"
+                                value={formData.montoTotal || ''}
+                                onChange={(e) => setFormData({...formData, montoTotal: e.target.value})}
+                                required
+                                className={`${inputClasses} flex-1`}
+                            />
+                            <select
+                                value={formData.monedaPrecio}
+                                onChange={(e) => setFormData({...formData, monedaPrecio: e.target.value})}
+                                className={`${inputClasses} w-1/3`}
+                            >
+                                <option value="USD">USD</option>
+                                <option value="ARS">ARS</option>
+                            </select>
+                        </div>
+                    </div>
+                    )}
+
+                    {!isMovimientoFiat && !isCobro && (
                         <div className="flex gap-4">
                             <div className="flex-1">
                                 <label className={`block text-xs font-bold mb-2 ${isGlass ? 'text-white/70' : 'text-gray-500'}`}>
@@ -310,7 +385,9 @@ export default function OperationModal({ onClose, isGlass, initialData }) {
                                 {initialData ? 'Guardar Cambios'
                                  : formData.tipo === 'compra' ? 'Registrar Compra' 
                                  : formData.tipo === 'venta' ? 'Registrar Venta'
-                                 : formData.tipo === 'deposito' ? 'Registrar Ingreso' 
+                                 : formData.tipo === 'deposito' ? 'Registrar Ingreso'
+                                 : formData.tipo === 'cobro_cupon' ? 'Registrar Cupón'
+                                 : formData.tipo === 'amortizacion' ? 'Registrar Amortización'
                                  : 'Registrar Retiro'}
                             </>
                         )}

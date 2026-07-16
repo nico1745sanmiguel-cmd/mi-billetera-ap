@@ -15,10 +15,75 @@ export default function AnalyticsTab({ isGlass, privacyMode }) {
     const textColor = isGlass ? 'text-white' : 'text-gray-800';
     const cardBg = isGlass ? 'bg-white/10 backdrop-blur-md border border-white/20' : 'bg-white shadow-sm border border-gray-100';
 
-    // Calcular TNA por posición
+    // Helper: detectar si una especie es un bono argentino
+    const isBond = (especie) => /^[a-zA-Z]{2,4}\d{2}[a-zA-Z]?$/.test(especie);
+
+    // TIR por Newton-Raphson: dado un array de {valor, dias} donde valor<0 es egreso,
+    // retorna la tasa diaria que hace NPV=0, anualizada a TNA.
+    const calcularTIR = (flujos) => {
+        if (flujos.length < 2) return null;
+        const npv = (r) => flujos.reduce((sum, f) => sum + f.valor / Math.pow(1 + r, f.dias / 365), 0);
+        const dnpv = (r) => flujos.reduce((sum, f) => sum - (f.dias / 365) * f.valor / Math.pow(1 + r, f.dias / 365 + 1), 0);
+        let r = 0.1;
+        for (let i = 0; i < 50; i++) {
+            const d = dnpv(r);
+            if (Math.abs(d) < 1e-12) break;
+            const rNew = r - npv(r) / d;
+            if (Math.abs(rNew - r) < 1e-8) { r = rNew; break; }
+            r = rNew;
+        }
+        return isFinite(r) && r > -1 ? r * 100 : null;
+    };
+
+    // Calcular TNA o TIR por posición
     const posicionesTNA = useMemo(() => {
         return posiciones.map(pos => {
-            // Buscamos la fecha de la primera compra para aproximar días
+            const esBono = isBond(pos.especie);
+            const cobradoTotalUSD = pos.cobradoTotalUSD || 0;
+
+            // Si es bono con cupones registrados → TIR real
+            if (esBono && cobradoTotalUSD > 0) {
+                // Construir flujos: usamos las operaciones de la posición
+                const now = new Date();
+                const flujos = [];
+                let primeraFecha = null;
+
+                pos.operaciones.forEach(op => {
+                    const fecha = new Date(op.fecha || op.createdAt?.toDate?.() || Date.now());
+                    const cant = parseFloat(op.cantidad) || 0;
+                    let precio = parseFloat(op.precioUnitario) || 0;
+                    if (op.monedaPrecio === 'ARS') precio = precio / (dolarBlue || 1000);
+                    const valor = cant * precio;
+                    const tipo = op.tipo;
+
+                    if (!primeraFecha || fecha < primeraFecha) primeraFecha = fecha;
+                    const dias = Math.max(0, Math.floor((fecha - (primeraFecha || fecha)) / 86400000));
+
+                    if (tipo === 'compra' || tipo === 'deposito' || tipo === 'ingreso') {
+                        flujos.push({ valor: -valor, fecha });
+                    } else if (tipo === 'cobro_cupon' || tipo === 'amortizacion') {
+                        flujos.push({ valor: valor, fecha });
+                    } else if (tipo === 'venta' || tipo === 'retiro') {
+                        flujos.push({ valor: valor, fecha });
+                    }
+                });
+
+                // Recalcular dias desde la primera fecha
+                const base = primeraFecha || new Date();
+                const flujosConDias = flujos.map(f => ({
+                    valor: f.valor,
+                    dias: Math.max(0, Math.floor((f.fecha - base) / 86400000))
+                }));
+                // Valor residual al día de hoy
+                const diasHoy = Math.max(1, Math.floor((now - base) / 86400000));
+                flujosConDias.push({ valor: pos.valorActualUSD, dias: diasHoy });
+
+                const tir = calcularTIR(flujosConDias);
+                const dias = diasHoy;
+                return { ...pos, tna: tir ?? 0, dias, esBono, tieneCobros: true };
+            }
+
+            // Fallback: TNA simplificada (para no-bonos o bonos sin cupones registrados)
             let primeraCompra = null;
             pos.operaciones.forEach(op => {
                 if (op.tipo === 'compra' || op.tipo === 'deposito') {
@@ -32,14 +97,13 @@ export default function AnalyticsTab({ isGlass, privacyMode }) {
             if (primeraCompra && pos.inversionTotalUSD > 0 && pos.valorActualUSD > 0) {
                 const now = new Date();
                 dias = Math.max(1, Math.floor((now - primeraCompra) / (1000 * 60 * 60 * 24)));
-                
                 const ratio = pos.valorActualUSD / pos.inversionTotalUSD;
                 tna = (Math.pow(ratio, 365 / dias) - 1) * 100;
             }
 
-            return { ...pos, tna, dias };
+            return { ...pos, tna, dias, esBono, tieneCobros: false };
         }).sort((a, b) => b.tna - a.tna);
-    }, [posiciones]);
+    }, [posiciones, dolarBlue]);
 
     // TNA Global ponderada
     const { totalValor, tnaGlobal } = useMemo(() => {
@@ -134,7 +198,16 @@ export default function AnalyticsTab({ isGlass, privacyMode }) {
                         </h4>
                         {posicionesTNA.map(pos => (
                             <div key={`${pos.cartera}-${pos.especie}`} className="flex justify-between items-center text-sm">
-                                <span className={textColor}>{pos.especie} <span className="opacity-50 text-xs">({pos.cartera})</span></span>
+                                <span className={textColor}>
+                                    {pos.especie} <span className="opacity-50 text-xs">({pos.cartera})</span>
+                                    {/* Badge según tipo de cálculo */}
+                                    {pos.esBono && pos.tieneCobros && (
+                                        <span className="ml-1 text-xs font-bold text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded-full">TIR</span>
+                                    )}
+                                    {pos.esBono && !pos.tieneCobros && (
+                                        <span className="ml-1 text-xs font-bold text-gray-400 bg-gray-500/10 px-1.5 py-0.5 rounded-full" title="Cargá cobros de cupón para calcular la TIR real">⚠️ est.</span>
+                                    )}
+                                </span>
                                 <span className={`font-bold ${pos.tna >= 0 ? 'text-green-500' : 'text-red-500'}`}>
                                     {pos.tna >= 0 ? '+' : ''}{pos.tna.toFixed(1)}%
                                 </span>

@@ -100,8 +100,16 @@ export const SavingsProvider = ({ children }) => {
     // Calcular posiciones actuales (holdings)
     const posiciones = useMemo(() => {
         const result = {};
+
+        // Bug fix: ordenar cronológicamente para que ventas parciales
+        // siempre se procesen después de las compras correspondientes.
+        const sorted = [...(savingsTransactions || [])].sort((a, b) => {
+            const dateA = new Date(a.fecha || a.createdAt?.toDate?.() || 0);
+            const dateB = new Date(b.fecha || b.createdAt?.toDate?.() || 0);
+            return dateA - dateB;
+        });
         
-        (savingsTransactions || []).forEach(tx => {
+        sorted.forEach(tx => {
             const { cartera, especie, tipo, cantidad, precioUnitario, monedaPrecio } = tx;
             const cant = parseFloat(cantidad) || 0;
             const precio = parseFloat(precioUnitario) || 0;
@@ -136,7 +144,11 @@ export const SavingsProvider = ({ children }) => {
                 }
                 pos.cantidad -= cant;
             } else if (tipo === 'ajuste') {
-                pos.cantidad += cant; 
+                pos.cantidad += cant;
+            } else if (tipo === 'cobro_cupon' || tipo === 'amortizacion') {
+                // No modifican la cantidad del activo.
+                // Acumulan el dinero efectivamente cobrado para el cálculo de TIR.
+                pos.cobradoTotalUSD = (pos.cobradoTotalUSD || 0) + valorOperacionUSD;
             }
             pos.operaciones.push(tx);
         });
@@ -166,11 +178,14 @@ export const SavingsProvider = ({ children }) => {
                 const gananciaPérdidaUSD = valorActualUSD - pos.inversionTotalUSD;
                 const gananciaPorcentaje = pos.inversionTotalUSD > 0 ? (gananciaPérdidaUSD / pos.inversionTotalUSD) * 100 : 0;
 
+                const cobradoTotalUSD = pos.cobradoTotalUSD || 0;
+
                 return {
                     ...pos,
                     precioActualUSD: currentPriceUSD,
                     variacionDiaria,
                     valorActualUSD,
+                    cobradoTotalUSD,
                     gananciaPérdidaUSD,
                     gananciaPorcentaje
                 };

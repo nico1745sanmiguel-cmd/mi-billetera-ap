@@ -23,16 +23,15 @@ export default function SavingsDashboard() {
     // 3. Calcular Total General a partir de las posiciones
     const total = useMemo(() => {
         let totalUSD = 0;
-        let totalARS = 0;
         const rate = dolarBlue || 1000;
 
+        // Usar valorActualUSD ya calculado en el contexto en lugar de recalcular.
+        // Evita desincronización si la lógica de precios cambia en SavingsContext.
         posiciones.forEach(pos => {
-            const currentPriceUSD = pos.precioActualUSD;
-            const posUSD = pos.cantidad * currentPriceUSD;
-            totalUSD += posUSD;
-            totalARS += (posUSD * rate);
+            totalUSD += pos.valorActualUSD;
         });
 
+        const totalARS = totalUSD * rate;
         return currencyView === 'ARS' ? totalARS : totalUSD;
     }, [posiciones, dolarBlue, currencyView]);
 
