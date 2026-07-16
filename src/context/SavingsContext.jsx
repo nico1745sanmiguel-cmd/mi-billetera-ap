@@ -91,15 +91,11 @@ export const SavingsProvider = ({ children }) => {
         
         const fetchPrecios = async () => {
             const fetched = await fetchAssetPrices(especiesWithCarteras, dolarBlue);
-            setAssetPrices(fetched); // Solamente pisamos los fetched
+            setAssetPrices(prev => ({...prev, ...fetched}));
         };
         fetchPrecios();
     }, [especiesWithCarteras, dolarBlue]);
 
-    // Combinar manual y fetched
-    const finalAssetPrices = useMemo(() => {
-        return { ...assetPrices, ...manualPrices };
-    }, [assetPrices, manualPrices]);
 
     // Calcular posiciones actuales (holdings)
     const posiciones = useMemo(() => {
@@ -152,7 +148,7 @@ export const SavingsProvider = ({ children }) => {
                 let currentPriceUSD = 0;
                 if (pos.especie === 'USD') currentPriceUSD = 1;
                 else if (pos.especie === 'ARS') currentPriceUSD = 1 / rate;
-                else currentPriceUSD = finalAssetPrices[pos.especie] || 0;
+                else currentPriceUSD = assetPrices[pos.especie] || 0;
                 
                 const valorActualUSD = pos.cantidad * currentPriceUSD;
                 const gananciaPérdidaUSD = valorActualUSD - pos.inversionTotalUSD;
