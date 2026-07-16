@@ -305,24 +305,28 @@ export default function OperationModal({ onClose, isGlass, initialData }) {
                         <label className={`block text-xs font-bold mb-2 ${isGlass ? 'text-white/70' : 'text-gray-500'}`}>
                             MONTO TOTAL RECIBIDO
                         </label>
-                        <div className="flex gap-3">
-                            <input
-                                type="text"
-                                inputMode="decimal"
-                                placeholder="Ej: 850 o 850,50"
-                                value={formData.montoTotal || ''}
-                                onChange={(e) => setFormData({...formData, montoTotal: e.target.value})}
-                                required
-                                className={`${inputClasses} flex-1`}
-                            />
-                            <select
-                                value={formData.monedaPrecio}
-                                onChange={(e) => setFormData({...formData, monedaPrecio: e.target.value})}
-                                className={`${inputClasses} w-1/3`}
-                            >
-                                <option value="USD">USD</option>
-                                <option value="ARS">ARS</option>
-                            </select>
+                        <div className="flex gap-4">
+                            <div className="flex-1">
+                                <input
+                                    type="text"
+                                    inputMode="decimal"
+                                    placeholder="Ej: 850 o 850,50"
+                                    value={formData.montoTotal || ''}
+                                    onChange={(e) => setFormData({...formData, montoTotal: e.target.value})}
+                                    required
+                                    className={inputClasses}
+                                />
+                            </div>
+                            <div className="w-1/3">
+                                <select
+                                    value={formData.monedaPrecio}
+                                    onChange={(e) => setFormData({...formData, monedaPrecio: e.target.value})}
+                                    className={inputClasses}
+                                >
+                                    <option value="USD">USD</option>
+                                    <option value="ARS">ARS</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
                     )}
