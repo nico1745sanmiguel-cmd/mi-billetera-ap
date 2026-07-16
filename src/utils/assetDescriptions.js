@@ -40,7 +40,7 @@ export const assetDescriptions = {
     'VALO': 'Banco de Valores S.A. Entidad financiera argentina especializada en el mercado de capitales y fideicomisos.',
     'SUPV': 'Grupo Supervielle S.A. Grupo financiero privado de capitales nacionales en Argentina.',
     'CRES': 'Cresud S.A. Empresa agropecuaria argentina líder en la producción de bienes agrícolas básicos y con importante presencia en Brasil y otros países de la región.',
-    'MCD': 'McDonald\\'s Corporation (CEDEAR/Acción). Cadena global de restaurantes de comida rápida.',
+    'MCD': "McDonald's Corporation (CEDEAR/Acción). Cadena global de restaurantes de comida rápida.",
     'DIS': 'The Walt Disney Company (CEDEAR/Acción). Conglomerado multinacional estadounidense de medios de comunicación y entretenimiento masivo.',
     'V': 'Visa Inc. (CEDEAR/Acción). Corporación multinacional de servicios financieros que facilita transferencias electrónicas de fondos en todo el mundo.',
     'MA': 'Mastercard Inc. (CEDEAR/Acción). Corporación multinacional de servicios financieros.',
