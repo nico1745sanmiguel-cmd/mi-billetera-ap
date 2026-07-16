@@ -254,6 +254,31 @@ export const SavingsProvider = ({ children }) => {
         }
     }, [user, userData]);
 
+    // ─── Actualizar transacción ───────────────────────────────────────────────
+    const updateSavingsTransaction = useCallback(async (id, data) => {
+        if (!user || !id) return;
+        try {
+            await setDoc(doc(db, COLLECTIONS.SAVINGS_TRANSACTIONS, id), {
+                ...data,
+                updatedAt: serverTimestamp()
+            }, { merge: true });
+        } catch (error) {
+            console.error("Error updating savings transaction:", error);
+            throw error;
+        }
+    }, [user]);
+
+    // ─── Eliminar transacción ─────────────────────────────────────────────────
+    const deleteSavingsTransaction = useCallback(async (id) => {
+        if (!user || !id) return;
+        try {
+            await deleteDoc(doc(db, COLLECTIONS.SAVINGS_TRANSACTIONS, id));
+        } catch (error) {
+            console.error("Error deleting savings transaction:", error);
+            throw error;
+        }
+    }, [user]);
+
     // ─── Eliminar todos los ahorros ───────────────────────────────────────────
     const clearAllSavings = useCallback(async () => {
         if (!user) return;
@@ -296,6 +321,8 @@ export const SavingsProvider = ({ children }) => {
     const value = useMemo(() => ({
         savingsTransactions,
         addSavingsTransaction,
+        updateSavingsTransaction,
+        deleteSavingsTransaction,
         savingsGoal,
         goalLoading,
         saveSavingsGoal,
@@ -305,7 +332,7 @@ export const SavingsProvider = ({ children }) => {
         assetPrices,
         posiciones,
         saveManualPrice
-    }), [savingsTransactions, addSavingsTransaction, savingsGoal, goalLoading, saveSavingsGoal, deleteSavingsGoal, clearAllSavings, assetPrices, posiciones, saveManualPrice]);
+    }), [savingsTransactions, addSavingsTransaction, updateSavingsTransaction, deleteSavingsTransaction, savingsGoal, goalLoading, saveSavingsGoal, deleteSavingsGoal, clearAllSavings, assetPrices, posiciones, saveManualPrice]);
 
     return (
         <SavingsContext.Provider value={value}>

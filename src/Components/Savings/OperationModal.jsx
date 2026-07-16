@@ -3,22 +3,27 @@ import { X, Save } from 'lucide-react';
 import { useSavings } from '../../context/SavingsContext';
 import { useFinancial } from '../../context/FinancialContext';
 
-export default function OperationModal({ onClose, isGlass }) {
-    const { addSavingsTransaction, savingsTransactions } = useSavings();
+export default function OperationModal({ onClose, isGlass, initialData }) {
+    const { addSavingsTransaction, updateSavingsTransaction, savingsTransactions } = useSavings();
     const { dolarBlue } = useFinancial();
     const [loading, setLoading] = useState(false);
 
-    // Valores iniciales (por defecto compra)
+    // Valores iniciales
     const [formData, setFormData] = useState({
-        tipo: 'compra', // compra, venta, deposito, retiro, ajuste
-        cartera: '',
-        especie: '',
-        cantidad: '',
-        precioUnitario: '',
-        monedaPrecio: 'USD',
-        fecha: new Date().toISOString().split('T')[0], // yyyy-mm-dd
-        nota: ''
+        tipo: initialData?.tipo || 'compra',
+        cartera: initialData?.cartera || '',
+        especie: initialData?.especie || '',
+        cantidad: initialData?.cantidad?.toString() || '',
+        precioUnitario: initialData?.precioUnitario?.toString() || '',
+        monedaPrecio: initialData?.monedaPrecio || 'USD',
+        fecha: initialData?.fecha 
+            ? new Date(initialData.fecha).toISOString().split('T')[0] 
+            : new Date().toISOString().split('T')[0],
+        nota: initialData?.nota || ''
     });
+
+    const [fechaMode, setFechaMode] = useState('exacta');
+    const [diasTenencia, setDiasTenencia] = useState('');
 
     // Autocompletado nativo extrayendo datos previos + defaults
     const carterasOpciones = useMemo(() => {
@@ -67,7 +72,7 @@ export default function OperationModal({ onClose, isGlass }) {
 
         setLoading(true);
         try {
-            await addSavingsTransaction({
+            const payload = {
                 tipo: formData.tipo,
                 cartera: formData.cartera.trim(),
                 especie: formData.especie.trim().toUpperCase(),
@@ -76,7 +81,13 @@ export default function OperationModal({ onClose, isGlass }) {
                 monedaPrecio: isMovimientoFiat ? formData.especie.toUpperCase() : formData.monedaPrecio,
                 fecha: new Date(formData.fecha).toISOString(),
                 nota: formData.nota.trim()
-            });
+            };
+
+            if (initialData?.id) {
+                await updateSavingsTransaction(initialData.id, payload);
+            } else {
+                await addSavingsTransaction(payload);
+            }
             onClose();
         } catch (error) {
             console.error(error);
@@ -100,7 +111,7 @@ export default function OperationModal({ onClose, isGlass }) {
                 
                 <div className="flex justify-between items-center mb-6">
                     <h2 className={`text-xl font-bold ${isGlass ? 'text-white' : 'text-gray-900'}`}>
-                        Nueva Operación
+                        {initialData ? 'Editar Operación' : 'Nueva Operación'}
                     </h2>
                     <button aria-label="Cerrar" type="button" onClick={onClose} className={`p-2 rounded-full ${isGlass ? 'hover:bg-white/10 text-white' : 'hover:bg-gray-100 text-gray-500'}`}>
                         <X size={20} />
@@ -129,16 +140,47 @@ export default function OperationModal({ onClose, isGlass }) {
 
                     {/* Fecha */}
                     <div>
-                        <label className={`block text-xs font-bold mb-2 ${isGlass ? 'text-white/70' : 'text-gray-500'}`}>
-                            FECHA DE LA OPERACIÓN
-                        </label>
-                        <input
-                            type="date"
-                            value={formData.fecha}
-                            onChange={(e) => setFormData({...formData, fecha: e.target.value})}
-                            required
-                            className={inputClasses}
-                        />
+                        <div className="flex justify-between items-center mb-2">
+                            <label className={`block text-xs font-bold ${isGlass ? 'text-white/70' : 'text-gray-500'}`}>
+                                FECHA DE LA OPERACIÓN
+                            </label>
+                            <button 
+                                type="button" 
+                                onClick={() => setFechaMode(m => m === 'exacta' ? 'dias' : 'exacta')} 
+                                className="text-xs text-green-500 font-bold hover:underline"
+                            >
+                                {fechaMode === 'exacta' ? 'Usar días de tenencia' : 'Usar fecha exacta'}
+                            </button>
+                        </div>
+                        {fechaMode === 'exacta' ? (
+                            <input
+                                type="date"
+                                value={formData.fecha}
+                                onChange={(e) => setFormData({...formData, fecha: e.target.value})}
+                                required
+                                className={inputClasses}
+                            />
+                        ) : (
+                            <input
+                                type="number"
+                                placeholder="Ej: 45 (calcula la fecha hacia atrás)"
+                                value={diasTenencia}
+                                onChange={(e) => {
+                                    setDiasTenencia(e.target.value);
+                                    const d = parseInt(e.target.value) || 0;
+                                    const dt = new Date();
+                                    dt.setDate(dt.getDate() - d);
+                                    setFormData({...formData, fecha: dt.toISOString().split('T')[0]});
+                                }}
+                                required
+                                className={inputClasses}
+                            />
+                        )}
+                        {fechaMode === 'dias' && (
+                            <div className={`text-xs mt-1 ${isGlass ? 'text-white/60' : 'text-gray-500'}`}>
+                                Fecha calculada: {new Date(formData.fecha).toLocaleDateString('es-AR')}
+                            </div>
+                        )}
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
@@ -249,7 +291,8 @@ export default function OperationModal({ onClose, isGlass }) {
                         ) : (
                             <>
                                 <Save size={20} />
-                                {formData.tipo === 'compra' ? 'Registrar Compra' 
+                                {initialData ? 'Guardar Cambios'
+                                 : formData.tipo === 'compra' ? 'Registrar Compra' 
                                  : formData.tipo === 'venta' ? 'Registrar Venta'
                                  : formData.tipo === 'deposito' ? 'Registrar Ingreso' 
                                  : 'Registrar Retiro'}

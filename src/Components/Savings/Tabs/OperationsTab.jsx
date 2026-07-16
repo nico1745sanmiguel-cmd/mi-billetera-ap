@@ -1,16 +1,24 @@
 import React, { useState } from 'react';
 import { useSavings } from '../../../context/SavingsContext';
-import { Search, Filter } from 'lucide-react';
+import { Search, Filter, Edit2, Trash2 } from 'lucide-react';
+import OperationModal from '../OperationModal';
 
 const arsFormatter = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 });
 const usdFormatter = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
 
 export default function OperationsTab({ isGlass, privacyMode }) {
-    const { savingsTransactions } = useSavings();
+    const { savingsTransactions, deleteSavingsTransaction } = useSavings();
     const [filterEspecie, setFilterEspecie] = useState('');
     const [filterCartera, setFilterCartera] = useState('');
+    const [editingTx, setEditingTx] = useState(null);
 
     const formatAmount = (amount, formatter) => privacyMode ? '****' : formatter.format(amount);
+
+    const handleDelete = async (id) => {
+        if (window.confirm('¿Seguro que querés eliminar esta operación?')) {
+            await deleteSavingsTransaction(id);
+        }
+    };
 
     const sortedHistory = [...(savingsTransactions || [])].sort((a, b) => {
         const dateA = new Date(a.fecha || a.createdAt?.toDate?.() || 0);
@@ -116,10 +124,27 @@ export default function OperationsTab({ isGlass, privacyMode }) {
                                         {tx.nota && <span className={`text-xs opacity-60 block mt-0.5 truncate max-w-[150px]`}>{tx.nota}</span>}
                                     </div>
                                 )}
+                                
+                                <div className="flex gap-2">
+                                    <button aria-label="Editar" onClick={() => setEditingTx(tx)} className={`p-2 rounded-xl transition-all ${isGlass ? 'hover:bg-white/10 text-white/70' : 'hover:bg-gray-100 text-gray-400 hover:text-green-500'}`}>
+                                        <Edit2 size={16} />
+                                    </button>
+                                    <button aria-label="Eliminar" onClick={() => handleDelete(tx.id)} className={`p-2 rounded-xl transition-all ${isGlass ? 'hover:bg-white/10 text-white/70 hover:text-red-400' : 'hover:bg-red-50 text-gray-400 hover:text-red-500'}`}>
+                                        <Trash2 size={16} />
+                                    </button>
+                                </div>
                             </div>
                         );
                     })}
                 </div>
+            )}
+            
+            {editingTx && (
+                <OperationModal 
+                    initialData={editingTx} 
+                    onClose={() => setEditingTx(null)} 
+                    isGlass={isGlass} 
+                />
             )}
         </div>
     );
