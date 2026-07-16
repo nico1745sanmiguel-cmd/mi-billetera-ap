@@ -19,8 +19,8 @@ export default function AppProviders({ children }) {
                 <CardsProvider>
                     <SupermarketProvider>
                         <ServicesProvider>
-                            <SavingsProvider>
-                                <FinancialProvider>
+                            <FinancialProvider>
+                                <SavingsProvider>
                                     <MobilityProvider>
                                         <SalaryProvider>
                                             <NotesProvider>
@@ -32,8 +32,8 @@ export default function AppProviders({ children }) {
                                             </NotesProvider>
                                         </SalaryProvider>
                                     </MobilityProvider>
-                                </FinancialProvider>
-                            </SavingsProvider>
+                                </SavingsProvider>
+                            </FinancialProvider>
                         </ServicesProvider>
                     </SupermarketProvider>
                 </CardsProvider>
