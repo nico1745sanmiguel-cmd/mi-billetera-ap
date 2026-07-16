@@ -62,9 +62,16 @@ export const fetchAssetPrices = async (especiesWithCarteras, dolarBlue) => {
                 if (INTL_BROKERS.some(ib => lowerC.includes(ib))) isIntl = true;
             }
 
+            // Verificar si es un bono local argentino (ej: AL30, TX26, GD30D)
+            const isBond = /^[a-zA-Z]{2,4}\d{2}[a-zA-Z]?$/.test(esp);
+
+            // Si es un bono, lo mandamos a Yahoo Finance directo.
+            if (isBond) {
+                toFetchYahoo.push(esp);
+            }
             // Si sabemos que es internacional y no hay indicios de que sea local, omitimos Data912
             // y usamos Yahoo Finance para buscar el precio de la accion en origen.
-            if (!isIntl || isLocal) {
+            else if (!isIntl || isLocal) {
                 toFetchData912.push(esp);
             } else {
                 toFetchYahoo.push(esp);
@@ -147,18 +154,44 @@ export const fetchAssetPrices = async (especiesWithCarteras, dolarBlue) => {
         }
     }
 
-    // 4. Fetch Yahoo Finance a través de Cloud Function para acciones internacionales (US Stocks)
+    // 4. Fetch Yahoo Finance a través de Cloud Function para acciones internacionales (US Stocks) y Bonos
     if (toFetchYahoo.length > 0) {
         try {
+            // Mapeo para saber qué ticker consultamos a Yahoo y cuál era el original
+            const yahooQueryMap = {};
+            const symbolsToQuery = toFetchYahoo.map(esp => {
+                const isBond = /^[a-zA-Z]{2,4}\d{2}[a-zA-Z]?$/.test(esp);
+                // A los bonos locales sin sufijo les agregamos .BA para Yahoo Finance
+                const querySymbol = (isBond && !esp.toUpperCase().includes('.BA')) ? `${esp.toUpperCase()}.BA` : esp;
+                yahooQueryMap[querySymbol] = esp;
+                return querySymbol;
+            });
+
             const fetchYahooFn = httpsCallable(functions, 'fetchYahooFinance');
-            const res = await fetchYahooFn({ symbols: toFetchYahoo });
+            const res = await fetchYahooFn({ symbols: symbolsToQuery });
             const data = res.data || {};
             
-            for (const esp of toFetchYahoo) {
-                if (data[esp]) {
-                    const price = parseFloat(data[esp]);
-                    result[esp] = price;
-                    setCache(`price_${esp}`, { price, timestamp: now });
+            for (const queriedSymbol of Object.keys(data)) {
+                const originalEsp = yahooQueryMap[queriedSymbol];
+                let price = parseFloat(data[queriedSymbol]);
+                
+                if (originalEsp) {
+                    const isBond = /^[a-zA-Z]{2,4}\d{2}[a-zA-Z]?$/.test(originalEsp);
+                    
+                    if (isBond) {
+                        // Los bonos en Yahoo (BYMA) cotizan cada 100 nominales. Lo llevamos a valor unitario.
+                        price = price / 100;
+                        
+                        // Determinar la moneda: Si termina en 'D' o 'C' (ej: AL30D), la cotización es en USD.
+                        // Si no, es en ARS y debemos pasarla a USD (ya que fetchAssetPrices devuelve todo en USD).
+                        const isUSDQuote = originalEsp.toUpperCase().endsWith('D') || originalEsp.toUpperCase().endsWith('C');
+                        if (!isUSDQuote && dolarBlue && dolarBlue > 0) {
+                            price = price / dolarBlue;
+                        }
+                    }
+
+                    result[originalEsp] = price;
+                    setCache(`price_${originalEsp}`, { price, timestamp: now });
                 }
             }
         } catch (error) {
