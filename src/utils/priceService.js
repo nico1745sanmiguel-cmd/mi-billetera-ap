@@ -65,9 +65,9 @@ export const fetchAssetPrices = async (especiesWithCarteras, dolarBlue) => {
             // Verificar si es un bono local argentino (ej: AL30, TX26, GD30D)
             const isBond = /^[a-zA-Z]{2,4}\d{2}[a-zA-Z]?$/.test(esp);
 
-            // Si es un bono, lo mandamos a Yahoo Finance directo.
+            // Si es un bono, lo mandamos a Data912 directo.
             if (isBond) {
-                toFetchYahoo.push(esp);
+                toFetchData912.push(esp);
             }
             // Si sabemos que es internacional y no hay indicios de que sea local, omitimos Data912
             // y usamos Yahoo Finance para buscar el precio de la accion en origen.
@@ -119,6 +119,13 @@ export const fetchAssetPrices = async (especiesWithCarteras, dolarBlue) => {
                 if (resS.ok) stocksData = await resS.json();
             } catch (e) { console.error('Error fetching Data912 Stocks', e); }
 
+            // BONOS
+            let bondsData = [];
+            try {
+                const resB = await fetch('https://data912.com/live/arg_bonds');
+                if (resB.ok) bondsData = await resB.json();
+            } catch (e) { console.error('Error fetching Data912 Bonds', e); }
+
             const priceMapARS = {};
             // El array viene como [{ ticker: "AAPL", price: 15000 }, ...] o similar dependiendo de la estructura exacta.
             // Asumiendo formato de data912: [{ticker, price, ...}, ...]
@@ -137,12 +144,28 @@ export const fetchAssetPrices = async (especiesWithCarteras, dolarBlue) => {
             
             processData(cedearsData);
             processData(stocksData);
+            processData(bondsData);
 
             // Mapear los solicitados
             for (const esp of toFetchData912) {
                 const cleanEsp = esp.toUpperCase();
                 if (priceMapARS[cleanEsp]) {
-                    const priceARS = priceMapARS[cleanEsp];
+                    let priceARS = priceMapARS[cleanEsp];
+                    
+                    const isBond = /^[a-zA-Z]{2,4}\d{2}[a-zA-Z]?$/.test(cleanEsp);
+                    if (isBond) {
+                        // Los bonos en Data912 vienen cada 100 nominales, pasamos a valor unitario
+                        priceARS = priceARS / 100;
+                        
+                        // Determinar si cotiza en USD
+                        const isUSDQuote = cleanEsp.endsWith('D') || cleanEsp.endsWith('C');
+                        if (isUSDQuote) {
+                            result[esp] = priceARS;
+                            setCache(`price_${esp}`, { price: priceARS, timestamp: now });
+                            continue;
+                        }
+                    }
+
                     const priceUSD = priceARS / dolarBlue; // Convertir a USD usando el blue
                     result[esp] = priceUSD;
                     setCache(`price_${esp}`, { price: priceUSD, timestamp: now });
@@ -154,44 +177,18 @@ export const fetchAssetPrices = async (especiesWithCarteras, dolarBlue) => {
         }
     }
 
-    // 4. Fetch Yahoo Finance a través de Cloud Function para acciones internacionales (US Stocks) y Bonos
+    // 4. Fetch Yahoo Finance a través de Cloud Function para acciones internacionales (US Stocks)
     if (toFetchYahoo.length > 0) {
         try {
-            // Mapeo para saber qué ticker consultamos a Yahoo y cuál era el original
-            const yahooQueryMap = {};
-            const symbolsToQuery = toFetchYahoo.map(esp => {
-                const isBond = /^[a-zA-Z]{2,4}\d{2}[a-zA-Z]?$/.test(esp);
-                // A los bonos locales sin sufijo les agregamos .BA para Yahoo Finance
-                const querySymbol = (isBond && !esp.toUpperCase().includes('.BA')) ? `${esp.toUpperCase()}.BA` : esp;
-                yahooQueryMap[querySymbol] = esp;
-                return querySymbol;
-            });
-
             const fetchYahooFn = httpsCallable(functions, 'fetchYahooFinance');
-            const res = await fetchYahooFn({ symbols: symbolsToQuery });
+            const res = await fetchYahooFn({ symbols: toFetchYahoo });
             const data = res.data || {};
             
-            for (const queriedSymbol of Object.keys(data)) {
-                const originalEsp = yahooQueryMap[queriedSymbol];
-                let price = parseFloat(data[queriedSymbol]);
-                
-                if (originalEsp) {
-                    const isBond = /^[a-zA-Z]{2,4}\d{2}[a-zA-Z]?$/.test(originalEsp);
-                    
-                    if (isBond) {
-                        // Los bonos en Yahoo (BYMA) cotizan cada 100 nominales. Lo llevamos a valor unitario.
-                        price = price / 100;
-                        
-                        // Determinar la moneda: Si termina en 'D' o 'C' (ej: AL30D), la cotización es en USD.
-                        // Si no, es en ARS y debemos pasarla a USD (ya que fetchAssetPrices devuelve todo en USD).
-                        const isUSDQuote = originalEsp.toUpperCase().endsWith('D') || originalEsp.toUpperCase().endsWith('C');
-                        if (!isUSDQuote && dolarBlue && dolarBlue > 0) {
-                            price = price / dolarBlue;
-                        }
-                    }
-
-                    result[originalEsp] = price;
-                    setCache(`price_${originalEsp}`, { price, timestamp: now });
+            for (const esp of toFetchYahoo) {
+                if (data[esp]) {
+                    const price = parseFloat(data[esp]);
+                    result[esp] = price;
+                    setCache(`price_${esp}`, { price, timestamp: now });
                 }
             }
         } catch (error) {
