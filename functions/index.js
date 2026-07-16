@@ -299,9 +299,16 @@ exports.fetchYahooFinance = functions.https.onCall(async (data, context) => {
             const res = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}`);
             if (res.ok) {
                 const json = await res.json();
-                const price = json?.chart?.result?.[0]?.meta?.regularMarketPrice;
+                const meta = json?.chart?.result?.[0]?.meta;
+                const price = meta?.regularMarketPrice;
+                const previousClose = meta?.chartPreviousClose || meta?.previousClose;
+                
                 if (price) {
-                    result[symbol] = price;
+                    let change = 0;
+                    if (previousClose) {
+                        change = ((price - previousClose) / previousClose) * 100;
+                    }
+                    result[symbol] = { price, change };
                 }
             }
         } catch (e) {

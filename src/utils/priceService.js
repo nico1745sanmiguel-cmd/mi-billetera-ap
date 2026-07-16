@@ -44,7 +44,7 @@ export const fetchAssetPrices = async (especiesWithCarteras, dolarBlue) => {
         const cached = getCache(cacheKey, null);
         
         if (cached && (now - cached.timestamp < CACHE_TTL_MS)) {
-            result[esp] = cached.price;
+            result[esp] = { price: cached.price, change: cached.change || 0 };
             continue;
         }
 
