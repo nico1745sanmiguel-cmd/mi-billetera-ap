@@ -1,26 +1,91 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
-import { Wallet, TrendingUp, TrendingDown } from 'lucide-react';
+import { Wallet, TrendingUp, TrendingDown, ArrowUpDown } from 'lucide-react';
 import { useSavings } from '../../../context/SavingsContext';
+import { useFinancial } from '../../../context/FinancialContext';
 
 const COLORS = ['#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#14B8A6', '#F97316'];
 
 const usdFormatter = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
 const arsFormatter = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 });
 
-export default function PortfolioTab({ isGlass, privacyMode }) {
+export default function PortfolioTab({ isGlass, privacyMode, currencyView = 'USD' }) {
     const { posiciones } = useSavings();
+    const { dolarBlue } = useFinancial();
+    const [sortConfig, setSortConfig] = useState({ key: null, direction: 'desc' });
 
-    const formatAmount = (amount, formatter) => privacyMode ? '****' : formatter.format(amount);
+    const rate = dolarBlue || 1000;
 
-    // Agrupar por cartera para el chart
-    const dataByCartera = useMemo(() => {
+    const formatAmount = (amount, currency) => {
+        if (privacyMode) return '****';
+        return currency === 'USD' ? usdFormatter.format(amount) : arsFormatter.format(amount);
+    };
+
+    const formatPercentage = (amount) => {
+        return amount.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
+    };
+
+    const requestSort = (key) => {
+        let direction = 'desc';
+        if (sortConfig && sortConfig.key === key && sortConfig.direction === 'desc') {
+            direction = 'asc';
+        }
+        setSortConfig({ key, direction });
+    };
+
+    // Agrupar por cartera
+    const posicionesByCartera = useMemo(() => {
         const ag = {};
         posiciones.forEach(p => {
-            ag[p.cartera] = (ag[p.cartera] || 0) + p.valorActualUSD;
+            if (!ag[p.cartera]) ag[p.cartera] = { totalUSD: 0, totalARS: 0, items: [] };
+            
+            const valorUSD = p.valorActualUSD;
+            const valorARS = valorUSD * rate;
+            
+            ag[p.cartera].totalUSD += valorUSD;
+            ag[p.cartera].totalARS += valorARS;
+            ag[p.cartera].items.push(p);
         });
-        return Object.keys(ag).map(c => ({ name: c, value: ag[c] })).filter(d => d.value > 0);
-    }, [posiciones]);
+
+        // Ordenar dentro de cada cartera
+        Object.keys(ag).forEach(cartera => {
+            if (sortConfig.key) {
+                ag[cartera].items.sort((a, b) => {
+                    let aValue = a[sortConfig.key];
+                    let bValue = b[sortConfig.key];
+                    
+                    if (typeof aValue === 'string') {
+                        aValue = aValue.toLowerCase();
+                        bValue = bValue.toLowerCase();
+                    }
+                    
+                    if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
+                    if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
+                    return 0;
+                });
+            }
+        });
+
+        // Convert to array and sort carteras by total value descending
+        return Object.keys(ag).map(name => ({
+            name,
+            ...ag[name]
+        })).sort((a, b) => b.totalUSD - a.totalUSD);
+    }, [posiciones, rate, sortConfig]);
+
+    const dataByCartera = useMemo(() => {
+        return posicionesByCartera.map(c => ({
+            name: c.name,
+            value: currencyView === 'ARS' ? c.totalARS : c.totalUSD
+        })).filter(d => d.value > 0);
+    }, [posicionesByCartera, currencyView]);
+
+    const renderSortIcon = (columnName) => {
+        if (sortConfig.key === columnName) {
+            return <ArrowUpDown size={14} className={`inline-block ml-1 transition-transform ${sortConfig.direction === 'asc' ? 'rotate-180' : ''}`} />;
+        }
+        return <ArrowUpDown size={14} className="inline-block ml-1 opacity-30 hover:opacity-100 transition-opacity" />;
+    };
 
     const textColor = isGlass ? 'text-white' : 'text-gray-800';
     const cardBg = isGlass ? 'bg-white/10 backdrop-blur-md border border-white/20' : 'bg-white shadow-sm border border-gray-100';
@@ -63,7 +128,7 @@ export default function PortfolioTab({ isGlass, privacyMode }) {
                                         ))}
                                     </Pie>
                                     <Tooltip 
-                                        formatter={(val) => usdFormatter.format(val)}
+                                        formatter={(val) => currencyView === 'USD' ? usdFormatter.format(val) : arsFormatter.format(val)}
                                         contentStyle={{ backgroundColor: isGlass ? 'rgba(0,0,0,0.8)' : 'white', borderRadius: '12px', border: 'none' }}
                                         itemStyle={{ color: isGlass ? 'white' : 'black' }}
                                     />
@@ -82,59 +147,91 @@ export default function PortfolioTab({ isGlass, privacyMode }) {
                                     <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
                                     <span className={isGlass ? 'text-white/80' : 'text-gray-600'}>{d.name}</span>
                                 </div>
-                                <span className={textColor}>{formatAmount(d.value, usdFormatter)}</span>
+                                <span className={textColor}>{formatAmount(d.value, currencyView)}</span>
                             </div>
                         ))}
                     </div>
                 </div>
             </div>
 
-            {/* Posiciones Abiertas */}
-            <div className={`rounded-3xl p-6 overflow-hidden ${cardBg}`}>
-                <h3 className={`font-bold mb-4 ${textColor}`}>Posiciones Abiertas</h3>
-                <div className="overflow-x-auto -mx-6 px-6">
-                    <table className="w-full text-sm text-left">
-                        <thead>
-                            <tr className={isGlass ? 'text-white/50' : 'text-gray-400'}>
-                                <th className="pb-3 font-semibold">Activo</th>
-                                <th className="pb-3 font-semibold">Cartera</th>
-                                <th className="pb-3 font-semibold text-right">Cant.</th>
-                                <th className="pb-3 font-semibold text-right">Precio Actual</th>
-                                <th className="pb-3 font-semibold text-right">Valor USD</th>
-                                <th className="pb-3 font-semibold text-right">P&L</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-200/20">
-                            {posiciones.map(pos => {
-                                const isProfit = pos.gananciaPérdidaUSD >= 0;
-                                return (
-                                    <tr key={`${pos.cartera}-${pos.especie}`} className="hover:bg-white/5 transition-colors">
-                                        <td className={`py-4 font-bold ${textColor}`}>{pos.especie}</td>
-                                        <td className={`py-4 ${isGlass ? 'text-white/70' : 'text-gray-600'}`}>{pos.cartera}</td>
-                                        <td className={`py-4 text-right font-medium ${textColor}`}>
-                                            {privacyMode ? '****' : pos.cantidad.toLocaleString('es-AR', { maximumFractionDigits: 6 })}
-                                        </td>
-                                        <td className={`py-4 text-right ${isGlass ? 'text-white/70' : 'text-gray-600'}`}>
-                                            {formatAmount(pos.precioActualUSD, usdFormatter)}
-                                        </td>
-                                        <td className={`py-4 text-right font-bold ${textColor}`}>
-                                            {formatAmount(pos.valorActualUSD, usdFormatter)}
-                                        </td>
-                                        <td className={`py-4 text-right font-bold flex justify-end items-center gap-1 ${
-                                            isProfit ? 'text-green-500' : 'text-red-500'
-                                        }`}>
-                                            {isProfit ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
-                                            {formatAmount(Math.abs(pos.gananciaPérdidaUSD), usdFormatter)}
-                                            <span className="text-xs opacity-70 ml-1">
-                                                ({isProfit ? '+' : ''}{pos.gananciaPorcentaje.toFixed(2)}%)
-                                            </span>
-                                        </td>
+            {/* Posiciones Abiertas Agrupadas por Cartera */}
+            <div className="space-y-4">
+                {posicionesByCartera.map((carteraData, index) => (
+                    <div key={carteraData.name} className={`rounded-3xl p-6 overflow-hidden ${cardBg}`}>
+                        <div className="flex justify-between items-end mb-4 border-b border-gray-200/20 pb-3">
+                            <div>
+                                <h3 className={`font-bold flex items-center gap-2 ${textColor}`}>
+                                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
+                                    {carteraData.name}
+                                </h3>
+                            </div>
+                            <div className="text-right">
+                                <div className={`text-xs font-semibold uppercase tracking-wider ${isGlass ? 'text-white/50' : 'text-gray-500'}`}>
+                                    Total {currencyView}
+                                </div>
+                                <div className={`text-lg font-black ${textColor}`}>
+                                    {formatAmount(currencyView === 'ARS' ? carteraData.totalARS : carteraData.totalUSD, currencyView)}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="overflow-x-auto -mx-6 px-6">
+                            <table className="w-full text-sm text-left">
+                                <thead>
+                                    <tr className={isGlass ? 'text-white/50' : 'text-gray-400'}>
+                                        <th className="pb-3 font-semibold cursor-pointer select-none hover:text-green-500 transition-colors" onClick={() => requestSort('especie')}>
+                                            Activo {renderSortIcon('especie')}
+                                        </th>
+                                        <th className="pb-3 font-semibold text-right cursor-pointer select-none hover:text-green-500 transition-colors" onClick={() => requestSort('cantidad')}>
+                                            Cant. {renderSortIcon('cantidad')}
+                                        </th>
+                                        <th className="pb-3 font-semibold text-right cursor-pointer select-none hover:text-green-500 transition-colors" onClick={() => requestSort('precioActualUSD')}>
+                                            Precio Actual {renderSortIcon('precioActualUSD')}
+                                        </th>
+                                        <th className="pb-3 font-semibold text-right cursor-pointer select-none hover:text-green-500 transition-colors" onClick={() => requestSort('valorActualUSD')}>
+                                            Valor {currencyView} {renderSortIcon('valorActualUSD')}
+                                        </th>
+                                        <th className="pb-3 font-semibold text-right cursor-pointer select-none hover:text-green-500 transition-colors" onClick={() => requestSort('gananciaPérdidaUSD')}>
+                                            P&L {renderSortIcon('gananciaPérdidaUSD')}
+                                        </th>
                                     </tr>
-                                );
-                            })}
-                        </tbody>
-                    </table>
-                </div>
+                                </thead>
+                                <tbody className="divide-y divide-gray-200/20">
+                                    {carteraData.items.map(pos => {
+                                        const valueBase = currencyView === 'ARS' ? (pos.valorActualUSD * rate) : pos.valorActualUSD;
+                                        const priceBase = currencyView === 'ARS' ? (pos.precioActualUSD * rate) : pos.precioActualUSD;
+                                        const pnlBase = currencyView === 'ARS' ? (pos.gananciaPérdidaUSD * rate) : pos.gananciaPérdidaUSD;
+                                        const isProfit = pos.gananciaPérdidaUSD >= 0;
+
+                                        return (
+                                            <tr key={`${pos.cartera}-${pos.especie}`} className="hover:bg-white/5 transition-colors">
+                                                <td className={`py-4 font-bold ${textColor}`}>{pos.especie}</td>
+                                                <td className={`py-4 text-right font-medium ${textColor}`}>
+                                                    {privacyMode ? '****' : pos.cantidad.toLocaleString('es-AR', { maximumFractionDigits: 6 })}
+                                                </td>
+                                                <td className={`py-4 text-right ${isGlass ? 'text-white/70' : 'text-gray-600'}`}>
+                                                    {formatAmount(priceBase, currencyView)}
+                                                </td>
+                                                <td className={`py-4 text-right font-bold ${textColor}`}>
+                                                    {formatAmount(valueBase, currencyView)}
+                                                </td>
+                                                <td className={`py-4 text-right font-bold flex justify-end items-center gap-1 ${
+                                                    isProfit ? 'text-green-500' : 'text-red-500'
+                                                }`}>
+                                                    {isProfit ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
+                                                    {formatAmount(Math.abs(pnlBase), currencyView)}
+                                                    <span className="text-xs opacity-70 ml-1">
+                                                        ({isProfit ? '+' : ''}{formatPercentage(pos.gananciaPorcentaje)})
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                ))}
             </div>
         </div>
     );

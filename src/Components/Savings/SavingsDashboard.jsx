@@ -112,7 +112,7 @@ export default function SavingsDashboard() {
 
             {/* TAB CONTENT */}
             <div className="mt-6">
-                {activeTab === 'portafolio' && <PortfolioTab isGlass={isGlass} privacyMode={privacyMode} />}
+                {activeTab === 'portafolio' && <PortfolioTab isGlass={isGlass} privacyMode={privacyMode} currencyView={currencyView} />}
                 {activeTab === 'operaciones' && <OperationsTab isGlass={isGlass} privacyMode={privacyMode} />}
                 {activeTab === 'analisis' && <AnalyticsTab isGlass={isGlass} privacyMode={privacyMode} />}
             </div>
