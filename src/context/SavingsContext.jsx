@@ -133,6 +133,23 @@ export const SavingsProvider = ({ children }) => {
         }
     }, [user, userData]);
 
+    // ─── Eliminar todos los ahorros ───────────────────────────────────────────
+    const clearAllSavings = useCallback(async () => {
+        if (!user) return;
+        try {
+            const promises = savingsTransactions.map(tx => 
+                deleteDoc(doc(db, COLLECTIONS.SAVINGS_TRANSACTIONS, tx.id))
+            );
+            if (savingsGoal?.id) {
+                promises.push(deleteDoc(doc(db, COLLECTIONS.SAVINGS_GOALS, savingsGoal.id)));
+            }
+            await Promise.all(promises);
+        } catch (error) {
+            console.error("Error clearing all savings:", error);
+            throw error;
+        }
+    }, [user, savingsTransactions, savingsGoal]);
+
     const value = useMemo(() => ({
         savingsTransactions,
         addSavingsTransaction,
@@ -140,7 +157,8 @@ export const SavingsProvider = ({ children }) => {
         goalLoading,
         saveSavingsGoal,
         deleteSavingsGoal,
-    }), [savingsTransactions, addSavingsTransaction, savingsGoal, goalLoading, saveSavingsGoal, deleteSavingsGoal]);
+        clearAllSavings,
+    }), [savingsTransactions, addSavingsTransaction, savingsGoal, goalLoading, saveSavingsGoal, deleteSavingsGoal, clearAllSavings]);
 
     return (
         <SavingsContext.Provider value={value}>

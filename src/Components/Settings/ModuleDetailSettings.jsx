@@ -9,6 +9,7 @@ import { AVAILABLE_MODULES } from '../../config/modules';
 const MobilitySettings = lazy(() => import('../Mobility/MobilitySettings'));
 const NotesSettings = lazy(() => import('../Notes/NotesSettings'));
 const PlannerSettings = lazy(() => import('./PlannerSettings'));
+const SavingsSettings = lazy(() => import('../Savings/SavingsSettings'));
 
 const LazyLoader = () => (
     <div className="flex justify-center items-center h-40 animate-pulse">
@@ -56,6 +57,12 @@ export default function ModuleDetailSettings({ onBack }) {
                 return (
                     <Suspense fallback={<LazyLoader />}>
                         <PlannerSettings isGlass={isGlass} onBack={onBack || (() => navigate(-1))} />
+                    </Suspense>
+                );
+            case 'savings':
+                return (
+                    <Suspense fallback={<LazyLoader />}>
+                        <SavingsSettings isGlass={isGlass} onBack={onBack || (() => navigate(-1))} />
                     </Suspense>
                 );
             default:
