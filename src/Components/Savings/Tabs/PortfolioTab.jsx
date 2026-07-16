@@ -182,13 +182,13 @@ export default function PortfolioTab({ isGlass, privacyMode, currencyView = 'USD
                                         <th className="pb-3 font-semibold cursor-pointer select-none hover:text-green-500 transition-colors" onClick={() => requestSort('especie')}>
                                             Activo {renderSortIcon('especie')}
                                         </th>
-                                        <th className="pb-3 font-semibold text-right cursor-pointer select-none hover:text-green-500 transition-colors" onClick={() => requestSort('cantidad')}>
+                                        <th className="hidden md:table-cell pb-3 font-semibold text-right cursor-pointer select-none hover:text-green-500 transition-colors" onClick={() => requestSort('cantidad')}>
                                             Cant. {renderSortIcon('cantidad')}
                                         </th>
-                                        <th className="pb-3 font-semibold text-right cursor-pointer select-none hover:text-green-500 transition-colors" onClick={() => requestSort('precioActualUSD')}>
+                                        <th className="hidden md:table-cell pb-3 font-semibold text-right cursor-pointer select-none hover:text-green-500 transition-colors" onClick={() => requestSort('precioActualUSD')}>
                                             Precio Actual {renderSortIcon('precioActualUSD')}
                                         </th>
-                                        <th className="pb-3 font-semibold text-right cursor-pointer select-none hover:text-green-500 transition-colors" onClick={() => requestSort('valorActualUSD')}>
+                                        <th className="hidden md:table-cell pb-3 font-semibold text-right cursor-pointer select-none hover:text-green-500 transition-colors" onClick={() => requestSort('valorActualUSD')}>
                                             Valor {currencyView} {renderSortIcon('valorActualUSD')}
                                         </th>
                                         <th className="pb-3 font-semibold text-right cursor-pointer select-none hover:text-green-500 transition-colors" onClick={() => requestSort('gananciaPérdidaUSD')}>
@@ -206,13 +206,13 @@ export default function PortfolioTab({ isGlass, privacyMode, currencyView = 'USD
                                         return (
                                             <tr key={`${pos.cartera}-${pos.especie}`} className="hover:bg-white/5 transition-colors">
                                                 <td className={`py-4 font-bold ${textColor}`}>{pos.especie}</td>
-                                                <td className={`py-4 text-right font-medium ${textColor}`}>
+                                                <td className={`hidden md:table-cell py-4 text-right font-medium ${textColor}`}>
                                                     {privacyMode ? '****' : pos.cantidad.toLocaleString('es-AR', { maximumFractionDigits: 6 })}
                                                 </td>
-                                                <td className={`py-4 text-right ${isGlass ? 'text-white/70' : 'text-gray-600'}`}>
+                                                <td className={`hidden md:table-cell py-4 text-right ${isGlass ? 'text-white/70' : 'text-gray-600'}`}>
                                                     {formatAmount(priceBase, currencyView)}
                                                 </td>
-                                                <td className={`py-4 text-right font-bold ${textColor}`}>
+                                                <td className={`hidden md:table-cell py-4 text-right font-bold ${textColor}`}>
                                                     {formatAmount(valueBase, currencyView)}
                                                 </td>
                                                 <td className={`py-4 text-right font-bold flex justify-end items-center gap-1 ${

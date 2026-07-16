@@ -95,7 +95,8 @@ export default function SavingsDashboard() {
                 {[
                     { id: 'portafolio', label: 'Portafolio' },
                     { id: 'operaciones', label: 'Operaciones' },
-                    { id: 'analisis', label: 'Análisis' }
+                    { id: 'analisis', label: 'Análisis' },
+                    { id: 'objetivo', label: 'Objetivo' }
                 ].map(tab => (
                     <button aria-label="Tab" type="button" key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
@@ -115,11 +116,7 @@ export default function SavingsDashboard() {
                 {activeTab === 'portafolio' && <PortfolioTab isGlass={isGlass} privacyMode={privacyMode} currencyView={currencyView} />}
                 {activeTab === 'operaciones' && <OperationsTab isGlass={isGlass} privacyMode={privacyMode} />}
                 {activeTab === 'analisis' && <AnalyticsTab isGlass={isGlass} privacyMode={privacyMode} />}
-            </div>
-
-            {/* OBJETIVO DE AHORRO */}
-            <div className="mt-8">
-                <SavingsGoal />
+                {activeTab === 'objetivo' && <SavingsGoal />}
             </div>
 
             {showAddModal && (
