@@ -1,6 +1,6 @@
 import React from 'react';
 import { X, TrendingUp, TrendingDown, Info, DollarSign, Activity } from 'lucide-react';
-import { getAssetDescription } from '../../../utils/assetDescriptions';
+import { getAssetDescription } from '../../utils/assetDescriptions';
 import { useFinancial } from '../../../context/FinancialContext';
 
 export default function AssetDetailsModal({ isOpen, onClose, asset, currencyView, isGlass, rate }) {
