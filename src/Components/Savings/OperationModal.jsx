@@ -46,14 +46,33 @@ export default function OperationModal({ onClose, isGlass }) {
         // Si no es un movimiento de caja puro, validamos precio
         if (!isMovimientoFiat && !formData.precioUnitario && formData.tipo !== 'ajuste') return;
 
+        const parseNumber = (val) => {
+            if (!val) return 0;
+            let str = val.toString().trim();
+            // Si tiene coma, asumimos formato argentino (ej. 1.234,50)
+            if (str.includes(',')) {
+                str = str.replace(/\./g, '').replace(',', '.');
+            } else {
+                // Si tiene múltiples puntos, son miles (ej. 1.000.000)
+                const parts = str.split('.');
+                if (parts.length > 2) {
+                    str = str.replace(/\./g, '');
+                }
+            }
+            return parseFloat(str) || 0;
+        };
+
+        const cantidadParsed = parseNumber(formData.cantidad);
+        const precioParsed = parseNumber(formData.precioUnitario);
+
         setLoading(true);
         try {
             await addSavingsTransaction({
                 tipo: formData.tipo,
                 cartera: formData.cartera.trim(),
                 especie: formData.especie.trim().toUpperCase(),
-                cantidad: parseFloat(formData.cantidad),
-                precioUnitario: isMovimientoFiat ? 1 : (parseFloat(formData.precioUnitario) || 0),
+                cantidad: cantidadParsed,
+                precioUnitario: isMovimientoFiat ? 1 : precioParsed,
                 monedaPrecio: isMovimientoFiat ? formData.especie.toUpperCase() : formData.monedaPrecio,
                 fecha: new Date(formData.fecha).toISOString(),
                 nota: formData.nota.trim()
@@ -165,9 +184,9 @@ export default function OperationModal({ onClose, isGlass }) {
                             CANTIDAD
                         </label>
                         <input
-                            type="number"
-                            step="any"
-                            placeholder="Cantidad de acciones/monedas"
+                            type="text"
+                            inputMode="decimal"
+                            placeholder="Ej: 15.5 o 15,5"
                             value={formData.cantidad}
                             onChange={(e) => setFormData({...formData, cantidad: e.target.value})}
                             required
@@ -182,9 +201,9 @@ export default function OperationModal({ onClose, isGlass }) {
                                     PRECIO UNITARIO
                                 </label>
                                 <input
-                                    type="number"
-                                    step="any"
-                                    placeholder="Precio por unidad"
+                                    type="text"
+                                    inputMode="decimal"
+                                    placeholder="Ej: 15000 o 15000,50"
                                     value={formData.precioUnitario}
                                     onChange={(e) => setFormData({...formData, precioUnitario: e.target.value})}
                                     required={!isMovimientoFiat}
