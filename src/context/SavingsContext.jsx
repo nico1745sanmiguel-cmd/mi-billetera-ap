@@ -72,33 +72,41 @@ export const SavingsProvider = ({ children }) => {
         return () => unsub();
     }, [user, userData]);
 
-    // Calcular las especies únicas que tenemos en cartera
-    const especiesUnicas = useMemo(() => {
-        const set = new Set();
+    // Compute especiesWithCarteras
+    const especiesWithCarteras = useMemo(() => {
+        const map = {};
         (savingsTransactions || []).forEach(tx => {
-            if (tx.especie) set.add(tx.especie);
+            if (!tx.especie) return;
+            const esp = tx.especie.toUpperCase();
+            if (!map[esp]) map[esp] = new Set();
+            if (tx.cartera) map[esp].add(tx.cartera);
         });
-        return Array.from(set);
+        return map;
     }, [savingsTransactions]);
 
-    // Fetch automático de precios para las especies únicas
+    // Fetch automático de precios
     useEffect(() => {
-        if (especiesUnicas.length === 0 || !dolarBlue) return;
+        const keys = Object.keys(especiesWithCarteras);
+        if (keys.length === 0 || !dolarBlue) return;
         
         const fetchPrecios = async () => {
-            const prices = await fetchAssetPrices(especiesUnicas, dolarBlue);
-            setAssetPrices(prev => ({ ...prev, ...prices }));
+            const fetched = await fetchAssetPrices(especiesWithCarteras, dolarBlue);
+            setAssetPrices(fetched); // Solamente pisamos los fetched
         };
         fetchPrecios();
-        // Podríamos poner un intervalo si queremos actualizar, por ahora una vez al montar/cambiar especies
-    }, [especiesUnicas, dolarBlue]);
+    }, [especiesWithCarteras, dolarBlue]);
+
+    // Combinar manual y fetched
+    const finalAssetPrices = useMemo(() => {
+        return { ...assetPrices, ...manualPrices };
+    }, [assetPrices, manualPrices]);
 
     // Calcular posiciones actuales (holdings)
     const posiciones = useMemo(() => {
         const result = {};
         
         (savingsTransactions || []).forEach(tx => {
-            const { cartera, especie, tipo, cantidad, precioUnitario, monedaPrecio, fecha } = tx;
+            const { cartera, especie, tipo, cantidad, precioUnitario, monedaPrecio } = tx;
             const cant = parseFloat(cantidad) || 0;
             const precio = parseFloat(precioUnitario) || 0;
             
@@ -116,7 +124,6 @@ export const SavingsProvider = ({ children }) => {
             const pos = result[key];
             const rate = dolarBlue || 1000;
             
-            // Valor de esta operacion en USD al momento de la compra
             let valorOperacionUSD = 0;
             if (precio > 0) {
                 if (monedaPrecio === 'ARS') valorOperacionUSD = (cant * precio) / rate;
@@ -127,20 +134,17 @@ export const SavingsProvider = ({ children }) => {
                 pos.cantidad += cant;
                 pos.inversionTotalUSD += valorOperacionUSD;
             } else if (tipo === 'venta' || tipo === 'retiro' || tipo === 'egreso') {
-                // Si vendemos, reducimos la inversión proporcionalmente a la cantidad vendida
                 if (pos.cantidad > 0) {
                     const proporcion = cant / pos.cantidad;
                     pos.inversionTotalUSD -= (pos.inversionTotalUSD * proporcion);
                 }
                 pos.cantidad -= cant;
             } else if (tipo === 'ajuste') {
-                // Ajuste puede ser sumar o restar. Asumimos que viene con signo o calculamos.
-                pos.cantidad += cant; // Por diseño, ajuste podría venir positivo o negativo.
+                pos.cantidad += cant; 
             }
             pos.operaciones.push(tx);
         });
 
-        // Valorizar posiciones actuales
         const rate = dolarBlue || 1000;
         return Object.values(result)
             .filter(p => p.cantidad > 0)
@@ -148,7 +152,7 @@ export const SavingsProvider = ({ children }) => {
                 let currentPriceUSD = 0;
                 if (pos.especie === 'USD') currentPriceUSD = 1;
                 else if (pos.especie === 'ARS') currentPriceUSD = 1 / rate;
-                else if (assetPrices[pos.especie]) currentPriceUSD = assetPrices[pos.especie];
+                else currentPriceUSD = finalAssetPrices[pos.especie] || 0;
                 
                 const valorActualUSD = pos.cantidad * currentPriceUSD;
                 const gananciaPérdidaUSD = valorActualUSD - pos.inversionTotalUSD;

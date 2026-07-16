@@ -16,6 +16,9 @@ const CRYPTO_MAP = {
     'DOT': 'polkadot'
 };
 
+const LOCAL_BROKERS = ['balanz', 'iol', 'invertironline', 'bull', 'cocos', 'ppi', 'inviu', 'ahorros', 'banco', 'galicia', 'santander', 'bbva', 'macro', 'brubank'];
+const INTL_BROKERS = ['nexo', 'binance', 'etoro', 'hapi', 'interactive', 'lemon', 'belo', 'buenbit', 'kucoin', 'okx', 'bybit'];
+
 /**
  * Obtiene el precio de una lista de especies
  * Devuelve un diccionario { [especie]: precioUSD }
@@ -25,7 +28,7 @@ const CRYPTO_MAP = {
  * 2. Si es crypto (matchea mapa), busca en CoinGecko
  * 3. Si no es crypto, busca en Data912 (CEDEARs o Acciones) en pesos y convierte a USD
  */
-export const fetchAssetPrices = async (especies, dolarBlue) => {
+export const fetchAssetPrices = async (especiesWithCarteras, dolarBlue) => {
     const result = {};
     const toFetchCoinGecko = [];
     const toFetchData912 = [];
@@ -33,7 +36,7 @@ export const fetchAssetPrices = async (especies, dolarBlue) => {
     const now = Date.now();
 
     // 1. Revisar cache y separar por tipo
-    for (const esp of especies) {
+    for (const esp of Object.keys(especiesWithCarteras)) {
         const cacheKey = `price_${esp}`;
         const cached = getCache(cacheKey, null);
         
@@ -45,7 +48,22 @@ export const fetchAssetPrices = async (especies, dolarBlue) => {
         if (CRYPTO_MAP[esp]) {
             toFetchCoinGecko.push(esp);
         } else {
-            toFetchData912.push(esp);
+            // Verificar si la cartera sugiere que es un activo del exterior
+            const carteras = Array.from(especiesWithCarteras[esp] || []);
+            let isIntl = false;
+            let isLocal = false;
+            
+            for (const c of carteras) {
+                const lowerC = c.toLowerCase();
+                if (LOCAL_BROKERS.some(lb => lowerC.includes(lb))) isLocal = true;
+                if (INTL_BROKERS.some(ib => lowerC.includes(ib))) isIntl = true;
+            }
+
+            // Si sabemos que es internacional y no hay indicios de que sea local, omitimos Data912
+            // ya que Data912 devolvería precios de CEDEAR en lugar de la acción original.
+            if (!isIntl || isLocal) {
+                toFetchData912.push(esp);
+            }
         }
     }
 
