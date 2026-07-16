@@ -22,6 +22,12 @@ export default function AnalyticsTab({ isGlass, privacyMode }) {
     // retorna la tasa diaria que hace NPV=0, anualizada a TNA.
     const calcularTIR = (flujos) => {
         if (flujos.length < 2) return null;
+        
+        // Debe haber al menos un flujo negativo (inversión) y uno positivo (retorno)
+        const hasNegative = flujos.some(f => f.valor < 0);
+        const hasPositive = flujos.some(f => f.valor > 0);
+        if (!hasNegative || !hasPositive) return null;
+
         const npv = (r) => flujos.reduce((sum, f) => sum + f.valor / Math.pow(1 + r, f.dias / 365), 0);
         const dnpv = (r) => flujos.reduce((sum, f) => sum - (f.dias / 365) * f.valor / Math.pow(1 + r, f.dias / 365 + 1), 0);
         let r = 0.1;
