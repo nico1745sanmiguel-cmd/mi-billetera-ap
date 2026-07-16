@@ -90,8 +90,9 @@ export const fetchAssetPrices = async (especiesWithCarteras, dolarBlue) => {
                 const id = CRYPTO_MAP[esp];
                 if (data[id] && data[id].usd) {
                     const price = data[id].usd;
-                    result[esp] = price;
-                    setCache(`price_${esp}`, { price, timestamp: now });
+                    const change = data[id].usd_24h_change || 0;
+                    result[esp] = { price, change };
+                    setCache(`price_${esp}`, { price, change, timestamp: now });
                 }
             }
         } catch (error) {
@@ -127,16 +128,14 @@ export const fetchAssetPrices = async (especiesWithCarteras, dolarBlue) => {
             } catch (e) { console.error('Error fetching Data912 Bonds', e); }
 
             const priceMapARS = {};
-            // El array viene como [{ ticker: "AAPL", price: 15000 }, ...] o similar dependiendo de la estructura exacta.
-            // Asumiendo formato de data912: [{ticker, price, ...}, ...]
             const processData = (list) => {
                 if (Array.isArray(list)) {
                     list.forEach(item => {
-                        // Data912 returns { symbol: "AAPL", c: 15000, ... }
                         if (item.symbol && item.c) {
-                            // Limpiar posibles sufijos si vinieran
                             const cleanTicker = item.symbol.replace('.BA', '').toUpperCase();
-                            priceMapARS[cleanTicker] = parseFloat(item.c);
+                            const price = parseFloat(item.c);
+                            const change = item.pct_change ? parseFloat(item.pct_change) : 0;
+                            priceMapARS[cleanTicker] = { price, change };
                         }
                     });
                 }
@@ -146,29 +145,25 @@ export const fetchAssetPrices = async (especiesWithCarteras, dolarBlue) => {
             processData(stocksData);
             processData(bondsData);
 
-            // Mapear los solicitados
             for (const esp of toFetchData912) {
                 const cleanEsp = esp.toUpperCase();
                 if (priceMapARS[cleanEsp]) {
-                    let priceARS = priceMapARS[cleanEsp];
+                    let { price: priceARS, change } = priceMapARS[cleanEsp];
                     
                     const isBond = /^[a-zA-Z]{2,4}\d{2}[a-zA-Z]?$/.test(cleanEsp);
                     if (isBond) {
-                        // Los bonos en Data912 vienen cada 100 nominales, pasamos a valor unitario
                         priceARS = priceARS / 100;
-                        
-                        // Determinar si cotiza en USD
                         const isUSDQuote = cleanEsp.endsWith('D') || cleanEsp.endsWith('C');
                         if (isUSDQuote) {
-                            result[esp] = priceARS;
-                            setCache(`price_${esp}`, { price: priceARS, timestamp: now });
+                            result[esp] = { price: priceARS, change };
+                            setCache(`price_${esp}`, { price: priceARS, change, timestamp: now });
                             continue;
                         }
                     }
 
-                    const priceUSD = priceARS / dolarBlue; // Convertir a USD usando el blue
-                    result[esp] = priceUSD;
-                    setCache(`price_${esp}`, { price: priceUSD, timestamp: now });
+                    const priceUSD = priceARS / dolarBlue; 
+                    result[esp] = { price: priceUSD, change };
+                    setCache(`price_${esp}`, { price: priceUSD, change, timestamp: now });
                 }
             }
 
@@ -186,9 +181,11 @@ export const fetchAssetPrices = async (especiesWithCarteras, dolarBlue) => {
             
             for (const esp of toFetchYahoo) {
                 if (data[esp]) {
-                    const price = parseFloat(data[esp]);
-                    result[esp] = price;
-                    setCache(`price_${esp}`, { price, timestamp: now });
+                    const priceData = data[esp];
+                    const price = typeof priceData === 'object' ? parseFloat(priceData.price) : parseFloat(priceData);
+                    const change = typeof priceData === 'object' ? parseFloat(priceData.change) : 0;
+                    result[esp] = { price, change };
+                    setCache(`price_${esp}`, { price, change, timestamp: now });
                 }
             }
         } catch (error) {

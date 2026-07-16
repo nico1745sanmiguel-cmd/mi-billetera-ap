@@ -182,6 +182,9 @@ export default function PortfolioTab({ isGlass, privacyMode, currencyView = 'USD
                                         <th className="pb-3 font-semibold cursor-pointer select-none hover:text-green-500 transition-colors" onClick={() => requestSort('especie')}>
                                             Activo {renderSortIcon('especie')}
                                         </th>
+                                        <th className="pb-3 font-semibold text-right cursor-pointer select-none hover:text-green-500 transition-colors" onClick={() => requestSort('variacionDiaria')}>
+                                            Var. 24h {renderSortIcon('variacionDiaria')}
+                                        </th>
                                         <th className="hidden md:table-cell pb-3 font-semibold text-right cursor-pointer select-none hover:text-green-500 transition-colors" onClick={() => requestSort('cantidad')}>
                                             Cant. {renderSortIcon('cantidad')}
                                         </th>
@@ -206,6 +209,9 @@ export default function PortfolioTab({ isGlass, privacyMode, currencyView = 'USD
                                         return (
                                             <tr key={`${pos.cartera}-${pos.especie}`} className="hover:bg-white/5 transition-colors">
                                                 <td className={`py-4 font-bold ${textColor}`}>{pos.especie}</td>
+                                                <td className={`py-4 text-right font-bold ${pos.variacionDiaria >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                                                    {pos.variacionDiaria !== 0 ? (pos.variacionDiaria > 0 ? '+' : '') + formatPercentage(pos.variacionDiaria) : '-'}
+                                                </td>
                                                 <td className={`hidden md:table-cell py-4 text-right font-medium ${textColor}`}>
                                                     {privacyMode ? '****' : pos.cantidad.toLocaleString('es-AR', { maximumFractionDigits: 6 })}
                                                 </td>

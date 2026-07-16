@@ -146,9 +146,21 @@ export const SavingsProvider = ({ children }) => {
             .filter(p => p.cantidad > 0)
             .map(pos => {
                 let currentPriceUSD = 0;
-                if (pos.especie === 'USD') currentPriceUSD = 1;
-                else if (pos.especie === 'ARS') currentPriceUSD = 1 / rate;
-                else currentPriceUSD = assetPrices[pos.especie] || 0;
+                let variacionDiaria = 0;
+                
+                if (pos.especie === 'USD') {
+                    currentPriceUSD = 1;
+                } else if (pos.especie === 'ARS') {
+                    currentPriceUSD = 1 / rate;
+                } else {
+                    const assetData = assetPrices[pos.especie];
+                    if (assetData && typeof assetData === 'object' && !Array.isArray(assetData)) {
+                        currentPriceUSD = assetData.price || 0;
+                        variacionDiaria = assetData.change || 0;
+                    } else {
+                        currentPriceUSD = assetData || 0;
+                    }
+                }
                 
                 const valorActualUSD = pos.cantidad * currentPriceUSD;
                 const gananciaPérdidaUSD = valorActualUSD - pos.inversionTotalUSD;
@@ -157,6 +169,7 @@ export const SavingsProvider = ({ children }) => {
                 return {
                     ...pos,
                     precioActualUSD: currentPriceUSD,
+                    variacionDiaria,
                     valorActualUSD,
                     gananciaPérdidaUSD,
                     gananciaPorcentaje
