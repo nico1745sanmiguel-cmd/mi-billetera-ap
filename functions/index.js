@@ -284,3 +284,29 @@ exports.onNotificationCreated = functions.firestore
             return null;
         }
     });
+
+// Función para obtener precios de Yahoo Finance saltándose el CORS
+exports.fetchYahooFinance = functions.https.onCall(async (data, context) => {
+    // data.symbols debe ser un array ['AAPL', 'MSFT', 'NKE']
+    const symbols = data.symbols;
+    if (!symbols || !Array.isArray(symbols)) {
+        throw new functions.https.HttpsError('invalid-argument', 'symbols array is required');
+    }
+
+    const result = {};
+    for (const symbol of symbols) {
+        try {
+            const res = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}`);
+            if (res.ok) {
+                const json = await res.json();
+                const price = json?.chart?.result?.[0]?.meta?.regularMarketPrice;
+                if (price) {
+                    result[symbol] = price;
+                }
+            }
+        } catch (e) {
+            console.error(`Error fetching ${symbol}:`, e);
+        }
+    }
+    return result;
+});

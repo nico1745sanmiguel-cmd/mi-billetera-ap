@@ -1,4 +1,6 @@
 import { getCache, setCache } from './cache';
+import { httpsCallable } from 'firebase/functions';
+import { functions } from '../firebase';
 
 const CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutos
 
@@ -32,6 +34,7 @@ export const fetchAssetPrices = async (especiesWithCarteras, dolarBlue) => {
     const result = {};
     const toFetchCoinGecko = [];
     const toFetchData912 = [];
+    const toFetchYahoo = [];
 
     const now = Date.now();
 
@@ -60,9 +63,11 @@ export const fetchAssetPrices = async (especiesWithCarteras, dolarBlue) => {
             }
 
             // Si sabemos que es internacional y no hay indicios de que sea local, omitimos Data912
-            // ya que Data912 devolvería precios de CEDEAR en lugar de la acción original.
+            // y usamos Yahoo Finance para buscar el precio de la accion en origen.
             if (!isIntl || isLocal) {
                 toFetchData912.push(esp);
+            } else {
+                toFetchYahoo.push(esp);
             }
         }
     }
@@ -139,6 +144,25 @@ export const fetchAssetPrices = async (especiesWithCarteras, dolarBlue) => {
 
         } catch (error) {
             console.error('Error fetching Data912:', error);
+        }
+    }
+
+    // 4. Fetch Yahoo Finance a través de Cloud Function para acciones internacionales (US Stocks)
+    if (toFetchYahoo.length > 0) {
+        try {
+            const fetchYahooFn = httpsCallable(functions, 'fetchYahooFinance');
+            const res = await fetchYahooFn({ symbols: toFetchYahoo });
+            const data = res.data || {};
+            
+            for (const esp of toFetchYahoo) {
+                if (data[esp]) {
+                    const price = parseFloat(data[esp]);
+                    result[esp] = price;
+                    setCache(`price_${esp}`, { price, timestamp: now });
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching Yahoo Finance via Cloud Function:', error);
         }
     }
 
