@@ -1,0 +1,244 @@
+import React, { useState, useMemo } from 'react';
+import { X, Save } from 'lucide-react';
+import { useSavings } from '../../context/SavingsContext';
+import { useFinancial } from '../../context/FinancialContext';
+
+export default function OperationModal({ onClose, isGlass }) {
+    const { addSavingsTransaction, savingsTransactions } = useSavings();
+    const { dolarBlue } = useFinancial();
+    const [loading, setLoading] = useState(false);
+
+    // Valores iniciales (por defecto compra)
+    const [formData, setFormData] = useState({
+        tipo: 'compra', // compra, venta, deposito, retiro, ajuste
+        cartera: '',
+        especie: '',
+        cantidad: '',
+        precioUnitario: '',
+        monedaPrecio: 'USD',
+        fecha: new Date().toISOString().split('T')[0], // yyyy-mm-dd
+        nota: ''
+    });
+
+    // Autocompletado nativo extrayendo datos previos + defaults
+    const carterasOpciones = useMemo(() => {
+        const set = new Set(['Efectivo', 'Balanz', 'Nexo', 'Binance']);
+        (savingsTransactions || []).forEach(tx => {
+            if (tx.cartera) set.add(tx.cartera);
+        });
+        return Array.from(set);
+    }, [savingsTransactions]);
+
+    const especiesOpciones = useMemo(() => {
+        const set = new Set(['ARS', 'USD', 'BTC', 'USDT', 'CEDEARs']);
+        (savingsTransactions || []).forEach(tx => {
+            if (tx.especie) set.add(tx.especie);
+        });
+        return Array.from(set);
+    }, [savingsTransactions]);
+
+    const isMovimientoFiat = formData.tipo === 'deposito' || formData.tipo === 'retiro';
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        if (!formData.cartera || !formData.especie || !formData.cantidad || !formData.fecha) return;
+        
+        // Si no es un movimiento de caja puro, validamos precio
+        if (!isMovimientoFiat && !formData.precioUnitario && formData.tipo !== 'ajuste') return;
+
+        setLoading(true);
+        try {
+            await addSavingsTransaction({
+                tipo: formData.tipo,
+                cartera: formData.cartera.trim(),
+                especie: formData.especie.trim().toUpperCase(),
+                cantidad: parseFloat(formData.cantidad),
+                precioUnitario: isMovimientoFiat ? 1 : (parseFloat(formData.precioUnitario) || 0),
+                monedaPrecio: isMovimientoFiat ? formData.especie.toUpperCase() : formData.monedaPrecio,
+                fecha: new Date(formData.fecha).toISOString(),
+                nota: formData.nota.trim()
+            });
+            onClose();
+        } catch (error) {
+            console.error(error);
+            alert("Error al guardar la operación");
+        }
+        setLoading(false);
+    };
+
+    const inputClasses = `w-full p-3 rounded-xl border transition-all outline-none ${
+        isGlass 
+        ? 'bg-white/10 border-white/20 text-white placeholder-white/40 focus:border-green-400 focus:bg-white/20' 
+        : 'bg-gray-50 border-gray-200 text-gray-800 focus:border-green-500 focus:bg-white focus:ring-4 focus:ring-green-500/10'
+    }`;
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+            <div className={`relative w-full max-w-md max-h-[90vh] overflow-y-auto rounded-3xl p-6 ${
+                isGlass ? 'bg-gray-900/80 border border-white/20 backdrop-blur-xl' : 'bg-white shadow-2xl'
+            } animate-slide-up`}>
+                
+                <div className="flex justify-between items-center mb-6">
+                    <h2 className={`text-xl font-bold ${isGlass ? 'text-white' : 'text-gray-900'}`}>
+                        Nueva Operación
+                    </h2>
+                    <button aria-label="Cerrar" type="button" onClick={onClose} className={`p-2 rounded-full ${isGlass ? 'hover:bg-white/10 text-white' : 'hover:bg-gray-100 text-gray-500'}`}>
+                        <X size={20} />
+                    </button>
+                </div>
+
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    
+                    {/* Tipo de Operación */}
+                    <div className="grid grid-cols-2 gap-2">
+                        {['compra', 'venta', 'deposito', 'retiro'].map(t => (
+                            <button aria-label="Acción" type="button" key={t}
+                                onClick={() => setFormData({...formData, tipo: t})}
+                                className={`p-2 text-sm font-bold rounded-xl border capitalize transition-all ${
+                                    formData.tipo === t
+                                    ? 'bg-green-500 border-green-500 text-white shadow-md'
+                                    : isGlass 
+                                        ? 'border-white/20 text-white/60 hover:bg-white/10' 
+                                        : 'border-gray-200 text-gray-500 hover:bg-gray-50'
+                                }`}
+                            >
+                                {t}
+                            </button>
+                        ))}
+                    </div>
+
+                    {/* Fecha */}
+                    <div>
+                        <label className={`block text-xs font-bold mb-2 ${isGlass ? 'text-white/70' : 'text-gray-500'}`}>
+                            FECHA DE LA OPERACIÓN
+                        </label>
+                        <input
+                            type="date"
+                            value={formData.fecha}
+                            onChange={(e) => setFormData({...formData, fecha: e.target.value})}
+                            required
+                            className={inputClasses}
+                        />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className={`block text-xs font-bold mb-2 ${isGlass ? 'text-white/70' : 'text-gray-500'}`}>
+                                CARTERA / BROKER
+                            </label>
+                            <input
+                                type="text"
+                                list="carteras-list"
+                                placeholder="Ej: Nexo"
+                                value={formData.cartera}
+                                onChange={(e) => setFormData({...formData, cartera: e.target.value})}
+                                required
+                                className={inputClasses}
+                            />
+                            <datalist id="carteras-list">
+                                {carterasOpciones.map(c => <option key={c} value={c} />)}
+                            </datalist>
+                        </div>
+                        
+                        <div>
+                            <label className={`block text-xs font-bold mb-2 ${isGlass ? 'text-white/70' : 'text-gray-500'}`}>
+                                ACTIVO (TICKER)
+                            </label>
+                            <input
+                                type="text"
+                                list="especies-list"
+                                placeholder="Ej: BTC, AAPL"
+                                value={formData.especie}
+                                onChange={(e) => setFormData({...formData, especie: e.target.value.toUpperCase()})}
+                                required
+                                className={inputClasses}
+                            />
+                            <datalist id="especies-list">
+                                {especiesOpciones.map(c => <option key={c} value={c} />)}
+                            </datalist>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className={`block text-xs font-bold mb-2 ${isGlass ? 'text-white/70' : 'text-gray-500'}`}>
+                            CANTIDAD
+                        </label>
+                        <input
+                            type="number"
+                            step="any"
+                            placeholder="Cantidad de acciones/monedas"
+                            value={formData.cantidad}
+                            onChange={(e) => setFormData({...formData, cantidad: e.target.value})}
+                            required
+                            className={inputClasses}
+                        />
+                    </div>
+
+                    {!isMovimientoFiat && (
+                        <div className="flex gap-4">
+                            <div className="flex-1">
+                                <label className={`block text-xs font-bold mb-2 ${isGlass ? 'text-white/70' : 'text-gray-500'}`}>
+                                    PRECIO UNITARIO
+                                </label>
+                                <input
+                                    type="number"
+                                    step="any"
+                                    placeholder="Precio por unidad"
+                                    value={formData.precioUnitario}
+                                    onChange={(e) => setFormData({...formData, precioUnitario: e.target.value})}
+                                    required={!isMovimientoFiat}
+                                    className={inputClasses}
+                                />
+                            </div>
+                            <div className="w-1/3">
+                                <label className={`block text-xs font-bold mb-2 ${isGlass ? 'text-white/70' : 'text-gray-500'}`}>
+                                    MONEDA
+                                </label>
+                                <select
+                                    value={formData.monedaPrecio}
+                                    onChange={(e) => setFormData({...formData, monedaPrecio: e.target.value})}
+                                    className={inputClasses}
+                                >
+                                    <option value="USD">USD</option>
+                                    <option value="ARS">ARS</option>
+                                </select>
+                            </div>
+                        </div>
+                    )}
+
+                    <div>
+                        <label className={`block text-xs font-bold mb-2 ${isGlass ? 'text-white/70' : 'text-gray-500'}`}>
+                            NOTAS / COMISIONES
+                        </label>
+                        <input
+                            type="text"
+                            placeholder="Opcional"
+                            value={formData.nota}
+                            onChange={(e) => setFormData({...formData, nota: e.target.value})}
+                            className={inputClasses}
+                        />
+                    </div>
+
+                    <button aria-label="Acción"
+                        type="submit"
+                        disabled={loading}
+                        className="w-full mt-6 bg-green-500 hover:bg-green-600 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50"
+                    >
+                        {loading ? (
+                            <div className="w-6 h-6 border-4 border-white/30 border-t-white rounded-full animate-spin" />
+                        ) : (
+                            <>
+                                <Save size={20} />
+                                {formData.tipo === 'compra' ? 'Registrar Compra' 
+                                 : formData.tipo === 'venta' ? 'Registrar Venta'
+                                 : formData.tipo === 'deposito' ? 'Registrar Ingreso' 
+                                 : 'Registrar Retiro'}
+                            </>
+                        )}
+                    </button>
+                </form>
+            </div>
+        </div>
+    );
+}

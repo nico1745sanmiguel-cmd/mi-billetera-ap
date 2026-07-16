@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Trash2, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { useSavings } from '../../context/SavingsContext';
 import { useUI } from '../../context/UIContext';
+import AssetPricesPanel from './AssetPricesPanel';
 
 export default function SavingsSettings({ isGlass, onBack }) {
     const { clearAllSavings } = useSavings();
@@ -34,6 +35,8 @@ export default function SavingsSettings({ isGlass, onBack }) {
 
     return (
         <div className="space-y-6 animate-fade-in">
+            <AssetPricesPanel isGlass={isGlass} />
+
             <div className={`rounded-3xl p-6 ${cardBg}`}>
                 <div className="flex items-start gap-4 mb-6">
                     <div className="p-3 bg-red-500/20 text-red-500 rounded-2xl shrink-0">
