@@ -13,6 +13,7 @@ const arsFormatter = new Intl.NumberFormat('es-AR', { style: 'currency', currenc
 const usdFormatter = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
 
 export default function SavingsDashboard() {
+    const { isGlass, privacyMode } = useUI();
     const { posiciones } = useSavings();
     const { dolarBlue } = useFinancial();
     const [showAddModal, setShowAddModal] = useState(false);

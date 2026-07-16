@@ -41,11 +41,11 @@ service cloud.firestore {
 
     // Regla general para colecciones que comparten el campo householdId:
     // transactions, cards, supermarket_items, fresh_purchases, services, 
-    // planner_categories, contributions, savings_transactions, savings_goals
+    // planner_categories, contributions, savings_transactions, savings_goals, savings_asset_prices
     match /{collection}/{document} {
       allow read, write: if isAuthenticated() && 
                             // Aseguramos que solo afecte a las colecciones con aislamiento por familia
-                            collection in ['transactions', 'cards', 'supermarket_items', 'fresh_purchases', 'services', 'planner_categories', 'contributions', 'savings_transactions', 'savings_goals'] &&
+                            collection in ['transactions', 'cards', 'supermarket_items', 'fresh_purchases', 'services', 'planner_categories', 'contributions', 'savings_transactions', 'savings_goals', 'savings_asset_prices'] &&
                             // Validamos acceso: con household (comparte con familia) o sin household (solo el propio userId)
                             (
                               // Caso 1: usuario CON household → el householdId del documento debe coincidir
