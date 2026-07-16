@@ -3,6 +3,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { Wallet, TrendingUp, TrendingDown, ArrowUpDown } from 'lucide-react';
 import { useSavings } from '../../../context/SavingsContext';
 import { useFinancial } from '../../../context/FinancialContext';
+import AssetDetailsModal from '../AssetDetailsModal';
 
 const COLORS = ['#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#14B8A6', '#F97316'];
 
@@ -13,6 +14,8 @@ export default function PortfolioTab({ isGlass, privacyMode, currencyView = 'USD
     const { posiciones } = useSavings();
     const { dolarBlue } = useFinancial();
     const [sortConfig, setSortConfig] = useState({ key: null, direction: 'desc' });
+    const [selectedAsset, setSelectedAsset] = useState(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
     const rate = dolarBlue || 1000;
 
@@ -23,6 +26,11 @@ export default function PortfolioTab({ isGlass, privacyMode, currencyView = 'USD
 
     const formatPercentage = (amount) => {
         return amount.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
+    };
+
+    const handleRowClick = (pos) => {
+        setSelectedAsset(pos);
+        setIsModalOpen(true);
     };
 
     const requestSort = (key) => {
@@ -207,7 +215,11 @@ export default function PortfolioTab({ isGlass, privacyMode, currencyView = 'USD
                                         const isProfit = pos.gananciaPérdidaUSD >= 0;
 
                                         return (
-                                            <tr key={`${pos.cartera}-${pos.especie}`} className="hover:bg-white/5 transition-colors">
+                                            <tr 
+                                                key={`${pos.cartera}-${pos.especie}`} 
+                                                className="hover:bg-white/5 transition-colors cursor-pointer"
+                                                onClick={() => handleRowClick(pos)}
+                                            >
                                                 <td className={`py-4 font-bold ${textColor}`}>{pos.especie}</td>
                                                 <td className={`py-4 text-right font-bold ${pos.variacionDiaria >= 0 ? 'text-green-500' : 'text-red-500'}`}>
                                                     {pos.variacionDiaria !== 0 ? (pos.variacionDiaria > 0 ? '+' : '') + formatPercentage(pos.variacionDiaria) : '-'}
@@ -239,6 +251,15 @@ export default function PortfolioTab({ isGlass, privacyMode, currencyView = 'USD
                     </div>
                 ))}
             </div>
+
+            <AssetDetailsModal 
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                asset={selectedAsset}
+                currencyView={currencyView}
+                isGlass={isGlass}
+                rate={rate}
+            />
         </div>
     );
 }

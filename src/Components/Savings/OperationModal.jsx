@@ -141,17 +141,17 @@ export default function OperationModal({ onClose, isGlass, initialData }) {
     }`;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-            <div className={`relative w-full max-w-md max-h-[90vh] overflow-y-auto rounded-3xl p-6 ${
-                isGlass ? 'bg-gray-900/80 border border-white/20 backdrop-blur-xl' : 'bg-white shadow-2xl'
-            } animate-slide-up`}>
+        <div className="fixed inset-0 z-[100] flex items-start justify-center p-4 pt-10 sm:pt-16 animate-fade-in">
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={onClose}></div>
+            <div className={`relative w-full max-w-md max-h-[85vh] overflow-y-auto rounded-3xl p-6 sm:p-8 shadow-2xl animate-scale-in ${
+                isGlass ? 'bg-[#0f0c29]/90 border border-white/20 backdrop-blur-xl' : 'bg-white'
+            }`}>
                 
                 <div className="flex justify-between items-center mb-6">
-                    <h2 className={`text-xl font-bold ${isGlass ? 'text-white' : 'text-gray-900'}`}>
+                    <h2 className={`text-2xl font-black ${isGlass ? 'text-white' : 'text-gray-800'}`}>
                         {initialData ? 'Editar Operación' : 'Nueva Operación'}
                     </h2>
-                    <button aria-label="Cerrar" type="button" onClick={onClose} className={`p-2 rounded-full ${isGlass ? 'hover:bg-white/10 text-white' : 'hover:bg-gray-100 text-gray-500'}`}>
+                    <button aria-label="Cerrar" type="button" onClick={onClose} className={`p-2 rounded-full transition-colors ${isGlass ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-600'}`}>
                         <X size={20} />
                     </button>
                 </div>
