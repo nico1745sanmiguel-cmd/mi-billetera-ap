@@ -54,14 +54,30 @@ export default function OperationModal({ onClose, isGlass, initialData }) {
         const parseNumber = (val) => {
             if (!val) return 0;
             let str = val.toString().trim();
-            // Si tiene coma, asumimos formato argentino (ej. 1.234,50)
-            if (str.includes(',')) {
-                str = str.replace(/\./g, '').replace(',', '.');
-            } else {
-                // Si tiene múltiples puntos, son miles (ej. 1.000.000)
+            
+            const lastComma = str.lastIndexOf(',');
+            const lastDot = str.lastIndexOf('.');
+            
+            if (lastComma > -1 && lastDot > -1) {
+                if (lastComma > lastDot) {
+                    str = str.replace(/\./g, '').replace(',', '.');
+                } else {
+                    str = str.replace(/,/g, '');
+                }
+            } else if (lastComma > -1) {
+                if (str.split(',').length > 2) {
+                    str = str.replace(/,/g, '');
+                } else {
+                    str = str.replace(',', '.');
+                }
+            } else if (lastDot > -1) {
                 const parts = str.split('.');
                 if (parts.length > 2) {
                     str = str.replace(/\./g, '');
+                } else {
+                    if (parts[1].length === 3 && parts[0] !== '0') {
+                        str = str.replace('.', '');
+                    }
                 }
             }
             return parseFloat(str) || 0;
