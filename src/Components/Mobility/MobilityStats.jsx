@@ -1,6 +1,8 @@
 import React, { useMemo } from 'react';
 import { TrendingUp, Clock, Navigation, Star, Zap, Fuel, Wrench, Droplets } from 'lucide-react';
 import { useMobilityState } from '../../context/MobilityContext';
+import MobilityTrendChart from './MobilityTrendChart';
+import MobilityWeeklyBreakdown from './MobilityWeeklyBreakdown';
 
 const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 
@@ -283,107 +285,24 @@ export default function MobilityStats({ isGlass, privacyMode, month, year }) {
                         </div>
                     )}
 
-                    {/* TENDENCIA ÚLTIMOS 6 MESES — RESPONSIVE FIX */}
-                    <div className={card}>
-                        <p className={`text-xs font-bold uppercase tracking-wide mb-4 ${sub}`}>Tendencia · últimos 6 meses</p>
-                        {/* grid-cols-6 garantiza que siempre quepan exactamente 6 columnas sin overflow */}
-                        <div className="grid grid-cols-6 gap-1 items-end" style={{ height: '120px' }}>
-                            {trend6.map(({ label, total, gastos, key }) => {
-                                const heightPct = maxTrend > 0 ? Math.max((total / maxTrend) * 100, total > 0 ? 4 : 0) : 0;
-                                const gastosPct = maxTrend > 0 ? Math.max((gastos / maxTrend) * 100, gastos > 0 ? 4 : 0) : 0;
-                                const isCurrentMonth = key === monthKey;
-                                return (
-                                    <div key={key} className="flex flex-col items-center gap-0.5 h-full justify-end">
-                                        {/* Barra de ingresos */}
-                                        <div className="w-full flex flex-col items-center justify-end" style={{ height: '82px' }}>
-                                            <div
-                                                className={`w-full rounded-t-md transition-all duration-700 ${
-                                                    isCurrentMonth
-                                                        ? 'bg-gradient-to-t from-violet-600 to-indigo-400'
-                                                        : isGlass
-                                                            ? 'bg-white/20'
-                                                            : 'bg-gray-200'
-                                                }`}
-                                                style={{ height: `${heightPct}%` }}
-                                                title={fmt(total)}
-                                            />
-                                            {/* Barra de gastos (roja, superpuesta debajo) */}
-                                            {gastosPct > 0 && (
-                                                <div
-                                                    className="w-full rounded-t-sm bg-red-400/60 -mt-0.5 transition-all duration-700"
-                                                    style={{ height: `${Math.min(gastosPct, heightPct * 0.8)}%` }}
-                                                    title={`Gastos: ${fmt(gastos)}`}
-                                                />
-                                            )}
-                                        </div>
-                                        {/* Label del mes */}
-                                        <span className={`text-[10px] font-medium leading-none mt-1 ${isCurrentMonth ? (isGlass ? 'text-violet-300' : 'text-violet-600') : sub}`}>
-                                            {label}
-                                        </span>
-                                        {/* Monto: solo en sm+ para no desbordar */}
-                                        {!privacyMode && total > 0 && (
-                                            <span className={`hidden sm:block text-[9px] ${sub} leading-none`}>{fmt(total)}</span>
-                                        )}
-                                    </div>
-                                );
-                            })}
-                        </div>
-                        {/* Leyenda */}
-                        <div className="flex items-center gap-3 mt-3">
-                            <div className="flex items-center gap-1.5">
-                                <div className="w-3 h-3 rounded-sm bg-gradient-to-t from-violet-600 to-indigo-400" />
-                                <span className={`text-[10px] ${sub}`}>Ingresos</span>
-                            </div>
-                            <div className="flex items-center gap-1.5">
-                                <div className="w-3 h-3 rounded-sm bg-red-400/60" />
-                                <span className={`text-[10px] ${sub}`}>Gastos</span>
-                            </div>
-                        </div>
-                    </div>
+                    <MobilityTrendChart 
+                        trend6={trend6}
+                        maxTrend={maxTrend}
+                        monthKey={monthKey}
+                        isGlass={isGlass}
+                        privacyMode={privacyMode}
+                        fmt={fmt}
+                    />
 
-                    {/* DESGLOSE SEMANAL — RESPONSIVE FIX */}
-                    {kpis.weeks.length > 0 && (
-                        <div className={card}>
-                            <p className={`text-xs font-bold uppercase tracking-wide mb-3 ${sub}`}>Desglose semanal</p>
-                            <div className="space-y-2.5">
-                                {kpis.weeks.map(w => (
-                                    <div key={w.label}>
-                                        <div className="flex items-center justify-between mb-1">
-                                            <span className={`text-xs font-bold w-6 flex-shrink-0 ${text}`}>{w.label}</span>
-                                            <div className="flex-1 mx-2 min-w-0">
-                                                {/* Barra de ingresos */}
-                                                <div className={`h-2 rounded-full mb-0.5 ${isGlass ? 'bg-white/10' : 'bg-gray-100'}`}>
-                                                    <div
-                                                        className="h-2 rounded-full bg-gradient-to-r from-violet-500 to-indigo-400 transition-all duration-700"
-                                                        style={{ width: `${kpis.totalEarnings > 0 ? (w.total / kpis.totalEarnings) * 100 : 0}%` }}
-                                                    />
-                                                </div>
-                                                {/* Barra de gastos */}
-                                                {w.gastos > 0 && (
-                                                    <div className={`h-1.5 rounded-full ${isGlass ? 'bg-white/10' : 'bg-gray-100'}`}>
-                                                        <div
-                                                            className="h-1.5 rounded-full bg-red-400/70 transition-all duration-700"
-                                                            style={{ width: `${kpis.totalEarnings > 0 ? (w.gastos / kpis.totalEarnings) * 100 : 0}%` }}
-                                                        />
-                                                    </div>
-                                                )}
-                                            </div>
-                                            <div className="text-right flex-shrink-0">
-                                                <p className={`text-xs font-bold ${text}`}>
-                                                    {privacyMode ? '••' : fmt(w.total)}
-                                                </p>
-                                                {w.gastos > 0 && (
-                                                    <p className={`text-[10px] ${isGlass ? 'text-red-300' : 'text-red-500'}`}>
-                                                        {privacyMode ? '••' : `-${fmt(w.gastos)}`}
-                                                    </p>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
+                    <MobilityWeeklyBreakdown 
+                        weeks={kpis.weeks}
+                        totalEarnings={kpis.totalEarnings}
+                        isGlass={isGlass}
+                        privacyMode={privacyMode}
+                        text={text}
+                        sub={sub}
+                        fmt={fmt}
+                    />
                 </>
             )}
         </div>

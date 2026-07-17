@@ -38,6 +38,9 @@ import { WidgetGrid } from './WidgetSystem';
 
 import SkinsModal from './Skins/SkinsModal';
 import WPTileGrid from './Skins/WindowsPhone/WPTileGrid';
+import UserMenu from './UserMenu';
+import ThemeSelector from './ThemeSelector';
+import CriticalAlert from './CriticalAlert';
 
 const handleCacheRefresh = async () => {
     if ('serviceWorker' in navigator) {
@@ -92,7 +95,6 @@ const Home = memo(({ onLogout, notifications = EMPTY_ARRAY, onCardClick }) => {
     const { superItems: supermarketItems, freshItems, plannerCategories } = useSupermarket();
     const { services } = useServices();
     const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
-    const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isSkinsOpen, setIsSkinsOpen] = useState(false);
 
     const unreadNotifsCount = useMemo(() => {
@@ -285,65 +287,17 @@ const Home = memo(({ onLogout, notifications = EMPTY_ARRAY, onCardClick }) => {
                         Hola, {user?.displayName?.split(' ')[0] || 'Nico'} 👋
                     </h1>
                 </div>
-                <div className="relative z-50">
-                    <button aria-label="Acción" 
-                        type="button" 
-                        onClick={() => setIsMenuOpen(!isMenuOpen)} 
-                        className="relative bg-gray-50 text-gray-500 dark:bg-white/10 dark:text-white/70 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-white/20 transition-colors dark:backdrop-blur-md dark:border dark:border-white/5"
-                    >
-                        <MoreVertical size={20} />
-                        {unreadNotifsCount > 0 && (
-                            <span className="absolute top-0 right-0 bg-red-500 text-[10px] w-2.5 h-2.5 rounded-full border-2 border-white dark:border-[#1a1b4b]"></span>
-                        )}
-                    </button>
-
-                    {isMenuOpen && (
-                        <>
-                            <div className="fixed inset-0 z-40" onClick={() => setIsMenuOpen(false)}></div>
-                            <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-[#1a1b4b] rounded-2xl shadow-xl shadow-black/10 dark:shadow-black/40 border border-gray-100 dark:border-white/10 overflow-hidden z-50 origin-top-right transition-all animate-fade-in">
-                                <div className="p-2 flex flex-col gap-1">
-                                    {isModuleEnabled('household') && (
-                                        <button aria-label="Acción" type="button" onClick={() => { navigate('/household'); setIsMenuOpen(false); }} className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-500/20 dark:hover:text-blue-300 rounded-xl transition-colors">
-                                            <div className="bg-blue-100/50 dark:bg-blue-500/20 p-1.5 rounded-lg text-blue-500 dark:text-blue-300"><Users size={16} /></div>
-                                            Miembros
-                                        </button>
-                                    )}
-                                    <button aria-label="Acción" type="button" onClick={() => { setIsNotificationsOpen(true); setIsMenuOpen(false); }} className="w-full flex items-center justify-between px-3 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-500/20 dark:hover:text-indigo-300 rounded-xl transition-colors">
-                                        <div className="flex items-center gap-3">
-                                            <div className="bg-indigo-100/50 dark:bg-indigo-500/20 p-1.5 rounded-lg text-indigo-500 dark:text-indigo-300">
-                                                <Bell size={16} className={unreadNotifsCount > 0 ? "animate-pulse" : ""} />
-                                            </div>
-                                            Notificaciones
-                                        </div>
-                                        {unreadNotifsCount > 0 && (
-                                            <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">{unreadNotifsCount}</span>
-                                        )}
-                                    </button>
-                                    <button aria-label="Acción" type="button" onClick={() => { navigate('/settings_modules'); setIsMenuOpen(false); }} className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-violet-50 hover:text-violet-600 dark:hover:bg-violet-500/20 dark:hover:text-violet-300 rounded-xl transition-colors">
-                                        <div className="bg-violet-100/50 dark:bg-violet-500/20 p-1.5 rounded-lg text-violet-500 dark:text-violet-300"><Puzzle size={16} /></div>
-                                        Módulos
-                                    </button>
-                                    <button aria-label="Acción" type="button" onClick={() => { setIsSkinsOpen(true); setIsMenuOpen(false); }} className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-500/20 dark:hover:text-emerald-300 rounded-xl transition-colors">
-                                        <div className="bg-emerald-100/50 dark:bg-emerald-500/20 p-1.5 rounded-lg text-emerald-500 dark:text-emerald-300"><Palette size={16} /></div>
-                                        Skins
-                                    </button>
-                                    <div className="h-px bg-gray-100 dark:bg-white/10 my-1 mx-2"></div>
-                                    <button aria-label="Acción" type="button" onClick={() => { onLogout(); setIsMenuOpen(false); }} className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/20 dark:hover:text-red-300 rounded-xl transition-colors">
-                                        <div className="bg-red-100/50 dark:bg-red-500/20 p-1.5 rounded-lg text-red-500 dark:text-red-300"><LogOut size={16} /></div>
-                                        Cerrar Sesión
-                                    </button>
-                                </div>
-                            </div>
-                        </>
-                    )}
-                </div>
+                <UserMenu 
+                    user={user}
+                    unreadNotifsCount={unreadNotifsCount}
+                    onLogout={onLogout}
+                    setIsNotificationsOpen={setIsNotificationsOpen}
+                    setIsSkinsOpen={setIsSkinsOpen}
+                    isModuleEnabled={isModuleEnabled}
+                />
             </div>
 
-            {criticalAlert.active && (
-                <div className="bg-red-50 dark:bg-red-500/10 border border-red-100 dark:border-red-500/30 p-4 rounded-xl flex items-center justify-between mx-1 animate-pulse dark:shadow-lg dark:shadow-red-900/10">
-                    <div className="flex items-center gap-3"><div className="bg-red-100 dark:bg-red-500/20 p-2 rounded-full text-red-600 dark:text-red-200 dark:border dark:border-red-500/30"><AlertCircle size={20} /></div><div><p className="text-sm font-bold text-red-800 dark:text-red-100">{criticalAlert.msg}</p><p className="text-xs text-red-600 dark:text-red-300/80 font-medium cursor-pointer underline dark:decoration-red-300/50" onClick={() => navigate('/services_manager')}>Ir a pagar ahora</p></div></div><p className="font-bold text-red-800 dark:text-red-100">{showMoney(criticalAlert.amount)}</p>
-                </div>
-            )}
+            <CriticalAlert criticalAlert={criticalAlert} showMoney={showMoney} />
 
             {skin === 'windowsphone' ? (
                 <WPTileGrid 
@@ -372,43 +326,7 @@ const Home = memo(({ onLogout, notifications = EMPTY_ARRAY, onCardClick }) => {
 
 
 
-            {/* ── Selector de Tema Triple ── */}
-            <div className="mt-6 flex items-center justify-center">
-                <div className={`relative flex items-center p-1 rounded-full gap-1 ${
-                    isGlass
-                        ? 'bg-white/10 border border-white/10'
-                        : 'bg-gray-100 border border-gray-200'
-                }`}>
-                    {THEME_OPTIONS.map(({ key, label, Icon }) => {
-                        const isActive = theme === key;
-                        return (
-                            <button aria-label="Acción" type="button"
-                                key={key}
-                                onClick={() => setTheme(key)}
-                                className={`relative flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold transition-all duration-300 ${
-                                    isActive
-                                        ? isGlass
-                                            ? 'bg-white/20 text-white shadow-lg shadow-black/20'
-                                            : 'bg-white text-gray-800 shadow-md shadow-gray-200'
-                                        : isGlass
-                                            ? 'text-white/40 hover:text-white/70'
-                                            : 'text-gray-400 hover:text-gray-600'
-                                }`}
-                            >
-                                <Icon
-                                    size={13}
-                                    className={`transition-colors duration-300 ${
-                                        isActive && key === 'light'  ? 'text-amber-500' :
-                                        isActive && key === 'dark'   ? 'text-indigo-400' :
-                                        isActive && key === 'system' ? 'text-emerald-400' : ''
-                                    }`}
-                                />
-                                <span>{label}</span>
-                            </button>
-                        );
-                    })}
-                </div>
-            </div>
+            <ThemeSelector theme={theme} setTheme={setTheme} isGlass={isGlass} />
 
             <button aria-label="Acción" type="button"
                 onClick={handleCacheRefresh}

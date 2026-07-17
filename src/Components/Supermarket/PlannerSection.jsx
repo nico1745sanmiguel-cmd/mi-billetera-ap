@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useMemo, useRef, useSyncExternalStore } from 'react';
 import { ChevronDown, ChevronUp, Users, Lock, Calendar, Plus, Trash2, LayoutList, Leaf, Beef } from 'lucide-react';
 import { formatMoney, formatInputNumber, parseInputNumber } from '../../utils';
 import { addFreshItem, deleteFreshItem, updateFreshTotal, toggleFreshCompleted } from '../../repositories/freshRepository';
@@ -7,8 +7,7 @@ import { AVAILABLE_COLORS, AVAILABLE_ICONS } from './constants';
 import { auth } from '../../firebase';
 import ConfirmDialog from '../UI/ConfirmDialog';
 import TripCard from './TripCard';
-import { getPlannerSettings } from '../Settings/PlannerSettings';
-
+import { getPlannerSettings, subscribeToPlannerSettings } from '../../utils/plannerUtils';
 export default function PlannerSection({ catData, trips, currentMonthKey, isGlass, householdId }) {
     const cfg = AVAILABLE_COLORS[catData.colorName] || AVAILABLE_COLORS.blue;
     let Icon = AVAILABLE_ICONS[catData.iconName] || LayoutList;
@@ -16,13 +15,7 @@ export default function PlannerSection({ catData, trips, currentMonthKey, isGlas
         Icon = catData.id === 'verduleria' ? Leaf : Beef;
     }
 
-    const [settings, setSettings] = useState(() => getPlannerSettings());
-
-    useEffect(() => {
-        const handleSettingsChange = () => setSettings(getPlannerSettings());
-        window.addEventListener('plannerSettingsChanged', handleSettingsChange);
-        return () => window.removeEventListener('plannerSettingsChanged', handleSettingsChange);
-    }, []);
+    const settings = useSyncExternalStore(subscribeToPlannerSettings, getPlannerSettings);
 
     const getInitialOpenState = () => {
         if (settings.initialState === 'expanded') return true;

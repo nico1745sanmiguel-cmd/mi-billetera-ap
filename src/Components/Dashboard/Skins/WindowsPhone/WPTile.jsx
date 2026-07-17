@@ -53,7 +53,6 @@ const WPTile = ({ color, size = '1x1', front, back, onClick, delay = 0, label = 
                 style={{
                     transform: showBack ? 'translateY(-105%)' : 'translateY(0)',
                     transition: 'transform 0.38s cubic-bezier(0.4, 0, 0.2, 1)',
-                    willChange: 'transform',
                 }}
             >
                 {front}
@@ -66,7 +65,6 @@ const WPTile = ({ color, size = '1x1', front, back, onClick, delay = 0, label = 
                     style={{
                         transform: showBack ? 'translateY(0)' : 'translateY(105%)',
                         transition: 'transform 0.38s cubic-bezier(0.4, 0, 0.2, 1)',
-                        willChange: 'transform',
                     }}
                 >
                     {back}

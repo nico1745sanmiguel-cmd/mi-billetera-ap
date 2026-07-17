@@ -4,16 +4,7 @@ import { CACHE_KEYS } from '../../config/constants';
 import { getCache, setCache } from '../../utils/cache';
 import { formatInputNumber, parseInputNumber } from '../../utils';
 
-export const getPlannerSettings = () => {
-    return getCache(CACHE_KEYS.PLANNER_SETTINGS) || {
-        compactView: false,
-        hideCompleted: false,
-        initialState: 'default', // 'default', 'expanded', 'collapsed'
-        sortBy: 'date', // 'date', 'price_desc', 'alpha'
-        budgetAlert: 0
-    };
-};
-
+import { getPlannerSettings } from '../../utils/plannerUtils';
 export default function PlannerSettings({ isGlass, onBack: _onBack }) {
     const [settings, setSettings] = useState(() => getPlannerSettings());
     const [saved, setSaved] = useState(false);

@@ -72,7 +72,7 @@ export const calcularAporte = (totalGasto, proportion) => {
  * @param {String} currentUid - UID del usuario actual
  * @returns {Object} { myTotal, partnerTotal, grandTotal }
  */
-export const calcularTotalesMes = (sharedItems, proporciones, currentUid) => {
+const calcularTotalesMes = (sharedItems, proporciones, currentUid) => {
     if (!sharedItems || !proporciones || proporciones.length === 0) {
         return { myTotal: 0, partnerTotal: 0, grandTotal: 0 };
     }

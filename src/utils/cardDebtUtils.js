@@ -16,14 +16,14 @@
  * @param {Date} date
  * @returns {number}
  */
-export const dateToMonthVal = (date) => date.getFullYear() * 12 + date.getMonth();
+const dateToMonthVal = (date) => date.getFullYear() * 12 + date.getMonth();
 
 /**
  * Convierte un string "YYYY-MM" a monthVal numérico.
  * @param {string} monthKey - Ej: "2026-05"
  * @returns {number}
  */
-export const monthKeyToVal = (monthKey) => {
+const monthKeyToVal = (monthKey) => {
     const [year, month] = monthKey.split('-').map(Number);
     return year * 12 + (month - 1);
 };

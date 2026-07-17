@@ -5,7 +5,7 @@ import { Plus, Check, ExternalLink } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { subscribeToNotes, addNote, deleteNote } from '../../../repositories/notesRepository';
 import { useNotes } from '../../../context/NotesContext';
-import { POST_IT_SKINS } from '../../Notes/NotesSettings';
+import { POST_IT_SKINS } from '../../Notes/constants';
 
 export default function FloatingNotes({ user }) {
     const [notes, setNotes] = useState([]);

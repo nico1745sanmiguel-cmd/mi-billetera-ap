@@ -3,23 +3,23 @@ import { X, TrendingUp, TrendingDown, Info, DollarSign, Activity } from 'lucide-
 import { getAssetDescription } from '../../utils/assetDescriptions';
 import { useFinancial } from '../../context/FinancialContext';
 
+const usdFormatter = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
+const arsFormatter = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 });
+
+const formatAmount = (amount, currency) => {
+    return currency === 'USD' ? usdFormatter.format(amount) : arsFormatter.format(amount);
+};
+
+const formatPercentage = (amount) => {
+    return amount.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
+};
+
 export default function AssetDetailsModal({ isOpen, onClose, asset, currencyView, isGlass, rate }) {
     if (!isOpen || !asset) return null;
 
     const textColor = isGlass ? 'text-white' : 'text-gray-800';
     const bgClass = isGlass ? 'bg-[#0f0c29]/90 border border-white/20 backdrop-blur-xl' : 'bg-white';
     const secondaryTextColor = isGlass ? 'text-white/70' : 'text-gray-500';
-
-    const usdFormatter = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
-    const arsFormatter = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 });
-
-    const formatAmount = (amount, currency) => {
-        return currency === 'USD' ? usdFormatter.format(amount) : arsFormatter.format(amount);
-    };
-
-    const formatPercentage = (amount) => {
-        return amount.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
-    };
 
     const valueBase = currencyView === 'ARS' ? (asset.valorActualUSD * rate) : asset.valorActualUSD;
     const priceBase = currencyView === 'ARS' ? (asset.precioActualUSD * rate) : asset.precioActualUSD;

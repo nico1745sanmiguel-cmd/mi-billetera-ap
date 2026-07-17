@@ -1,13 +1,14 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, lazy, Suspense } from 'react';
 import { useSavings } from '../../context/SavingsContext';
 import { useFinancial } from '../../context/FinancialContext';
 import { Plus, Wallet, ArrowRightLeft, TrendingUp } from 'lucide-react';
 import SavingsGoal from './SavingsGoal';
 import { useUI } from '../../context/UIContext';
 import OperationModal from './OperationModal';
-import PortfolioTab from './Tabs/PortfolioTab';
 import OperationsTab from './Tabs/OperationsTab';
-import AnalyticsTab from './Tabs/AnalyticsTab';
+
+const PortfolioTab = lazy(() => import('./Tabs/PortfolioTab'));
+const AnalyticsTab = lazy(() => import('./Tabs/AnalyticsTab'));
 
 const arsFormatter = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 });
 const usdFormatter = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
@@ -111,11 +112,13 @@ export default function SavingsDashboard() {
             </div>
 
             {/* TAB CONTENT */}
-            <div className="mt-6">
-                {activeTab === 'portafolio' && <PortfolioTab isGlass={isGlass} privacyMode={privacyMode} currencyView={currencyView} />}
-                {activeTab === 'operaciones' && <OperationsTab isGlass={isGlass} privacyMode={privacyMode} />}
-                {activeTab === 'analisis' && <AnalyticsTab isGlass={isGlass} privacyMode={privacyMode} />}
-                {activeTab === 'objetivo' && <SavingsGoal />}
+            <div className="mt-6 min-h-[300px]">
+                <Suspense fallback={<div className={`flex items-center justify-center p-12 text-sm font-bold ${isGlass ? 'text-white/50' : 'text-gray-400'}`}><div className="w-6 h-6 border-4 border-t-green-500 border-green-500/20 rounded-full animate-spin mr-3"></div>Cargando...</div>}>
+                    {activeTab === 'portafolio' && <PortfolioTab isGlass={isGlass} privacyMode={privacyMode} currencyView={currencyView} />}
+                    {activeTab === 'operaciones' && <OperationsTab isGlass={isGlass} privacyMode={privacyMode} />}
+                    {activeTab === 'analisis' && <AnalyticsTab isGlass={isGlass} privacyMode={privacyMode} />}
+                    {activeTab === 'objetivo' && <SavingsGoal />}
+                </Suspense>
             </div>
 
             {showAddModal && (

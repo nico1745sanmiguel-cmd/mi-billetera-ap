@@ -1,10 +1,37 @@
 import React, { useMemo, useState } from 'react';
+// eslint-disable-next-line react-doctor/prefer-dynamic-import
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Calculator, TrendingUp } from 'lucide-react';
 import { useSavings } from '../../../context/SavingsContext';
 import { useFinancial } from '../../../context/FinancialContext';
 
 const usdFormatter = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+
+// Helper: detectar si una especie es un bono argentino
+const isBond = (especie) => /^[a-zA-Z]{2,4}\d{2}[a-zA-Z]?$/.test(especie);
+
+// TIR por Newton-Raphson: dado un array de {valor, dias} donde valor<0 es egreso,
+// retorna la tasa diaria que hace NPV=0, anualizada a TNA.
+const calcularTIR = (flujos) => {
+    if (flujos.length < 2) return null;
+    
+    // Debe haber al menos un flujo negativo (inversión) y uno positivo (retorno)
+    const hasNegative = flujos.some(f => f.valor < 0);
+    const hasPositive = flujos.some(f => f.valor > 0);
+    if (!hasNegative || !hasPositive) return null;
+
+    const npv = (r) => flujos.reduce((sum, f) => sum + f.valor / Math.pow(1 + r, f.dias / 365), 0);
+    const dnpv = (r) => flujos.reduce((sum, f) => sum - (f.dias / 365) * f.valor / Math.pow(1 + r, f.dias / 365 + 1), 0);
+    let r = 0.1;
+    for (let i = 0; i < 50; i++) {
+        const d = dnpv(r);
+        if (Math.abs(d) < 1e-12) break;
+        const rNew = r - npv(r) / d;
+        if (Math.abs(rNew - r) < 1e-8) { r = rNew; break; }
+        r = rNew;
+    }
+    return isFinite(r) && r > -1 ? r * 100 : null;
+};
 
 export default function AnalyticsTab({ isGlass, privacyMode }) {
     const { posiciones, savingsTransactions } = useSavings();
@@ -14,32 +41,6 @@ export default function AnalyticsTab({ isGlass, privacyMode }) {
 
     const textColor = isGlass ? 'text-white' : 'text-gray-800';
     const cardBg = isGlass ? 'bg-white/10 backdrop-blur-md border border-white/20' : 'bg-white shadow-sm border border-gray-100';
-
-    // Helper: detectar si una especie es un bono argentino
-    const isBond = (especie) => /^[a-zA-Z]{2,4}\d{2}[a-zA-Z]?$/.test(especie);
-
-    // TIR por Newton-Raphson: dado un array de {valor, dias} donde valor<0 es egreso,
-    // retorna la tasa diaria que hace NPV=0, anualizada a TNA.
-    const calcularTIR = (flujos) => {
-        if (flujos.length < 2) return null;
-        
-        // Debe haber al menos un flujo negativo (inversión) y uno positivo (retorno)
-        const hasNegative = flujos.some(f => f.valor < 0);
-        const hasPositive = flujos.some(f => f.valor > 0);
-        if (!hasNegative || !hasPositive) return null;
-
-        const npv = (r) => flujos.reduce((sum, f) => sum + f.valor / Math.pow(1 + r, f.dias / 365), 0);
-        const dnpv = (r) => flujos.reduce((sum, f) => sum - (f.dias / 365) * f.valor / Math.pow(1 + r, f.dias / 365 + 1), 0);
-        let r = 0.1;
-        for (let i = 0; i < 50; i++) {
-            const d = dnpv(r);
-            if (Math.abs(d) < 1e-12) break;
-            const rNew = r - npv(r) / d;
-            if (Math.abs(rNew - r) < 1e-8) { r = rNew; break; }
-            r = rNew;
-        }
-        return isFinite(r) && r > -1 ? r * 100 : null;
-    };
 
     // Calcular TNA o TIR por posición
     const posicionesTNA = useMemo(() => {
@@ -128,7 +129,7 @@ export default function AnalyticsTab({ isGlass, privacyMode }) {
     const chartData = useMemo(() => {
         if (!savingsTransactions || savingsTransactions.length === 0) return [];
         
-        const history = [...savingsTransactions].sort((a, b) => {
+        const history = savingsTransactions.toSorted((a, b) => {
             const dateA = new Date(a.fecha || a.createdAt?.toDate?.() || 0);
             const dateB = new Date(b.fecha || b.createdAt?.toDate?.() || 0);
             return dateA - dateB;
@@ -230,10 +231,11 @@ export default function AnalyticsTab({ isGlass, privacyMode }) {
                     
                     <div className="space-y-4">
                         <div>
-                            <label className={`block text-xs font-bold mb-2 ${isGlass ? 'text-white/70' : 'text-gray-500'}`}>
+                            <label htmlFor="aniosProyeccion" className={`block text-xs font-bold mb-2 ${isGlass ? 'text-white/70' : 'text-gray-500'}`}>
                                 AÑOS A PROYECTAR: {aniosProyeccion}
                             </label>
                             <input 
+                                id="aniosProyeccion"
                                 type="range" 
                                 min="1" max="30" 
                                 value={aniosProyeccion}
@@ -243,11 +245,13 @@ export default function AnalyticsTab({ isGlass, privacyMode }) {
                         </div>
 
                         <div>
-                            <label className={`block text-xs font-bold mb-2 ${isGlass ? 'text-white/70' : 'text-gray-500'}`}>
+                            <label htmlFor="aporteMensual" className={`block text-xs font-bold mb-2 ${isGlass ? 'text-white/70' : 'text-gray-500'}`}>
                                 APORTE MENSUAL (USD)
                             </label>
                             <input 
+                                id="aporteMensual"
                                 type="number" 
+                                min="0" step="100"
                                 value={aportesMensuales}
                                 onChange={e => setAportesMensuales(e.target.value)}
                                 className={`w-full p-2 rounded-xl text-sm outline-none transition-all ${

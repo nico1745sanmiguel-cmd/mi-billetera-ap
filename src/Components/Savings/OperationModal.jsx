@@ -201,7 +201,7 @@ export default function OperationModal({ onClose, isGlass, initialData }) {
                     {/* Fecha */}
                     <div>
                         <div className="flex justify-between items-center mb-2">
-                            <label className={`block text-xs font-bold ${isGlass ? 'text-white/70' : 'text-gray-500'}`}>
+                            <label htmlFor="fecha" className={`block text-xs font-bold ${isGlass ? 'text-white/70' : 'text-gray-500'}`}>
                                 FECHA DE LA OPERACIÓN
                             </label>
                             <button 
@@ -214,6 +214,7 @@ export default function OperationModal({ onClose, isGlass, initialData }) {
                         </div>
                         {fechaMode === 'exacta' ? (
                             <input
+                                id="fecha"
                                 type="date"
                                 value={formData.fecha}
                                 onChange={(e) => setFormData({...formData, fecha: e.target.value})}
@@ -245,10 +246,11 @@ export default function OperationModal({ onClose, isGlass, initialData }) {
 
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className={`block text-xs font-bold mb-2 ${isGlass ? 'text-white/70' : 'text-gray-500'}`}>
+                            <label htmlFor="cartera" className={`block text-xs font-bold mb-2 ${isGlass ? 'text-white/70' : 'text-gray-500'}`}>
                                 CARTERA / BROKER
                             </label>
                             <input
+                                id="cartera"
                                 type="text"
                                 list="carteras-list"
                                 placeholder="Ej: Nexo"
@@ -263,10 +265,11 @@ export default function OperationModal({ onClose, isGlass, initialData }) {
                         </div>
                         
                         <div>
-                            <label className={`block text-xs font-bold mb-2 ${isGlass ? 'text-white/70' : 'text-gray-500'}`}>
+                            <label htmlFor="especie" className={`block text-xs font-bold mb-2 ${isGlass ? 'text-white/70' : 'text-gray-500'}`}>
                                 ACTIVO (TICKER)
                             </label>
                             <input
+                                id="especie"
                                 type="text"
                                 list="especies-list"
                                 placeholder="Ej: BTC, AAPL"
@@ -284,10 +287,11 @@ export default function OperationModal({ onClose, isGlass, initialData }) {
                     {/* Cantidad — solo para operaciones normales */}
                     {!isCobro && (
                     <div>
-                        <label className={`block text-xs font-bold mb-2 ${isGlass ? 'text-white/70' : 'text-gray-500'}`}>
+                        <label htmlFor="cantidad" className={`block text-xs font-bold mb-2 ${isGlass ? 'text-white/70' : 'text-gray-500'}`}>
                             CANTIDAD
                         </label>
                         <input
+                            id="cantidad"
                             type="text"
                             inputMode="decimal"
                             placeholder="Ej: 15.5 o 15,5"
@@ -302,12 +306,13 @@ export default function OperationModal({ onClose, isGlass, initialData }) {
                     {/* Monto total recibido — solo para cobros */}
                     {isCobro && (
                     <div>
-                        <label className={`block text-xs font-bold mb-2 ${isGlass ? 'text-white/70' : 'text-gray-500'}`}>
+                        <label htmlFor="montoTotal" className={`block text-xs font-bold mb-2 ${isGlass ? 'text-white/70' : 'text-gray-500'}`}>
                             MONTO TOTAL RECIBIDO
                         </label>
                         <div className="flex gap-4">
                             <div className="flex-1">
                                 <input
+                                    id="montoTotal"
                                     type="text"
                                     inputMode="decimal"
                                     placeholder="Ej: 850 o 850,50"
@@ -334,10 +339,11 @@ export default function OperationModal({ onClose, isGlass, initialData }) {
                     {!isMovimientoFiat && !isCobro && (
                         <div className="flex gap-4">
                             <div className="flex-1">
-                                <label className={`block text-xs font-bold mb-2 ${isGlass ? 'text-white/70' : 'text-gray-500'}`}>
+                                <label htmlFor="precioUnitario" className={`block text-xs font-bold mb-2 ${isGlass ? 'text-white/70' : 'text-gray-500'}`}>
                                     PRECIO UNITARIO
                                 </label>
                                 <input
+                                    id="precioUnitario"
                                     type="text"
                                     inputMode="decimal"
                                     placeholder="Ej: 15000 o 15000,50"
@@ -348,10 +354,11 @@ export default function OperationModal({ onClose, isGlass, initialData }) {
                                 />
                             </div>
                             <div className="w-1/3">
-                                <label className={`block text-xs font-bold mb-2 ${isGlass ? 'text-white/70' : 'text-gray-500'}`}>
+                                <label htmlFor="monedaPrecio" className={`block text-xs font-bold mb-2 ${isGlass ? 'text-white/70' : 'text-gray-500'}`}>
                                     MONEDA
                                 </label>
                                 <select
+                                    id="monedaPrecio"
                                     value={formData.monedaPrecio}
                                     onChange={(e) => setFormData({...formData, monedaPrecio: e.target.value})}
                                     className={inputClasses}
@@ -364,10 +371,11 @@ export default function OperationModal({ onClose, isGlass, initialData }) {
                     )}
 
                     <div>
-                        <label className={`block text-xs font-bold mb-2 ${isGlass ? 'text-white/70' : 'text-gray-500'}`}>
+                        <label htmlFor="nota" className={`block text-xs font-bold mb-2 ${isGlass ? 'text-white/70' : 'text-gray-500'}`}>
                             NOTAS / COMISIONES
                         </label>
                         <input
+                            id="nota"
                             type="text"
                             placeholder="Opcional"
                             value={formData.nota}

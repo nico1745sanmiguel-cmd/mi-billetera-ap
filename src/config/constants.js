@@ -15,7 +15,7 @@ export const ENABLE_HOUSEHOLD = true;
  * Activa el módulo de registro de ingresos por apps de movilidad.
  * Por defecto desactivado — el usuario lo habilita desde Módulos.
  */
-export const ENABLE_MOBILITY = false;
+const ENABLE_MOBILITY = false;
 
 // ─── TIMEOUTS ────────────────────────────────────────────────────────────────
 /**
@@ -64,7 +64,7 @@ export const CRITICAL_DUE_DAY_THRESHOLD = 5;
 /**
  * Longitud del código de invitación al hogar.
  */
-export const INVITE_CODE_LENGTH = 6;
+const INVITE_CODE_LENGTH = 6;
 
 // ─── PROYECCIONES ────────────────────────────────────────────────────────────
 /**
@@ -76,7 +76,7 @@ export const PROJECTION_MONTHS = 6;
 /**
  * Nombre de usuario que se muestra como fallback si el usuario no tiene displayName.
  */
-export const DEFAULT_USER_NAME = 'Usuario';
+const DEFAULT_USER_NAME = 'Usuario';
 
 /**
  * Colores del tema oscuro (glass mode) — usados para la meta tag theme-color.

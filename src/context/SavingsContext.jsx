@@ -103,7 +103,7 @@ export const SavingsProvider = ({ children }) => {
 
         // Bug fix: ordenar cronológicamente para que ventas parciales
         // siempre se procesen después de las compras correspondientes.
-        const sorted = [...(savingsTransactions || [])].sort((a, b) => {
+        const sorted = (savingsTransactions || []).toSorted((a, b) => {
             const dateA = new Date(a.fecha || a.createdAt?.toDate?.() || 0);
             const dateB = new Date(b.fecha || b.createdAt?.toDate?.() || 0);
             return dateA - dateB;
@@ -154,42 +154,42 @@ export const SavingsProvider = ({ children }) => {
         });
 
         const rate = dolarBlue || 1000;
-        return Object.values(result)
-            .filter(p => p.cantidad > 0)
-            .map(pos => {
-                let currentPriceUSD = 0;
-                let variacionDiaria = 0;
-                
-                if (pos.especie === 'USD') {
-                    currentPriceUSD = 1;
-                } else if (pos.especie === 'ARS') {
-                    currentPriceUSD = 1 / rate;
+        return Object.values(result).flatMap(pos => {
+            if (pos.cantidad <= 0) return [];
+            
+            let currentPriceUSD = 0;
+            let variacionDiaria = 0;
+            
+            if (pos.especie === 'USD') {
+                currentPriceUSD = 1;
+            } else if (pos.especie === 'ARS') {
+                currentPriceUSD = 1 / rate;
+            } else {
+                const assetData = assetPrices[pos.especie];
+                if (assetData && typeof assetData === 'object' && !Array.isArray(assetData)) {
+                    currentPriceUSD = assetData.price || 0;
+                    variacionDiaria = assetData.change || 0;
                 } else {
-                    const assetData = assetPrices[pos.especie];
-                    if (assetData && typeof assetData === 'object' && !Array.isArray(assetData)) {
-                        currentPriceUSD = assetData.price || 0;
-                        variacionDiaria = assetData.change || 0;
-                    } else {
-                        currentPriceUSD = assetData || 0;
-                    }
+                    currentPriceUSD = assetData || 0;
                 }
-                
-                const valorActualUSD = pos.cantidad * currentPriceUSD;
-                const gananciaPérdidaUSD = valorActualUSD - pos.inversionTotalUSD;
-                const gananciaPorcentaje = pos.inversionTotalUSD > 0 ? (gananciaPérdidaUSD / pos.inversionTotalUSD) * 100 : 0;
+            }
+            
+            const valorActualUSD = pos.cantidad * currentPriceUSD;
+            const gananciaPérdidaUSD = valorActualUSD - pos.inversionTotalUSD;
+            const gananciaPorcentaje = pos.inversionTotalUSD > 0 ? (gananciaPérdidaUSD / pos.inversionTotalUSD) * 100 : 0;
 
-                const cobradoTotalUSD = pos.cobradoTotalUSD || 0;
+            const cobradoTotalUSD = pos.cobradoTotalUSD || 0;
 
-                return {
-                    ...pos,
-                    precioActualUSD: currentPriceUSD,
-                    variacionDiaria,
-                    valorActualUSD,
-                    cobradoTotalUSD,
-                    gananciaPérdidaUSD,
-                    gananciaPorcentaje
-                };
-            });
+            return [{
+                ...pos,
+                precioActualUSD: currentPriceUSD,
+                variacionDiaria,
+                valorActualUSD,
+                cobradoTotalUSD,
+                gananciaPérdidaUSD,
+                gananciaPorcentaje
+            }];
+        });
     }, [savingsTransactions, assetPrices, dolarBlue]);
 
     // ─── Listener del objetivo (Firestore, compartido por household) ──────────

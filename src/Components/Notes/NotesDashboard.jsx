@@ -7,7 +7,7 @@ import { subscribeToNotes, addNote, deleteNote, updateNote } from '../../reposit
 import { useNotes } from '../../context/NotesContext';
 import { useFinancial } from '../../context/FinancialContext';
 import { useUIDispatch } from '../../context/UIContext';
-import { NOTES_SKINS } from './NotesSettings';
+import { NOTES_SKINS } from './constants';
 
 const EditNoteModal = ({ note, categories, isGlass, onClose, onSave }) => {
     const [text, setText] = useState(note?.text || '');

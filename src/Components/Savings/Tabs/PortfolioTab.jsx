@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+// eslint-disable-next-line react-doctor/prefer-dynamic-import
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { Wallet, TrendingUp, TrendingDown, ArrowUpDown } from 'lucide-react';
 import { useSavings } from '../../../context/SavingsContext';
@@ -9,6 +10,10 @@ const COLORS = ['#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'
 
 const usdFormatter = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
 const arsFormatter = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 });
+
+const formatPercentage = (amount) => {
+    return amount.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
+};
 
 export default function PortfolioTab({ isGlass, privacyMode, currencyView = 'USD' }) {
     const { posiciones } = useSavings();
@@ -22,10 +27,6 @@ export default function PortfolioTab({ isGlass, privacyMode, currencyView = 'USD
     const formatAmount = (amount, currency) => {
         if (privacyMode) return '****';
         return currency === 'USD' ? usdFormatter.format(amount) : arsFormatter.format(amount);
-    };
-
-    const formatPercentage = (amount) => {
-        return amount.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
     };
 
     const handleRowClick = (pos) => {
@@ -82,10 +83,11 @@ export default function PortfolioTab({ isGlass, privacyMode, currencyView = 'USD
     }, [posiciones, rate, sortConfig]);
 
     const dataByCartera = useMemo(() => {
-        return posicionesByCartera.map(c => ({
-            name: c.name,
-            value: currencyView === 'ARS' ? c.totalARS : c.totalUSD
-        })).filter(d => d.value > 0);
+        return posicionesByCartera.reduce((acc, c) => {
+            const value = currencyView === 'ARS' ? c.totalARS : c.totalUSD;
+            if (value > 0) acc.push({ name: c.name, value });
+            return acc;
+        }, []);
     }, [posicionesByCartera, currencyView]);
 
     const renderSortIcon = (columnName) => {
@@ -132,7 +134,7 @@ export default function PortfolioTab({ isGlass, privacyMode, currencyView = 'USD
                                         stroke="none"
                                     >
                                         {dataByCartera.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                            <Cell key={`cell-${entry.name}`} fill={COLORS[index % COLORS.length]} />
                                         ))}
                                     </Pie>
                                     <Tooltip 

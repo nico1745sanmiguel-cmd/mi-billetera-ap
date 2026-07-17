@@ -294,7 +294,7 @@ exports.fetchYahooFinance = functions.https.onCall(async (data, context) => {
     }
 
     const result = {};
-    for (const symbol of symbols) {
+    await Promise.all(symbols.map(async (symbol) => {
         try {
             const res = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}`);
             if (res.ok) {
@@ -314,6 +314,6 @@ exports.fetchYahooFinance = functions.https.onCall(async (data, context) => {
         } catch (e) {
             console.error(`Error fetching ${symbol}:`, e);
         }
-    }
+    }));
     return result;
 });

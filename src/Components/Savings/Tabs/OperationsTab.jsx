@@ -20,7 +20,7 @@ export default function OperationsTab({ isGlass, privacyMode }) {
         }
     };
 
-    const sortedHistory = [...(savingsTransactions || [])].sort((a, b) => {
+    const sortedHistory = (savingsTransactions || []).toSorted((a, b) => {
         const dateA = new Date(a.fecha || a.createdAt?.toDate?.() || 0);
         const dateB = new Date(b.fecha || b.createdAt?.toDate?.() || 0);
         return dateB - dateA;
@@ -41,8 +41,8 @@ export default function OperationsTab({ isGlass, privacyMode }) {
     }`;
 
     // Opciones para filtros
-    const carteras = Array.from(new Set((savingsTransactions || []).map(t => t.cartera).filter(Boolean)));
-    const especies = Array.from(new Set((savingsTransactions || []).map(t => t.especie).filter(Boolean)));
+    const carteras = Array.from(new Set((savingsTransactions || []).flatMap(t => t.cartera ? [t.cartera] : [])));
+    const especies = Array.from(new Set((savingsTransactions || []).flatMap(t => t.especie ? [t.especie] : [])));
 
     return (
         <div className={`rounded-3xl p-6 ${cardBg} animate-fade-in`}>
