@@ -1,0 +1,45 @@
+﻿[1mReact Doctor[22m [2mv0.7.8[22m
+
+[90m  [39m
+
+  [33mÔÜá[39m [33mPerformance: Heavy library loaded eagerly[39m [90m├ù3[39m
+    [36mLearn more: https://react.doctor/docs/rules/react-doctor/prefer-dynamic-import[39m
+    "recharts" ships extra code to your users up front & slows
+    page load. Load it on demand with React.lazy() or
+    next/dynamic.
+[2m    ÔåÆ Load it only when needed: `const Component = dynamic(()[22m
+[2m    => import('library'), { ssr: false })` from next/dynamic,[22m
+[2m    or React.lazy().[22m
+
+[90m    src/Components/Dashboard/StatsChart.jsx:3[39m
+
+[90m    src/Components/Savings/Tabs/AnalyticsTab.jsx:2[39m
+
+[90m    src/Components/Savings/Tabs/PortfolioTab.jsx:2[39m
+
+
+[2m  ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ[22m
+
+  [1mAll 3 issues[22m
+
+  [1mPerformance[22m [2m>[22m [33m[2m3 warnings[22m[39m
+
+  [32mÔöîÔöÇÔöÇÔöÇÔöÇÔöÇÔöÉ[39m  [32m83[39m [2m/ 100[22m [32mNeeds work[39m
+  [32mÔöé Ôùá Ôùá Ôöé[39m  [32mÔûêÔûêÔûêÔûêÔûêÔûêÔûêÔûêÔûêÔûêÔûêÔûêÔûêÔûêÔûêÔûêÔûêÔûêÔûêÔûêÔûêÔûêÔûêÔûêÔûêÔûêÔûêÔûêÔûêÔûêÔûêÔûêÔûêÔûêÔûêÔûêÔûêÔûêÔûêÔûêÔûêÔûê[39m[2mÔûæÔûæÔûæÔûæÔûæÔûæÔûæÔûæ[22m
+  [32mÔöé  Ôû¢  Ôöé[39m  React Doctor [2m(https://react.doctor)[22m
+  [32mÔööÔöÇÔöÇÔöÇÔöÇÔöÇÔöÿ[39m
+
+[90m  Full diagnostics written to C:\Users\Nico\AppData\Local\Temp\react-doctor-dd26142d-6ab2-4067-b8c8-5c6df37b8ffc[39m
+
+[2m  ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ[22m
+
+  [1mShare:[22m [36mhttps://react.doctor/share?p=billetera-app&s=83&w=3&f=3[39m
+[2m  Tell others how you did on socials[22m
+
+  [1mDocs:[22m [36mhttps://react.doctor/docs[39m
+[2m  Learn more about fixing issues, setting up CI/CD, and[22m
+[2m  configuring rules with a config file[22m
+
+  [1mGitHub:[22m [36mhttps://github.com/millionco/react-doctor[39m
+[2m  Report issues and star the repository![22m
+

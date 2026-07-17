@@ -21,6 +21,7 @@ export default function PortfolioTab({ isGlass, privacyMode, currencyView = 'USD
     const [sortConfig, setSortConfig] = useState({ key: null, direction: 'desc' });
     const [selectedAsset, setSelectedAsset] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [chartView, setChartView] = useState('general');
 
     const rate = dolarBlue || 1000;
 
@@ -82,13 +83,54 @@ export default function PortfolioTab({ isGlass, privacyMode, currencyView = 'USD
         })).sort((a, b) => b.totalUSD - a.totalUSD);
     }, [posiciones, rate, sortConfig]);
 
-    const dataByCartera = useMemo(() => {
-        return posicionesByCartera.reduce((acc, c) => {
-            const value = currencyView === 'ARS' ? c.totalARS : c.totalUSD;
-            if (value > 0) acc.push({ name: c.name, value });
-            return acc;
-        }, []);
-    }, [posicionesByCartera, currencyView]);
+    const chartData = useMemo(() => {
+        if (chartView === 'general') {
+            const innerData = [];
+            const outerData = [];
+            
+            posicionesByCartera.forEach((c, index) => {
+                const cValue = currencyView === 'ARS' ? c.totalARS : c.totalUSD;
+                if (cValue > 0) {
+                    innerData.push({ name: c.name, value: cValue, fill: COLORS[index % COLORS.length] });
+                    
+                    c.items.forEach(p => {
+                        const pValue = currencyView === 'ARS' ? p.valorActualUSD * rate : p.valorActualUSD;
+                        if (pValue > 0) {
+                            outerData.push({ name: `${p.especie} (${c.name})`, value: pValue, parentFill: COLORS[index % COLORS.length] });
+                        }
+                    });
+                }
+            });
+            return { innerData, outerData, type: '2-level' };
+        }
+        
+        if (chartView === 'global') {
+            const grouped = {};
+            posiciones.forEach(p => {
+                const val = currencyView === 'ARS' ? p.valorActualUSD * rate : p.valorActualUSD;
+                if (!grouped[p.especie]) grouped[p.especie] = 0;
+                grouped[p.especie] += val;
+            });
+            const outerData = Object.keys(grouped).map((k, i) => ({
+                name: k,
+                value: grouped[k],
+                fill: COLORS[i % COLORS.length]
+            })).sort((a,b) => b.value - a.value);
+            return { outerData, type: '1-level' };
+        }
+        
+        const carteraInfo = posicionesByCartera.find(c => c.name === chartView);
+        if (carteraInfo) {
+            const outerData = carteraInfo.items.reduce((acc, p, i) => {
+                 const value = currencyView === 'ARS' ? p.valorActualUSD * rate : p.valorActualUSD;
+                 if (value > 0) acc.push({ name: p.especie, value, fill: COLORS[i % COLORS.length] });
+                 return acc;
+            }, []).sort((a,b) => b.value - a.value);
+            return { outerData, type: '1-level' };
+        }
+        
+        return { outerData: [], type: '1-level' };
+    }, [posicionesByCartera, posiciones, chartView, currencyView, rate]);
 
     const renderSortIcon = (columnName) => {
         if (sortConfig.key === columnName) {
@@ -114,29 +156,70 @@ export default function PortfolioTab({ isGlass, privacyMode, currencyView = 'USD
         <div className="space-y-6 animate-fade-in">
             {/* Distribución de Carteras */}
             <div className={`rounded-3xl p-6 ${cardBg}`}>
-                <h3 className={`font-bold mb-4 flex items-center gap-2 ${textColor}`}>
-                    <Wallet size={18} />
-                    Distribución por Cartera
-                </h3>
+                <div className="flex flex-col md:flex-row md:items-center justify-between mb-4 gap-4">
+                    <h3 className={`font-bold flex items-center gap-2 ${textColor}`}>
+                        <Wallet size={18} />
+                        Distribución de Tenencias
+                    </h3>
+                    <select
+                        value={chartView}
+                        onChange={(e) => setChartView(e.target.value)}
+                        className={`p-2 rounded-xl text-sm font-semibold outline-none transition-all ${isGlass ? 'bg-white/10 text-white border border-white/20' : 'bg-gray-50 text-gray-800 border border-gray-200 focus:border-green-500'}`}
+                    >
+                        <option value="general">Visión General (Anillos)</option>
+                        <option value="global">Todas las tenencias (Agrupadas)</option>
+                        <optgroup label="Por Cartera">
+                            {posicionesByCartera.map(c => (
+                                <option key={c.name} value={c.name}>{c.name}</option>
+                            ))}
+                        </optgroup>
+                    </select>
+                </div>
                 <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-                    <div className="w-full md:w-1/2 h-48 relative">
+                    <div className="w-full md:w-1/2 h-64 relative">
                         {!privacyMode ? (
                             <ResponsiveContainer width="100%" height="100%">
                                 <PieChart>
-                                    <Pie
-                                        data={dataByCartera}
-                                        cx="50%"
-                                        cy="50%"
-                                        innerRadius={60}
-                                        outerRadius={80}
-                                        paddingAngle={5}
-                                        dataKey="value"
-                                        stroke="none"
-                                    >
-                                        {dataByCartera.map((entry, index) => (
-                                            <Cell key={`cell-${entry.name}`} fill={COLORS[index % COLORS.length]} />
-                                        ))}
-                                    </Pie>
+                                    {chartData.type === '2-level' ? (
+                                        <>
+                                            <Pie
+                                                data={chartData.innerData}
+                                                cx="50%" cy="50%"
+                                                innerRadius={0} outerRadius={60}
+                                                dataKey="value"
+                                                stroke="none"
+                                            >
+                                                {chartData.innerData.map((entry, index) => (
+                                                    <Cell key={`cell-inner-${index}`} fill={entry.fill} />
+                                                ))}
+                                            </Pie>
+                                            <Pie
+                                                data={chartData.outerData}
+                                                cx="50%" cy="50%"
+                                                innerRadius={70} outerRadius={90}
+                                                paddingAngle={2}
+                                                dataKey="value"
+                                                stroke="none"
+                                            >
+                                                {chartData.outerData.map((entry, index) => (
+                                                    <Cell key={`cell-outer-${index}`} fill={entry.parentFill} opacity={0.8} />
+                                                ))}
+                                            </Pie>
+                                        </>
+                                    ) : (
+                                        <Pie
+                                            data={chartData.outerData}
+                                            cx="50%" cy="50%"
+                                            innerRadius={60} outerRadius={90}
+                                            paddingAngle={5}
+                                            dataKey="value"
+                                            stroke="none"
+                                        >
+                                            {chartData.outerData.map((entry, index) => (
+                                                <Cell key={`cell-${index}`} fill={entry.fill} />
+                                            ))}
+                                        </Pie>
+                                    )}
                                     <Tooltip 
                                         formatter={(val) => currencyView === 'USD' ? usdFormatter.format(val) : arsFormatter.format(val)}
                                         contentStyle={{ backgroundColor: isGlass ? 'rgba(0,0,0,0.8)' : 'white', borderRadius: '12px', border: 'none' }}
@@ -150,12 +233,12 @@ export default function PortfolioTab({ isGlass, privacyMode, currencyView = 'USD
                             </div>
                         )}
                     </div>
-                    <div className="w-full md:w-1/2 space-y-3">
-                        {dataByCartera.map((d, i) => (
+                    <div className="w-full md:w-1/2 space-y-3 max-h-64 overflow-y-auto hide-scrollbar pr-2">
+                        {(chartData.type === '2-level' ? chartData.innerData : chartData.outerData).map((d, i) => (
                             <div key={d.name} className="flex justify-between items-center text-sm font-bold">
-                                <div className="flex items-center gap-2">
-                                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
-                                    <span className={isGlass ? 'text-white/80' : 'text-gray-600'}>{d.name}</span>
+                                <div className="flex items-center gap-2 truncate">
+                                    <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: d.fill || COLORS[i % COLORS.length] }} />
+                                    <span className={`truncate ${isGlass ? 'text-white/80' : 'text-gray-600'}`} title={d.name}>{d.name}</span>
                                 </div>
                                 <span className={textColor}>{formatAmount(d.value, currencyView)}</span>
                             </div>

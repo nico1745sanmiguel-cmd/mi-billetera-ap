@@ -8,59 +8,25 @@ const usdFormatter = new Intl.NumberFormat('es-AR', { style: 'currency', currenc
 
 export default function SavingsWidget({ setView, privacyMode, size }) {
     const { dolarBlue } = useFinancial();
-    const { savingsTransactions, savingsGoal } = useSavings();
+    const { posiciones, savingsGoal } = useSavings();
     const [currencyView, setCurrencyView] = useState('ARS');
-    const [customQuotes] = useState(() => {
-        const saved = localStorage.getItem('savings_custom_quotes');
-        if (saved) {
-            try { return JSON.parse(saved); } catch (e) { console.warn(e); }
-        }
-        return {};
-    });
     const [imgError, setImgError] = useState(false);
 
-    const total = useMemo(() => {
+    const { total, totalARS } = useMemo(() => {
         let totalUSD = 0;
-        let totalARS = 0;
         const rate = dolarBlue || 1000;
 
-        const balances = {};
-        (savingsTransactions || []).forEach(tx => {
-            const { cartera, especie, tipo, cantidad } = tx;
-            if (!balances[cartera]) balances[cartera] = {};
-            if (!balances[cartera][especie]) balances[cartera][especie] = 0;
-
-            const num = parseFloat(cantidad) || 0;
-            if (tipo === 'ingreso') balances[cartera][especie] += num;
-            else if (tipo === 'egreso') balances[cartera][especie] -= num;
+        posiciones.forEach(pos => {
+            totalUSD += pos.valorActualUSD;
         });
 
-        Object.keys(balances).forEach(cartera => {
-            Object.keys(balances[cartera]).forEach(especie => {
-                const cant = balances[cartera][especie];
-                const es = especie.toUpperCase();
-
-                if (es === 'USD') {
-                    totalUSD += cant;
-                    totalARS += cant * rate;
-                } else if (es === 'ARS') {
-                    totalARS += cant;
-                    totalUSD += cant / rate;
-                } else {
-                    let userQuote = customQuotes[es];
-                    if (userQuote === undefined || isNaN(parseFloat(userQuote))) {
-                        userQuote = ['USDT', 'USDC', 'DAI', 'USDP'].includes(es) ? 1 : 0;
-                    } else {
-                        userQuote = parseFloat(userQuote);
-                    }
-                    totalUSD += (cant * userQuote);
-                    totalARS += (cant * userQuote * rate);
-                }
-            });
-        });
-
-        return currencyView === 'ARS' ? totalARS : totalUSD;
-    }, [savingsTransactions, dolarBlue, currencyView, customQuotes]);
+        const computedTotalARS = totalUSD * rate;
+        
+        return {
+            totalARS: computedTotalARS,
+            total: currencyView === 'ARS' ? computedTotalARS : totalUSD
+        };
+    }, [posiciones, dolarBlue, currencyView]);
 
     const formatCurrency = (amount, currency) => {
         if (privacyMode) return '****';
@@ -69,28 +35,6 @@ export default function SavingsWidget({ setView, privacyMode, size }) {
 
     // Progreso del objetivo para el widget
     const goalAmount = savingsGoal ? parseFloat(savingsGoal.amount) : 0;
-    const totalARS = useMemo(() => {
-        const rate = dolarBlue || 1000;
-        const balances = {};
-        (savingsTransactions || []).forEach(tx => {
-            const { cartera, especie, tipo, cantidad } = tx;
-            if (!balances[cartera]) balances[cartera] = {};
-            if (!balances[cartera][especie]) balances[cartera][especie] = 0;
-            const num = parseFloat(cantidad) || 0;
-            if (tipo === 'ingreso') balances[cartera][especie] += num;
-            else if (tipo === 'egreso') balances[cartera][especie] -= num;
-        });
-        let t = 0;
-        Object.values(balances).forEach(c => {
-            Object.entries(c).forEach(([esp, cant]) => {
-                const es = esp.toUpperCase();
-                if (es === 'ARS') t += cant;
-                else if (es === 'USD') t += cant * rate;
-                else if (['USDT', 'USDC', 'DAI', 'USDP'].includes(es)) t += cant * rate;
-            });
-        });
-        return t;
-    }, [savingsTransactions, dolarBlue]);
 
     const progress = savingsGoal && goalAmount > 0
         ? Math.min(100, (totalARS / goalAmount) * 100)
