@@ -9,8 +9,14 @@ const DEFAULT_PLANNER_SETTINGS = {
     budgetAlert: 0
 };
 
+let cachedSettings = null;
+
 export const getPlannerSettings = () => {
-    return getCache(CACHE_KEYS.PLANNER_SETTINGS) || DEFAULT_PLANNER_SETTINGS;
+    const current = getCache(CACHE_KEYS.PLANNER_SETTINGS) || DEFAULT_PLANNER_SETTINGS;
+    if (!cachedSettings || JSON.stringify(cachedSettings) !== JSON.stringify(current)) {
+        cachedSettings = current;
+    }
+    return cachedSettings;
 };
 
 export const subscribeToPlannerSettings = (callback) => {
