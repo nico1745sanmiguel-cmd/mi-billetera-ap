@@ -234,38 +234,50 @@ exports.onNotificationCreated = functions.firestore
         const notification = snap.data();
         const householdId = context.params.householdId;
         
-        const senderId = notification.paidBy || notification.userId;
+        // ⚠️ El frontend guarda el campo como 'paidByUid' (Home.jsx)
+        const senderId = notification.paidByUid || notification.paidBy || notification.userId;
         const senderName = notification.paidByName || notification.userName || "Alguien";
         const amount = notification.amount || 0;
         const itemName = notification.itemName || "un servicio";
 
         try {
-            // Obtener todos los usuarios del hogar excepto el que hizo el pago
+            // Obtener todos los usuarios del hogar
             const usersSnapshot = await admin.firestore().collection('users')
                 .where('householdId', '==', householdId)
                 .get();
 
-            let tokens = [];
+            const allUsers = [];
             usersSnapshot.forEach(doc => {
                 const userData = doc.data();
-                if (doc.id !== senderId && userData.fcmTokens && Array.isArray(userData.fcmTokens)) {
-                    tokens.push(...userData.fcmTokens);
+                if (userData.fcmTokens && Array.isArray(userData.fcmTokens)) {
+                    allUsers.push({ uid: doc.id, tokens: userData.fcmTokens });
+                }
+            });
+
+            const totalUsers = allUsers.length;
+
+            // MODO TEST: si el hogar tiene un solo usuario, notificar también al que pagó.
+            // Cuando haya más de un usuario, solo se notifica a los demás.
+            let tokens = [];
+            allUsers.forEach(u => {
+                const isTheSender = u.uid === senderId;
+                if (!isTheSender || totalUsers === 1) {
+                    tokens.push(...u.tokens);
                 }
             });
 
             if (tokens.length === 0) {
-                console.log('No hay tokens a los que enviar notificaciones para el hogar:', householdId);
+                console.log(`No hay tokens para notificar en el hogar: ${householdId}. senderId: ${senderId}, totalUsers: ${totalUsers}`);
                 return null;
             }
 
             const payload = {
                 notification: {
-                    title: 'Nuevo pago registrado',
-                    body: `${senderName} acaba de pagar ${itemName} por $${amount}.`,
+                    title: '💳 Nuevo pago registrado',
+                    body: `${senderName} pagó ${itemName} por $${amount}.`,
                 },
                 data: {
                     householdId: householdId,
-                    click_action: "FLUTTER_NOTIFICATION_CLICK" // opcional, para manejar clics
                 }
             };
 
@@ -274,8 +286,20 @@ exports.onNotificationCreated = functions.firestore
             
             // Limpieza de tokens inválidos
             if (response.failureCount > 0) {
-                // Aquí podrías implementar la lógica para eliminar tokens expirados
-                // iterando sobre response.results y buscando errores de 'messaging/invalid-registration-token'
+                const tokensToRemove = [];
+                response.results.forEach((result, idx) => {
+                    const error = result.error;
+                    if (error && (
+                        error.code === 'messaging/invalid-registration-token' ||
+                        error.code === 'messaging/registration-token-not-registered'
+                    )) {
+                        tokensToRemove.push(tokens[idx]);
+                    }
+                });
+                if (tokensToRemove.length > 0) {
+                    console.log('Tokens inválidos detectados para limpieza:', tokensToRemove);
+                    // Podrías iterar los usuarios y usar arrayRemove para limpiarlos
+                }
             }
 
             return null;

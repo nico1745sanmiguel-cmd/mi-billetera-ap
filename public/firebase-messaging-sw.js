@@ -19,8 +19,8 @@ messaging.onBackgroundMessage((payload) => {
   const notificationTitle = payload.notification.title;
   const notificationOptions = {
     body: payload.notification.body,
-    icon: '/vite.svg', // Idealmente deberías tener un ícono de la app
-    badge: '/vite.svg',
+    icon: '/icon-192.webp',
+    badge: '/icon-192.webp',
     data: payload.data
   };
 
