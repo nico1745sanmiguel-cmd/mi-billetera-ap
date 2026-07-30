@@ -271,34 +271,38 @@ exports.onNotificationCreated = functions.firestore
                 return null;
             }
 
-            const payload = {
+            // Nueva API FCM v1: sendEachForMulticast (sendToDevice fue dado de baja en jun 2024)
+            const message = {
                 notification: {
                     title: '💳 Nuevo pago registrado',
                     body: `${senderName} pagó ${itemName} por $${amount}.`,
                 },
-                data: {
-                    householdId: householdId,
-                }
+                webpush: {
+                    notification: {
+                        icon: '/icon-192.webp',
+                        badge: '/icon-192.webp',
+                    }
+                },
+                data: { householdId },
+                tokens,
             };
 
-            const response = await admin.messaging().sendToDevice(tokens, payload);
+            const response = await admin.messaging().sendEachForMulticast(message);
             console.log(`Notificaciones enviadas. Éxito: ${response.successCount}, Fallos: ${response.failureCount}`);
-            
+
             // Limpieza de tokens inválidos
             if (response.failureCount > 0) {
                 const tokensToRemove = [];
-                response.results.forEach((result, idx) => {
-                    const error = result.error;
-                    if (error && (
-                        error.code === 'messaging/invalid-registration-token' ||
-                        error.code === 'messaging/registration-token-not-registered'
+                response.responses.forEach((r, idx) => {
+                    if (!r.success && r.error && (
+                        r.error.code === 'messaging/invalid-registration-token' ||
+                        r.error.code === 'messaging/registration-token-not-registered'
                     )) {
                         tokensToRemove.push(tokens[idx]);
                     }
                 });
                 if (tokensToRemove.length > 0) {
-                    console.log('Tokens inválidos detectados para limpieza:', tokensToRemove);
-                    // Podrías iterar los usuarios y usar arrayRemove para limpiarlos
+                    console.log('Tokens inválidos para limpiar:', tokensToRemove);
                 }
             }
 
@@ -385,23 +389,31 @@ exports.diagnosePush = functions.https.onCall(async (data, context) => {
         }
         result.steps.push({ step: 'tokens', ok: true, count: tokens.length });
 
-        // Paso 4: intentar enviar un push directo
+        // Paso 4: intentar enviar un push directo (FCM v1 API)
         if (data.sendTest) {
-            const payload = {
+            const message = {
                 notification: {
                     title: '✅ Push de diagnóstico',
                     body: `Token encontrado. Sistema funcionando. Tokens: ${tokens.length}`,
                 },
-                data: { householdId }
+                webpush: {
+                    notification: {
+                        icon: '/icon-192.webp',
+                        badge: '/icon-192.webp',
+                    }
+                },
+                data: { householdId },
+                tokens,
             };
-            const response = await admin.messaging().sendToDevice(tokens, payload);
+            const response = await admin.messaging().sendEachForMulticast(message);
             result.steps.push({
                 step: 'send',
                 ok: response.successCount > 0,
                 successCount: response.successCount,
                 failureCount: response.failureCount,
-                results: response.results.map((r, i) => ({
+                results: response.responses.map((r, i) => ({
                     index: i,
+                    success: r.success,
                     error: r.error ? r.error.code : null,
                 })),
             });
