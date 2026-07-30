@@ -1,23 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { Bell, X, Wallet, CheckCheck, Loader2, FlaskConical, CheckCircle, AlertCircle } from 'lucide-react';
+import { Bell, X, Wallet, CheckCheck, Loader2 } from 'lucide-react';
 import { formatMoney } from '../../../utils';
-import { messaging, db, functions } from '../../../firebase';
+import { messaging, db } from '../../../firebase';
 import { getToken, onMessage } from 'firebase/messaging';
-import { doc, updateDoc, arrayUnion, addDoc, collection, serverTimestamp } from 'firebase/firestore';
-import { httpsCallable } from 'firebase/functions';
+import { doc, updateDoc, arrayUnion } from 'firebase/firestore';
 
-export default function NotificationsModal({ notifications, user, privacyMode, setIsNotificationsOpen, handleMarkAsRead, showToast, householdId }) {
+export default function NotificationsModal({ notifications, user, privacyMode, setIsNotificationsOpen, handleMarkAsRead, showToast }) {
     const [isPushLoading, setIsPushLoading] = useState(false);
-    const [isTestLoading, setIsTestLoading] = useState(false);
-    const [diagResult, setDiagResult] = useState(null);
 
-    // ── Manejo de mensajes en PRIMER PLANO ───────────────────────────────────
     // Cuando la app está abierta, FCM no muestra notificaciones del sistema
     // automáticamente. Este handler las muestra igual usando la Notification API.
     useEffect(() => {
         if (!messaging) return;
         const unsubscribe = onMessage(messaging, (payload) => {
-            console.log('[FCM] Mensaje en primer plano recibido:', payload);
             if (Notification.permission === 'granted') {
                 const { title, body } = payload.notification || {};
                 if (title) {
@@ -68,24 +63,6 @@ export default function NotificationsModal({ notifications, user, privacyMode, s
         }
     };
 
-    // ── Diagnóstico + envío directo ─────────────────────────────────────────
-    // Llama a la Cloud Function diagnosePush que inspecciona Firestore en el
-    // servidor y nos dice exactamente qué falta o falla.
-    const handleTestNotification = async () => {
-        try {
-            setIsTestLoading(true);
-            setDiagResult(null);
-            const diagnosePush = httpsCallable(functions, 'diagnosePush');
-            const { data } = await diagnosePush({ sendTest: true });
-            setDiagResult(data);
-        } catch (error) {
-            console.error('Error al diagnosticar push:', error);
-            setDiagResult({ error: error.message });
-        } finally {
-            setIsTestLoading(false);
-        }
-    };
-
     return (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[100] flex items-start justify-center p-4 pt-10 sm:pt-16 animate-fade-in" onClick={() => setIsNotificationsOpen(false)}>
             <div className="relative w-full max-w-md max-h-[85vh] bg-[#f3f4f6] dark:bg-[#1a1b4b] p-6 rounded-3xl shadow-2xl animate-scale-in flex flex-col" onClick={e => e.stopPropagation()}>
@@ -98,7 +75,7 @@ export default function NotificationsModal({ notifications, user, privacyMode, s
                     </button>
                 </div>
                 
-                <div className="mb-3 flex flex-col gap-2">
+                <div className="mb-4">
                     <button aria-label="Acción" type="button" 
                         onClick={handleEnablePush} 
                         disabled={isPushLoading}
@@ -107,36 +84,6 @@ export default function NotificationsModal({ notifications, user, privacyMode, s
                         {isPushLoading ? <Loader2 size={16} className="animate-spin" /> : <Bell size={16} />} 
                         {isPushLoading ? 'Activando...' : 'Activar Notificaciones en el celular'}
                     </button>
-
-                    <button aria-label="Acción" type="button"
-                        onClick={handleTestNotification}
-                        disabled={isTestLoading}
-                        className="w-full bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 py-3 px-4 rounded-xl font-bold text-sm hover:bg-amber-200 dark:hover:bg-amber-500/30 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        {isTestLoading ? <Loader2 size={16} className="animate-spin" /> : <FlaskConical size={16} />}
-                        {isTestLoading ? 'Diagnosticando...' : 'Diagnosticar y enviar prueba'}
-                    </button>
-
-                    {/* Resultado del diagnóstico */}
-                    {diagResult && (
-                        <div className="bg-gray-900 rounded-xl p-3 text-xs font-mono space-y-1 max-h-48 overflow-y-auto">
-                            {diagResult.error ? (
-                                <p className="text-red-400">❌ Error: {diagResult.error}</p>
-                            ) : (
-                                (diagResult.steps || []).map((s, i) => (
-                                    <div key={i} className={`flex items-start gap-2 ${s.ok ? 'text-green-400' : 'text-red-400'}`}>
-                                        {s.ok ? <CheckCircle size={12} className="mt-0.5 shrink-0" /> : <AlertCircle size={12} className="mt-0.5 shrink-0" />}
-                                        <span>
-                                            <strong>[{s.step}]</strong>{' '}
-                                            {s.msg || JSON.stringify(
-                                                Object.fromEntries(Object.entries(s).filter(([k]) => k !== 'step' && k !== 'ok'))
-                                            )}
-                                        </span>
-                                    </div>
-                                ))
-                            )}
-                        </div>
-                    )}
                 </div>
                 
                 <div className="overflow-y-auto space-y-3 pr-2 custom-scrollbar flex-1">
