@@ -345,7 +345,8 @@ const Home = memo(({ onLogout, notifications = EMPTY_ARRAY, onCardClick }) => {
                     privacyMode={privacyMode} 
                     setIsNotificationsOpen={setIsNotificationsOpen} 
                     handleMarkAsRead={handleMarkAsRead}
-                    showToast={showToast} 
+                    showToast={showToast}
+                    householdId={householdId}
                 />
             )}
 

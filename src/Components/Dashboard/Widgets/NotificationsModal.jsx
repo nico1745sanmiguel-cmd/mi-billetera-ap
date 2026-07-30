@@ -1,12 +1,34 @@
-import React, { useState } from 'react';
-import { Bell, X, Wallet, CheckCheck, Loader2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Bell, X, Wallet, CheckCheck, Loader2, FlaskConical } from 'lucide-react';
 import { formatMoney } from '../../../utils';
 import { messaging, db } from '../../../firebase';
-import { getToken } from 'firebase/messaging';
-import { doc, updateDoc, arrayUnion } from 'firebase/firestore';
+import { getToken, onMessage } from 'firebase/messaging';
+import { doc, updateDoc, arrayUnion, addDoc, collection, serverTimestamp } from 'firebase/firestore';
 
-export default function NotificationsModal({ notifications, user, privacyMode, setIsNotificationsOpen, handleMarkAsRead, showToast }) {
+export default function NotificationsModal({ notifications, user, privacyMode, setIsNotificationsOpen, handleMarkAsRead, showToast, householdId }) {
     const [isPushLoading, setIsPushLoading] = useState(false);
+    const [isTestLoading, setIsTestLoading] = useState(false);
+
+    // ── Manejo de mensajes en PRIMER PLANO ───────────────────────────────────
+    // Cuando la app está abierta, FCM no muestra notificaciones del sistema
+    // automáticamente. Este handler las muestra igual usando la Notification API.
+    useEffect(() => {
+        if (!messaging) return;
+        const unsubscribe = onMessage(messaging, (payload) => {
+            console.log('[FCM] Mensaje en primer plano recibido:', payload);
+            if (Notification.permission === 'granted') {
+                const { title, body } = payload.notification || {};
+                if (title) {
+                    new Notification(title, {
+                        body: body || '',
+                        icon: '/icon-192.webp',
+                        badge: '/icon-192.webp',
+                    });
+                }
+            }
+        });
+        return () => unsubscribe();
+    }, []);
 
     const handleEnablePush = async () => {
         if (!messaging) {
@@ -27,7 +49,6 @@ export default function NotificationsModal({ notifications, user, privacyMode, s
             if (permission === 'granted') {
                 const token = await getToken(messaging, { vapidKey });
                 if (token) {
-                    // Guardar el token en el perfil del usuario
                     const userRef = doc(db, 'users', user.uid);
                     await updateDoc(userRef, {
                         fcmTokens: arrayUnion(token)
@@ -45,6 +66,37 @@ export default function NotificationsModal({ notifications, user, privacyMode, s
         }
     };
 
+    // ── Botón de PRUEBA ───────────────────────────────────────────────────────
+    // Crea un documento real en Firestore → dispara la Cloud Function →
+    // la Cloud Function envía el push por FCM → llega como notificación del sistema.
+    // Para probar: hacé clic, luego minimizá o cerrá el navegador.
+    const handleTestNotification = async () => {
+        if (!householdId) {
+            showToast("No se encontró el ID del hogar.", "error");
+            return;
+        }
+        try {
+            setIsTestLoading(true);
+            await addDoc(collection(db, 'households', householdId, 'notifications'), {
+                type: 'payment',
+                itemName: '🧪 Notificación de Prueba',
+                amount: 0,
+                dueDate: '-',
+                itemType: 'test',
+                paidByUid: user.uid,
+                paidByName: user.displayName || 'Vos',
+                createdAt: serverTimestamp(),
+                readBy: [],
+            });
+            showToast("¡Prueba enviada! Minimizá el navegador para verla.", "success");
+        } catch (error) {
+            console.error("Error al enviar notificación de prueba:", error);
+            showToast("Error al enviar la prueba.", "error");
+        } finally {
+            setIsTestLoading(false);
+        }
+    };
+
     return (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[100] flex items-start justify-center p-4 pt-10 sm:pt-16 animate-fade-in" onClick={() => setIsNotificationsOpen(false)}>
             <div className="relative w-full max-w-md max-h-[85vh] bg-[#f3f4f6] dark:bg-[#1a1b4b] p-6 rounded-3xl shadow-2xl animate-scale-in flex flex-col" onClick={e => e.stopPropagation()}>
@@ -57,7 +109,7 @@ export default function NotificationsModal({ notifications, user, privacyMode, s
                     </button>
                 </div>
                 
-                <div className="mb-4">
+                <div className="mb-3 flex flex-col gap-2">
                     <button aria-label="Acción" type="button" 
                         onClick={handleEnablePush} 
                         disabled={isPushLoading}
@@ -65,6 +117,15 @@ export default function NotificationsModal({ notifications, user, privacyMode, s
                     >
                         {isPushLoading ? <Loader2 size={16} className="animate-spin" /> : <Bell size={16} />} 
                         {isPushLoading ? 'Activando...' : 'Activar Notificaciones en el celular'}
+                    </button>
+
+                    <button aria-label="Acción" type="button"
+                        onClick={handleTestNotification}
+                        disabled={isTestLoading}
+                        className="w-full bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 py-3 px-4 rounded-xl font-bold text-sm hover:bg-amber-200 dark:hover:bg-amber-500/30 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        {isTestLoading ? <Loader2 size={16} className="animate-spin" /> : <FlaskConical size={16} />}
+                        {isTestLoading ? 'Enviando...' : 'Enviar notificación de prueba'}
                     </button>
                 </div>
                 
