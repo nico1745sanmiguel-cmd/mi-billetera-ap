@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Bell, X, Wallet, CheckCheck, Loader2, FlaskConical } from 'lucide-react';
+import { Bell, X, Wallet, CheckCheck, Loader2, FlaskConical, CheckCircle, AlertCircle } from 'lucide-react';
 import { formatMoney } from '../../../utils';
-import { messaging, db } from '../../../firebase';
+import { messaging, db, functions } from '../../../firebase';
 import { getToken, onMessage } from 'firebase/messaging';
 import { doc, updateDoc, arrayUnion, addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { httpsCallable } from 'firebase/functions';
 
 export default function NotificationsModal({ notifications, user, privacyMode, setIsNotificationsOpen, handleMarkAsRead, showToast, householdId }) {
     const [isPushLoading, setIsPushLoading] = useState(false);
     const [isTestLoading, setIsTestLoading] = useState(false);
+    const [diagResult, setDiagResult] = useState(null);
 
     // ── Manejo de mensajes en PRIMER PLANO ───────────────────────────────────
     // Cuando la app está abierta, FCM no muestra notificaciones del sistema
@@ -66,32 +68,19 @@ export default function NotificationsModal({ notifications, user, privacyMode, s
         }
     };
 
-    // ── Botón de PRUEBA ───────────────────────────────────────────────────────
-    // Crea un documento real en Firestore → dispara la Cloud Function →
-    // la Cloud Function envía el push por FCM → llega como notificación del sistema.
-    // Para probar: hacé clic, luego minimizá o cerrá el navegador.
+    // ── Diagnóstico + envío directo ─────────────────────────────────────────
+    // Llama a la Cloud Function diagnosePush que inspecciona Firestore en el
+    // servidor y nos dice exactamente qué falta o falla.
     const handleTestNotification = async () => {
-        if (!householdId) {
-            showToast("No se encontró el ID del hogar.", "error");
-            return;
-        }
         try {
             setIsTestLoading(true);
-            await addDoc(collection(db, 'households', householdId, 'notifications'), {
-                type: 'payment',
-                itemName: '🧪 Notificación de Prueba',
-                amount: 0,
-                dueDate: '-',
-                itemType: 'test',
-                paidByUid: user.uid,
-                paidByName: user.displayName || 'Vos',
-                createdAt: serverTimestamp(),
-                readBy: [],
-            });
-            showToast("¡Prueba enviada! Minimizá el navegador para verla.", "success");
+            setDiagResult(null);
+            const diagnosePush = httpsCallable(functions, 'diagnosePush');
+            const { data } = await diagnosePush({ sendTest: true });
+            setDiagResult(data);
         } catch (error) {
-            console.error("Error al enviar notificación de prueba:", error);
-            showToast("Error al enviar la prueba.", "error");
+            console.error('Error al diagnosticar push:', error);
+            setDiagResult({ error: error.message });
         } finally {
             setIsTestLoading(false);
         }
@@ -125,8 +114,29 @@ export default function NotificationsModal({ notifications, user, privacyMode, s
                         className="w-full bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 py-3 px-4 rounded-xl font-bold text-sm hover:bg-amber-200 dark:hover:bg-amber-500/30 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {isTestLoading ? <Loader2 size={16} className="animate-spin" /> : <FlaskConical size={16} />}
-                        {isTestLoading ? 'Enviando...' : 'Enviar notificación de prueba'}
+                        {isTestLoading ? 'Diagnosticando...' : 'Diagnosticar y enviar prueba'}
                     </button>
+
+                    {/* Resultado del diagnóstico */}
+                    {diagResult && (
+                        <div className="bg-gray-900 rounded-xl p-3 text-xs font-mono space-y-1 max-h-48 overflow-y-auto">
+                            {diagResult.error ? (
+                                <p className="text-red-400">❌ Error: {diagResult.error}</p>
+                            ) : (
+                                (diagResult.steps || []).map((s, i) => (
+                                    <div key={i} className={`flex items-start gap-2 ${s.ok ? 'text-green-400' : 'text-red-400'}`}>
+                                        {s.ok ? <CheckCircle size={12} className="mt-0.5 shrink-0" /> : <AlertCircle size={12} className="mt-0.5 shrink-0" />}
+                                        <span>
+                                            <strong>[{s.step}]</strong>{' '}
+                                            {s.msg || JSON.stringify(
+                                                Object.fromEntries(Object.entries(s).filter(([k]) => k !== 'step' && k !== 'ok'))
+                                            )}
+                                        </span>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    )}
                 </div>
                 
                 <div className="overflow-y-auto space-y-3 pr-2 custom-scrollbar flex-1">
