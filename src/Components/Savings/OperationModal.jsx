@@ -572,8 +572,10 @@ export default function OperationModal({ onClose, isGlass, initialData }) {
                             className={inputClasses}
                         />
                     </div>
-                    </> {/* end non-caucion block */}
+                    {/* fin bloque no-caucion */}
+                    </>
                     )}
+
 
                     <button aria-label="Acción"
                         type="submit"
