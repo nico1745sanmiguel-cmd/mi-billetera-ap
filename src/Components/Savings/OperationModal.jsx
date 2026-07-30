@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { X, Save } from 'lucide-react';
+import { X, Save, Clock } from 'lucide-react';
 import { useSavings } from '../../context/SavingsContext';
 import { useFinancial } from '../../context/FinancialContext';
 
@@ -19,7 +19,14 @@ export default function OperationModal({ onClose, isGlass, initialData }) {
         fecha: initialData?.fecha 
             ? new Date(initialData.fecha).toISOString().split('T')[0] 
             : new Date().toISOString().split('T')[0],
-        nota: initialData?.nota || ''
+        nota: initialData?.nota || '',
+        // campos caución
+        montoARS: initialData?.montoARS?.toString() || '',
+        tna: initialData?.tna?.toString() || '',
+        plazo: initialData?.plazo?.toString() || '7',
+        fechaInicio: initialData?.fechaInicio
+            ? new Date(initialData.fechaInicio).toISOString().split('T')[0]
+            : new Date().toISOString().split('T')[0],
     });
 
     const [fechaMode, setFechaMode] = useState('exacta');
@@ -45,15 +52,39 @@ export default function OperationModal({ onClose, isGlass, initialData }) {
     const isMovimientoFiat = formData.tipo === 'deposito' || formData.tipo === 'retiro';
     // cobro_cupon y amortizacion: solo registran el monto total recibido, sin modificar cantidad
     const isCobro = formData.tipo === 'cobro_cupon' || formData.tipo === 'amortizacion';
+    const isCaucion = formData.tipo === 'caucion';
+
+    // Cálculos automáticos de la caución
+    const caucionCalc = useMemo(() => {
+        if (!isCaucion) return null;
+        const monto = parseFloat(formData.montoARS) || 0;
+        const tna = parseFloat(formData.tna) || 0;
+        const plazo = parseInt(formData.plazo) || 0;
+        if (!monto || !tna || !plazo) return null;
+
+        const interesEsperadoARS = monto * (tna / 100 / 365) * plazo;
+        const montoTotalEsperadoARS = monto + interesEsperadoARS;
+
+        const fechaVenc = new Date(formData.fechaInicio);
+        fechaVenc.setDate(fechaVenc.getDate() + plazo);
+        const fechaVencimiento = fechaVenc.toISOString().split('T')[0];
+
+        return { interesEsperadoARS, montoTotalEsperadoARS, fechaVencimiento };
+    }, [isCaucion, formData.montoARS, formData.tna, formData.plazo, formData.fechaInicio]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!formData.cartera || !formData.especie || !formData.fecha) return;
+        if (!formData.cartera || !formData.fecha) return;
         
-        // cobros solo requieren monto total; el resto requieren cantidad
-        if (!isCobro && !formData.cantidad) return;
-        // Si no es fiat ni cobro, necesita precio
-        if (!isMovimientoFiat && !isCobro && !formData.precioUnitario && formData.tipo !== 'ajuste') return;
+        if (isCaucion) {
+            if (!formData.montoARS || !formData.tna || !formData.plazo) return;
+        } else {
+            if (!formData.especie) return;
+            // cobros solo requieren monto total; el resto requieren cantidad
+            if (!isCobro && !formData.cantidad) return;
+            // Si no es fiat ni cobro, necesita precio
+            if (!isMovimientoFiat && !isCobro && !formData.precioUnitario && formData.tipo !== 'ajuste') return;
+        }
 
         const parseNumber = (val) => {
             if (!val) return 0;
@@ -95,7 +126,30 @@ export default function OperationModal({ onClose, isGlass, initialData }) {
         try {
             let payload;
 
-            if (isCobro) {
+            if (isCaucion) {
+                const monto = parseFloat(formData.montoARS) || 0;
+                const tna = parseFloat(formData.tna) || 0;
+                const plazo = parseInt(formData.plazo) || 0;
+                const interesEsperadoARS = monto * (tna / 100 / 365) * plazo;
+                const montoTotalEsperadoARS = monto + interesEsperadoARS;
+                const fechaVenc = new Date(formData.fechaInicio);
+                fechaVenc.setDate(fechaVenc.getDate() + plazo);
+
+                payload = {
+                    tipo: 'caucion',
+                    cartera: formData.cartera.trim(),
+                    especie: 'ARS',
+                    montoARS: monto,
+                    tna,
+                    plazo,
+                    fechaInicio: new Date(formData.fechaInicio).toISOString(),
+                    fechaVencimiento: fechaVenc.toISOString(),
+                    interesEsperadoARS,
+                    montoTotalEsperadoARS,
+                    fecha: new Date(formData.fechaInicio).toISOString(),
+                    nota: formData.nota.trim()
+                };
+            } else if (isCobro) {
                 // Para cobros: cantidad = 1, precioUnitario = monto total recibido
                 // Así el contexto calcula valorOperacionUSD = 1 * montoTotal = montoTotal
                 payload = {
@@ -176,13 +230,15 @@ export default function OperationModal({ onClose, isGlass, initialData }) {
                         ))}
                     </div>
                     {/* Tipos especiales de bono — fila 2 */}
-                    <div className="grid grid-cols-2 gap-2">
-                        {[{ id: 'cobro_cupon', label: '🏦 Cobro Cupón' }, { id: 'amortizacion', label: '📉 Amortización' }].map(({ id, label }) => (
+                    <div className="grid grid-cols-3 gap-2">
+                        {[{ id: 'cobro_cupon', label: '🏦 Cupón' }, { id: 'amortizacion', label: '📉 Amort.' }, { id: 'caucion', label: '⏱ Caución' }].map(({ id, label }) => (
                             <button aria-label="Acción" type="button" key={id}
                                 onClick={() => setFormData({...formData, tipo: id})}
                                 className={`p-2 text-sm font-bold rounded-xl border transition-all ${
                                     formData.tipo === id
-                                    ? 'bg-amber-500 border-amber-500 text-white shadow-md'
+                                    ? id === 'caucion'
+                                        ? 'bg-blue-500 border-blue-500 text-white shadow-md'
+                                        : 'bg-amber-500 border-amber-500 text-white shadow-md'
                                     : isGlass 
                                         ? 'border-white/20 text-white/60 hover:bg-white/10' 
                                         : 'border-gray-200 text-gray-500 hover:bg-gray-50'
@@ -197,7 +253,140 @@ export default function OperationModal({ onClose, isGlass, initialData }) {
                             Registrá el dinero recibido. No modifica la cantidad del activo.
                         </p>
                     )}
+                    {isCaucion && (
+                        <p className={`text-xs px-1 -mt-2 ${isGlass ? 'text-blue-300/80' : 'text-blue-600'}`}>
+                            Colocá pesos a préstamo en el mercado bursátil. Se registra el capital y la tasa acordada.
+                        </p>
+                    )}
 
+                    {/* ──── FORMULARIO ESPECIAL PARA CAUCIÓN ──── */}
+                    {isCaucion ? (
+                        <div className="space-y-4">
+                            {/* Cartera */}
+                            <div>
+                                <label htmlFor="cartera-caucion" className={`block text-xs font-bold mb-2 ${isGlass ? 'text-white/70' : 'text-gray-500'}`}>
+                                    BROKER / CARTERA
+                                </label>
+                                <input
+                                    id="cartera-caucion"
+                                    type="text"
+                                    list="carteras-list-c"
+                                    placeholder="Ej: Balanz"
+                                    value={formData.cartera}
+                                    onChange={(e) => setFormData({...formData, cartera: e.target.value})}
+                                    required
+                                    className={inputClasses}
+                                />
+                                <datalist id="carteras-list-c">
+                                    {carterasOpciones.map(c => <option key={c} value={c} />)}
+                                </datalist>
+                            </div>
+                            {/* Monto + TNA */}
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label htmlFor="monto-caucion" className={`block text-xs font-bold mb-2 ${isGlass ? 'text-white/70' : 'text-gray-500'}`}>
+                                        MONTO EN ARS
+                                    </label>
+                                    <input
+                                        id="monto-caucion"
+                                        type="text"
+                                        inputMode="decimal"
+                                        placeholder="Ej: 500000"
+                                        value={formData.montoARS}
+                                        onChange={(e) => setFormData({...formData, montoARS: e.target.value})}
+                                        required
+                                        className={inputClasses}
+                                    />
+                                </div>
+                                <div>
+                                    <label htmlFor="tna-caucion" className={`block text-xs font-bold mb-2 ${isGlass ? 'text-white/70' : 'text-gray-500'}`}>
+                                        TNA (%)
+                                    </label>
+                                    <input
+                                        id="tna-caucion"
+                                        type="text"
+                                        inputMode="decimal"
+                                        placeholder="Ej: 40"
+                                        value={formData.tna}
+                                        onChange={(e) => setFormData({...formData, tna: e.target.value})}
+                                        required
+                                        className={inputClasses}
+                                    />
+                                </div>
+                            </div>
+                            {/* Plazo + Fecha de inicio */}
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label htmlFor="plazo-caucion" className={`block text-xs font-bold mb-2 ${isGlass ? 'text-white/70' : 'text-gray-500'}`}>
+                                        PLAZO (DÍAS)
+                                    </label>
+                                    <input
+                                        id="plazo-caucion"
+                                        type="number"
+                                        min="1"
+                                        placeholder="Ej: 7"
+                                        value={formData.plazo}
+                                        onChange={(e) => setFormData({...formData, plazo: e.target.value})}
+                                        required
+                                        className={inputClasses}
+                                    />
+                                </div>
+                                <div>
+                                    <label htmlFor="fecha-inicio-caucion" className={`block text-xs font-bold mb-2 ${isGlass ? 'text-white/70' : 'text-gray-500'}`}>
+                                        FECHA INICIO
+                                    </label>
+                                    <input
+                                        id="fecha-inicio-caucion"
+                                        type="date"
+                                        value={formData.fechaInicio}
+                                        onChange={(e) => setFormData({...formData, fechaInicio: e.target.value})}
+                                        required
+                                        className={inputClasses}
+                                    />
+                                </div>
+                            </div>
+                            {/* Resumen calculado */}
+                            {caucionCalc && (
+                                <div className={`rounded-2xl p-4 space-y-2 text-sm ${
+                                    isGlass ? 'bg-blue-500/15 border border-blue-400/30' : 'bg-blue-50 border border-blue-200'
+                                }`}>
+                                    <div className="flex justify-between">
+                                        <span className={isGlass ? 'text-blue-200' : 'text-blue-700'}>Vencimiento</span>
+                                        <span className={`font-bold ${isGlass ? 'text-white' : 'text-blue-900'}`}>
+                                            {new Date(caucionCalc.fechaVencimiento + 'T00:00:00').toLocaleDateString('es-AR')}
+                                        </span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className={isGlass ? 'text-blue-200' : 'text-blue-700'}>Interés esperado</span>
+                                        <span className={`font-bold ${isGlass ? 'text-green-300' : 'text-green-700'}`}>
+                                            + {caucionCalc.interesEsperadoARS.toLocaleString('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 })}
+                                        </span>
+                                    </div>
+                                    <div className={`flex justify-between border-t pt-2 ${isGlass ? 'border-blue-400/30' : 'border-blue-200'}`}>
+                                        <span className={`font-bold ${isGlass ? 'text-blue-100' : 'text-blue-800'}`}>Total a cobrar</span>
+                                        <span className={`font-black ${isGlass ? 'text-white' : 'text-blue-900'}`}>
+                                            {caucionCalc.montoTotalEsperadoARS.toLocaleString('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 })}
+                                        </span>
+                                    </div>
+                                </div>
+                            )}
+                            {/* Nota */}
+                            <div>
+                                <label htmlFor="nota-caucion" className={`block text-xs font-bold mb-2 ${isGlass ? 'text-white/70' : 'text-gray-500'}`}>
+                                    NOTA (OPCIONAL)
+                                </label>
+                                <input
+                                    id="nota-caucion"
+                                    type="text"
+                                    placeholder="Opcional"
+                                    value={formData.nota}
+                                    onChange={(e) => setFormData({...formData, nota: e.target.value})}
+                                    className={inputClasses}
+                                />
+                            </div>
+                        </div>
+                    ) : (
+                    <>
                     {/* Fecha */}
                     <div>
                         <div className="flex justify-between items-center mb-2">
@@ -383,6 +572,8 @@ export default function OperationModal({ onClose, isGlass, initialData }) {
                             className={inputClasses}
                         />
                     </div>
+                    </> {/* end non-caucion block */}
+                    )}
 
                     <button aria-label="Acción"
                         type="submit"
@@ -400,6 +591,7 @@ export default function OperationModal({ onClose, isGlass, initialData }) {
                                  : formData.tipo === 'deposito' ? 'Registrar Ingreso'
                                  : formData.tipo === 'cobro_cupon' ? 'Registrar Cupón'
                                  : formData.tipo === 'amortizacion' ? 'Registrar Amortización'
+                                 : formData.tipo === 'caucion' ? 'Registrar Caución'
                                  : 'Registrar Retiro'}
                             </>
                         )}

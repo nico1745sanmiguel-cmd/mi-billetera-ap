@@ -15,26 +15,30 @@ const usdFormatter = new Intl.NumberFormat('es-AR', { style: 'currency', currenc
 
 export default function SavingsDashboard() {
     const { isGlass, privacyMode } = useUI();
-    const { posiciones } = useSavings();
+    const { posiciones, cauciones } = useSavings();
     const { dolarBlue } = useFinancial();
     const [showAddModal, setShowAddModal] = useState(false);
     const [currencyView, setCurrencyView] = useState('ARS'); // 'ARS' or 'USD'
     const [activeTab, setActiveTab] = useState('portafolio'); // portafolio, operaciones, analisis
 
-    // 3. Calcular Total General a partir de las posiciones
+    // 3. Calcular Total General a partir de las posiciones + cauciones
     const total = useMemo(() => {
         let totalUSD = 0;
         const rate = dolarBlue || 1000;
 
-        // Usar valorActualUSD ya calculado en el contexto en lugar de recalcular.
-        // Evita desincronización si la lógica de precios cambia en SavingsContext.
+        // Posiciones normales
         posiciones.forEach(pos => {
             totalUSD += pos.valorActualUSD;
         });
 
+        // Cauciones activas (en ARS, convertidas a USD)
+        (cauciones || []).forEach(c => {
+            totalUSD += c.valorActualUSD || 0;
+        });
+
         const totalARS = totalUSD * rate;
         return currencyView === 'ARS' ? totalARS : totalUSD;
-    }, [posiciones, dolarBlue, currencyView]);
+    }, [posiciones, cauciones, dolarBlue, currencyView]);
 
     const formatCurrency = (amount, currency) => {
         if (privacyMode) return '****';

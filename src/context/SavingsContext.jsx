@@ -192,6 +192,53 @@ export const SavingsProvider = ({ children }) => {
         });
     }, [savingsTransactions, assetPrices, dolarBlue]);
 
+    // ─── Calcular cauciones activas ───────────────────────────────────────────
+    // Una caución guarda: { tipo:'caucion', cartera, montoARS, tna, plazo,
+    //   fechaInicio, fechaVencimiento, interesEsperadoARS, montoTotalEsperadoARS }
+    const cauciones = useMemo(() => {
+        const hoy = new Date();
+        hoy.setHours(0, 0, 0, 0);
+        const rate = dolarBlue || 1000;
+
+        return (savingsTransactions || [])
+            .filter(tx => tx.tipo === 'caucion')
+            .map(tx => {
+                const fechaInicio = new Date(tx.fechaInicio);
+                const fechaVencimiento = new Date(tx.fechaVencimiento);
+                fechaVencimiento.setHours(0, 0, 0, 0);
+
+                const plazo = tx.plazo || 1;
+                const montoARS = parseFloat(tx.montoARS) || 0;
+                const tna = parseFloat(tx.tna) || 0;
+
+                // Días transcurridos desde el inicio (cap al plazo)
+                const msTranscurridos = Math.max(0, hoy - fechaInicio);
+                const diasTranscurridos = Math.min(Math.floor(msTranscurridos / 86400000), plazo);
+
+                const interesAcumuladoARS = montoARS * (tna / 100 / 365) * diasTranscurridos;
+                const valorActualARS = montoARS + interesAcumuladoARS;
+                const valorActualUSD = valorActualARS / rate;
+
+                // Estado
+                let estado = 'activa';
+                const diffMs = fechaVencimiento - hoy;
+                if (diffMs < 0) estado = 'vencida';
+                else if (diffMs === 0) estado = 'vence_hoy';
+
+                const diasRestantes = Math.max(0, Math.ceil(diffMs / 86400000));
+
+                return {
+                    ...tx,
+                    diasTranscurridos,
+                    diasRestantes,
+                    interesAcumuladoARS,
+                    valorActualARS,
+                    valorActualUSD,
+                    estado
+                };
+            });
+    }, [savingsTransactions, dolarBlue]);
+
     // ─── Listener del objetivo (Firestore, compartido por household) ──────────
     useEffect(() => {
         if (!user) return;
@@ -359,8 +406,10 @@ export const SavingsProvider = ({ children }) => {
         // Nuevos valores FASE 1
         assetPrices,
         posiciones,
-        saveManualPrice
-    }), [savingsTransactions, addSavingsTransaction, updateSavingsTransaction, deleteSavingsTransaction, savingsGoal, goalLoading, saveSavingsGoal, deleteSavingsGoal, clearAllSavings, assetPrices, posiciones, saveManualPrice]);
+        saveManualPrice,
+        // Cauciones
+        cauciones
+    }), [savingsTransactions, addSavingsTransaction, updateSavingsTransaction, deleteSavingsTransaction, savingsGoal, goalLoading, saveSavingsGoal, deleteSavingsGoal, clearAllSavings, assetPrices, posiciones, saveManualPrice, cauciones]);
 
     return (
         <SavingsContext.Provider value={value}>

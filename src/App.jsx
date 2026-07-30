@@ -54,6 +54,26 @@ const confirmLogout = (authInstance) => {
     signOut(authInstance);
 };
 
+// ─── DEEP LINKING: Captura del query param ANTES de que React monte ──────────
+// Se ejecuta UNA SOLA VEZ cuando el módulo se parsea (cold start).
+// Usar sessionStorage (no useRef) garantiza que sobrevive cualquier remount.
+// La URL se limpia inmediatamente para que React Router no vea el ?deeplink.
+;(() => {
+    try {
+        const params = new URLSearchParams(window.location.search);
+        const deeplink = params.get('deeplink');
+        console.log('[Deeplink IIFE] href:', window.location.href, '| deeplink param:', deeplink);
+        if (deeplink) {
+            sessionStorage.setItem('pendingDeeplink', deeplink);
+            window.history.replaceState({}, document.title, window.location.pathname);
+            console.log('[Deeplink IIFE] Stored in sessionStorage:', deeplink);
+        }
+    } catch (err) {
+        console.warn('[Deeplink IIFE] Error:', err);
+    }
+})();
+
+
 export default function App() {
     // ─── DATOS FINANCIEROS ───────────────────────────────────────────────────
     const { user, loadingUser, notifications } = useFinancial();
@@ -109,6 +129,32 @@ export default function App() {
         window.addEventListener('modulesChanged', handler);
         return () => window.removeEventListener('modulesChanged', handler);
     }, []);
+
+    // --- DEEP LINKING (Cold & Warm Start) ---
+    // El deeplink se capturó a nivel módulo (IIFE) antes de que React montara.
+    // Se usa sessionStorage para que sobreviva cualquier remount del componente.
+
+    // Exponer window.navigateTo para Warm Start desde Android (onNewIntent)
+    useEffect(() => {
+        window.navigateTo = navigate;
+        return () => { delete window.navigateTo; };
+    }, [navigate]);
+
+    // Navegar al deeplink pendiente en cuanto el usuario esté autenticado.
+    // Sin setTimeout: el navigate ocurre directo, sin race conditions.
+    useEffect(() => {
+        console.log('[Deeplink Effect] loadingUser:', loadingUser, '| user:', !!user);
+        if (!loadingUser && user) {
+            const route = sessionStorage.getItem('pendingDeeplink');
+            console.log('[Deeplink Effect] pendingDeeplink from sessionStorage:', route);
+            if (route) {
+                sessionStorage.removeItem('pendingDeeplink');
+                console.log('[Deeplink Effect] Navigating to:', route);
+                navigate(route, { replace: true });
+            }
+        }
+    }, [loadingUser, user, navigate]);
+
 
     if (!loadingUser && !user) {
         return <Login />;

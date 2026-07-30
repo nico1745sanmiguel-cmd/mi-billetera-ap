@@ -10,12 +10,17 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
-  // 1. INICIAR CON GOOGLE (MODO POPUP)
+  // 1. INICIAR CON GOOGLE (MODO POPUP o NATIVO)
   const handleGoogleLogin = async () => {
     try {
       setError('');
-      await signInWithPopup(auth, googleProvider);
-      // App.jsx detectará el cambio de usuario automáticamente
+      if (window.AndroidBridge) {
+        // Estamos dentro de la app Android, delegamos el login al SDK nativo
+        window.AndroidBridge.requestGoogleLogin();
+      } else {
+        // Entorno web normal
+        await signInWithPopup(auth, googleProvider);
+      }
     } catch (err) {
       console.error("Error Google:", err);
       if (err.code === 'auth/popup-closed-by-user') {
@@ -28,6 +33,23 @@ export default function Login() {
     }
   };
 
+  // Exponer función para que Android devuelva el token de Google
+  React.useEffect(() => {
+    window.onNativeGoogleLogin = async (idToken) => {
+      try {
+        const { GoogleAuthProvider, signInWithCredential } = await import('firebase/auth');
+        const credential = GoogleAuthProvider.credential(idToken);
+        await signInWithCredential(auth, credential);
+      } catch (err) {
+        console.error("Error en login nativo:", err);
+        setError(`Error nativo: ${err.message}`);
+      }
+    };
+    return () => {
+      delete window.onNativeGoogleLogin;
+    };
+  }, []);
+
   // 2. Iniciar o Crear con Email
   const handleEmailAuth = async (e) => {
     e.preventDefault();
@@ -37,6 +59,12 @@ export default function Login() {
         await createUserWithEmailAndPassword(auth, email, password);
       } else {
         await signInWithEmailAndPassword(auth, email, password);
+      }
+      
+      // Si estamos en Android, le pasamos las credenciales para que también inicie sesión nativamente
+      // y así los widgets tengan acceso a Firestore.
+      if (window.AndroidBridge) {
+        window.AndroidBridge.requestEmailLogin(email, password);
       }
     } catch (err) {
       console.error(err);

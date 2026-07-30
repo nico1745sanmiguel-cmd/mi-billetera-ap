@@ -40,6 +40,11 @@ export const AuthProvider = ({ children }) => {
                     setCache('userData', { householdId: currentHouseholdId });
                 }
 
+                // Sincronizar sesión con la app Android nativa si estamos dentro de WebView
+                if (window.AndroidBridge) {
+                    window.AndroidBridge.updateSession(currentUser.uid, currentHouseholdId || '');
+                }
+
                 // Apagar el loading de usuario (se puede usar cache o delay)
                 setLoadingUser(false);
 
@@ -57,6 +62,9 @@ export const AuthProvider = ({ children }) => {
                     }).catch(e => console.error('Error loading household members:', e));
                 }
             } else {
+                if (window.AndroidBridge) {
+                    window.AndroidBridge.updateSession('', '');
+                }
                 setUserData(null);
                 setHouseholdMembers([]);
                 setCache('userData', null);
