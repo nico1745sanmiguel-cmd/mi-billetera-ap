@@ -95,25 +95,62 @@ export default function NotificationsModal({ notifications, user, privacyMode, s
                     ) : (
                         notifications.map(n => {
                             const isRead = n.readBy?.includes(user?.uid);
+                            const isStopLoss = n.type === 'stop_loss';
+
                             return (
-                                <div key={n.id} className={`p-4 rounded-2xl border transition-all ${isRead ? 'bg-white/60 dark:bg-white/5 border-gray-200 dark:border-white/5 opacity-70' : 'bg-white dark:bg-indigo-900/20 border-indigo-200 dark:border-indigo-500/30 shadow-md'}`}>
+                                <div key={n.id} className={`p-4 rounded-2xl border transition-all ${isRead
+                                    ? 'bg-white/60 dark:bg-white/5 border-gray-200 dark:border-white/5 opacity-70'
+                                    : isStopLoss
+                                        ? 'bg-red-50 dark:bg-red-900/20 border-red-300 dark:border-red-500/40 shadow-md'
+                                        : 'bg-white dark:bg-indigo-900/20 border-indigo-200 dark:border-indigo-500/30 shadow-md'
+                                }`}>
                                     <div className="flex items-start gap-3">
-                                        <div className={`p-2 rounded-xl mt-1 ${isRead ? 'bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-white/40' : 'bg-indigo-50 dark:bg-indigo-500/30 text-indigo-600 dark:text-indigo-300'}`}>
-                                            <Wallet size={20} />
+                                        <div className={`p-2 rounded-xl mt-1 shrink-0 ${isRead
+                                            ? 'bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-white/40'
+                                            : isStopLoss
+                                                ? 'bg-red-100 dark:bg-red-500/30 text-red-600 dark:text-red-300'
+                                                : 'bg-indigo-50 dark:bg-indigo-500/30 text-indigo-600 dark:text-indigo-300'
+                                        }`}>
+                                            {isStopLoss ? (
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                                            ) : (
+                                                <Wallet size={20} />
+                                            )}
                                         </div>
-                                        <div className="flex-1">
-                                            <p className={`text-sm ${isRead ? 'text-gray-600 dark:text-gray-300' : 'text-gray-900 dark:text-white'}`}>
-                                                <span className="font-bold text-indigo-600 dark:text-indigo-400">{n.paidByName}</span> acaba de pagar <span className="font-bold">{n.itemName}</span> que vencía el día {n.dueDate}
-                                            </p>
-                                            <p className={`text-xl font-mono font-bold mt-1 ${isRead ? 'text-gray-500 dark:text-gray-400' : 'text-gray-900 dark:text-white'}`}>
-                                                {privacyMode ? '****' : formatMoney(n.amount)}
-                                            </p>
+                                        <div className="flex-1 min-w-0">
+                                            {isStopLoss ? (
+                                                <>
+                                                    <p className={`text-sm font-bold ${isRead ? 'text-gray-600 dark:text-gray-300' : 'text-red-700 dark:text-red-300'}`}>
+                                                        ⚠️ Stop Loss tocado: <span className="font-black">{n.especie}</span>
+                                                        {n.cartera ? <span className="font-normal text-xs opacity-70"> ({n.cartera})</span> : null}
+                                                    </p>
+                                                    <p className={`text-sm mt-1 ${isRead ? 'text-gray-500 dark:text-gray-400' : 'text-gray-700 dark:text-gray-200'}`}>
+                                                        Precio actual:{' '}
+                                                        <span className="font-mono font-bold">
+                                                            {privacyMode ? '****' : `USD ${parseFloat(n.currentPrice || 0).toFixed(2)}`}
+                                                        </span>
+                                                        {' '}/ Stop:{' '}
+                                                        <span className="font-mono font-bold text-red-600 dark:text-red-400">
+                                                            {privacyMode ? '****' : `USD ${parseFloat(n.stopPrice || 0).toFixed(2)}`}
+                                                        </span>
+                                                    </p>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <p className={`text-sm ${isRead ? 'text-gray-600 dark:text-gray-300' : 'text-gray-900 dark:text-white'}`}>
+                                                        <span className="font-bold text-indigo-600 dark:text-indigo-400">{n.paidByName}</span> acaba de pagar <span className="font-bold">{n.itemName}</span> que vencía el día {n.dueDate}
+                                                    </p>
+                                                    <p className={`text-xl font-mono font-bold mt-1 ${isRead ? 'text-gray-500 dark:text-gray-400' : 'text-gray-900 dark:text-white'}`}>
+                                                        {privacyMode ? '****' : formatMoney(n.amount)}
+                                                    </p>
+                                                </>
+                                            )}
                                             <div className="text-[10px] text-gray-400 dark:text-white/40 mt-3 flex justify-between items-center border-t border-gray-100 dark:border-white/5 pt-2">
                                                 <span>{n.createdAt ? new Date(n.createdAt.toMillis()).toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' }) : 'Reciente'}</span>
                                                 {!isRead && (
                                                     <button aria-label="Acción" type="button" 
                                                         onClick={() => handleMarkAsRead(n.id)}
-                                                        className="flex items-center gap-1 text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 font-bold px-2 py-1 bg-indigo-50 dark:bg-indigo-500/20 rounded-lg transition-colors active:scale-95"
+                                                        className={`flex items-center gap-1 font-bold px-2 py-1 rounded-lg transition-colors active:scale-95 ${isStopLoss ? 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-500/20 hover:bg-red-100' : 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/20 hover:bg-indigo-100'}`}
                                                     >
                                                         <CheckCheck size={12} /> Marcar leído
                                                     </button>

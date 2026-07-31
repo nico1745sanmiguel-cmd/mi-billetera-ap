@@ -9,6 +9,7 @@ import { getCache, setCache } from '../utils/cache';
 import { COLLECTIONS, CACHE_KEYS } from '../config/constants';
 import { fetchAssetPrices } from '../utils/priceService';
 import { useFinancial } from './FinancialContext';
+import { getStopLossPercentage } from '../utils/stopLossService';
 
 const SavingsContext = createContext();
 
@@ -26,6 +27,7 @@ export const SavingsProvider = ({ children }) => {
     const [savingsTransactions, setSavingsTransactions] = useState(() => getCache(CACHE_KEYS.SAVINGS_TRANSACTIONS, []));
     const [savingsGoal, setSavingsGoalState] = useState(() => getCache('savings_goal_data', null));
     const [goalLoading, setGoalLoading] = useState(true);
+    const [stopLosses, setStopLosses] = useState(() => getCache(CACHE_KEYS.SAVINGS_STOP_LOSSES, {}));
     
     // FASE 1: Asset Prices & Posiciones
     const [assetPrices, setAssetPrices] = useState({}); // { [especie]: precioUSD }
@@ -69,6 +71,40 @@ export const SavingsProvider = ({ children }) => {
             // Update cache/state with manual overrides
             setAssetPrices(prev => ({...prev, ...manual}));
         });
+        return () => unsub();
+    }, [user, userData]);
+
+    // Listener de Stop Losses (guardados en Firestore)
+    useEffect(() => {
+        if (!user) return;
+        const householdId = userData?.householdId;
+        const queryField = householdId ? "householdId" : "userId";
+        const queryValue = householdId ? householdId : user.uid;
+
+        const q = query(collection(db, COLLECTIONS.SAVINGS_STOP_LOSSES), where(queryField, "==", queryValue));
+        const unsub = onSnapshot(q, (snap) => {
+            const data = {};
+            snap.docs.forEach(d => {
+                const docData = d.data();
+                if (docData.especie) {
+                    const esp = docData.especie.toUpperCase();
+                    // Calcular el precio de stop al vuelo para ser reactivo
+                    const beta = parseFloat(docData.beta) || 1.20;
+                    const maxPrice = parseFloat(docData.maxPrecioRegistrado) || parseFloat(docData.precioCompra) || 0;
+                    const pct = getStopLossPercentage(beta);
+                    const stopPrecio = maxPrice * (1 - pct);
+
+                    data[esp] = {
+                        id: d.id,
+                        ...docData,
+                        stopPrecio
+                    };
+                }
+            });
+            setStopLosses(data);
+            setCache(CACHE_KEYS.SAVINGS_STOP_LOSSES, data);
+        }, (error) => console.error("Error fetching stop losses:", error));
+
         return () => unsub();
     }, [user, userData]);
 
@@ -180,6 +216,8 @@ export const SavingsProvider = ({ children }) => {
 
             const cobradoTotalUSD = pos.cobradoTotalUSD || 0;
 
+            const stopData = stopLosses[pos.especie.toUpperCase()];
+
             return [{
                 ...pos,
                 precioActualUSD: currentPriceUSD,
@@ -187,10 +225,18 @@ export const SavingsProvider = ({ children }) => {
                 valorActualUSD,
                 cobradoTotalUSD,
                 gananciaPérdidaUSD,
-                gananciaPorcentaje
+                gananciaPorcentaje,
+                stopLoss: stopData ? {
+                    id: stopData.id,
+                    precioCompra: stopData.precioCompra,
+                    beta: stopData.beta,
+                    maxPrecioRegistrado: stopData.maxPrecioRegistrado,
+                    stopPrecio: stopData.stopPrecio,
+                    alarmaActiva: stopData.alarmaActiva
+                } : null
             }];
         });
-    }, [savingsTransactions, assetPrices, dolarBlue]);
+    }, [savingsTransactions, assetPrices, dolarBlue, stopLosses]);
 
     // ─── Calcular cauciones activas ───────────────────────────────────────────
     // Una caución guarda: { tipo:'caucion', cartera, montoARS, tna, plazo,
@@ -393,6 +439,79 @@ export const SavingsProvider = ({ children }) => {
         }
     }, [user, userData]);
 
+    // ─── Guardar Stop Loss ────────────────────────────────────────────────────
+    const saveStopLoss = useCallback(async (especie, precioCompra, beta, maxPrecioRegistrado, alarmaActiva = true) => {
+        if (!user) return;
+        const householdId = userData?.householdId || null;
+        const esp = especie.toUpperCase();
+        const docId = householdId ? `${householdId}_${esp}` : `${user.uid}_${esp}`;
+        
+        const payload = {
+            especie: esp,
+            precioCompra: parseFloat(precioCompra) || 0,
+            beta: parseFloat(beta) || 1.20,
+            maxPrecioRegistrado: parseFloat(maxPrecioRegistrado) || parseFloat(precioCompra) || 0,
+            alarmaActiva,
+            userId: user.uid,
+            householdId,
+            updatedAt: serverTimestamp()
+        };
+
+        try {
+            await setDoc(doc(db, COLLECTIONS.SAVINGS_STOP_LOSSES, docId), payload, { merge: true });
+        } catch (error) {
+            console.error("Error saving stop loss:", error);
+            throw error;
+        }
+    }, [user, userData]);
+
+    // ─── Eliminar Stop Loss ──────────────────────────────────────────────────
+    const deleteStopLoss = useCallback(async (especie) => {
+        if (!user) return;
+        const householdId = userData?.householdId || null;
+        const esp = especie.toUpperCase();
+        const docId = householdId ? `${householdId}_${esp}` : `${user.uid}_${esp}`;
+        try {
+            await deleteDoc(doc(db, COLLECTIONS.SAVINGS_STOP_LOSSES, docId));
+        } catch (error) {
+            console.error("Error deleting stop loss:", error);
+            throw error;
+        }
+    }, [user, userData]);
+
+    // ─── Actualizar precio máximo registrado (Trailing Stop) ─────────────────
+    const updateMaxPrice = useCallback(async (especie, newMaxPrice) => {
+        if (!user) return;
+        const householdId = userData?.householdId || null;
+        const esp = especie.toUpperCase();
+        const docId = householdId ? `${householdId}_${esp}` : `${user.uid}_${esp}`;
+        try {
+            await setDoc(doc(db, COLLECTIONS.SAVINGS_STOP_LOSSES, docId), {
+                maxPrecioRegistrado: parseFloat(newMaxPrice),
+                updatedAt: serverTimestamp()
+            }, { merge: true });
+        } catch (error) {
+            console.error("Error updating max price in stop loss:", error);
+        }
+    }, [user, userData]);
+
+    // ─── Trailing Stop automático ─────────────────────────────────────────────
+    useEffect(() => {
+        if (!posiciones || posiciones.length === 0 || !stopLosses) return;
+        posiciones.forEach(pos => {
+            const stopData = stopLosses[pos.especie.toUpperCase()];
+            if (stopData) {
+                const currentPrice = pos.precioActualUSD;
+                const maxRegistered = stopData.maxPrecioRegistrado || 0;
+                // Si el precio actual en USD es mayor que el máximo registrado,
+                // actualizamos el máximo registrado (trailing stop)
+                if (currentPrice > maxRegistered) {
+                    updateMaxPrice(pos.especie, currentPrice);
+                }
+            }
+        });
+    }, [posiciones, stopLosses, updateMaxPrice]);
+
     const value = useMemo(() => ({
         savingsTransactions,
         addSavingsTransaction,
@@ -408,8 +527,18 @@ export const SavingsProvider = ({ children }) => {
         posiciones,
         saveManualPrice,
         // Cauciones
-        cauciones
-    }), [savingsTransactions, addSavingsTransaction, updateSavingsTransaction, deleteSavingsTransaction, savingsGoal, goalLoading, saveSavingsGoal, deleteSavingsGoal, clearAllSavings, assetPrices, posiciones, saveManualPrice, cauciones]);
+        cauciones,
+        // Stop Losses
+        stopLosses,
+        saveStopLoss,
+        deleteStopLoss,
+        updateMaxPrice
+    }), [
+        savingsTransactions, addSavingsTransaction, updateSavingsTransaction, deleteSavingsTransaction,
+        savingsGoal, goalLoading, saveSavingsGoal, deleteSavingsGoal, clearAllSavings,
+        assetPrices, posiciones, saveManualPrice, cauciones,
+        stopLosses, saveStopLoss, deleteStopLoss, updateMaxPrice
+    ]);
 
     return (
         <SavingsContext.Provider value={value}>

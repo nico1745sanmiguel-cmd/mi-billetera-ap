@@ -1,11 +1,12 @@
 import React, { useMemo, useState } from 'react';
 // eslint-disable-next-line react-doctor/prefer-dynamic-import
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
-import { Wallet, TrendingUp, TrendingDown, ArrowUpDown, Clock, CheckCircle, AlertTriangle, ChevronRight } from 'lucide-react';
+import { Wallet, TrendingUp, TrendingDown, ArrowUpDown, Clock, CheckCircle, AlertTriangle, ChevronRight, Shield } from 'lucide-react';
 import { useSavings } from '../../../context/SavingsContext';
 import { useFinancial } from '../../../context/FinancialContext';
 import AssetDetailsModal from '../AssetDetailsModal';
 import OperationModal from '../OperationModal';
+import StopLossModal from '../StopLossModal';
 
 const COLORS = ['#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#14B8A6', '#F97316'];
 
@@ -22,6 +23,8 @@ export default function PortfolioTab({ isGlass, privacyMode, currencyView = 'USD
     const [sortConfig, setSortConfig] = useState({ key: null, direction: 'desc' });
     const [selectedAsset, setSelectedAsset] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedStopAsset, setSelectedStopAsset] = useState(null);
+    const [isStopModalOpen, setIsStopModalOpen] = useState(false);
     const [chartView, setChartView] = useState('general');
     const [vencimientoModal, setVencimientoModal] = useState(null); // caucion a registrar vencimiento
 
@@ -35,6 +38,11 @@ export default function PortfolioTab({ isGlass, privacyMode, currencyView = 'USD
     const handleRowClick = (pos) => {
         setSelectedAsset(pos);
         setIsModalOpen(true);
+    };
+
+    const handleStopClick = (pos) => {
+        setSelectedStopAsset(pos);
+        setIsStopModalOpen(true);
     };
 
     const requestSort = (key) => {
@@ -295,6 +303,9 @@ export default function PortfolioTab({ isGlass, privacyMode, currencyView = 'USD
                                         <th className="pb-3 font-semibold text-right cursor-pointer select-none hover:text-green-500 transition-colors" onClick={() => requestSort('gananciaPérdidaUSD')}>
                                             P&L {renderSortIcon('gananciaPérdidaUSD')}
                                         </th>
+                                        <th className="pb-3 font-semibold text-right">
+                                            Stop Loss (T)
+                                        </th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-200/20">
@@ -303,6 +314,28 @@ export default function PortfolioTab({ isGlass, privacyMode, currencyView = 'USD
                                         const priceBase = currencyView === 'ARS' ? (pos.precioActualUSD * rate) : pos.precioActualUSD;
                                         const pnlBase = currencyView === 'ARS' ? (pos.gananciaPérdidaUSD * rate) : pos.gananciaPérdidaUSD;
                                         const isProfit = pos.gananciaPérdidaUSD >= 0;
+
+                                        const stopPrice = pos.stopLoss ? pos.stopLoss.stopPrecio : null;
+                                        const stopPriceBase = stopPrice && (currencyView === 'ARS' ? (stopPrice * rate) : stopPrice);
+                                        
+                                        let stopStatus = 'none'; // 'none', 'normal', 'near', 'triggered'
+                                        if (pos.stopLoss) {
+                                            const currentPrice = pos.precioActualUSD;
+                                            if (currentPrice <= stopPrice) {
+                                                stopStatus = 'triggered';
+                                            } else if (currentPrice <= stopPrice * 1.05) {
+                                                stopStatus = 'near';
+                                            } else {
+                                                stopStatus = 'normal';
+                                            }
+                                        }
+
+                                        const stopBadge = {
+                                            none: { text: '+ Configurar', cls: 'text-gray-400 hover:text-red-400 hover:border-red-400/50 border border-dashed border-gray-400/30' },
+                                            normal: { text: formatAmount(stopPriceBase, currencyView), cls: 'text-green-500 border border-green-500/20 bg-green-500/5' },
+                                            near: { text: formatAmount(stopPriceBase, currencyView), cls: 'text-yellow-500 border border-yellow-500/20 bg-yellow-500/5 animate-pulse' },
+                                            triggered: { text: '🚨 STOPPED', cls: 'text-white border border-red-500 bg-red-600 animate-bounce' }
+                                        }[stopStatus];
 
                                         return (
                                             <tr 
@@ -332,6 +365,12 @@ export default function PortfolioTab({ isGlass, privacyMode, currencyView = 'USD
                                                         ({isProfit ? '+' : ''}{formatPercentage(pos.gananciaPorcentaje)})
                                                     </span>
                                                 </td>
+                                                <td className="py-4 text-right" onClick={(e) => { e.stopPropagation(); handleStopClick(pos); }}>
+                                                     <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-black cursor-pointer transition-all ${stopBadge.cls}`}>
+                                                         <Shield size={12} />
+                                                         {stopBadge.text}
+                                                     </span>
+                                                 </td>
                                             </tr>
                                         );
                                     })}
@@ -436,6 +475,12 @@ export default function PortfolioTab({ isGlass, privacyMode, currencyView = 'USD
                 currencyView={currencyView}
                 isGlass={isGlass}
                 rate={rate}
+            />
+            <StopLossModal 
+                isOpen={isStopModalOpen}
+                onClose={() => setIsStopModalOpen(false)}
+                asset={selectedStopAsset}
+                isGlass={isGlass}
             />
             {vencimientoModal && (
                 <OperationModal

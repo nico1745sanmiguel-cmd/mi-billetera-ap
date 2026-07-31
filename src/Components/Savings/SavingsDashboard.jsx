@@ -6,6 +6,7 @@ import SavingsGoal from './SavingsGoal';
 import { useUI } from '../../context/UIContext';
 import OperationModal from './OperationModal';
 import OperationsTab from './Tabs/OperationsTab';
+import { useStopLossAlerts } from '../../hooks/useStopLossAlerts';
 
 const PortfolioTab = lazy(() => import('./Tabs/PortfolioTab'));
 const AnalyticsTab = lazy(() => import('./Tabs/AnalyticsTab'));
@@ -14,6 +15,9 @@ const arsFormatter = new Intl.NumberFormat('es-AR', { style: 'currency', currenc
 const usdFormatter = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
 
 export default function SavingsDashboard() {
+    // Activar alertas y notificaciones del navegador para el Stop Loss
+    useStopLossAlerts();
+
     const { isGlass, privacyMode } = useUI();
     const { posiciones, cauciones } = useSavings();
     const { dolarBlue } = useFinancial();

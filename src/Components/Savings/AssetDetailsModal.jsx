@@ -1,5 +1,4 @@
-import React from 'react';
-import { X, TrendingUp, TrendingDown, Info, DollarSign, Activity } from 'lucide-react';
+import { X, TrendingUp, TrendingDown, Info, DollarSign, Activity, Shield } from 'lucide-react';
 import { getAssetDescription } from '../../utils/assetDescriptions';
 import { useFinancial } from '../../context/FinancialContext';
 
@@ -100,6 +99,46 @@ export default function AssetDetailsModal({ isOpen, onClose, asset, currencyView
                         </div>
                     </div>
                 </div>
+
+                {asset.stopLoss ? (
+                    <div className={`p-5 rounded-2xl mt-4 ${isGlass ? 'bg-white/5' : 'bg-gray-50'}`}>
+                        <h3 className={`text-sm font-bold flex items-center gap-2 mb-4 ${textColor}`}>
+                            <Shield size={16} className="text-red-500" /> Protección Stop Loss (Sistema T)
+                        </h3>
+                        <div className="space-y-3">
+                            <div className="flex justify-between items-center border-b border-gray-500/20 pb-2">
+                                <span className={secondaryTextColor}>Precio de Stop Loss</span>
+                                <span className="font-black text-red-500">
+                                    {formatAmount(currencyView === 'ARS' ? asset.stopLoss.stopPrecio * rate : asset.stopLoss.stopPrecio, currencyView)}
+                                </span>
+                            </div>
+                            <div className="flex justify-between items-center border-b border-gray-500/20 pb-2">
+                                <span className={secondaryTextColor}>Máximo Registrado (Trailing)</span>
+                                <span className={`font-semibold ${textColor}`}>
+                                    {formatAmount(currencyView === 'ARS' ? asset.stopLoss.maxPrecioRegistrado * rate : asset.stopLoss.maxPrecioRegistrado, currencyView)}
+                                </span>
+                            </div>
+                            <div className="flex justify-between items-center border-b border-gray-500/20 pb-2">
+                                <span className={secondaryTextColor}>Precio de Compra</span>
+                                <span className={`font-semibold ${textColor}`}>
+                                    {formatAmount(currencyView === 'ARS' ? asset.stopLoss.precioCompra * rate : asset.stopLoss.precioCompra, currencyView)}
+                                </span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                                <span className={secondaryTextColor}>Coeficiente Beta / Alarma</span>
+                                <span className={`font-semibold ${textColor}`}>
+                                    Beta {parseFloat(asset.stopLoss.beta).toFixed(2)} | {asset.stopLoss.alarmaActiva ? '🔔 Activa' : '🔕 Inactiva'}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                ) : (
+                    <div className={`p-4 rounded-2xl mt-4 border border-dashed ${isGlass ? 'border-white/10 bg-white/5' : 'border-gray-200 bg-gray-50/50'} text-center`}>
+                        <p className={`text-xs ${secondaryTextColor}`}>
+                            No tenés configurado un Stop Loss dinámico para este activo. Podés hacerlo haciendo clic en el escudo en la tabla de tenencias.
+                        </p>
+                    </div>
+                )}
                 
                 {/* Variación Diaria si está disponible */}
                 {asset.variacionDiaria !== 0 && (
