@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { X, Shield, Bell, AlertTriangle, RefreshCw, Trash } from 'lucide-react';
+import { X, Shield, Bell, RefreshCw, Trash } from 'lucide-react';
 import { useSavings } from '../../context/SavingsContext';
 import { getStopLossPercentage, mapBetaToVol, mapVolToBeta } from '../../utils/stopLossService';
 
-export default function StopLossModal({ isOpen, onClose, asset, isGlass }) {
+export default function StopLossModal({ isOpen, onClose, asset, isGlass, currencyView = 'USD', rate }) {
     const { saveStopLoss, deleteStopLoss } = useSavings();
     
-    // Obtener promedio de costo ponderado de la posición
-    const defaultPrecioCompra = asset ? (asset.inversionTotalUSD / asset.cantidad) : 0;
+    // Obtener promedio de costo ponderado de la posición, resguardando contra división por cero o valores nulos/NaN
+    const defaultPrecioCompra = asset && asset.cantidad > 0 && typeof asset.inversionTotalUSD === 'number'
+        ? (asset.inversionTotalUSD / asset.cantidad)
+        : 0;
     
     const [precioCompra, setPrecioCompra] = useState('');
     const [volatilidad, setVolatilidad] = useState('medium');
@@ -17,28 +19,34 @@ export default function StopLossModal({ isOpen, onClose, asset, isGlass }) {
     const [alarmaActiva, setAlarmaActiva] = useState(true);
     const [loading, setLoading] = useState(false);
 
-    // Cargar datos si el activo ya tiene un stop loss configurado
+    // Cargar datos adaptados a la moneda de visualización (ARS vs USD)
     useEffect(() => {
         if (asset) {
+            const factor = currencyView === 'ARS' ? (rate || 1000) : 1;
+            
             if (asset.stopLoss) {
-                setPrecioCompra(asset.stopLoss.precioCompra.toString());
+                const pc = (parseFloat(asset.stopLoss.precioCompra) || 0) * factor;
+                const mr = (parseFloat(asset.stopLoss.maxPrecioRegistrado) || 0) * factor;
+                setPrecioCompra(pc.toFixed(2));
                 setBeta(asset.stopLoss.beta.toString());
-                setMaxPrecioRegistrado(asset.stopLoss.maxPrecioRegistrado.toString());
+                setMaxPrecioRegistrado(mr.toFixed(2));
                 setAlarmaActiva(asset.stopLoss.alarmaActiva);
                 
                 const vol = mapBetaToVol(asset.stopLoss.beta);
                 setVolatilidad(vol);
                 setIsCustomBeta(vol === 'custom' || ![0.7, 1.2, 2.1].includes(parseFloat(asset.stopLoss.beta)));
             } else {
-                setPrecioCompra(defaultPrecioCompra.toFixed(2));
+                const pc = defaultPrecioCompra * factor;
+                const mr = (parseFloat(asset.precioActualUSD) || 0) * factor;
+                setPrecioCompra(pc.toFixed(2));
                 setVolatilidad('medium');
                 setBeta('1.20');
                 setIsCustomBeta(false);
-                setMaxPrecioRegistrado(asset.precioActualUSD ? asset.precioActualUSD.toFixed(2) : '0');
+                setMaxPrecioRegistrado(mr.toFixed(2));
                 setAlarmaActiva(true);
             }
         }
-    }, [asset, defaultPrecioCompra]);
+    }, [asset, defaultPrecioCompra, currencyView, rate]);
 
     if (!isOpen || !asset) return null;
 
@@ -59,6 +67,13 @@ export default function StopLossModal({ isOpen, onClose, asset, isGlass }) {
         }
     };
 
+    // Auxiliares de formato monetario para el modal
+    const formatCurrencyText = (value) => {
+        return currencyView === 'ARS'
+            ? `$ ${value.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ARS`
+            : `USD ${value.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    };
+
     // Cálculos dinámicos
     const bValue = parseFloat(beta) || 1.20;
     const pct = getStopLossPercentage(bValue);
@@ -68,12 +83,19 @@ export default function StopLossModal({ isOpen, onClose, asset, isGlass }) {
     const handleSave = async (e) => {
         e.preventDefault();
         setLoading(true);
+        
+        const factor = currencyView === 'ARS' ? (rate || 1000) : 1;
+        
+        // Convertir precios de pesos a dólares antes de guardar en Firestore si es necesario
+        const pcUSD = (parseFloat(precioCompra) || 0) / factor;
+        const mrUSD = (parseFloat(maxPrecioRegistrado) || 0) / factor;
+
         try {
             await saveStopLoss(
                 asset.especie,
-                parseFloat(precioCompra) || 0,
+                pcUSD,
                 bValue,
-                parseFloat(maxPrecioRegistrado) || parseFloat(precioCompra) || 0,
+                mrUSD,
                 alarmaActiva
             );
             onClose();
@@ -100,7 +122,9 @@ export default function StopLossModal({ isOpen, onClose, asset, isGlass }) {
 
     const handleResetTrail = () => {
         if (asset.precioActualUSD) {
-            setMaxPrecioRegistrado(asset.precioActualUSD.toFixed(2));
+            const factor = currencyView === 'ARS' ? (rate || 1000) : 1;
+            const mr = asset.precioActualUSD * factor;
+            setMaxPrecioRegistrado(mr.toFixed(2));
         }
     };
 
@@ -126,7 +150,7 @@ export default function StopLossModal({ isOpen, onClose, asset, isGlass }) {
                     {/* Precio de compra */}
                     <div>
                         <label className={`block text-xs font-bold uppercase tracking-wider mb-2 ${secondaryTextColor}`}>
-                            Precio Promedio de Compra (USD)
+                            Precio Promedio de Compra ({currencyView})
                         </label>
                         <input
                             type="number"
@@ -137,7 +161,7 @@ export default function StopLossModal({ isOpen, onClose, asset, isGlass }) {
                             className={`w-full p-3 rounded-xl text-sm font-semibold outline-none border transition-all ${inputBg} focus:border-red-500`}
                         />
                         <p className={`text-[10px] mt-1 ${isGlass ? 'text-white/40' : 'text-gray-400'}`}>
-                            Costo promedio calculado en tu billetera: USD {defaultPrecioCompra.toFixed(2)}
+                            Costo promedio calculado en tu billetera: {formatCurrencyText(defaultPrecioCompra * (currencyView === 'ARS' ? (rate || 1000) : 1))}
                         </p>
                     </div>
 
@@ -183,7 +207,7 @@ export default function StopLossModal({ isOpen, onClose, asset, isGlass }) {
                     <div>
                         <div className="flex justify-between items-center mb-2">
                             <label className={`block text-xs font-bold uppercase tracking-wider ${secondaryTextColor}`}>
-                                Precio Máximo Alcanzado (USD)
+                                Precio Máximo Registrado ({currencyView})
                             </label>
                             <button
                                 type="button"
@@ -202,7 +226,7 @@ export default function StopLossModal({ isOpen, onClose, asset, isGlass }) {
                             className={`w-full p-3 rounded-xl text-sm font-semibold outline-none border transition-all ${inputBg} focus:border-red-500`}
                         />
                         <p className={`text-[10px] mt-1 ${isGlass ? 'text-white/40' : 'text-gray-400'}`}>
-                            Precio actual de mercado: USD {asset.precioActualUSD ? asset.precioActualUSD.toFixed(2) : '—'}
+                            Precio actual de mercado: {formatCurrencyText((asset.precioActualUSD || 0) * (currencyView === 'ARS' ? (rate || 1000) : 1))}
                         </p>
                     </div>
 
@@ -217,7 +241,7 @@ export default function StopLossModal({ isOpen, onClose, asset, isGlass }) {
                             </span>
                         </div>
                         <div className={`text-xl font-black ${isGlass ? 'text-white' : 'text-gray-800'}`}>
-                            USD {stopPriceCalculado > 0 ? stopPriceCalculado.toFixed(2) : '0.00'}
+                            {formatCurrencyText(stopPriceCalculado)}
                         </div>
                     </div>
 

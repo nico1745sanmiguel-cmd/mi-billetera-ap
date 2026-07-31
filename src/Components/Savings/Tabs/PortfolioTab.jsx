@@ -481,6 +481,8 @@ export default function PortfolioTab({ isGlass, privacyMode, currencyView = 'USD
                 onClose={() => setIsStopModalOpen(false)}
                 asset={selectedStopAsset}
                 isGlass={isGlass}
+                currencyView={currencyView}
+                rate={rate}
             />
             {vencimientoModal && (
                 <OperationModal
