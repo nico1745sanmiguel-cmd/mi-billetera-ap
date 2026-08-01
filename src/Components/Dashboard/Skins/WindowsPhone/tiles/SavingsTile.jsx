@@ -5,8 +5,9 @@ import { useSavings } from '../../../../../context/SavingsContext';
 import { formatMoney } from '../../../../../utils';
 
 const SavingsTile = ({ privacyMode, navigate, animDelay = 0 }) => {
-    const { savingsTransactions } = useSavings();
-    const totalSaved = savingsTransactions.reduce((acc, t) => acc + (t.amount || 0), 0);
+    const { savingsTransactions, cauciones } = useSavings();
+    const totalSaved = savingsTransactions.reduce((acc, t) => acc + (t.amount || 0), 0) + 
+                       (cauciones || []).reduce((acc, c) => acc + (c.montoARS || 0), 0);
     const showMoney = (v) => privacyMode ? '****' : formatMoney(v);
 
     const front = (

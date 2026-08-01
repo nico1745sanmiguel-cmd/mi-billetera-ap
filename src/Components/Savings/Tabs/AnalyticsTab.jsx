@@ -152,7 +152,7 @@ export default function AnalyticsTab({ isGlass, privacyMode }) {
 
             const valorOp = cant * precio;
 
-            if (tx.tipo === 'compra' || tx.tipo === 'deposito' || tx.tipo === 'ingreso') {
+            if (tx.tipo === 'compra' || tx.tipo === 'deposito' || tx.tipo === 'ingreso' || tx.tipo === 'caucion') {
                 acumuladoUSD += valorOp;
             } else if (tx.tipo === 'venta' || tx.tipo === 'retiro' || tx.tipo === 'egreso') {
                 acumuladoUSD -= valorOp;
