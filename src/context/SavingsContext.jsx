@@ -528,6 +528,24 @@ export const SavingsProvider = ({ children }) => {
         }
     }, [user]);
 
+    // ─── Migrar Operaciones a Nueva Cartera ───────────────────────────────────
+    const migrateCarteraTransactions = useCallback(async (oldName, newName) => {
+        if (!user || !oldName || !newName) return;
+        try {
+            const txsToMigrate = savingsTransactions.filter(tx => tx.cartera === oldName);
+            const promises = txsToMigrate.map(tx => 
+                setDoc(doc(db, COLLECTIONS.SAVINGS_TRANSACTIONS, tx.id), {
+                    cartera: newName,
+                    updatedAt: serverTimestamp()
+                }, { merge: true })
+            );
+            await Promise.all(promises);
+        } catch (error) {
+            console.error("Error migrating cartera transactions:", error);
+            throw error;
+        }
+    }, [user, savingsTransactions]);
+
     // ─── Actualizar precio máximo registrado (Trailing Stop) ─────────────────
     const updateMaxPrice = useCallback(async (especie, newMaxPrice) => {
         if (!user) return;
@@ -584,13 +602,14 @@ export const SavingsProvider = ({ children }) => {
         updateMaxPrice,
         carterasPersonalizadas,
         addCartera,
-        deleteCartera
+        deleteCartera,
+        migrateCarteraTransactions
     }), [
         savingsTransactions, addSavingsTransaction, updateSavingsTransaction, deleteSavingsTransaction,
         savingsGoal, goalLoading, saveSavingsGoal, deleteSavingsGoal, clearAllSavings,
         assetPrices, posiciones, saveManualPrice, cauciones,
         stopLosses, saveStopLoss, deleteStopLoss, updateMaxPrice,
-        carterasPersonalizadas, addCartera, deleteCartera
+        carterasPersonalizadas, addCartera, deleteCartera, migrateCarteraTransactions
     ]);
 
     return (

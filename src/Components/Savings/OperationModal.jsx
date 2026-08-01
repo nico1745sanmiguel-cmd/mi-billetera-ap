@@ -31,6 +31,8 @@ export default function OperationModal({ onClose, isGlass, initialData }) {
 
     const [fechaMode, setFechaMode] = useState('exacta');
     const [diasTenencia, setDiasTenencia] = useState('');
+    const [customCartera, setCustomCartera] = useState(false);
+    const [customEspecie, setCustomEspecie] = useState(false);
 
     // Autocompletado nativo extrayendo datos previos + configuradas + defaults
     const carterasOpciones = useMemo(() => {
@@ -268,19 +270,49 @@ export default function OperationModal({ onClose, isGlass, initialData }) {
                                 <label htmlFor="cartera-caucion" className={`block text-xs font-bold mb-2 ${isGlass ? 'text-white/70' : 'text-gray-500'}`}>
                                     BROKER / CARTERA
                                 </label>
-                                <input
-                                    id="cartera-caucion"
-                                    type="text"
-                                    list="carteras-list-c"
-                                    placeholder="Ej: Balanz"
-                                    value={formData.cartera}
-                                    onChange={(e) => setFormData({...formData, cartera: e.target.value})}
-                                    required
-                                    className={inputClasses}
-                                />
-                                <datalist id="carteras-list-c">
-                                    {carterasOpciones.map(c => <option key={c} value={c} />)}
-                                </datalist>
+                                {customCartera ? (
+                                    <div className="flex gap-2">
+                                        <input
+                                            id="cartera-caucion"
+                                            type="text"
+                                            placeholder="Escribí el nombre..."
+                                            value={formData.cartera}
+                                            onChange={(e) => setFormData({...formData, cartera: e.target.value})}
+                                            required
+                                            className={inputClasses}
+                                            autoFocus
+                                        />
+                                        <button 
+                                            type="button" 
+                                            onClick={() => { setCustomCartera(false); setFormData({...formData, cartera: ''}); }}
+                                            className={`px-3 rounded-xl transition-colors ${isGlass ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`}
+                                        >
+                                            <X size={16} />
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <select
+                                        id="cartera-caucion"
+                                        value={carterasOpciones.includes(formData.cartera) ? formData.cartera : (formData.cartera ? 'OTRA_OPCION' : '')}
+                                        onChange={(e) => {
+                                            if (e.target.value === 'OTRA_OPCION') {
+                                                setCustomCartera(true);
+                                                setFormData({...formData, cartera: ''});
+                                            } else {
+                                                setFormData({...formData, cartera: e.target.value});
+                                            }
+                                        }}
+                                        required
+                                        className={inputClasses}
+                                    >
+                                        <option value="" disabled>Seleccioná...</option>
+                                        {carterasOpciones.map(c => <option key={c} value={c}>{c}</option>)}
+                                        {formData.cartera && !carterasOpciones.includes(formData.cartera) && (
+                                            <option value={formData.cartera}>{formData.cartera}</option>
+                                        )}
+                                        <option value="OTRA_OPCION">+ Escribir otra...</option>
+                                    </select>
+                                )}
                             </div>
                             {/* Monto + TNA */}
                             <div className="grid grid-cols-2 gap-4">
@@ -439,38 +471,98 @@ export default function OperationModal({ onClose, isGlass, initialData }) {
                             <label htmlFor="cartera" className={`block text-xs font-bold mb-2 ${isGlass ? 'text-white/70' : 'text-gray-500'}`}>
                                 CARTERA / BROKER
                             </label>
-                            <input
-                                id="cartera"
-                                type="text"
-                                list="carteras-list"
-                                placeholder="Ej: Nexo"
-                                value={formData.cartera}
-                                onChange={(e) => setFormData({...formData, cartera: e.target.value})}
-                                required
-                                className={inputClasses}
-                            />
-                            <datalist id="carteras-list">
-                                {carterasOpciones.map(c => <option key={c} value={c} />)}
-                            </datalist>
+                            {customCartera ? (
+                                <div className="flex gap-2">
+                                    <input
+                                        id="cartera"
+                                        type="text"
+                                        placeholder="Escribí..."
+                                        value={formData.cartera}
+                                        onChange={(e) => setFormData({...formData, cartera: e.target.value})}
+                                        required
+                                        className={inputClasses}
+                                        autoFocus
+                                    />
+                                    <button 
+                                        type="button" 
+                                        onClick={() => { setCustomCartera(false); setFormData({...formData, cartera: ''}); }}
+                                        className={`px-3 rounded-xl transition-colors ${isGlass ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`}
+                                    >
+                                        <X size={16} />
+                                    </button>
+                                </div>
+                            ) : (
+                                <select
+                                    id="cartera"
+                                    value={carterasOpciones.includes(formData.cartera) ? formData.cartera : (formData.cartera ? 'OTRA_OPCION' : '')}
+                                    onChange={(e) => {
+                                        if (e.target.value === 'OTRA_OPCION') {
+                                            setCustomCartera(true);
+                                            setFormData({...formData, cartera: ''});
+                                        } else {
+                                            setFormData({...formData, cartera: e.target.value});
+                                        }
+                                    }}
+                                    required
+                                    className={inputClasses}
+                                >
+                                    <option value="" disabled>Seleccioná...</option>
+                                    {carterasOpciones.map(c => <option key={c} value={c}>{c}</option>)}
+                                    {formData.cartera && !carterasOpciones.includes(formData.cartera) && (
+                                        <option value={formData.cartera}>{formData.cartera}</option>
+                                    )}
+                                    <option value="OTRA_OPCION">+ Escribir otra...</option>
+                                </select>
+                            )}
                         </div>
                         
                         <div>
                             <label htmlFor="especie" className={`block text-xs font-bold mb-2 ${isGlass ? 'text-white/70' : 'text-gray-500'}`}>
                                 ACTIVO (TICKER)
                             </label>
-                            <input
-                                id="especie"
-                                type="text"
-                                list="especies-list"
-                                placeholder="Ej: BTC, AAPL"
-                                value={formData.especie}
-                                onChange={(e) => setFormData({...formData, especie: e.target.value.toUpperCase()})}
-                                required
-                                className={inputClasses}
-                            />
-                            <datalist id="especies-list">
-                                {especiesOpciones.map(c => <option key={c} value={c} />)}
-                            </datalist>
+                            {customEspecie ? (
+                                <div className="flex gap-2">
+                                    <input
+                                        id="especie"
+                                        type="text"
+                                        placeholder="Ej: BTC"
+                                        value={formData.especie}
+                                        onChange={(e) => setFormData({...formData, especie: e.target.value.toUpperCase()})}
+                                        required
+                                        className={inputClasses}
+                                        autoFocus
+                                    />
+                                    <button 
+                                        type="button" 
+                                        onClick={() => { setCustomEspecie(false); setFormData({...formData, especie: ''}); }}
+                                        className={`px-3 rounded-xl transition-colors ${isGlass ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`}
+                                    >
+                                        <X size={16} />
+                                    </button>
+                                </div>
+                            ) : (
+                                <select
+                                    id="especie"
+                                    value={especiesOpciones.includes(formData.especie) ? formData.especie : (formData.especie ? 'OTRA_OPCION' : '')}
+                                    onChange={(e) => {
+                                        if (e.target.value === 'OTRA_OPCION') {
+                                            setCustomEspecie(true);
+                                            setFormData({...formData, especie: ''});
+                                        } else {
+                                            setFormData({...formData, especie: e.target.value});
+                                        }
+                                    }}
+                                    required
+                                    className={inputClasses}
+                                >
+                                    <option value="" disabled>Seleccioná...</option>
+                                    {especiesOpciones.map(c => <option key={c} value={c}>{c}</option>)}
+                                    {formData.especie && !especiesOpciones.includes(formData.especie) && (
+                                        <option value={formData.especie}>{formData.especie}</option>
+                                    )}
+                                    <option value="OTRA_OPCION">+ Escribir otra...</option>
+                                </select>
+                            )}
                         </div>
                     </div>
 
