@@ -109,16 +109,18 @@ export const SavingsProvider = ({ children }) => {
         return () => unsub();
     }, [user, userData]);
 
-    // Listener de Carteras Personalizadas
+    // Listener de Carteras Personalizadas (usa savings_asset_prices para no requerir reglas de producción nuevas)
     useEffect(() => {
         if (!user) return;
         const householdId = userData?.householdId;
         const queryField = householdId ? "householdId" : "userId";
         const queryValue = householdId ? householdId : user.uid;
 
-        const q = query(collection(db, COLLECTIONS.SAVINGS_CARTERAS), where(queryField, "==", queryValue));
+        const q = query(collection(db, 'savings_asset_prices'), where(queryField, "==", queryValue));
         const unsub = onSnapshot(q, (snap) => {
-            const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            const data = snap.docs
+                .filter(d => d.data().tipo === 'cartera')
+                .map(d => ({ id: d.id, ...d.data() }));
             setCarterasPersonalizadas(data);
             setCache(CACHE_KEYS.SAVINGS_CARTERAS, data);
         }, (error) => console.error("Error fetching savings carteras:", error));
@@ -501,13 +503,14 @@ export const SavingsProvider = ({ children }) => {
     const addCartera = useCallback(async (nombre) => {
         if (!user || !nombre) return;
         const payload = {
+            tipo: 'cartera',
             nombre: nombre.trim(),
             userId: user.uid,
             householdId: userData?.householdId || null,
             createdAt: serverTimestamp()
         };
         try {
-            await addDoc(collection(db, COLLECTIONS.SAVINGS_CARTERAS), payload);
+            await addDoc(collection(db, 'savings_asset_prices'), payload);
         } catch (error) {
             console.error("Error adding cartera:", error);
             throw error;
@@ -518,7 +521,7 @@ export const SavingsProvider = ({ children }) => {
     const deleteCartera = useCallback(async (id) => {
         if (!user || !id) return;
         try {
-            await deleteDoc(doc(db, COLLECTIONS.SAVINGS_CARTERAS, id));
+            await deleteDoc(doc(db, 'savings_asset_prices', id));
         } catch (error) {
             console.error("Error deleting cartera:", error);
             throw error;
