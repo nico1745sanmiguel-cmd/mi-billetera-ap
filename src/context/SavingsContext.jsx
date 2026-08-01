@@ -28,6 +28,7 @@ export const SavingsProvider = ({ children }) => {
     const [savingsGoal, setSavingsGoalState] = useState(() => getCache('savings_goal_data', null));
     const [goalLoading, setGoalLoading] = useState(true);
     const [stopLosses, setStopLosses] = useState(() => getCache(CACHE_KEYS.SAVINGS_STOP_LOSSES, {}));
+    const [carterasPersonalizadas, setCarterasPersonalizadas] = useState(() => getCache(CACHE_KEYS.SAVINGS_CARTERAS, []));
     
     // FASE 1: Asset Prices & Posiciones
     const [assetPrices, setAssetPrices] = useState({}); // { [especie]: precioUSD }
@@ -104,6 +105,23 @@ export const SavingsProvider = ({ children }) => {
             setStopLosses(data);
             setCache(CACHE_KEYS.SAVINGS_STOP_LOSSES, data);
         }, (error) => console.error("Error fetching stop losses:", error));
+
+        return () => unsub();
+    }, [user, userData]);
+
+    // Listener de Carteras Personalizadas
+    useEffect(() => {
+        if (!user) return;
+        const householdId = userData?.householdId;
+        const queryField = householdId ? "householdId" : "userId";
+        const queryValue = householdId ? householdId : user.uid;
+
+        const q = query(collection(db, COLLECTIONS.SAVINGS_CARTERAS), where(queryField, "==", queryValue));
+        const unsub = onSnapshot(q, (snap) => {
+            const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            setCarterasPersonalizadas(data);
+            setCache(CACHE_KEYS.SAVINGS_CARTERAS, data);
+        }, (error) => console.error("Error fetching savings carteras:", error));
 
         return () => unsub();
     }, [user, userData]);
@@ -479,6 +497,34 @@ export const SavingsProvider = ({ children }) => {
         }
     }, [user, userData]);
 
+    // ─── Agregar Cartera Personalizada ─────────────────────────────────────────
+    const addCartera = useCallback(async (nombre) => {
+        if (!user || !nombre) return;
+        const payload = {
+            nombre: nombre.trim(),
+            userId: user.uid,
+            householdId: userData?.householdId || null,
+            createdAt: serverTimestamp()
+        };
+        try {
+            await addDoc(collection(db, COLLECTIONS.SAVINGS_CARTERAS), payload);
+        } catch (error) {
+            console.error("Error adding cartera:", error);
+            throw error;
+        }
+    }, [user, userData]);
+
+    // ─── Eliminar Cartera Personalizada ─────────────────────────────────────────
+    const deleteCartera = useCallback(async (id) => {
+        if (!user || !id) return;
+        try {
+            await deleteDoc(doc(db, COLLECTIONS.SAVINGS_CARTERAS, id));
+        } catch (error) {
+            console.error("Error deleting cartera:", error);
+            throw error;
+        }
+    }, [user]);
+
     // ─── Actualizar precio máximo registrado (Trailing Stop) ─────────────────
     const updateMaxPrice = useCallback(async (especie, newMaxPrice) => {
         if (!user) return;
@@ -532,12 +578,16 @@ export const SavingsProvider = ({ children }) => {
         stopLosses,
         saveStopLoss,
         deleteStopLoss,
-        updateMaxPrice
+        updateMaxPrice,
+        carterasPersonalizadas,
+        addCartera,
+        deleteCartera
     }), [
         savingsTransactions, addSavingsTransaction, updateSavingsTransaction, deleteSavingsTransaction,
         savingsGoal, goalLoading, saveSavingsGoal, deleteSavingsGoal, clearAllSavings,
         assetPrices, posiciones, saveManualPrice, cauciones,
-        stopLosses, saveStopLoss, deleteStopLoss, updateMaxPrice
+        stopLosses, saveStopLoss, deleteStopLoss, updateMaxPrice,
+        carterasPersonalizadas, addCartera, deleteCartera
     ]);
 
     return (

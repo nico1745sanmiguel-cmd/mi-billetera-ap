@@ -3,6 +3,7 @@ import { Trash2, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { useSavings } from '../../context/SavingsContext';
 import { useUI } from '../../context/UIContext';
 import AssetPricesPanel from './AssetPricesPanel';
+import CarterasPanel from './CarterasPanel';
 
 export default function SavingsSettings({ isGlass, onBack }) {
     const { clearAllSavings } = useSavings();
@@ -35,6 +36,7 @@ export default function SavingsSettings({ isGlass, onBack }) {
 
     return (
         <div className="space-y-6 animate-fade-in">
+            <CarterasPanel isGlass={isGlass} />
             <AssetPricesPanel isGlass={isGlass} />
 
             <div className={`rounded-3xl p-6 ${cardBg}`}>

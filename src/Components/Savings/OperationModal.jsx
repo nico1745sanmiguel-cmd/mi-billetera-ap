@@ -4,7 +4,7 @@ import { useSavings } from '../../context/SavingsContext';
 import { useFinancial } from '../../context/FinancialContext';
 
 export default function OperationModal({ onClose, isGlass, initialData }) {
-    const { addSavingsTransaction, updateSavingsTransaction, savingsTransactions } = useSavings();
+    const { addSavingsTransaction, updateSavingsTransaction, savingsTransactions, carterasPersonalizadas } = useSavings();
     const { dolarBlue } = useFinancial();
     const [loading, setLoading] = useState(false);
 
@@ -32,14 +32,15 @@ export default function OperationModal({ onClose, isGlass, initialData }) {
     const [fechaMode, setFechaMode] = useState('exacta');
     const [diasTenencia, setDiasTenencia] = useState('');
 
-    // Autocompletado nativo extrayendo datos previos + defaults
+    // Autocompletado nativo extrayendo datos previos + configuradas + defaults
     const carterasOpciones = useMemo(() => {
         const set = new Set(['Efectivo', 'Balanz', 'Nexo', 'Binance']);
+        (carterasPersonalizadas || []).forEach(c => set.add(c.nombre));
         (savingsTransactions || []).forEach(tx => {
             if (tx.cartera) set.add(tx.cartera);
         });
         return Array.from(set);
-    }, [savingsTransactions]);
+    }, [savingsTransactions, carterasPersonalizadas]);
 
     const especiesOpciones = useMemo(() => {
         const set = new Set(['ARS', 'USD', 'BTC', 'USDT', 'CEDEARs']);

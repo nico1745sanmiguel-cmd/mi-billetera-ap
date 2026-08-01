@@ -56,6 +56,8 @@ export default function PortfolioTab({ isGlass, privacyMode, currencyView = 'USD
     // Agrupar por cartera
     const posicionesByCartera = useMemo(() => {
         const ag = {};
+        
+        // Agregar posiciones
         posiciones.forEach(p => {
             if (!ag[p.cartera]) ag[p.cartera] = { totalUSD: 0, totalARS: 0, items: [] };
             
@@ -65,6 +67,19 @@ export default function PortfolioTab({ isGlass, privacyMode, currencyView = 'USD
             ag[p.cartera].totalUSD += valorUSD;
             ag[p.cartera].totalARS += valorARS;
             ag[p.cartera].items.push(p);
+        });
+
+        // Agregar cauciones al total de la cartera
+        const caucionesActivas = (cauciones || []).filter(c => c.estado !== 'vencida' || true);
+        caucionesActivas.forEach(c => {
+            if (!ag[c.cartera]) ag[c.cartera] = { totalUSD: 0, totalARS: 0, items: [] };
+            
+            const valorARS = c.valorActualARS || 0;
+            const valorUSD = c.valorActualUSD || 0;
+            
+            ag[c.cartera].totalUSD += valorUSD;
+            ag[c.cartera].totalARS += valorARS;
+            // No pusheamos a items porque items es para la tabla de posiciones normales
         });
 
         // Ordenar dentro de cada cartera
@@ -94,6 +109,8 @@ export default function PortfolioTab({ isGlass, privacyMode, currencyView = 'USD
     }, [posiciones, rate, sortConfig]);
 
     const chartData = useMemo(() => {
+        const caucionesActivas = (cauciones || []).filter(c => c.estado !== 'vencida' || true);
+
         if (chartView === 'general') {
             const innerData = [];
             const outerData = [];
@@ -109,6 +126,13 @@ export default function PortfolioTab({ isGlass, privacyMode, currencyView = 'USD
                             outerData.push({ name: `${p.especie} (${c.name})`, value: pValue, parentFill: COLORS[index % COLORS.length] });
                         }
                     });
+
+                    caucionesActivas.filter(cau => cau.cartera === c.name).forEach(cau => {
+                        const pValue = currencyView === 'ARS' ? cau.valorActualARS : cau.valorActualUSD;
+                        if (pValue > 0) {
+                            outerData.push({ name: `Caución ARS (${c.name})`, value: pValue, parentFill: COLORS[index % COLORS.length] });
+                        }
+                    });
                 }
             });
             return { innerData, outerData, type: '2-level' };
@@ -121,6 +145,12 @@ export default function PortfolioTab({ isGlass, privacyMode, currencyView = 'USD
                 if (!grouped[p.especie]) grouped[p.especie] = 0;
                 grouped[p.especie] += val;
             });
+            caucionesActivas.forEach(cau => {
+                const val = currencyView === 'ARS' ? cau.valorActualARS : cau.valorActualUSD;
+                if (!grouped['Caución ARS']) grouped['Caución ARS'] = 0;
+                grouped['Caución ARS'] += val;
+            });
+            
             const outerData = Object.keys(grouped).map((k, i) => ({
                 name: k,
                 value: grouped[k],
@@ -135,12 +165,19 @@ export default function PortfolioTab({ isGlass, privacyMode, currencyView = 'USD
                  const value = currencyView === 'ARS' ? p.valorActualUSD * rate : p.valorActualUSD;
                  if (value > 0) acc.push({ name: p.especie, value, fill: COLORS[i % COLORS.length] });
                  return acc;
-            }, []).sort((a,b) => b.value - a.value);
+            }, []);
+            
+            caucionesActivas.filter(cau => cau.cartera === chartView).forEach(cau => {
+                const value = currencyView === 'ARS' ? cau.valorActualARS : cau.valorActualUSD;
+                if (value > 0) outerData.push({ name: 'Caución ARS', value, fill: COLORS[outerData.length % COLORS.length] });
+            });
+
+            outerData.sort((a,b) => b.value - a.value);
             return { outerData, type: '1-level' };
         }
         
         return { outerData: [], type: '1-level' };
-    }, [posicionesByCartera, posiciones, chartView, currencyView, rate]);
+    }, [posicionesByCartera, posiciones, cauciones, chartView, currencyView, rate]);
 
     const renderSortIcon = (columnName) => {
         if (sortConfig.key === columnName) {
