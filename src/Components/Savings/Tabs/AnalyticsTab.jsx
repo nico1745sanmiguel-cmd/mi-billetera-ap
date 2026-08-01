@@ -143,14 +143,19 @@ export default function AnalyticsTab({ isGlass, privacyMode }) {
             const date = new Date(tx.fecha || tx.createdAt?.toDate?.() || Date.now());
             const monthYear = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
             
-            const cant = parseFloat(tx.cantidad) || 0;
-            let precio = parseFloat(tx.precioUnitario) || 0;
-            if (tx.monedaPrecio === 'ARS') precio = precio / rate;
-            
-            // Si es un movimiento viejo sin precio, estimamos con precioActual o 1. (Idealmente deberían haber sido borrados o migrados)
-            if (precio === 0 && tx.tipo !== 'ajuste') return;
+            let valorOp = 0;
+            if (tx.tipo === 'caucion') {
+                valorOp = (parseFloat(tx.montoARS) || 0) / rate;
+            } else {
+                const cant = parseFloat(tx.cantidad) || 0;
+                let precio = parseFloat(tx.precioUnitario) || 0;
+                if (tx.monedaPrecio === 'ARS') precio = precio / rate;
+                
+                // Si es un movimiento viejo sin precio, estimamos con precioActual o 1. (Idealmente deberían haber sido borrados o migrados)
+                if (precio === 0 && tx.tipo !== 'ajuste') return;
 
-            const valorOp = cant * precio;
+                valorOp = cant * precio;
+            }
 
             if (tx.tipo === 'compra' || tx.tipo === 'deposito' || tx.tipo === 'ingreso' || tx.tipo === 'caucion') {
                 acumuladoUSD += valorOp;
