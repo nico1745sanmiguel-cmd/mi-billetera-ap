@@ -1,6 +1,7 @@
-import { X, TrendingUp, TrendingDown, Info, DollarSign, Activity, Shield, ShoppingCart } from 'lucide-react';
+import { useState } from 'react';
+import { X, TrendingUp, TrendingDown, Info, Activity, Shield, DollarSign, CheckCircle2, AlertCircle } from 'lucide-react';
 import { getAssetDescription } from '../../utils/assetDescriptions';
-import { useFinancial } from '../../context/FinancialContext';
+import { useSavings } from '../../context/SavingsContext';
 
 const usdFormatter = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
 const arsFormatter = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 });
@@ -12,6 +13,241 @@ const formatAmount = (amount, currency) => {
 const formatPercentage = (amount) => {
     return amount.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
 };
+
+// ─── Panel de Venta Rápida ─────────────────────────────────────────────────────
+function QuickSellPanel({ asset, isGlass, currencyView, rate, textColor, secondaryTextColor, onClose }) {
+    const { addSavingsTransaction } = useSavings();
+
+    const lastOp = asset.operaciones?.slice().reverse().find(op => op.tipo === 'compra' || op.tipo === 'deposito');
+    const monedaVenta = lastOp?.monedaPrecio || 'USD';
+
+    const precioVenta = monedaVenta === 'ARS'
+        ? (asset.precioActualUSD * rate)
+        : asset.precioActualUSD;
+
+    const [modo, setModo] = useState(null); // null | 'total' | 'parcial'
+    const [cantidadParcial, setCantidadParcial] = useState('');
+    const [saving, setSaving] = useState(false);
+    const [done, setDone] = useState(false);
+    const [error, setError] = useState('');
+
+    const cantidadTotal = asset.cantidad;
+    const cantidadAVender = modo === 'total'
+        ? cantidadTotal
+        : (parseFloat(cantidadParcial) || 0);
+
+    const montoResultante = cantidadAVender * precioVenta;
+    const formatter = monedaVenta === 'ARS' ? arsFormatter : usdFormatter;
+
+    const handleConfirm = async () => {
+        if (cantidadAVender <= 0 || cantidadAVender > cantidadTotal) {
+            setError('Cantidad inválida.');
+            return;
+        }
+        setSaving(true);
+        setError('');
+        try {
+            const fecha = new Date().toISOString();
+
+            // 1. Registrar la venta del activo
+            await addSavingsTransaction({
+                cartera: asset.cartera,
+                especie: asset.especie,
+                tipo: 'venta',
+                cantidad: cantidadAVender,
+                precioUnitario: precioVenta,
+                monedaPrecio: monedaVenta,
+                fecha,
+                nota: modo === 'total' ? 'Venta total desde portafolio' : 'Venta parcial desde portafolio',
+            });
+
+            // 2. Registrar el dinero resultante como depósito líquido en la misma cartera
+            await addSavingsTransaction({
+                cartera: asset.cartera,
+                especie: monedaVenta, // 'ARS' o 'USD'
+                tipo: 'deposito',
+                cantidad: montoResultante,
+                precioUnitario: 1,
+                monedaPrecio: monedaVenta,
+                fecha,
+                nota: `Líquido por venta de ${asset.especie}`,
+            });
+
+            setDone(true);
+            setTimeout(() => onClose(), 1800);
+        } catch (e) {
+            console.error(e);
+            setError('Error al registrar la venta. Intentá de nuevo.');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const inputClass = `w-full p-3 rounded-xl text-sm font-bold outline-none transition-all ${
+        isGlass
+            ? 'bg-white/10 text-white border border-white/20 focus:border-green-400 placeholder-white/30'
+            : 'bg-gray-50 text-gray-800 border border-gray-200 focus:border-green-500 focus:bg-white'
+    }`;
+
+    if (done) {
+        return (
+            <div className={`mb-6 p-5 rounded-2xl flex flex-col items-center gap-2 ${isGlass ? 'bg-green-500/10 border border-green-500/20' : 'bg-green-50 border border-green-100'}`}>
+                <CheckCircle2 size={32} className="text-green-500" />
+                <p className="font-black text-green-500">¡Venta registrada!</p>
+                <p className={`text-xs text-center ${secondaryTextColor}`}>
+                    {formatter.format(montoResultante)} quedaron como dinero líquido en <strong>{asset.cartera}</strong>.
+                </p>
+            </div>
+        );
+    }
+
+    if (!modo) {
+        return (
+            <button
+                type="button"
+                onClick={() => setModo('elegir')}
+                className="w-full mb-6 py-4 bg-green-500 hover:bg-green-600 text-white font-black rounded-2xl flex items-center justify-center gap-2 transition-all shadow-lg active:scale-95"
+            >
+                <DollarSign size={20} /> Vender Activo
+            </button>
+        );
+    }
+
+    return (
+        <div className={`mb-6 rounded-2xl overflow-hidden border ${isGlass ? 'border-white/10' : 'border-gray-100'}`}>
+            {/* Header del panel */}
+            <div className={`px-5 py-4 flex items-center justify-between ${isGlass ? 'bg-white/5' : 'bg-gray-50'}`}>
+                <div className="flex items-center gap-2">
+                    <DollarSign size={16} className="text-green-500" />
+                    <span className={`text-sm font-black ${textColor}`}>Vender este activo</span>
+                </div>
+                <span className={`text-xs ${secondaryTextColor}`}>
+                    Disponible: <strong>{cantidadTotal.toLocaleString('es-AR', { maximumFractionDigits: 6 })}</strong> {asset.especie}
+                </span>
+            </div>
+
+            <div className="p-5 space-y-4">
+                {/* Selector total/parcial */}
+                {modo === 'elegir' && (
+                    <div className="space-y-3">
+                        <div className="grid grid-cols-2 gap-3">
+                            <button
+                                type="button"
+                                onClick={() => setModo('total')}
+                                className={`py-3 px-4 rounded-xl font-black text-sm transition-all active:scale-95 ${
+                                    isGlass
+                                        ? 'bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/30'
+                                        : 'bg-red-50 hover:bg-red-100 text-red-600 border border-red-100'
+                                }`}
+                            >
+                                Vender Todo
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => { setModo('parcial'); setCantidadParcial(''); }}
+                                className={`py-3 px-4 rounded-xl font-black text-sm transition-all active:scale-95 ${
+                                    isGlass
+                                        ? 'bg-white/10 hover:bg-white/20 text-white border border-white/20'
+                                        : 'bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200'
+                                }`}
+                            >
+                                Venta Parcial
+                            </button>
+                        </div>
+                        <button type="button" onClick={() => setModo(null)} className={`w-full py-2 rounded-xl text-xs font-bold transition-all ${isGlass ? 'text-white/40 hover:text-white/60' : 'text-gray-400 hover:text-gray-600'}`}>
+                            Cancelar
+                        </button>
+                    </div>
+                )}
+
+                {/* Modo total: resumen y confirmación */}
+                {modo === 'total' && (
+                    <div className="space-y-4">
+                        <div className={`p-4 rounded-xl ${isGlass ? 'bg-white/5' : 'bg-gray-50'} space-y-2`}>
+                            <div className="flex justify-between text-sm">
+                                <span className={secondaryTextColor}>Cantidad a vender</span>
+                                <span className={`font-bold ${textColor}`}>{cantidadTotal.toLocaleString('es-AR', { maximumFractionDigits: 6 })} {asset.especie}</span>
+                            </div>
+                            <div className="flex justify-between text-sm">
+                                <span className={secondaryTextColor}>Precio actual</span>
+                                <span className={`font-bold ${textColor}`}>{formatter.format(precioVenta)}</span>
+                            </div>
+                            <div className={`flex justify-between text-sm pt-2 border-t ${isGlass ? 'border-white/10' : 'border-gray-200'}`}>
+                                <span className={`font-black ${textColor}`}>Líquido a recibir ({monedaVenta})</span>
+                                <span className="font-black text-green-500">{formatter.format(montoResultante)}</span>
+                            </div>
+                        </div>
+                        <div className="flex gap-3">
+                            <button type="button" onClick={() => setModo(null)} className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${isGlass ? 'bg-white/5 text-white/60 hover:bg-white/10' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
+                                Cancelar
+                            </button>
+                            <button type="button" onClick={handleConfirm} disabled={saving} className="flex-2 flex-grow py-2.5 px-6 rounded-xl text-sm font-black bg-green-500 hover:bg-green-600 text-white transition-all active:scale-95 disabled:opacity-60">
+                                {saving ? 'Guardando...' : 'Confirmar Venta'}
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {/* Modo parcial: input de cantidad */}
+                {modo === 'parcial' && (
+                    <div className="space-y-4">
+                        <div>
+                            <label className={`block text-xs font-bold mb-2 ${secondaryTextColor}`}>
+                                CANTIDAD A VENDER (máx. {cantidadTotal.toLocaleString('es-AR', { maximumFractionDigits: 6 })})
+                            </label>
+                            <input
+                                autoComplete="off"
+                                type="number"
+                                inputMode="decimal"
+                                step="any"
+                                min="0"
+                                max={cantidadTotal}
+                                placeholder={`0 – ${cantidadTotal.toLocaleString('es-AR', { maximumFractionDigits: 6 })}`}
+                                value={cantidadParcial}
+                                onChange={e => { setCantidadParcial(e.target.value); setError(''); }}
+                                className={inputClass}
+                                autoFocus
+                            />
+                        </div>
+
+                        {cantidadAVender > 0 && cantidadAVender <= cantidadTotal && (
+                            <div className={`p-3 rounded-xl ${isGlass ? 'bg-white/5' : 'bg-gray-50'} space-y-1 text-sm`}>
+                                <div className="flex justify-between">
+                                    <span className={secondaryTextColor}>Precio actual</span>
+                                    <span className={`font-bold ${textColor}`}>{formatter.format(precioVenta)}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className={`font-black ${textColor}`}>Líquido a recibir ({monedaVenta})</span>
+                                    <span className="font-black text-green-500">{formatter.format(montoResultante)}</span>
+                                </div>
+                            </div>
+                        )}
+
+                        {error && (
+                            <div className="flex items-center gap-2 text-red-500 text-xs">
+                                <AlertCircle size={14} /> {error}
+                            </div>
+                        )}
+
+                        <div className="flex gap-3">
+                            <button type="button" onClick={() => { setModo(null); setError(''); }} className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${isGlass ? 'bg-white/5 text-white/60 hover:bg-white/10' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
+                                Cancelar
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleConfirm}
+                                disabled={saving || cantidadAVender <= 0 || cantidadAVender > cantidadTotal}
+                                className="flex-2 flex-grow py-2.5 px-6 rounded-xl text-sm font-black bg-green-500 hover:bg-green-600 text-white transition-all active:scale-95 disabled:opacity-40"
+                            >
+                                {saving ? 'Guardando...' : 'Confirmar Venta'}
+                            </button>
+                        </div>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
 
 export default function AssetDetailsModal({ isOpen, onClose, asset, currencyView, isGlass, rate, onSellClick }) {
     if (!isOpen || !asset) return null;
@@ -72,15 +308,16 @@ export default function AssetDetailsModal({ isOpen, onClose, asset, currencyView
                     </div>
                 </div>
 
-                {/* Sell Button */}
-                {onSellClick && (
-                    <button
-                        onClick={onSellClick}
-                        className="w-full mb-6 py-4 bg-green-500 hover:bg-green-600 text-white font-black rounded-2xl flex items-center justify-center gap-2 transition-all shadow-lg active:scale-95"
-                    >
-                        <ShoppingCart size={20} /> Vender Activo
-                    </button>
-                )}
+                {/* Panel de Venta Rápida */}
+                <QuickSellPanel
+                    asset={asset}
+                    isGlass={isGlass}
+                    currencyView={currencyView}
+                    rate={rate}
+                    textColor={textColor}
+                    secondaryTextColor={secondaryTextColor}
+                    onClose={onClose}
+                />
 
                 {/* Performance Section */}
                 <div className={`p-5 rounded-2xl ${isGlass ? 'bg-white/5' : 'bg-gray-50'}`}>
