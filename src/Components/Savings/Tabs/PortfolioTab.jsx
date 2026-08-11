@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 // eslint-disable-next-line react-doctor/prefer-dynamic-import
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
-import { Wallet, TrendingUp, TrendingDown, ArrowUpDown, Clock, CheckCircle, AlertTriangle, ChevronRight, Shield } from 'lucide-react';
+import { Wallet, TrendingUp, TrendingDown, ArrowUpDown, Clock, CheckCircle, AlertTriangle, ChevronRight, Shield, ShoppingCart } from 'lucide-react';
 import { useSavings } from '../../../context/SavingsContext';
 import { useFinancial } from '../../../context/FinancialContext';
 import AssetDetailsModal from '../AssetDetailsModal';
@@ -18,11 +18,12 @@ const formatPercentage = (amount) => {
 };
 
 export default function PortfolioTab({ isGlass, privacyMode, currencyView = 'USD' }) {
-    const { posiciones, cauciones } = useSavings();
+    const { posiciones, cauciones, liquidezPorCartera } = useSavings();
     const { dolarBlue } = useFinancial();
     const [sortConfig, setSortConfig] = useState({ key: null, direction: 'desc' });
     const [selectedAsset, setSelectedAsset] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [sellModalData, setSellModalData] = useState(null);
     const [selectedStopAsset, setSelectedStopAsset] = useState(null);
     const [isStopModalOpen, setIsStopModalOpen] = useState(false);
     const [chartView, setChartView] = useState('general');
@@ -38,6 +39,18 @@ export default function PortfolioTab({ isGlass, privacyMode, currencyView = 'USD
     const handleRowClick = (pos) => {
         setSelectedAsset(pos);
         setIsModalOpen(true);
+    };
+
+    const handleSellClick = (e, pos) => {
+        e.stopPropagation();
+        setSellModalData({
+            tipo: 'venta',
+            cartera: pos.cartera,
+            especie: pos.especie,
+            cantidad: pos.cantidad.toString(),
+            precioUnitario: pos.precioActualUSD.toString(),
+            monedaPrecio: 'USD',
+        });
     };
 
     const handleStopClick = (pos) => {
@@ -57,9 +70,13 @@ export default function PortfolioTab({ isGlass, privacyMode, currencyView = 'USD
     const posicionesByCartera = useMemo(() => {
         const ag = {};
         
+        const initCartera = (c) => {
+            if (!ag[c]) ag[c] = { totalUSD: 0, totalARS: 0, items: [], liquidez: { ARS: 0, USD: 0 } };
+        };
+
         // Agregar posiciones
         posiciones.forEach(p => {
-            if (!ag[p.cartera]) ag[p.cartera] = { totalUSD: 0, totalARS: 0, items: [] };
+            initCartera(p.cartera);
             
             const valorUSD = p.valorActualUSD;
             const valorARS = valorUSD * rate;
@@ -69,10 +86,19 @@ export default function PortfolioTab({ isGlass, privacyMode, currencyView = 'USD
             ag[p.cartera].items.push(p);
         });
 
+        // Asegurar carteras que solo tienen liquidez
+        Object.keys(liquidezPorCartera || {}).forEach(c => {
+            initCartera(c);
+            const liq = liquidezPorCartera[c];
+            ag[c].liquidez = liq;
+            ag[c].totalARS += (liq.ARS || 0) + ((liq.USD || 0) * rate);
+            ag[c].totalUSD += (liq.USD || 0) + ((liq.ARS || 0) / rate);
+        });
+
         // Agregar cauciones al total de la cartera
         const caucionesActivas = (cauciones || []).filter(c => c.estado !== 'vencida' || true);
         caucionesActivas.forEach(c => {
-            if (!ag[c.cartera]) ag[c.cartera] = { totalUSD: 0, totalARS: 0, items: [] };
+            initCartera(c.cartera);
             
             const valorARS = c.valorActualARS || 0;
             const valorUSD = c.valorActualUSD || 0;
@@ -133,6 +159,11 @@ export default function PortfolioTab({ isGlass, privacyMode, currencyView = 'USD
                             outerData.push({ name: `Caución ARS (${c.name})`, value: pValue, parentFill: COLORS[index % COLORS.length] });
                         }
                     });
+
+                    if (c.liquidez) {
+                        if (c.liquidez.ARS > 0) outerData.push({ name: `Líquido ARS (${c.name})`, value: currencyView === 'ARS' ? c.liquidez.ARS : c.liquidez.ARS / rate, parentFill: COLORS[index % COLORS.length] });
+                        if (c.liquidez.USD > 0) outerData.push({ name: `Líquido USD (${c.name})`, value: currencyView === 'ARS' ? c.liquidez.USD * rate : c.liquidez.USD, parentFill: COLORS[index % COLORS.length] });
+                    }
                 }
             });
             return { innerData, outerData, type: '2-level' };
@@ -149,6 +180,18 @@ export default function PortfolioTab({ isGlass, privacyMode, currencyView = 'USD
                 const val = currencyView === 'ARS' ? cau.valorActualARS : cau.valorActualUSD;
                 if (!grouped['Caución ARS']) grouped['Caución ARS'] = 0;
                 grouped['Caución ARS'] += val;
+            });
+            posicionesByCartera.forEach(c => {
+                if (c.liquidez) {
+                    if (c.liquidez.ARS > 0) {
+                        if (!grouped['Líquido ARS']) grouped['Líquido ARS'] = 0;
+                        grouped['Líquido ARS'] += currencyView === 'ARS' ? c.liquidez.ARS : c.liquidez.ARS / rate;
+                    }
+                    if (c.liquidez.USD > 0) {
+                        if (!grouped['Líquido USD']) grouped['Líquido USD'] = 0;
+                        grouped['Líquido USD'] += currencyView === 'ARS' ? c.liquidez.USD * rate : c.liquidez.USD;
+                    }
+                }
             });
             
             const outerData = Object.keys(grouped).map((k, i) => ({
@@ -172,6 +215,15 @@ export default function PortfolioTab({ isGlass, privacyMode, currencyView = 'USD
                 if (value > 0) outerData.push({ name: 'Caución ARS', value, fill: COLORS[outerData.length % COLORS.length] });
             });
 
+            if (carteraInfo.liquidez) {
+                if (carteraInfo.liquidez.ARS > 0) {
+                    outerData.push({ name: 'Líquido ARS', value: currencyView === 'ARS' ? carteraInfo.liquidez.ARS : carteraInfo.liquidez.ARS / rate, fill: COLORS[outerData.length % COLORS.length] });
+                }
+                if (carteraInfo.liquidez.USD > 0) {
+                    outerData.push({ name: 'Líquido USD', value: currencyView === 'ARS' ? carteraInfo.liquidez.USD * rate : carteraInfo.liquidez.USD, fill: COLORS[outerData.length % COLORS.length] });
+                }
+            }
+
             outerData.sort((a,b) => b.value - a.value);
             return { outerData, type: '1-level' };
         }
@@ -191,8 +243,9 @@ export default function PortfolioTab({ isGlass, privacyMode, currencyView = 'USD
 
     const caucionesActivas = (cauciones || []).filter(c => c.estado !== 'vencida' || true); // mostrar todas
     const hasCauciones = caucionesActivas.length > 0;
+    const hasLiquidez = Object.keys(liquidezPorCartera || {}).some(c => liquidezPorCartera[c].ARS > 0 || liquidezPorCartera[c].USD > 0);
 
-    if (posiciones.length === 0 && !hasCauciones) {
+    if (posiciones.length === 0 && !hasCauciones && !hasLiquidez) {
         return (
             <div className={`text-center p-8 rounded-2xl ${cardBg}`}>
                 <p className={isGlass ? 'text-white/60' : 'text-gray-500'}>
@@ -318,6 +371,29 @@ export default function PortfolioTab({ isGlass, privacyMode, currencyView = 'USD
                             </div>
                         </div>
 
+                        {/* Mostrar Liquidez si hay */}
+                        {carteraData.liquidez && (carteraData.liquidez.ARS > 0 || carteraData.liquidez.USD > 0 || carteraData.liquidez.ARS < 0 || carteraData.liquidez.USD < 0) && (
+                            <div className={`mb-4 p-3 rounded-2xl flex flex-wrap gap-4 items-center justify-between ${isGlass ? 'bg-white/5' : 'bg-gray-50'}`}>
+                                <div className={`text-sm font-bold flex items-center gap-2 ${isGlass ? 'text-white/70' : 'text-gray-600'}`}>
+                                    <Wallet size={16} /> Dinero Líquido
+                                </div>
+                                <div className="flex gap-4">
+                                    {carteraData.liquidez.ARS !== 0 && (
+                                        <div className="text-right">
+                                            <span className={`text-xs block ${isGlass ? 'text-white/50' : 'text-gray-400'}`}>ARS</span>
+                                            <span className={`font-black ${textColor}`}>{arsFormatter.format(carteraData.liquidez.ARS)}</span>
+                                        </div>
+                                    )}
+                                    {carteraData.liquidez.USD !== 0 && (
+                                        <div className="text-right">
+                                            <span className={`text-xs block ${isGlass ? 'text-white/50' : 'text-gray-400'}`}>USD</span>
+                                            <span className={`font-black ${textColor}`}>{usdFormatter.format(carteraData.liquidez.USD)}</span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
                         <div className="overflow-x-auto -mx-6 px-6">
                             <table className="w-full text-sm text-left">
                                 <thead>
@@ -339,6 +415,9 @@ export default function PortfolioTab({ isGlass, privacyMode, currencyView = 'USD
                                         </th>
                                         <th className="pb-3 font-semibold text-right cursor-pointer select-none hover:text-green-500 transition-colors" onClick={() => requestSort('gananciaPérdidaUSD')}>
                                             P&L {renderSortIcon('gananciaPérdidaUSD')}
+                                        </th>
+                                        <th className="pb-3 font-semibold text-right">
+                                            Acción
                                         </th>
                                         <th className="pb-3 font-semibold text-right">
                                             Stop Loss (T)
@@ -401,6 +480,18 @@ export default function PortfolioTab({ isGlass, privacyMode, currencyView = 'USD
                                                     <span className="text-xs opacity-70 ml-1">
                                                         ({isProfit ? '+' : ''}{formatPercentage(pos.gananciaPorcentaje)})
                                                     </span>
+                                                </td>
+                                                <td className="py-4 text-right">
+                                                    <button 
+                                                        onClick={(e) => handleSellClick(e, pos)}
+                                                        className={`p-2 rounded-xl transition-all font-bold text-xs flex items-center justify-end w-full gap-1 ${
+                                                            isGlass 
+                                                            ? 'text-white/70 hover:text-white bg-white/10 hover:bg-white/20' 
+                                                            : 'text-gray-500 hover:text-white bg-gray-100 hover:bg-red-500 hover:shadow-md'
+                                                        }`}
+                                                    >
+                                                        <ShoppingCart size={14} /> Vender
+                                                    </button>
                                                 </td>
                                                 <td className="py-4 text-right" onClick={(e) => { e.stopPropagation(); handleStopClick(pos); }}>
                                                      <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-black cursor-pointer transition-all ${stopBadge.cls}`}>
@@ -512,6 +603,17 @@ export default function PortfolioTab({ isGlass, privacyMode, currencyView = 'USD
                 currencyView={currencyView}
                 isGlass={isGlass}
                 rate={rate}
+                onSellClick={() => {
+                    setIsModalOpen(false);
+                    setSellModalData({
+                        tipo: 'venta',
+                        cartera: selectedAsset.cartera,
+                        especie: selectedAsset.especie,
+                        cantidad: selectedAsset.cantidad.toString(),
+                        precioUnitario: selectedAsset.precioActualUSD.toString(),
+                        monedaPrecio: 'USD',
+                    });
+                }}
             />
             <StopLossModal 
                 isOpen={isStopModalOpen}
@@ -521,6 +623,13 @@ export default function PortfolioTab({ isGlass, privacyMode, currencyView = 'USD
                 currencyView={currencyView}
                 rate={rate}
             />
+            {sellModalData && (
+                <OperationModal
+                    onClose={() => setSellModalData(null)}
+                    isGlass={isGlass}
+                    initialData={sellModalData}
+                />
+            )}
             {vencimientoModal && (
                 <OperationModal
                     onClose={() => setVencimientoModal(null)}

@@ -1,4 +1,4 @@
-import { X, TrendingUp, TrendingDown, Info, DollarSign, Activity, Shield } from 'lucide-react';
+import { X, TrendingUp, TrendingDown, Info, DollarSign, Activity, Shield, ShoppingCart } from 'lucide-react';
 import { getAssetDescription } from '../../utils/assetDescriptions';
 import { useFinancial } from '../../context/FinancialContext';
 
@@ -13,7 +13,7 @@ const formatPercentage = (amount) => {
     return amount.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
 };
 
-export default function AssetDetailsModal({ isOpen, onClose, asset, currencyView, isGlass, rate }) {
+export default function AssetDetailsModal({ isOpen, onClose, asset, currencyView, isGlass, rate, onSellClick }) {
     if (!isOpen || !asset) return null;
 
     const textColor = isGlass ? 'text-white' : 'text-gray-800';
@@ -71,6 +71,16 @@ export default function AssetDetailsModal({ isOpen, onClose, asset, currencyView
                         </div>
                     </div>
                 </div>
+
+                {/* Sell Button */}
+                {onSellClick && (
+                    <button
+                        onClick={onSellClick}
+                        className="w-full mb-6 py-4 bg-green-500 hover:bg-green-600 text-white font-black rounded-2xl flex items-center justify-center gap-2 transition-all shadow-lg active:scale-95"
+                    >
+                        <ShoppingCart size={20} /> Vender Activo
+                    </button>
+                )}
 
                 {/* Performance Section */}
                 <div className={`p-5 rounded-2xl ${isGlass ? 'bg-white/5' : 'bg-gray-50'}`}>

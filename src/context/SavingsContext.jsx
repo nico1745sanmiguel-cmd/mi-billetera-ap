@@ -579,6 +579,55 @@ export const SavingsProvider = ({ children }) => {
         });
     }, [posiciones, stopLosses, updateMaxPrice]);
 
+    // ─── Calcular Liquidez por Cartera (Dinero en caja) ───────────────────────
+    const liquidezPorCartera = useMemo(() => {
+        const result = {};
+        
+        const sorted = (savingsTransactions || []).toSorted((a, b) => {
+            const dateA = new Date(a.fecha || a.createdAt?.toDate?.() || 0);
+            const dateB = new Date(b.fecha || b.createdAt?.toDate?.() || 0);
+            return dateA - dateB;
+        });
+
+        sorted.forEach(tx => {
+            const { cartera, tipo, especie, monedaPrecio } = tx;
+            if (!cartera) return;
+
+            if (!result[cartera]) {
+                result[cartera] = { ARS: 0, USD: 0 };
+            }
+
+            const cant = parseFloat(tx.cantidad) || 0;
+            const precio = parseFloat(tx.precioUnitario) || 0;
+            const espUpper = especie?.toUpperCase();
+            
+            if (tipo === 'deposito' || tipo === 'ingreso') {
+                if (espUpper === 'ARS') result[cartera].ARS += cant;
+                else if (espUpper === 'USD') result[cartera].USD += cant;
+            } else if (tipo === 'retiro' || tipo === 'egreso') {
+                if (espUpper === 'ARS') result[cartera].ARS -= cant;
+                else if (espUpper === 'USD') result[cartera].USD -= cant;
+            } else if (tipo === 'compra') {
+                const monto = cant * precio;
+                if (monedaPrecio === 'ARS') result[cartera].ARS -= monto;
+                else if (monedaPrecio === 'USD') result[cartera].USD -= monto;
+            } else if (tipo === 'venta') {
+                const monto = cant * precio;
+                if (monedaPrecio === 'ARS') result[cartera].ARS += monto;
+                else if (monedaPrecio === 'USD') result[cartera].USD += monto;
+            } else if (tipo === 'cobro_cupon' || tipo === 'amortizacion') {
+                const monto = precio; // En cobros guardamos el monto total en precioUnitario
+                if (monedaPrecio === 'ARS') result[cartera].ARS += monto;
+                else if (monedaPrecio === 'USD') result[cartera].USD += monto;
+            } else if (tipo === 'caucion') {
+                const montoARS = parseFloat(tx.montoARS) || 0;
+                result[cartera].ARS -= montoARS;
+            }
+        });
+
+        return result;
+    }, [savingsTransactions]);
+
     const value = useMemo(() => ({
         savingsTransactions,
         addSavingsTransaction,
@@ -592,6 +641,7 @@ export const SavingsProvider = ({ children }) => {
         // Nuevos valores FASE 1
         assetPrices,
         posiciones,
+        liquidezPorCartera,
         saveManualPrice,
         // Cauciones
         cauciones,
@@ -607,7 +657,7 @@ export const SavingsProvider = ({ children }) => {
     }), [
         savingsTransactions, addSavingsTransaction, updateSavingsTransaction, deleteSavingsTransaction,
         savingsGoal, goalLoading, saveSavingsGoal, deleteSavingsGoal, clearAllSavings,
-        assetPrices, posiciones, saveManualPrice, cauciones,
+        assetPrices, posiciones, liquidezPorCartera, saveManualPrice, cauciones,
         stopLosses, saveStopLoss, deleteStopLoss, updateMaxPrice,
         carterasPersonalizadas, addCartera, deleteCartera, migrateCarteraTransactions
     ]);
