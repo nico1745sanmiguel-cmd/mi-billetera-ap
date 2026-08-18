@@ -22,7 +22,7 @@ export default function MobilityHistory({ isGlass, privacyMode, month, year }) {
 
     // Totales del mes
     const totals = useMemo(() => ({
-        total:  filtered.reduce((a, s) => a + (s.total || 0), 0),
+        total:  filtered.reduce((a, s) => a + Number(s.total || 0), 0),
         days:   filtered.length,
     }), [filtered]);
 

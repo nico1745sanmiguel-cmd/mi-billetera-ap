@@ -40,14 +40,14 @@ export default function MobilityStats({ isGlass, privacyMode, month, year }) {
     // ─── KPIs ─────────────────────────────────────────────────────────────────
     const kpis = useMemo(() => {
         if (!filtered.length && !filteredExpenses.length) return null;
-        const totalEarnings = filtered.reduce((a, s) => a + (s.total || 0), 0);
+        const totalEarnings = filtered.reduce((a, s) => a + Number(s.total || 0), 0);
         const bestDay       = filtered.toSorted((a, b) => (b.total || 0) - (a.total || 0))[0];
         const daysWorked    = filtered.length;
         const avgPerDay     = daysWorked > 0 ? totalEarnings / daysWorked : 0;
 
         const platforms = Object.keys(settings?.activePlatforms || { uber: true, didi: true, cabify: true, others: true }).reduce((acc, key) => {
             if (settings?.activePlatforms[key]) {
-                const total = filtered.reduce((a, s) => a + (s[key] || 0), 0);
+                const total = filtered.reduce((a, s) => a + Number(s[key] || 0), 0);
                 if (total > 0) {
                     acc.push({ key, label: key === 'others' ? 'Otros' : key.charAt(0).toUpperCase() + key.slice(1), total });
                 }
@@ -72,14 +72,14 @@ export default function MobilityStats({ isGlass, privacyMode, month, year }) {
         filtered.forEach(s => {
             const w = getWeekKey(s.date);
             if (!weeksMap.has(w)) weeksMap.set(w, { total: 0, gastos: 0, days: 0 });
-            weeksMap.get(w).total += (s.total || 0);
+            weeksMap.get(w).total += Number(s.total || 0);
             weeksMap.get(w).days += 1;
         });
 
         filteredExpenses.forEach(e => {
             const w = getWeekKey(e.date);
             if (!weeksMap.has(w)) weeksMap.set(w, { total: 0, gastos: 0, days: 0 });
-            weeksMap.get(w).gastos += (e.amount || 0);
+            weeksMap.get(w).gastos += Number(e.amount || 0);
             weeksMap.get(w).days += 1;
         });
 
@@ -93,7 +93,7 @@ export default function MobilityStats({ isGlass, privacyMode, month, year }) {
         // Gastos del mes por categoría (usando las de settings)
         const cats = settings?.expenseCategories || [];
         const expenseByCategory = cats.flatMap(cat => {
-            const total = filteredExpenses.reduce((a, e) => e.category === cat.id ? a + (e.amount || 0) : a, 0);
+            const total = filteredExpenses.reduce((a, e) => e.category === cat.id ? a + Number(e.amount || 0) : a, 0);
             if (total > 0) {
                 return [{
                     ...cat,
@@ -104,7 +104,7 @@ export default function MobilityStats({ isGlass, privacyMode, month, year }) {
             return [];
         });
 
-        const totalExpenses = filteredExpenses.reduce((a, e) => a + (e.amount || 0), 0);
+        const totalExpenses = filteredExpenses.reduce((a, e) => a + Number(e.amount || 0), 0);
         const netEarnings   = totalEarnings - totalExpenses;
         const profitMargin  = totalEarnings > 0 ? (netEarnings / totalEarnings) * 100 : 0;
 
@@ -119,8 +119,8 @@ export default function MobilityStats({ isGlass, privacyMode, month, year }) {
             while (m < 0)  { m += 12; y--; }
             while (m > 11) { m -= 12; y++; }
             const key = `${y}-${String(m + 1).padStart(2, '0')}`;
-            const total = sessions.reduce((a, s) => s.date?.startsWith(key) ? a + (s.total || 0) : a, 0);
-            const gastos = (expenses || []).reduce((a, e) => e.date?.startsWith(key) ? a + (e.amount || 0) : a, 0);
+            const total = sessions.reduce((a, s) => s.date?.startsWith(key) ? a + Number(s.total || 0) : a, 0);
+            const gastos = (expenses || []).reduce((a, e) => e.date?.startsWith(key) ? a + Number(e.amount || 0) : a, 0);
             return { label: MONTHS[m].slice(0, 3), total, gastos, key };
         });
     }, [sessions, expenses, month, year]);
