@@ -1,18 +1,9 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
-import { db } from '../firebase';
-import { collection, onSnapshot, query, where, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from 'firebase/firestore';
 import { getCache, setCache } from '../utils/cache';
-import { COLLECTIONS, CACHE_KEYS } from '../config/constants';
+import { CACHE_KEYS } from '../config/constants';
 import { useFinancial } from './FinancialContext';
 import { useUIDispatch } from './UIContext';
-import { sanitizeFinancialData } from '../utils/security';
-
-const getDayOfWeek = (dateStr) => {
-    if (!dateStr) return 'lunes';
-    const days = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
-    const d = new Date(dateStr + 'T12:00:00');
-    return days[d.getDay()];
-};
+import { mobilityRepository } from '../repositories/mobilityRepository';
 
 const MobilityStateContext = createContext(null);
 const MobilityDispatchContext = createContext(null);
@@ -60,7 +51,6 @@ export const MobilityProvider = ({ children }) => {
     const [loadingExpenses, setLoadingExpenses] = useState(true);
 
     // ─── AJUSTES ──────────────────────────────────────────────────────────────
-    
     const [settings, setSettings] = useState(() => {
         const cached = getCache(CACHE_KEYS.MOBILITY_SETTINGS);
         if (!cached) return DEFAULT_SETTINGS;
@@ -89,22 +79,19 @@ export const MobilityProvider = ({ children }) => {
     useEffect(() => {
         if (!user) { setLoadingSessions(false); return; }
 
-        const q = query(
-            collection(db, COLLECTIONS.MOBILITY_SESSIONS),
-            where('userId', '==', user.uid)
+        const unsub = mobilityRepository.subscribeToSessions(
+            user.uid,
+            (data) => {
+                setSessions(data);
+                setCache(CACHE_KEYS.MOBILITY_SESSIONS, data);
+                setLoadingSessions(false);
+            },
+            (error) => {
+                console.error('Mobility sessions error:', error);
+                showToast('Error de conexión al sincronizar Jornadas de Movilidad.', 'error');
+                setLoadingSessions(false);
+            }
         );
-
-        const unsub = onSnapshot(q, (snap) => {
-            const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-            data.sort((a, b) => b.date.localeCompare(a.date));
-            setSessions(data);
-            setCache(CACHE_KEYS.MOBILITY_SESSIONS, data);
-            setLoadingSessions(false);
-        }, (error) => {
-            console.error('Mobility sessions error:', error);
-            showToast('Error de conexión al sincronizar Jornadas de Movilidad.', 'error');
-            setLoadingSessions(false);
-        });
 
         return () => unsub();
     }, [user, showToast]);
@@ -113,87 +100,50 @@ export const MobilityProvider = ({ children }) => {
     useEffect(() => {
         if (!user) { setLoadingExpenses(false); return; }
 
-        const q = query(
-            collection(db, COLLECTIONS.MOBILITY_EXPENSES),
-            where('userId', '==', user.uid)
+        const unsub = mobilityRepository.subscribeToExpenses(
+            user.uid,
+            (data) => {
+                setExpenses(data);
+                setCache(CACHE_KEYS.MOBILITY_EXPENSES, data);
+                setLoadingExpenses(false);
+            },
+            (error) => {
+                console.error('Mobility expenses error:', error);
+                showToast('Error de conexión al sincronizar Gastos de Movilidad.', 'error');
+                setLoadingExpenses(false);
+            }
         );
-
-        const unsub = onSnapshot(q, (snap) => {
-            const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-            data.sort((a, b) => b.date.localeCompare(a.date));
-            setExpenses(data);
-            setCache(CACHE_KEYS.MOBILITY_EXPENSES, data);
-            setLoadingExpenses(false);
-        }, (error) => {
-            console.error('Mobility expenses error:', error);
-            showToast('Error de conexión al sincronizar Gastos de Movilidad.', 'error');
-            setLoadingExpenses(false);
-        });
 
         return () => unsub();
     }, [user, showToast]);
 
-    // ─── CAMPOS DERIVADOS (jornadas) ──────────────────────────────────────────
-    const buildPayload = useCallback((formData) => {
-        const safeData = sanitizeFinancialData(formData, ['uber', 'didi', 'cabify', 'others', 'hoursWorked', 'kilometers'], false);
-
-        const uber    = safeData.uber    || 0;
-        const didi    = safeData.didi    || 0;
-        const cabify  = safeData.cabify  || 0;
-        const others  = safeData.others  || 0;
-        const total   = uber + didi + cabify + others;
-        const hours   = safeData.hoursWorked || 0;
-        const km      = safeData.kilometers  || 0;
-
-        return {
-            date:            safeData.date,
-            dayOfWeek:       safeData.dayOfWeek || getDayOfWeek(safeData.date),
-            hoursWorked:     hours,
-            kilometers:      km,
-            uber,
-            didi,
-            cabify,
-            others,
-            total,
-            earningsPerHour: hours > 0 ? parseFloat((total / hours).toFixed(2)) : 0,
-            earningsPerKm:   km    > 0 ? parseFloat((total / km).toFixed(2))    : 0,
-        };
-    }, []);
-
-
     // ─── CRUD JORNADAS ────────────────────────────────────────────────────────
     const addSession = useCallback(async (formData) => {
         if (!user) return;
-        const payload = {
-            ...buildPayload(formData),
-            userId: user.uid,
-            createdAt: serverTimestamp(),
-        };
         try {
-            await addDoc(collection(db, COLLECTIONS.MOBILITY_SESSIONS), payload);
+            await mobilityRepository.addSession(user.uid, formData);
         } catch (error) {
             console.error('Error adding session:', error);
             showToast('Hubo un error al registrar la jornada de movilidad.', 'error');
             throw error;
         }
-    }, [user, buildPayload, showToast]);
+    }, [user, showToast]);
 
     const updateSession = useCallback(async (id, formData) => {
         if (!user) return;
-        const payload = buildPayload(formData);
         try {
-            await updateDoc(doc(db, COLLECTIONS.MOBILITY_SESSIONS, id), payload);
+            await mobilityRepository.updateSession(id, formData);
         } catch (error) {
             console.error('Error updating session:', error);
             showToast('Hubo un error al actualizar la jornada.', 'error');
             throw error;
         }
-    }, [user, buildPayload, showToast]);
+    }, [user, showToast]);
 
     const deleteSession = useCallback(async (id) => {
         if (!user) return;
         try {
-            await deleteDoc(doc(db, COLLECTIONS.MOBILITY_SESSIONS, id));
+            await mobilityRepository.deleteSession(id);
         } catch (error) {
             console.error('Error deleting session:', error);
             showToast('Hubo un error al eliminar la jornada.', 'error');
@@ -204,12 +154,7 @@ export const MobilityProvider = ({ children }) => {
     const deleteAllSessions = useCallback(async () => {
         if (!user) return;
         try {
-            const { writeBatch } = await import('firebase/firestore');
-            const batch = writeBatch(db);
-            for (const session of sessions) {
-                batch.delete(doc(db, COLLECTIONS.MOBILITY_SESSIONS, session.id));
-            }
-            await batch.commit();
+            await mobilityRepository.deleteAllSessions(sessions);
         } catch (error) {
             console.error('Error deleting all sessions:', error);
             showToast('Hubo un error al eliminar las jornadas.', 'error');
@@ -219,40 +164,14 @@ export const MobilityProvider = ({ children }) => {
 
     const importSessions = useCallback(async (rows) => {
         if (!user) return { ok: 0, errors: 0 };
-        let ok = 0, errors = 0;
-        const promises = rows.map(async (row) => {
-            try {
-                const payload = {
-                    ...buildPayload(row),
-                    userId: user.uid,
-                    createdAt: serverTimestamp(),
-                    importedFromCSV: true,
-                };
-                await addDoc(collection(db, COLLECTIONS.MOBILITY_SESSIONS), payload);
-                return { status: 'fulfilled' };
-            } catch (e) {
-                console.error('Import error for row:', row, e);
-                return { status: 'rejected' };
-            }
-        });
-        const results = await Promise.all(promises);
-        results.forEach(res => res.status === 'fulfilled' ? ok++ : errors++);
-        return { ok, errors };
-    }, [user, buildPayload]);
+        return await mobilityRepository.importSessions(user.uid, rows);
+    }, [user]);
 
     // ─── CRUD GASTOS ──────────────────────────────────────────────────────────
-    const addExpense = useCallback(async ({ date, category, amount, notes = '' }) => {
+    const addExpense = useCallback(async (expenseData) => {
         if (!user) return;
-        const safeData = sanitizeFinancialData({ amount }, ['amount'], false);
         try {
-            await addDoc(collection(db, COLLECTIONS.MOBILITY_EXPENSES), {
-                date,
-                category,
-                amount: safeData.amount,
-                notes,
-                userId: user.uid,
-                createdAt: serverTimestamp(),
-            });
+            await mobilityRepository.addExpense(user.uid, expenseData);
         } catch (error) {
             console.error('Error adding expense:', error);
             showToast('Hubo un error al registrar el gasto.', 'error');
@@ -260,16 +179,10 @@ export const MobilityProvider = ({ children }) => {
         }
     }, [user, showToast]);
 
-    const updateExpense = useCallback(async (id, data) => {
+    const updateExpense = useCallback(async (id, expenseData) => {
         if (!user) return;
-        const safeData = sanitizeFinancialData({ amount: data.amount }, ['amount'], false);
         try {
-            await updateDoc(doc(db, COLLECTIONS.MOBILITY_EXPENSES, id), {
-                date: data.date,
-                category: data.category,
-                amount: safeData.amount,
-                notes: data.notes || '',
-            });
+            await mobilityRepository.updateExpense(id, expenseData);
         } catch (error) {
             console.error('Error updating expense:', error);
             showToast('Hubo un error al actualizar el gasto.', 'error');
@@ -280,7 +193,7 @@ export const MobilityProvider = ({ children }) => {
     const deleteExpense = useCallback(async (id) => {
         if (!user) return;
         try {
-            await deleteDoc(doc(db, COLLECTIONS.MOBILITY_EXPENSES, id));
+            await mobilityRepository.deleteExpense(id);
         } catch (error) {
             console.error('Error deleting expense:', error);
             showToast('Hubo un error al eliminar el gasto.', 'error');
@@ -288,12 +201,13 @@ export const MobilityProvider = ({ children }) => {
         }
     }, [user, showToast]);
 
+    const getDayOfWeek = mobilityRepository.getDayOfWeek;
+
     const stateValue = useMemo(() => ({
         sessions,
         expenses,
         loading,
         settings,
-         
     }), [sessions, expenses, loading, settings]);
 
     const dispatchValue = useMemo(() => ({
@@ -307,8 +221,7 @@ export const MobilityProvider = ({ children }) => {
         deleteExpense,
         getDayOfWeek,
         updateSettings,
-         
-    }), [addSession, updateSession, deleteSession, deleteAllSessions, importSessions, addExpense, updateExpense, deleteExpense, updateSettings]);
+    }), [addSession, updateSession, deleteSession, deleteAllSessions, importSessions, addExpense, updateExpense, deleteExpense, updateSettings, getDayOfWeek]);
 
     return (
         <MobilityDispatchContext.Provider value={dispatchValue}>
