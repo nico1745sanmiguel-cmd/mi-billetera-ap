@@ -1,11 +1,35 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { ShoppingCart, Plus, Check } from 'lucide-react';
 import { formatMoney } from '../../../utils';
 import { addSuperItem } from '../../../repositories/supermarketRepository';
 import { useAuth } from '../../../context/AuthContext';
 import { useUIDispatch } from '../../../context/UIContext';
+import { useSupermarket } from '../../../context/SupermarketContext';
 
-export default function SuperActionsWidget({ superData, privacyMode, setView, size = '1x1', targetMonthKey }) {
+export default function SuperActionsWidget({ privacyMode, setView, size = '1x1', targetMonthKey }) {
+    const { superItems: supermarketItems } = useSupermarket();
+
+    const superData = useMemo(() => {
+        const monthlyItems = supermarketItems.filter(item => {
+            if (item.month) return item.month === targetMonthKey;
+            const realNow = new Date();
+            const realKey = `${realNow.getFullYear()}-${String(realNow.getMonth() + 1).padStart(2, '0')}`;
+            return targetMonthKey === realKey;
+        });
+
+        const rawBudget = monthlyItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+        const realSpent = monthlyItems.filter(i => i.checked).reduce((acc, item) => acc + (item.price * item.quantity), 0);
+        const hasStartedShopping = monthlyItems.some(i => i.checked);
+
+        const totalBudget = hasStartedShopping ? realSpent : rawBudget;
+        const showAmount = hasStartedShopping ? realSpent : totalBudget;
+        const label = hasStartedShopping ? 'En Carrito (Gastado)' : 'Presupuesto Estimado';
+        const statusColor = hasStartedShopping ? 'text-gray-900' : 'text-gray-400';
+        const percent = rawBudget > 0 ? (realSpent / rawBudget) * 100 : 0;
+
+        return { totalBudget, realSpent, percent, showAmount, label, statusColor, rawBudget };
+    }, [supermarketItems, targetMonthKey]);
+
     const { showToast } = useUIDispatch();
     const showMoney = (amount) => privacyMode ? '****' : formatMoney(amount);
     const { user, userData } = useAuth();

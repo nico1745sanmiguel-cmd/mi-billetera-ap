@@ -23,16 +23,15 @@ import { useCards } from '../../context/CardsContext';
 import { useSupermarket } from '../../context/SupermarketContext';
 import { useServices } from '../../context/ServicesContext';
 
-// Import new Widgets
-import SplitSummaryWidget from './Widgets/SplitSummaryWidget';
-import SavingsWidget from './Widgets/SavingsWidget';
-import CardsWidget from './Widgets/CardsWidget';
-import AgendaWidget from './Widgets/AgendaWidget';
-import SuperActionsWidget from './Widgets/SuperActionsWidget';
-import NotificationsModal from './Widgets/NotificationsModal';
-import MobilityWidget from './Widgets/MobilityWidget';
-import SalaryWidget from './Widgets/SalaryWidget';
-import PlannerWidget from './Widgets/PlannerWidget';
+const SplitSummaryWidget = React.lazy(() => import('./Widgets/SplitSummaryWidget'));
+const SavingsWidget = React.lazy(() => import('./Widgets/SavingsWidget'));
+const CardsWidget = React.lazy(() => import('./Widgets/CardsWidget'));
+const AgendaWidget = React.lazy(() => import('./Widgets/AgendaWidget'));
+const SuperActionsWidget = React.lazy(() => import('./Widgets/SuperActionsWidget'));
+const NotificationsModal = React.lazy(() => import('./Widgets/NotificationsModal'));
+const MobilityWidget = React.lazy(() => import('./Widgets/MobilityWidget'));
+const SalaryWidget = React.lazy(() => import('./Widgets/SalaryWidget'));
+const PlannerWidget = React.lazy(() => import('./Widgets/PlannerWidget'));
 import { isModuleEnabled } from '../../utils/modulesUtils';
 import { WidgetGrid } from './WidgetSystem';
 
@@ -264,10 +263,10 @@ const Home = memo(({ onLogout, notifications = EMPTY_ARRAY, onCardClick }) => {
         ...(isModuleEnabled('savings') ? { savings_summary: (size) => <SavingsWidget setView={(path) => navigate(`/${path}`)} privacyMode={privacyMode} size={size} /> } : {}),
         ...(isModuleEnabled('mobility') ? { mobility: (size) => <MobilityWidget setView={(path) => navigate(`/${path}`)} currentDate={currentDate} privacyMode={privacyMode} size={size} /> } : {}),
         ...(isModuleEnabled('salary') ? { salary: (size) => <SalaryWidget setView={(path) => navigate(`/${path}`)} privacyMode={privacyMode} size={size} /> } : {}),
-        ...(isModuleEnabled('household') ? { split_summary: (size) => <SplitSummaryWidget setView={(path) => navigate(`/${path}`)} householdMembers={householdMembers} splitData={splitData} currentDate={currentDate} privacyMode={privacyMode} user={user} size={size} /> } : {}),
+        ...(isModuleEnabled('household') ? { split_summary: (size) => <SplitSummaryWidget setView={(path) => navigate(`/${path}`)} householdMembers={householdMembers} currentDate={currentDate} privacyMode={privacyMode} user={user} size={size} targetMonthKey={targetMonthKey} targetMonthVal={targetMonthVal} /> } : {}),
         ...(isModuleEnabled('cards') ? { cards: (size) => <CardsWidget cards={cards} targetMonthKey={targetMonthKey} privacyMode={privacyMode} onCardClick={openCardModal} size={size} /> } : {}),
-        ...(isModuleEnabled('agenda') ? { agenda: (size) => <AgendaWidget agenda={agenda} currentDate={currentDate} privacyMode={privacyMode} setView={(path) => navigate(`/${path}`)} freshItems={freshItems} plannerCategories={plannerCategories} onTogglePaid={handleToggleAgendaPaid} size={size} /> } : {}),
-        ...(isModuleEnabled('supermarket') ? { super_actions: (size) => <SuperActionsWidget size={size} superData={superData} privacyMode={privacyMode} setView={(path) => navigate(`/${path}`)} targetMonthKey={targetMonthKey} /> } : {}),
+        ...(isModuleEnabled('agenda') ? { agenda: (size) => <AgendaWidget currentDate={currentDate} privacyMode={privacyMode} setView={(path) => navigate(`/${path}`)} onTogglePaid={handleToggleAgendaPaid} size={size} targetMonthKey={targetMonthKey} targetMonthVal={targetMonthVal} /> } : {}),
+        ...(isModuleEnabled('supermarket') ? { super_actions: (size) => <SuperActionsWidget size={size} privacyMode={privacyMode} setView={(path) => navigate(`/${path}`)} targetMonthKey={targetMonthKey} /> } : {}),
         ...(isModuleEnabled('planner') ? { planner_access: (size) => <PlannerWidget setView={(path) => navigate(`/${path}`)} size={size} /> } : {}),
     };
 
@@ -314,14 +313,16 @@ const Home = memo(({ onLogout, notifications = EMPTY_ARRAY, onCardClick }) => {
                     splitData={splitData}
                 />
             ) : (
-                <WidgetGrid
-                    order={order}
-                    getWidgetNode={getWidgetNode}
-                    getSize={getSize}
-                    toggleSize={toggleSize}
-                    getDragProps={getDragProps}
-                    draggingItem={draggingItem}
-                />
+                <React.Suspense fallback={<div className="h-40 animate-pulse bg-gray-100 dark:bg-white/5 rounded-3xl flex items-center justify-center text-xs text-gray-400">Cargando módulos...</div>}>
+                    <WidgetGrid
+                        order={order}
+                        getWidgetNode={getWidgetNode}
+                        getSize={getSize}
+                        toggleSize={toggleSize}
+                        getDragProps={getDragProps}
+                        draggingItem={draggingItem}
+                    />
+                </React.Suspense>
             )}
 
 

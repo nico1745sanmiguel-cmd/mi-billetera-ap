@@ -1,6 +1,11 @@
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
 import { CalendarDays, PartyPopper, LayoutList, CalendarRange, CheckCircle2, RotateCcw } from 'lucide-react';
 import { formatMoney } from '../../../utils';
+import { useServices } from '../../../context/ServicesContext';
+import { useCards } from '../../../context/CardsContext';
+import { useSupermarket } from '../../../context/SupermarketContext';
+import { buildCardsWithDebt } from '../../../utils/cardDebtUtils';
+import { AGENDA_MAX_ITEMS } from '../../../config/constants';
 
 // Mapa de colores de categoría del planificador (mismo que ServicesManager)
 const PLANNER_COLOR_MAP = {
@@ -69,9 +74,33 @@ function UndoToast({ toast, onUndo, onDismiss }) {
     );
 }
 
-const EMPTY_ARRAY = [];
+export default function AgendaWidget({ currentDate, privacyMode, setView, onTogglePaid, size, targetMonthKey, targetMonthVal }) {
+    const { services } = useServices();
+    const { cards, transactions } = useCards();
+    const { freshItems, plannerCategories } = useSupermarket();
 
-export default function AgendaWidget({ agenda, currentDate, privacyMode, setView, freshItems = EMPTY_ARRAY, plannerCategories = EMPTY_ARRAY, onTogglePaid, size }) {
+    const cardsWithDebt = useMemo(() => {
+        return buildCardsWithDebt(cards, transactions, targetMonthKey, targetMonthVal);
+    }, [cards, transactions, targetMonthKey, targetMonthVal]);
+
+    const agenda = useMemo(() => {
+        const realServices = services.map(s => ({ id: s.id, name: s.name, amount: s.amount, day: s.day, isPaid: s.paidPeriods?.includes(targetMonthKey) || false, type: 'service' }));
+        const cardServices = cardsWithDebt.flatMap(c => c.currentDebt > 0 ? [{
+            id: c.id,
+            name: c.name,
+            amount: c.currentDebt,
+            day: c.dueDay || 10,
+            isPaid: c.paidPeriods?.includes(targetMonthKey) || false,
+            type: 'card_item',
+            bank: c.bank
+        }] : []);
+
+        return [...realServices, ...cardServices]
+            .sort((a, b) => a.day - b.day)
+            .filter(item => !item.isPaid)
+            .slice(0, AGENDA_MAX_ITEMS);
+    }, [services, cardsWithDebt, targetMonthKey]);
+
     const showMoney = (amount) => privacyMode ? '****' : formatMoney(amount);
 
     const [viewMode, setViewMode] = useState(() => {
