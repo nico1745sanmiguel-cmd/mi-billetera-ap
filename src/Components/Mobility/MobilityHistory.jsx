@@ -23,8 +23,6 @@ export default function MobilityHistory({ isGlass, privacyMode, month, year }) {
     // Totales del mes
     const totals = useMemo(() => ({
         total:  filtered.reduce((a, s) => a + (s.total || 0), 0),
-        hours:  filtered.reduce((a, s) => a + (s.hoursWorked || 0), 0),
-        km:     filtered.reduce((a, s) => a + (s.kilometers || 0), 0),
         days:   filtered.length,
     }), [filtered]);
 
@@ -56,12 +54,10 @@ export default function MobilityHistory({ isGlass, privacyMode, month, year }) {
         <div className="space-y-4">
             {/* RESUMEN DEL MES */}
             {filtered.length > 0 && (
-                <div className={`${card} grid grid-cols-4 gap-2 text-center`}>
+                <div className={`${card} grid grid-cols-2 gap-2 text-center`}>
                     {[
                         { label: 'Jornadas', value: totals.days },
-                        { label: 'Total',    value: privacyMode ? '••••' : fmt(totals.total) },
-                        { label: 'Horas',    value: `${totals.hours}h` },
-                        { label: 'KM',       value: `${totals.km}` },
+                        { label: 'Ingreso Bruto', value: privacyMode ? '••••' : fmt(totals.total) },
                     ].map(({ label, value }) => (
                         <div key={label}>
                             <p className={`text-base font-bold ${text}`}>{value}</p>
@@ -116,13 +112,6 @@ export default function MobilityHistory({ isGlass, privacyMode, month, year }) {
                                             {session.didi   > 0 && <PlatformBadge label="DiDi"   value={session.didi}   privacyMode={privacyMode} color="bg-orange-500 text-white" />}
                                             {session.cabify > 0 && <PlatformBadge label="Cabify" value={session.cabify} privacyMode={privacyMode} color="bg-purple-600 text-white" />}
                                             {session.others > 0 && <PlatformBadge label="Otros"  value={session.others} privacyMode={privacyMode} color="bg-gray-500 text-white" />}
-                                        </div>
-
-                                        {/* MÉTRICAS */}
-                                        <div className={`flex gap-3 text-xs ${sub}`}>
-                                            {session.hoursWorked > 0 && <span>⏱ {session.hoursWorked}h</span>}
-                                            {session.kilometers  > 0 && <span>🛣 {session.kilometers}km</span>}
-                                            {session.earningsPerHour > 0 && <span>💵 {privacyMode ? '••' : `$${Number(session.earningsPerHour).toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}/hr`}</span>}
                                         </div>
                                     </div>
 

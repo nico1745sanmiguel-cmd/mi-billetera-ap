@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { TrendingUp, Clock, Navigation, Star, Zap, Fuel, Wrench, Droplets } from 'lucide-react';
+import { TrendingUp, Calendar, Percent, Star, Zap, Fuel, Wrench, Droplets } from 'lucide-react';
 import { useMobilityState } from '../../context/MobilityContext';
 import MobilityTrendChart from './MobilityTrendChart';
 import MobilityWeeklyBreakdown from './MobilityWeeklyBreakdown';
@@ -41,11 +41,9 @@ export default function MobilityStats({ isGlass, privacyMode, month, year }) {
     const kpis = useMemo(() => {
         if (!filtered.length && !filteredExpenses.length) return null;
         const totalEarnings = filtered.reduce((a, s) => a + (s.total || 0), 0);
-        const totalHours    = filtered.reduce((a, s) => a + (s.hoursWorked || 0), 0);
-        const totalKm       = filtered.reduce((a, s) => a + (s.kilometers || 0), 0);
         const bestDay       = filtered.toSorted((a, b) => (b.total || 0) - (a.total || 0))[0];
-        const avgPerHour    = totalHours > 0 ? totalEarnings / totalHours : 0;
-        const avgPerKm      = totalKm    > 0 ? totalEarnings / totalKm    : 0;
+        const daysWorked    = filtered.length;
+        const avgPerDay     = daysWorked > 0 ? totalEarnings / daysWorked : 0;
 
         const platforms = Object.keys(settings?.activePlatforms || { uber: true, didi: true, cabify: true, others: true }).reduce((acc, key) => {
             if (settings?.activePlatforms[key]) {
@@ -108,8 +106,9 @@ export default function MobilityStats({ isGlass, privacyMode, month, year }) {
 
         const totalExpenses = filteredExpenses.reduce((a, e) => a + (e.amount || 0), 0);
         const netEarnings   = totalEarnings - totalExpenses;
+        const profitMargin  = totalEarnings > 0 ? (netEarnings / totalEarnings) * 100 : 0;
 
-        return { totalEarnings, totalHours, totalKm, bestDay, avgPerHour, avgPerKm, platforms, weeks, expenseByCategory, totalExpenses, netEarnings };
+        return { totalEarnings, bestDay, daysWorked, avgPerDay, platforms, weeks, expenseByCategory, totalExpenses, netEarnings, profitMargin };
     }, [filtered, filteredExpenses, settings]);
 
     // ─── Últimos 6 meses para tendencia ──────────────────────────────────────
@@ -152,23 +151,23 @@ export default function MobilityStats({ isGlass, privacyMode, month, year }) {
                             isGlass={isGlass}
                         />
                         <KpiCard
-                            icon={<Clock size={18} />}
-                            label="Horas trabajadas"
-                            value={`${kpis.totalHours}h`}
+                            icon={<Calendar size={18} />}
+                            label="Días trabajados"
+                            value={kpis.daysWorked.toString()}
                             accent="indigo"
                             isGlass={isGlass}
                         />
                         <KpiCard
-                            icon={<span className="text-sm font-bold">$/h</span>}
-                            label="Por hora"
-                            value={privacyMode ? '••' : fmt(kpis.avgPerHour)}
+                            icon={<span className="text-sm font-bold">$/D</span>}
+                            label="Promedio diario"
+                            value={privacyMode ? '••••' : fmt(kpis.avgPerDay)}
                             accent="purple"
                             isGlass={isGlass}
                         />
                         <KpiCard
-                            icon={<Navigation size={18} />}
-                            label="Por km"
-                            value={privacyMode ? '••' : `$${kpis.avgPerKm.toFixed(2)}`}
+                            icon={<Percent size={18} />}
+                            label="Margen neto"
+                            value={privacyMode ? '••' : `${kpis.profitMargin.toFixed(1)}%`}
                             accent="blue"
                             isGlass={isGlass}
                         />

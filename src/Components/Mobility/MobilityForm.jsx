@@ -17,8 +17,6 @@ const CONFIRM_KEY = STORAGE_KEY + '_confirmed';
 
 const emptyForm = (date) => ({
     date: date || today(),
-    hoursWorked: '',
-    kilometers: '',
     uber: '',
     didi: '',
     cabify: '',
@@ -109,10 +107,6 @@ export default function MobilityForm({ isGlass, onSuccess, initialData = null, o
     const cabify = parseFloat(form.cabify) || 0;
     const others = parseFloat(form.others) || 0;
     const total  = uber + didi + cabify + others;
-    const hours  = parseFloat(form.hoursWorked) || 0;
-    const km     = parseFloat(form.kilometers)  || 0;
-    const perHour = hours > 0 ? (total / hours).toFixed(0) : '—';
-    const perKm   = km    > 0 ? (total / km).toFixed(2)    : '—';
 
     const setField = useCallback((field, val) => {
         setDrafts(prev => ({
@@ -304,40 +298,16 @@ export default function MobilityForm({ isGlass, onSuccess, initialData = null, o
             {/* FECHA Y LOGÍSTICA */}
             <div className={`rounded-2xl p-4 space-y-4 ${isGlass ? 'bg-white/10 border border-white/10' : 'bg-white shadow-sm border border-gray-100'}`}>
                 <h3 className={`font-bold text-sm ${isGlass ? 'text-white' : 'text-gray-700'}`}>📅 {isEdit ? 'Jornada' : 'Datos del día'}</h3>
-                <div className="grid grid-cols-3 gap-3">
-                    <div className="col-span-1">
-                        <label className={labelCls} htmlFor="mobDate">Fecha</label>
-                        <input autoComplete="off"
-                            id="mobDate"
-                            type="date"
-                            value={form.date}
-                            onChange={e => handleDateChange(form.date, e.target.value)}
-                            className={inputCls}
-                            required
-                        />
-                    </div>
-                    <div>
-                        <label className={labelCls} htmlFor="mobHours">Horas</label>
-                        <CurrencyInput autoComplete="off"
-                            id="mobHours"
-                            value={form.hoursWorked}
-                            onChange={val => setField('hoursWorked', val)}
-                            placeholder="8"
-                            allowDecimals={true}
-                            className={inputCls}
-                        />
-                    </div>
-                    <div>
-                        <label className={labelCls} htmlFor="mobKm">KM</label>
-                        <CurrencyInput autoComplete="off"
-                            id="mobKm"
-                            value={form.kilometers}
-                            onChange={val => setField('kilometers', val)}
-                            placeholder="120"
-                            allowDecimals={false}
-                            className={inputCls}
-                        />
-                    </div>
+                <div>
+                    <label className={labelCls} htmlFor="mobDate">Fecha</label>
+                    <input autoComplete="off"
+                        id="mobDate"
+                        type="date"
+                        value={form.date}
+                        onChange={e => handleDateChange(form.date, e.target.value)}
+                        className={inputCls}
+                        required
+                    />
                 </div>
             </div>
 
@@ -436,22 +406,9 @@ export default function MobilityForm({ isGlass, onSuccess, initialData = null, o
 
             {/* PREVIEW DE TOTALES */}
             {total > 0 && (
-                <div className={`rounded-2xl p-4 ${isGlass ? 'bg-violet-500/20 border border-violet-400/30' : 'bg-violet-50 border border-violet-100'}`}>
-                    <p className={`text-xs font-semibold uppercase mb-3 ${isGlass ? 'text-violet-300' : 'text-violet-500'}`}>Vista previa del día</p>
-                    <div className="grid grid-cols-3 gap-2 text-center">
-                        <div>
-                            <p className={`text-lg font-bold ${isGlass ? 'text-white' : 'text-gray-800'}`}>${total.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</p>
-                            <p className={`text-xs ${isGlass ? 'text-white/50' : 'text-gray-400'}`}>Total</p>
-                        </div>
-                        <div>
-                            <p className={`text-lg font-bold ${isGlass ? 'text-white' : 'text-gray-800'}`}>${perHour !== '—' ? Number(perHour).toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) : '—'}</p>
-                            <p className={`text-xs ${isGlass ? 'text-white/50' : 'text-gray-400'}`}>por hora</p>
-                        </div>
-                        <div>
-                            <p className={`text-lg font-bold ${isGlass ? 'text-white' : 'text-gray-800'}`}>${perKm}</p>
-                            <p className={`text-xs ${isGlass ? 'text-white/50' : 'text-gray-400'}`}>por km</p>
-                        </div>
-                    </div>
+                <div className={`rounded-2xl p-4 text-center ${isGlass ? 'bg-violet-500/20 border border-violet-400/30' : 'bg-violet-50 border border-violet-100'}`}>
+                    <p className={`text-xs font-semibold uppercase mb-1 ${isGlass ? 'text-violet-300' : 'text-violet-500'}`}>Ingreso Bruto Total</p>
+                    <p className={`text-2xl font-bold ${isGlass ? 'text-white' : 'text-gray-800'}`}>${total.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</p>
                 </div>
             )}
 
