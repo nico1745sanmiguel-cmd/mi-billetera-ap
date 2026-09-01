@@ -87,6 +87,7 @@ const SavingsGoalView = ({
                     </div>
                 </div>
                 <button type="button"
+                    aria-label="Editar objetivo de ahorro"
                     onClick={openEdit}
                     className={`p-3 rounded-2xl transition-all ${
                         isGlass ? 'bg-white/5 hover:bg-white/20 text-white' : 'bg-gray-50 hover:bg-gray-200 text-gray-600'
@@ -216,7 +217,7 @@ const SavingsGoalView = ({
                 )}
             </div>
 
-            <button aria-label="Acción" type="button"
+            <button aria-label="Eliminar objetivo de ahorro" type="button"
                 onClick={handleDelete}
                 disabled={saving}
                 className={`w-full py-4 text-xs font-bold uppercase tracking-wider transition-colors border-t relative z-20 ${

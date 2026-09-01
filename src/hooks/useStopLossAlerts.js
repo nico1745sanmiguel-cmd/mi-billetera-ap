@@ -52,7 +52,10 @@ export function useStopLossAlerts() {
                     // ── 1. Guardar en la colección de notificaciones de Firestore (sistema existente) ──
                     saveFirestoreNotification(user, householdId, pos.especie, pos.cartera, currentPrice, stopPrice);
 
-                    // ── 2. Emitir sonido de alerta ──
+                    // ── 2. Emitir notificación nativa del navegador ──
+                    dispatchNativeNotification(pos.especie, pos.cartera, currentPrice, stopPrice);
+
+                    // ── 3. Emitir sonido de alerta ──
                     playAlarmSound();
                 }
             }
@@ -60,6 +63,22 @@ export function useStopLossAlerts() {
 
         lastPosicionesRef.current = posiciones;
     }, [posiciones, stopLosses, user, userData]);
+}
+
+/**
+ * Despacha una notificación visual de escritorio del navegador si cuenta con permisos.
+ */
+function dispatchNativeNotification(especie, cartera, currentPrice, stopPrice) {
+    try {
+        if ('Notification' in window && Notification.permission === 'granted') {
+            new Notification(`⚠️ Stop Loss Activado: ${especie}`, {
+                body: `${especie} en ${cartera} cayó a USD ${currentPrice.toFixed(2)}, por debajo del nivel de Stop Loss (USD ${stopPrice.toFixed(2)}).`,
+                icon: '/favicon.ico'
+            });
+        }
+    } catch (e) {
+        console.warn('[StopLossAlerts] Error al emitir notificación del navegador:', e);
+    }
 }
 
 /**

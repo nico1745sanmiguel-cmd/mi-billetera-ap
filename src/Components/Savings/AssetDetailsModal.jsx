@@ -18,8 +18,10 @@ const formatPercentage = (amount) => {
 function QuickSellPanel({ asset, isGlass, currencyView, rate, textColor, secondaryTextColor, onClose }) {
     const { addSavingsTransaction } = useSavings();
 
-    const lastOp = asset.operaciones?.slice().reverse().find(op => op.tipo === 'compra' || op.tipo === 'deposito');
-    const monedaVenta = lastOp?.monedaPrecio || 'USD';
+    const [monedaVenta, setMonedaVenta] = useState(() => {
+        const lastOp = asset.operaciones?.slice().reverse().find(op => op.tipo === 'compra' || op.tipo === 'deposito');
+        return lastOp?.monedaPrecio || 'USD';
+    });
 
     const precioVenta = monedaVenta === 'ARS'
         ? (asset.precioActualUSD * rate)
@@ -93,6 +95,7 @@ function QuickSellPanel({ asset, isGlass, currencyView, rate, textColor, seconda
         return (
             <button
                 type="button"
+                aria-label="Vender activo"
                 onClick={() => setModo('elegir')}
                 className="w-full mb-6 py-4 bg-green-500 hover:bg-green-600 text-white font-black rounded-2xl flex items-center justify-center gap-2 transition-all shadow-lg active:scale-95"
             >
@@ -115,12 +118,44 @@ function QuickSellPanel({ asset, isGlass, currencyView, rate, textColor, seconda
             </div>
 
             <div className="p-5 space-y-4">
+                {/* Selector de divisa de cobro */}
+                <div className="flex items-center justify-between">
+                    <span className={`text-xs font-bold ${secondaryTextColor}`}>MONEDA DE COBRO</span>
+                    <div className="flex gap-1.5 p-1 rounded-xl bg-black/10 dark:bg-white/10">
+                        <button
+                            type="button"
+                            aria-label="Cobrar en USD"
+                            onClick={() => setMonedaVenta('USD')}
+                            className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                                monedaVenta === 'USD'
+                                    ? 'bg-green-500 text-white shadow-sm'
+                                    : (isGlass ? 'text-white/60 hover:text-white' : 'text-gray-600 hover:text-gray-900')
+                            }`}
+                        >
+                            USD
+                        </button>
+                        <button
+                            type="button"
+                            aria-label="Cobrar en ARS"
+                            onClick={() => setMonedaVenta('ARS')}
+                            className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                                monedaVenta === 'ARS'
+                                    ? 'bg-green-500 text-white shadow-sm'
+                                    : (isGlass ? 'text-white/60 hover:text-white' : 'text-gray-600 hover:text-gray-900')
+                            }`}
+                        >
+                            ARS
+                        </button>
+                    </div>
+                </div>
+
                 {/* Selector total/parcial */}
                 {modo === 'elegir' && (
                     <div className="space-y-3">
                         <div className="grid grid-cols-2 gap-3">
                             <button
                                 type="button"
+                                aria-label="Vender posición completa"
                                 onClick={() => setModo('total')}
                                 className={`py-3 px-4 rounded-xl font-black text-sm transition-all active:scale-95 ${
                                     isGlass
@@ -132,6 +167,7 @@ function QuickSellPanel({ asset, isGlass, currencyView, rate, textColor, seconda
                             </button>
                             <button
                                 type="button"
+                                aria-label="Vender cantidad parcial"
                                 onClick={() => { setModo('parcial'); setCantidadParcial(''); }}
                                 className={`py-3 px-4 rounded-xl font-black text-sm transition-all active:scale-95 ${
                                     isGlass
@@ -142,7 +178,7 @@ function QuickSellPanel({ asset, isGlass, currencyView, rate, textColor, seconda
                                 Venta Parcial
                             </button>
                         </div>
-                        <button type="button" onClick={() => setModo(null)} className={`w-full py-2 rounded-xl text-xs font-bold transition-all ${isGlass ? 'text-white/40 hover:text-white/60' : 'text-gray-400 hover:text-gray-600'}`}>
+                        <button type="button" aria-label="Cancelar venta" onClick={() => setModo(null)} className={`w-full py-2 rounded-xl text-xs font-bold transition-all ${isGlass ? 'text-white/40 hover:text-white/60' : 'text-gray-400 hover:text-gray-600'}`}>
                             Cancelar
                         </button>
                     </div>
@@ -166,10 +202,10 @@ function QuickSellPanel({ asset, isGlass, currencyView, rate, textColor, seconda
                             </div>
                         </div>
                         <div className="flex gap-3">
-                            <button type="button" onClick={() => setModo(null)} className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${isGlass ? 'bg-white/5 text-white/60 hover:bg-white/10' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
+                            <button type="button" aria-label="Cancelar" onClick={() => setModo(null)} className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${isGlass ? 'bg-white/5 text-white/60 hover:bg-white/10' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
                                 Cancelar
                             </button>
-                            <button type="button" onClick={handleConfirm} disabled={saving} className="flex-2 flex-grow py-2.5 px-6 rounded-xl text-sm font-black bg-green-500 hover:bg-green-600 text-white transition-all active:scale-95 disabled:opacity-60">
+                            <button type="button" aria-label="Confirmar venta total" onClick={handleConfirm} disabled={saving} className="flex-2 flex-grow py-2.5 px-6 rounded-xl text-sm font-black bg-green-500 hover:bg-green-600 text-white transition-all active:scale-95 disabled:opacity-60">
                                 {saving ? 'Guardando...' : 'Confirmar Venta'}
                             </button>
                         </div>
@@ -218,11 +254,12 @@ function QuickSellPanel({ asset, isGlass, currencyView, rate, textColor, seconda
                         )}
 
                         <div className="flex gap-3">
-                            <button type="button" onClick={() => { setModo(null); setError(''); }} className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${isGlass ? 'bg-white/5 text-white/60 hover:bg-white/10' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
+                            <button type="button" aria-label="Cancelar" onClick={() => { setModo(null); setError(''); }} className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${isGlass ? 'bg-white/5 text-white/60 hover:bg-white/10' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
                                 Cancelar
                             </button>
                             <button
                                 type="button"
+                                aria-label="Confirmar venta parcial"
                                 onClick={handleConfirm}
                                 disabled={saving || cantidadAVender <= 0 || cantidadAVender > cantidadTotal}
                                 className="flex-2 flex-grow py-2.5 px-6 rounded-xl text-sm font-black bg-green-500 hover:bg-green-600 text-white transition-all active:scale-95 disabled:opacity-40"
@@ -267,7 +304,7 @@ export default function AssetDetailsModal({ isOpen, onClose, asset, currencyView
                             {asset.cartera}
                         </span>
                     </div>
-                    <button type="button" onClick={onClose} className={`p-2 rounded-full transition-colors ${isGlass ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-600'}`}>
+                    <button type="button" aria-label="Cerrar detalle" onClick={onClose} className={`p-2 rounded-full transition-colors ${isGlass ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-600'}`}>
                         <X size={20} />
                     </button>
                 </div>
@@ -326,7 +363,7 @@ export default function AssetDetailsModal({ isOpen, onClose, asset, currencyView
                             <span className={secondaryTextColor}>Ganancia / Pérdida</span>
                             <div className={`font-black flex items-center gap-1 ${isProfit ? 'text-green-500' : 'text-red-500'}`}>
                                 {isProfit ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
-                                {formatAmount(Math.abs(pnlBase), currencyView)}
+                                {isProfit ? `+${formatAmount(pnlBase, currencyView)}` : formatAmount(pnlBase, currencyView)}
                                 <span className="text-sm opacity-80 ml-1">
                                     ({isProfit ? '+' : ''}{formatPercentage(asset.gananciaPorcentaje)})
                                 </span>

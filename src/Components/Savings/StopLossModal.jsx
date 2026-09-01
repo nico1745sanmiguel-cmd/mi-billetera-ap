@@ -128,6 +128,17 @@ export default function StopLossModal({ isOpen, onClose, asset, isGlass, currenc
         }
     };
 
+    const handleAlarmaToggle = async (checked) => {
+        setAlarmaActiva(checked);
+        if (checked && 'Notification' in window && Notification.permission === 'default') {
+            try {
+                await Notification.requestPermission();
+            } catch (err) {
+                console.warn('Error solicitando permisos de notificación:', err);
+            }
+        }
+    };
+
     return (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 animate-fade-in">
             <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={onClose}></div>
@@ -141,7 +152,7 @@ export default function StopLossModal({ isOpen, onClose, asset, isGlass, currenc
                             Stop Loss para {asset.especie}
                         </h2>
                     </div>
-                    <button type="button" onClick={onClose} className={`p-1.5 rounded-full transition-colors ${isGlass ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-600'}`}>
+                    <button type="button" aria-label="Cerrar modal de Stop Loss" onClick={onClose} className={`p-1.5 rounded-full transition-colors ${isGlass ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-600'}`}>
                         <X size={18} />
                     </button>
                 </div>
@@ -160,7 +171,7 @@ export default function StopLossModal({ isOpen, onClose, asset, isGlass, currenc
                             onChange={(e) => setPrecioCompra(e.target.value)}
                             className={`w-full p-3 rounded-xl text-sm font-semibold outline-none border transition-all ${inputBg} focus:border-red-500`}
                         />
-                        <p className={`text-[10px] mt-1 ${isGlass ? 'text-white/40' : 'text-gray-400'}`}>
+                        <p className={`text-[10px] mt-1 ${isGlass ? 'text-white/70' : 'text-gray-400'}`}>
                             Costo promedio calculado en tu billetera: {formatCurrencyText(defaultPrecioCompra * (currencyView === 'ARS' ? (rate || 1000) : 1))}
                         </p>
                     </div>
@@ -211,6 +222,7 @@ export default function StopLossModal({ isOpen, onClose, asset, isGlass, currenc
                             </label>
                             <button
                                 type="button"
+                                aria-label="Reiniciar precio máximo al actual"
                                 onClick={handleResetTrail}
                                 className="flex items-center gap-1 text-[10px] font-bold text-blue-500 hover:underline"
                             >
@@ -225,7 +237,7 @@ export default function StopLossModal({ isOpen, onClose, asset, isGlass, currenc
                             onChange={(e) => setMaxPrecioRegistrado(e.target.value)}
                             className={`w-full p-3 rounded-xl text-sm font-semibold outline-none border transition-all ${inputBg} focus:border-red-500`}
                         />
-                        <p className={`text-[10px] mt-1 ${isGlass ? 'text-white/40' : 'text-gray-400'}`}>
+                        <p className={`text-[10px] mt-1 ${isGlass ? 'text-white/70' : 'text-gray-400'}`}>
                             Precio actual de mercado: {formatCurrencyText((asset.precioActualUSD || 0) * (currencyView === 'ARS' ? (rate || 1000) : 1))}
                         </p>
                     </div>
@@ -236,7 +248,7 @@ export default function StopLossModal({ isOpen, onClose, asset, isGlass, currenc
                             <span className={`text-[10px] font-bold uppercase tracking-wider block ${isGlass ? 'text-red-300' : 'text-red-600'}`}>
                                 Precio de Stop Loss Activado
                             </span>
-                            <span className={`text-xs ${isGlass ? 'text-white/50' : 'text-gray-400'}`}>
+                            <span className={`text-xs ${isGlass ? 'text-white/70' : 'text-gray-400'}`}>
                                 Si el precio cae a este nivel o menos
                             </span>
                         </div>
@@ -257,8 +269,9 @@ export default function StopLossModal({ isOpen, onClose, asset, isGlass, currenc
                         <label className="relative inline-flex items-center cursor-pointer">
                             <input
                                 type="checkbox"
+                                aria-label="Activar notificaciones de escritorio para este Stop Loss"
                                 checked={alarmaActiva}
-                                onChange={(e) => setAlarmaActiva(e.target.checked)}
+                                onChange={(e) => handleAlarmaToggle(e.target.checked)}
                                 className="sr-only peer"
                             />
                             <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-600"></div>
@@ -270,6 +283,7 @@ export default function StopLossModal({ isOpen, onClose, asset, isGlass, currenc
                         {asset.stopLoss && (
                             <button
                                 type="button"
+                                aria-label="Eliminar Stop Loss"
                                 onClick={handleDelete}
                                 disabled={loading}
                                 className={`p-3 rounded-xl transition-all ${isGlass ? 'bg-red-500/20 text-red-300 hover:bg-red-500/30' : 'bg-red-100 text-red-700 hover:bg-red-200'} flex items-center justify-center`}
@@ -280,6 +294,7 @@ export default function StopLossModal({ isOpen, onClose, asset, isGlass, currenc
                         )}
                         <button
                             type="submit"
+                            aria-label="Guardar configuración de Stop Loss"
                             disabled={loading}
                             className="flex-1 py-3 bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white font-bold rounded-xl text-sm transition-all shadow-md"
                         >

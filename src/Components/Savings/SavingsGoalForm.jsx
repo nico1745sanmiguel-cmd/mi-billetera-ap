@@ -97,7 +97,7 @@ const SavingsGoalForm = ({
 
                 {/* Botones de acción */}
                 <div className="flex gap-3 pt-4 mt-6 border-t border-gray-200/20">
-                    <button aria-label="Acción" type="button"
+                    <button aria-label={savingsGoal ? "Guardar cambios del objetivo de ahorro" : "Crear nuevo objetivo de ahorro"} type="button"
                         onClick={handleSave}
                         disabled={!form.name || !form.amount || saving}
                         className="flex-1 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100 disabled:cursor-not-allowed text-white font-black py-4 rounded-2xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20"
@@ -106,7 +106,7 @@ const SavingsGoalForm = ({
                         {savingsGoal ? 'Guardar cambios' : 'Crear objetivo'}
                     </button>
                     {savingsGoal && (
-                        <button aria-label="Acción" type="button"
+                        <button aria-label="Cancelar edición de objetivo" type="button"
                             onClick={handleCancel}
                             className={`px-5 rounded-2xl font-bold transition-all active:scale-[0.98] ${
                                 isGlass 

@@ -283,7 +283,7 @@ export default function OperationModal({ onClose, isGlass, initialData }) {
                     <h2 className={`text-2xl font-black ${isGlass ? 'text-white' : 'text-gray-800'}`}>
                         {initialData ? 'Editar Operación' : 'Nueva Operación'}
                     </h2>
-                    <button aria-label="Cerrar" type="button" onClick={onClose} className={`p-2 rounded-full transition-colors ${isGlass ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-600'}`}>
+                    <button aria-label="Cerrar modal de operación" type="button" onClick={onClose} className={`p-2 rounded-full transition-colors ${isGlass ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-600'}`}>
                         <X size={20} />
                     </button>
                 </div>
@@ -293,7 +293,7 @@ export default function OperationModal({ onClose, isGlass, initialData }) {
                     {/* Tipo de Operación — fila 1 */}
                     <div className="grid grid-cols-2 gap-2">
                         {['compra', 'venta', 'deposito', 'retiro'].map(t => (
-                            <button aria-label="Acción" type="button" key={t}
+                            <button aria-label={`Seleccionar tipo de operación: ${t}`} type="button" key={t}
                                 onClick={() => setFormData({...formData, tipo: t})}
                                 className={`p-2 text-sm font-bold rounded-xl border capitalize transition-all ${
                                     formData.tipo === t
@@ -310,7 +310,7 @@ export default function OperationModal({ onClose, isGlass, initialData }) {
                     {/* Tipos especiales — fila 2 */}
                     <div className="grid grid-cols-3 gap-2">
                         {[{ id: 'cobro_cupon', label: '🏦 Cupón' }, { id: 'amortizacion', label: '📉 Amort.' }, { id: 'caucion', label: '⏱ Caución' }].map(({ id, label }) => (
-                            <button aria-label="Acción" type="button" key={id}
+                            <button aria-label={`Seleccionar tipo de operación: ${label}`} type="button" key={id}
                                 onClick={() => setFormData({...formData, tipo: id})}
                                 className={`p-2 text-sm font-bold rounded-xl border transition-all ${
                                     formData.tipo === id
@@ -367,7 +367,7 @@ export default function OperationModal({ onClose, isGlass, initialData }) {
                         />
                     )}
 
-                    <button aria-label="Acción"
+                    <button aria-label="Guardar operación"
                         type="submit"
                         disabled={loading}
                         className="w-full mt-6 bg-green-500 hover:bg-green-600 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50"

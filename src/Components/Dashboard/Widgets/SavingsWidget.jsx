@@ -82,7 +82,7 @@ export default function SavingsWidget({ setView, privacyMode, size }) {
                             <TrendingUp size={13} className="text-green-400" />
                             Mis Ahorros
                         </h3>
-                        <button aria-label="Acción" type="button"
+                        <button aria-label={`Cambiar moneda a ${currencyView === 'ARS' ? 'USD' : 'ARS'}`} type="button"
                             onClick={(e) => { e.stopPropagation(); setCurrencyView(prev => prev === 'ARS' ? 'USD' : 'ARS'); }}
                             className={`flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full transition-colors ${hasGoalImage ? 'text-white/70 bg-white/10 hover:bg-white/20' : 'text-gray-400 dark:text-white/40 bg-gray-50 dark:bg-white/5 hover:text-green-600 dark:hover:text-green-400'}`}
                         >
@@ -189,7 +189,7 @@ export default function SavingsWidget({ setView, privacyMode, size }) {
                         <TrendingUp size={16} className="text-green-400" />
                         Mis Ahorros
                     </h3>
-                    <button aria-label="Acción" type="button"
+                    <button aria-label={`Cambiar moneda a ${currencyView === 'ARS' ? 'USD' : 'ARS'}`} type="button"
                         onClick={(e) => {
                             e.stopPropagation();
                             setCurrencyView(prev => prev === 'ARS' ? 'USD' : 'ARS');

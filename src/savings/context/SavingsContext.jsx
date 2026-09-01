@@ -48,15 +48,19 @@ export const SavingsProvider = ({ children }) => {
     // Re-bind del trailing stop passing posiciones
     const { updateMaxPrice, stopLosses } = stopLossData;
     const { posiciones } = calculations;
+    const lastUpdatedMaxPriceRef = React.useRef({});
     
     React.useEffect(() => {
         if (!posiciones || posiciones.length === 0 || !stopLosses) return;
         posiciones.forEach(pos => {
-            const stopData = stopLosses[pos.especie.toUpperCase()];
+            const especieUpper = pos.especie?.toUpperCase();
+            const stopData = stopLosses[especieUpper];
             if (stopData) {
                 const currentPrice = pos.precioActualUSD;
                 const maxRegistered = stopData.maxPrecioRegistrado || 0;
-                if (currentPrice > maxRegistered) {
+                const lastUpdated = lastUpdatedMaxPriceRef.current[especieUpper] || 0;
+                if (currentPrice > maxRegistered && currentPrice > lastUpdated) {
+                    lastUpdatedMaxPriceRef.current[especieUpper] = currentPrice;
                     updateMaxPrice(pos.especie, currentPrice);
                 }
             }

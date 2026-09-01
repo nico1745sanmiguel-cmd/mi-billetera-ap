@@ -25,7 +25,7 @@ export default function TenenciasLista({
 }) {
     const textColor = isGlass ? 'text-white' : 'text-gray-800';
     const cardBg = isGlass ? 'bg-white/10 backdrop-blur-md border border-white/20' : 'bg-white shadow-sm border border-gray-100';
-    const secondaryTextColor = isGlass ? 'text-white/60' : 'text-gray-500';
+    const secondaryTextColor = isGlass ? 'text-white/70' : 'text-gray-500';
 
     return (
         <div className="space-y-6">
@@ -211,7 +211,7 @@ export default function TenenciasLista({
                                                 <p className={`text-[10px] font-bold uppercase tracking-wider mb-0.5 ${secondaryTextColor}`}>P&L</p>
                                                 <div className={`flex items-center justify-end gap-1 font-black ${isProfit ? 'text-green-500' : 'text-red-500'}`}>
                                                     {isProfit ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
-                                                    {formatAmount(Math.abs(pnlBase), currencyView)}
+                                                    {isProfit ? `+${formatAmount(pnlBase, currencyView)}` : formatAmount(pnlBase, currencyView)}
                                                 </div>
                                             </div>
                                         </div>
@@ -219,6 +219,8 @@ export default function TenenciasLista({
                                         {/* Fila inferior: Acciones rápidas (Stop Loss + Vender) */}
                                         <div className={`flex items-center justify-between pt-3 border-t mt-auto ${isGlass ? 'border-white/10' : 'border-gray-100'}`}>
                                             <button 
+                                                type="button"
+                                                aria-label={stopStatus === 'none' ? `Configurar Stop Loss para ${pos.especie}` : `Ver configuración de Stop Loss para ${pos.especie}`}
                                                 onClick={(e) => { e.stopPropagation(); handleStopClick(pos); }}
                                                 className={`flex items-center justify-center w-10 h-10 rounded-xl border transition-all ${stopBadge.cls} ${isGlass ? 'hover:bg-white/20' : 'hover:bg-gray-100'}`}
                                                 title={stopStatus === 'none' ? 'Configurar Stop Loss' : 'Ver Stop Loss'}
@@ -227,6 +229,8 @@ export default function TenenciasLista({
                                             </button>
                                             
                                             <button 
+                                                type="button"
+                                                aria-label={`Vender ${pos.especie}`}
                                                 onClick={(e) => handleSellClick(e, pos)}
                                                 className={`flex items-center justify-center gap-2 px-4 h-10 rounded-xl font-bold text-xs transition-all ${
                                                     isGlass 
