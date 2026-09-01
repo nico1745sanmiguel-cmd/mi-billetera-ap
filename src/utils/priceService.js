@@ -15,7 +15,28 @@ const CRYPTO_MAP = {
     'BNB': 'binancecoin',
     'SOL': 'solana',
     'ADA': 'cardano',
-    'DOT': 'polkadot'
+    'DOT': 'polkadot',
+    'XRP': 'ripple',
+    'DOGE': 'dogecoin',
+    'AVAX': 'avalanche-2',
+    'LINK': 'chainlink',
+    'MATIC': 'matic-network',
+    'POL': 'polygon-ecosystem-token',
+    'SUI': 'sui',
+    'NEAR': 'near',
+    'TRX': 'tron',
+    'LTC': 'litecoin',
+    'SHIB': 'shiba-inu',
+    'UNI': 'uniswap',
+    'XLM': 'stellar',
+    'ATOM': 'cosmos',
+    'RENDER': 'render-token',
+    'APT': 'aptos',
+    'ICP': 'internet-computer',
+    'ALGO': 'algorand',
+    'FTM': 'fantom',
+    'PEPE': 'pepe',
+    'WLD': 'worldcoin-wld'
 };
 
 const LOCAL_BROKERS = ['balanz', 'iol', 'invertironline', 'bull', 'cocos', 'ppi', 'inviu', 'ahorros', 'banco', 'galicia', 'santander', 'bbva', 'macro', 'brubank'];
@@ -151,13 +172,15 @@ export const fetchAssetPrices = async (especiesWithCarteras, dolarBlue) => {
                     let { price: priceARS, change } = priceMapARS[cleanEsp];
                     
                     const isBond = /^[a-zA-Z]{2,4}\d{2}[a-zA-Z]?$/.test(cleanEsp);
+                    const isDollarBond = isBond && (cleanEsp.endsWith('D') || cleanEsp.endsWith('C'));
+                    
                     if (isBond) {
-                        // Data912 devuelve todos los bonos en ARS (precio técnico × 100)
-                        // incluso los dolarizados (sufijo D/C). Siempre dividimos por dolarBlue.
+                        // Data912 devuelve la cotización de los bonos cada 100 láminas
                         priceARS = priceARS / 100;
                     }
 
-                    const priceUSD = priceARS / dolarBlue; 
+                    // Si el bono cotiza en dólares (especie D o C), ya está en USD y no se divide por Dólar Blue
+                    const priceUSD = isDollarBond ? priceARS : (priceARS / dolarBlue); 
                     result[esp] = { price: priceUSD, change };
                     setCache(`price_${esp}`, { price: priceUSD, change, timestamp: now });
                 }
