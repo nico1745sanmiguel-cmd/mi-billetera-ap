@@ -82,24 +82,19 @@ export const SavingsProvider = ({ children }) => {
             const deletePromises = [];
 
             for (const collName of targetCollections) {
-                // Borrar documentos por householdId o userId
-                const q = query(collection(db, collName), where(queryField, "==", queryValue));
-                const snap = await getDocs(q);
-                snap.forEach(d => {
-                    deletePromises.push(deleteDoc(d.ref));
-                });
-
-                // Si estamos en un household, también asegurar la limpieza de docs asociados al userId directo
-                if (householdId) {
-                    const qUser = query(collection(db, collName), where("userId", "==", user.uid));
-                    const snapUser = await getDocs(qUser);
-                    snapUser.forEach(d => {
-                        deletePromises.push(deleteDoc(d.ref));
+                // Borrar documentos respetando la regla de seguridad (householdId si pertenece a hogar, o userId)
+                try {
+                    const q = query(collection(db, collName), where(queryField, "==", queryValue));
+                    const snap = await getDocs(q);
+                    snap.forEach(d => {
+                        deletePromises.push(deleteDoc(d.ref).catch(err => console.warn(`Error deleting doc ${d.id}:`, err)));
                     });
+                } catch (collErr) {
+                    console.warn(`Error querying collection ${collName} during clear:`, collErr);
                 }
             }
 
-            // Eliminar los que estén cargados en memoria por ID como fallback
+            // Eliminar los que estén cargados en memoria por ID como fallback seguro
             savingsTransactions.forEach(tx => {
                 if (tx.id) {
                     deletePromises.push(deleteDoc(doc(db, COLLECTIONS.SAVINGS_TRANSACTIONS, tx.id)).catch(() => {}));
