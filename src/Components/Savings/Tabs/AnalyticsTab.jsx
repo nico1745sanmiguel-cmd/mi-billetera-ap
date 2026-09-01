@@ -34,7 +34,7 @@ const calcularTIR = (flujos) => {
 };
 
 export default function AnalyticsTab({ isGlass, privacyMode }) {
-    const { posiciones, savingsTransactions } = useSavings();
+    const { posiciones, savingsTransactions, cauciones, liquidezPorCartera } = useSavings();
     const { dolarBlue } = useFinancial();
     const [aniosProyeccion, setAniosProyeccion] = useState(5);
     const [aportesMensuales, setAportesMensuales] = useState(0);
@@ -45,73 +45,55 @@ export default function AnalyticsTab({ isGlass, privacyMode }) {
 
     // Calcular TNA o TIR por posición
     const posicionesTNA = useMemo(() => {
-        return posiciones.map(pos => {
+        const hoy = new Date();
+        const rate = dolarBlue || 1000;
+
+        return (posiciones || []).map(pos => {
             const esBono = isBond(pos.especie);
+            const operaciones = (pos.operaciones || []).toSorted((a, b) => new Date(a.fecha) - new Date(b.fecha));
             const cobradoTotalUSD = pos.cobradoTotalUSD || 0;
 
             // Si es bono con cupones registrados → TIR real
             if (esBono && cobradoTotalUSD > 0) {
-                // Construir flujos: usamos las operaciones de la posición
-                const now = new Date();
                 const flujos = [];
-                let primeraFecha = null;
-
-                pos.operaciones.forEach(op => {
-                    const fecha = new Date(op.fecha || op.createdAt?.toDate?.() || Date.now());
+                operaciones.forEach(op => {
+                    const dOp = new Date(op.fecha);
+                    const dias = Math.max(0, (hoy - dOp) / 86400000);
                     const cant = parseFloat(op.cantidad) || 0;
                     let precio = parseFloat(op.precioUnitario) || 0;
-                    if (op.monedaPrecio === 'ARS') precio = precio / (dolarBlue || 1000);
-                    const valor = cant * precio;
-                    const tipo = op.tipo;
+                    if (op.monedaPrecio === 'ARS') precio = precio / rate;
 
-                    if (!primeraFecha || fecha < primeraFecha) primeraFecha = fecha;
-
-                    if (tipo === 'compra' || tipo === 'deposito' || tipo === 'ingreso') {
-                        flujos.push({ valor: -valor, fecha });
-                    } else if (tipo === 'cobro_cupon' || tipo === 'amortizacion') {
-                        flujos.push({ valor: valor, fecha });
-                    } else if (tipo === 'venta' || tipo === 'retiro') {
-                        flujos.push({ valor: valor, fecha });
-                    }
+                    if (op.tipo === 'compra') flujos.push({ valor: -(cant * precio), dias });
+                    else if (op.tipo === 'venta') flujos.push({ valor: cant * precio, dias });
+                    else if (op.tipo === 'cobro_cupon' || op.tipo === 'amortizacion') flujos.push({ valor: precio, dias });
                 });
+                
+                // Flujo final: valor de liquidación actual
+                flujos.push({ valor: pos.valorActualUSD, dias: 0 });
 
-                // Recalcular dias desde la primera fecha
-                const base = primeraFecha || new Date();
-                const flujosConDias = flujos.map(f => ({
-                    valor: f.valor,
-                    dias: Math.max(0, Math.floor((f.fecha - base) / 86400000))
-                }));
-                // Valor residual al día de hoy
-                const diasHoy = Math.max(1, Math.floor((now - base) / 86400000));
-                flujosConDias.push({ valor: pos.valorActualUSD, dias: diasHoy });
-
-                const tir = calcularTIR(flujosConDias);
-                const dias = diasHoy;
-                return { ...pos, tna: tir ?? 0, dias, esBono, tieneCobros: true };
+                const tirCalculada = calcularTIR(flujos);
+                if (tirCalculada !== null) {
+                    return { ...pos, tna: tirCalculada, esBono: true, tieneCobros: true };
+                }
             }
 
-            // Fallback: TNA simplificada (para no-bonos o bonos sin cupones registrados)
-            let primeraCompra = null;
-            pos.operaciones.forEach(op => {
-                if (op.tipo === 'compra' || op.tipo === 'deposito' || op.tipo === 'ingreso') {
-                    const date = new Date(op.fecha || op.createdAt?.toDate?.() || Date.now());
-                    if (!primeraCompra || date < primeraCompra) primeraCompra = date;
-                }
-            });
-
+            // Cálculo estándar TNA
+            const primeraOp = operaciones[0];
+            const fechaInicio = primeraOp ? new Date(primeraOp.fecha) : hoy;
+            const ms = Math.max(0, hoy - fechaInicio);
+            const dias = Math.max(1, Math.floor(ms / 86400000));
+            
             let tna = 0;
-            let dias = 0;
-            if (primeraCompra && pos.inversionTotalUSD > 0 && pos.valorActualUSD > 0) {
-                const now = new Date();
-                dias = Math.max(1, Math.floor((now - primeraCompra) / (1000 * 60 * 60 * 24)));
-                const ratio = pos.valorActualUSD / pos.inversionTotalUSD;
-                // Si la tenencia tiene menos de 15 días, anualizar linealmente con base mínima de 15 días
-                // para evitar distorsiones exorbitantes por fluctuaciones diarias.
+            if (pos.inversionTotalUSD > 0) {
+                const gananciaTotal = pos.gananciaPérdidaUSD + (pos.cobradoTotalUSD || 0);
+                const retSimple = gananciaTotal / pos.inversionTotalUSD;
+                
+                // Para tenencias muy recientes (< 15 días), evitamos que variaciones pequeñas
+                // de un día generen TNAs astronómicas (ej: +2% en 1 día proyectaría +730% anual).
                 if (dias < 15) {
-                    const simpleReturn = ratio - 1;
-                    tna = simpleReturn * (365 / Math.max(15, dias)) * 100;
+                    tna = (retSimple / 15) * 365 * 100;
                 } else {
-                    tna = (Math.pow(ratio, 365 / dias) - 1) * 100;
+                    tna = (retSimple / dias) * 365 * 100;
                 }
             }
 
@@ -119,19 +101,38 @@ export default function AnalyticsTab({ isGlass, privacyMode }) {
         }).sort((a, b) => b.tna - a.tna);
     }, [posiciones, dolarBlue]);
 
-    // TNA Global ponderada
+    // TNA Global ponderada y capital consolidado total
     const { totalValor, tnaGlobal } = useMemo(() => {
         let total = 0;
         let sumTnaVP = 0;
+        const rate = dolarBlue || 1000;
+
         posicionesTNA.forEach(p => {
-            total += p.valorActualUSD;
-            sumTnaVP += (p.tna * p.valorActualUSD);
+            const val = p.valorActualUSD || 0;
+            total += val;
+            sumTnaVP += (p.tna * val);
         });
+
+        (cauciones || []).filter(c => c.estado !== 'vencida' && !c.liquidada).forEach(c => {
+            const val = c.valorActualUSD || 0;
+            const tnaCaucion = parseFloat(c.tna) || 0;
+            total += val;
+            sumTnaVP += (tnaCaucion * val);
+        });
+
+        Object.values(liquidezPorCartera || {}).forEach(liq => {
+            const val = (liq.USD || 0) + ((liq.ARS || 0) / rate);
+            if (val > 0) {
+                total += val;
+                // La liquidez en caja no genera TNA por sí sola (0%)
+            }
+        });
+
         const tna = total > 0 ? sumTnaVP / total : 0;
         return { totalValor: total, tnaGlobal: tna };
-    }, [posicionesTNA]);
+    }, [posicionesTNA, cauciones, liquidezPorCartera, dolarBlue]);
 
-    // Generar datos para el gráfico de evolución
+    // Generar datos para el gráfico de evolución (sin doble cómputo de depósitos vs compras)
     const chartData = useMemo(() => {
         if (!savingsTransactions || savingsTransactions.length === 0) return [];
         
@@ -142,38 +143,49 @@ export default function AnalyticsTab({ isGlass, privacyMode }) {
         });
 
         const rate = dolarBlue || 1000;
-        let acumuladoUSD = 0;
+        let liquidezUSD = 0;
+        let activosUSD = 0;
+        let caucionesUSD = 0;
         const dataMap = new Map();
 
         history.forEach(tx => {
             const date = new Date(tx.fecha || tx.createdAt?.toDate?.() || Date.now());
             const monthYear = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
             
-            let valorOp = 0;
-            if (tx.tipo === 'caucion') {
-                valorOp = (parseFloat(tx.montoARS) || 0) / rate;
-            } else {
-                const cant = parseFloat(tx.cantidad) || 0;
-                let precio = parseFloat(tx.precioUnitario) || 0;
-                if (tx.monedaPrecio === 'ARS') precio = precio / rate;
-                
-                if (precio === 0 && tx.tipo !== 'ajuste') return;
+            const espUpper = tx.especie?.toUpperCase();
+            const cant = parseFloat(tx.cantidad) || 0;
+            let precio = parseFloat(tx.precioUnitario) || 0;
+            if (tx.monedaPrecio === 'ARS') precio = precio / rate;
+            const valorOp = cant * precio;
 
-                valorOp = cant * precio;
+            if (tx.tipo === 'deposito' || tx.tipo === 'ingreso') {
+                if (espUpper === 'ARS') liquidezUSD += cant / rate;
+                else if (espUpper === 'USD') liquidezUSD += cant;
+                else activosUSD += valorOp; // Depósito directo de crypto/activo
+            } else if (tx.tipo === 'retiro' || tx.tipo === 'egreso') {
+                if (espUpper === 'ARS') liquidezUSD -= cant / rate;
+                else if (espUpper === 'USD') liquidezUSD -= cant;
+                else activosUSD -= valorOp;
+            } else if (tx.tipo === 'compra') {
+                liquidezUSD -= valorOp;
+                activosUSD += valorOp;
+            } else if (tx.tipo === 'venta') {
+                liquidezUSD += valorOp;
+                activosUSD -= valorOp;
+            } else if (tx.tipo === 'cobro_cupon' || tx.tipo === 'amortizacion') {
+                liquidezUSD += precio;
+            } else if (tx.tipo === 'caucion') {
+                const monto = (parseFloat(tx.montoARS) || 0) / rate;
+                liquidezUSD -= monto;
+                caucionesUSD += monto;
             }
 
-            if (tx.tipo === 'compra' || tx.tipo === 'deposito' || tx.tipo === 'ingreso' || tx.tipo === 'caucion') {
-                acumuladoUSD += valorOp;
-            } else if (tx.tipo === 'venta' || tx.tipo === 'retiro' || tx.tipo === 'egreso') {
-                acumuladoUSD -= valorOp;
-            }
-
-            dataMap.set(monthYear, Math.max(0, acumuladoUSD));
+            const totalHistorico = Math.max(0, activosUSD + caucionesUSD + Math.max(0, liquidezUSD));
+            dataMap.set(monthYear, totalHistorico);
         });
 
         return Array.from(dataMap.entries()).map(([date, value]) => ({ date, value }));
     }, [savingsTransactions, dolarBlue]);
-
 
     // Proyección de interés compuesto
     const valorFuturo = useMemo(() => {

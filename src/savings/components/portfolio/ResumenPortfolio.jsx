@@ -142,8 +142,8 @@ export default function ResumenPortfolio({
                                     <div key={`liq-${c.name}`} className="flex items-center gap-2 text-xs">
                                         <span className={`font-semibold ${secondaryTextColor}`}>{c.name}:</span>
                                         <div className="flex gap-1.5 font-black">
-                                            {c.liquidez.ARS > 0 && <span className={textColor}>{arsFormatter.format(c.liquidez.ARS)}</span>}
-                                            {c.liquidez.USD > 0 && <span className="text-green-500">{usdFormatter.format(c.liquidez.USD)}</span>}
+                                            {c.liquidez.ARS > 0 && <span className={textColor}>{privacyMode ? '****' : arsFormatter.format(c.liquidez.ARS)}</span>}
+                                            {c.liquidez.USD > 0 && <span className="text-green-500">{privacyMode ? '****' : usdFormatter.format(c.liquidez.USD)}</span>}
                                         </div>
                                     </div>
                                 ))}
