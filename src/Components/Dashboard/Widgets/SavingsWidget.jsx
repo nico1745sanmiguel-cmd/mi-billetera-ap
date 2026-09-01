@@ -21,8 +21,8 @@ export default function SavingsWidget({ setView, privacyMode, size }) {
         });
 
         (cauciones || []).forEach(c => {
-            if (c.estado !== 'vencida') {
-                totalUSD += c.valorActualUSD || (c.montoARS / rate);
+            if (c.estado !== 'vencida' && !c.liquidada) {
+                totalUSD += c.valorActualUSD || ((parseFloat(c.montoARS) || 0) / rate);
             }
         });
 
@@ -32,7 +32,7 @@ export default function SavingsWidget({ setView, privacyMode, size }) {
             totalARS: computedTotalARS,
             total: currencyView === 'ARS' ? computedTotalARS : totalUSD
         };
-    }, [posiciones, dolarBlue, currencyView]);
+    }, [posiciones, cauciones, dolarBlue, currencyView]);
 
     const formatCurrency = (amount, currency) => {
         if (privacyMode) return '****';

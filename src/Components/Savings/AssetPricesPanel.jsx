@@ -57,7 +57,10 @@ export default function AssetPricesPanel({ isGlass }) {
 
             <div className="space-y-3">
                 {especiesUnicas.map(esp => {
-                    const price = assetPrices[esp] || 0;
+                    const rawPrice = assetPrices[esp];
+                    const price = typeof rawPrice === 'object' && rawPrice !== null 
+                        ? (parseFloat(rawPrice.price) || 0) 
+                        : (parseFloat(rawPrice) || 0);
                     const isEditing = editing === esp;
 
                     return (
@@ -90,7 +93,7 @@ export default function AssetPricesPanel({ isGlass }) {
                                 ) : (
                                     <div 
                                         className={`px-3 py-1.5 rounded-lg text-sm font-bold cursor-pointer transition-colors ${isGlass ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-white hover:bg-gray-100 text-gray-800 shadow-sm border border-gray-100'}`}
-                                        onClick={() => { setEditing(esp); setEditValue(price); }}
+                                        onClick={() => { setEditing(esp); setEditValue(price > 0 ? price.toString() : ''); }}
                                         title="Tocar para editar"
                                     >
                                         U$D {price.toLocaleString('es-AR', { maximumFractionDigits: 4 })}

@@ -132,7 +132,7 @@ export default function CaucionForm({
                     <div className="flex justify-between">
                         <span className={isGlass ? 'text-blue-200' : 'text-blue-700'}>Vencimiento</span>
                         <span className={`font-bold ${isGlass ? 'text-white' : 'text-blue-900'}`}>
-                            {new Date(caucionCalc.fechaVencimiento + 'T00:00:00').toLocaleDateString('es-AR')}
+                            {caucionCalc.fechaVencimiento ? `${caucionCalc.fechaVencimiento.split('-')[2]}/${caucionCalc.fechaVencimiento.split('-')[1]}/${caucionCalc.fechaVencimiento.split('-')[0]}` : '-'}
                         </span>
                     </div>
                     <div className="flex justify-between">

@@ -97,8 +97,8 @@ export default function PortfolioTab({ isGlass, privacyMode, currencyView = 'USD
             ag[c].totalUSD += (liq.USD || 0) + ((liq.ARS || 0) / rate);
         });
 
-        // Agregar cauciones al total de la cartera
-        const caucionesFiltradas = (cauciones || []).filter(c => c.estado !== 'vencida' || true);
+        // Agregar cauciones al total de la cartera (solo cauciones vigentes no vencidas)
+        const caucionesFiltradas = (cauciones || []).filter(c => c.estado !== 'vencida');
         caucionesFiltradas.forEach(c => {
             initCartera(c.cartera);
             const valorARS = c.valorActualARS || 0;
@@ -132,7 +132,7 @@ export default function PortfolioTab({ isGlass, privacyMode, currencyView = 'USD
     }, [posiciones, cauciones, liquidezPorCartera, rate, sortConfig]);
 
     const chartData = useMemo(() => {
-        const caucionesFiltradas = (cauciones || []).filter(c => c.estado !== 'vencida' || true);
+        const caucionesFiltradas = (cauciones || []).filter(c => c.estado !== 'vencida');
 
         if (chartView === 'general') {
             const innerData = [];
@@ -232,7 +232,7 @@ export default function PortfolioTab({ isGlass, privacyMode, currencyView = 'USD
     const textColor = isGlass ? 'text-white' : 'text-gray-800';
     const cardBg = isGlass ? 'bg-white/10 backdrop-blur-md border border-white/20' : 'bg-white shadow-sm border border-gray-100';
 
-    const caucionesActivasList = (cauciones || []).filter(c => c.estado !== 'vencida' || true); // mostrar todas
+    const caucionesActivasList = cauciones || [];
     const hasCauciones = caucionesActivasList.length > 0;
     const hasLiquidez = Object.keys(liquidezPorCartera || {}).some(c => liquidezPorCartera[c].ARS > 0 || liquidezPorCartera[c].USD > 0);
 
@@ -335,6 +335,7 @@ export default function PortfolioTab({ isGlass, privacyMode, currencyView = 'USD
                         cantidad: vencimientoModal.montoTotalEsperadoARS,
                         precioUnitario: 1,
                         monedaPrecio: 'ARS',
+                        caucionId: vencimientoModal.id,
                         nota: `Vencimiento caución ${vencimientoModal.plazo}d @ ${vencimientoModal.tna}% TNA`,
                     }}
                 />

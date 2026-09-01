@@ -26,7 +26,7 @@ export default function SavingsGoal() {
         (posiciones || []).forEach(pos => {
             totalUSD += pos.valorActualUSD || 0;
         });
-        (cauciones || []).forEach(c => {
+        (cauciones || []).filter(c => c.estado !== 'vencida' && !c.liquidada).forEach(c => {
             totalUSD += c.valorActualUSD || 0;
         });
         return totalUSD * rate;

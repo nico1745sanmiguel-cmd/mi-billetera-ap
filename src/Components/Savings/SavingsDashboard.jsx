@@ -43,7 +43,7 @@ export default function SavingsDashboard() {
             totalUSD += pos.valorActualUSD;
             inversionUSD += pos.inversionTotalUSD || 0;
         });
-        (cauciones || []).forEach(c => {
+        (cauciones || []).filter(c => c.estado !== 'vencida' && !c.liquidada).forEach(c => {
             totalUSD += c.valorActualUSD || 0;
             inversionUSD += (parseFloat(c.montoARS) || 0) / rate;
         });

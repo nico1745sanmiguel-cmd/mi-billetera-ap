@@ -121,7 +121,7 @@ export const useSavingsCalculations = (savingsTransactions = [], assetPrices = {
         const rate = dolarBlue || 1000;
 
         return (savingsTransactions || [])
-            .filter(tx => tx.tipo === 'caucion')
+            .filter(tx => tx.tipo === 'caucion' && !tx.liquidada)
             .map(tx => {
                 const fechaInicio = new Date(tx.fechaInicio);
                 const fechaVencimiento = new Date(tx.fechaVencimiento);

@@ -52,7 +52,10 @@ export default function CouponForm({
                             const d = parseInt(e.target.value) || 0;
                             const dt = new Date();
                             dt.setDate(dt.getDate() - d);
-                            setFormData({ ...formData, fecha: dt.toISOString().split('T')[0] });
+                            const year = dt.getFullYear();
+                            const month = String(dt.getMonth() + 1).padStart(2, '0');
+                            const day = String(dt.getDate()).padStart(2, '0');
+                            setFormData({ ...formData, fecha: `${year}-${month}-${day}` });
                         }}
                         required
                         className={inputClasses}
@@ -60,7 +63,7 @@ export default function CouponForm({
                 )}
                 {fechaMode === 'dias' && (
                     <div className={`text-xs mt-1 ${isGlass ? 'text-white/60' : 'text-gray-500'}`}>
-                        Fecha calculada: {new Date(formData.fecha).toLocaleDateString('es-AR')}
+                        Fecha calculada: {formData.fecha ? `${formData.fecha.split('-')[2]}/${formData.fecha.split('-')[1]}/${formData.fecha.split('-')[0]}` : '-'}
                     </div>
                 )}
             </div>

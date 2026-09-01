@@ -19,6 +19,23 @@ const TIPO_CONFIG = {
     egreso: { label: 'Egreso', icon: ArrowUpRight, color: 'text-red-500', bg: 'bg-red-500/10' }
 };
 
+const formatTxDate = (fechaStr, createdAt) => {
+    if (fechaStr) {
+        const match = typeof fechaStr === 'string' && fechaStr.match(/^(\d{4})-(\d{2})-(\d{2})/);
+        if (match) {
+            const [, y, m, d] = match;
+            const dt = new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
+            return dt.toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' });
+        }
+        const d = new Date(fechaStr);
+        if (!isNaN(d.getTime())) {
+            return d.toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' });
+        }
+    }
+    const d = createdAt?.toDate?.() || new Date();
+    return d.toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' });
+};
+
 export default function OperationsTab({ isGlass, privacyMode }) {
     const { savingsTransactions, deleteSavingsTransaction } = useSavings();
     const [filterEspecie, setFilterEspecie] = useState('');
@@ -146,7 +163,6 @@ export default function OperationsTab({ isGlass, privacyMode }) {
             ) : (
                 <div className="space-y-4">
                     {filtered.map(tx => {
-                        const date = tx.fecha ? new Date(tx.fecha) : (tx.createdAt?.toDate?.() || new Date());
                         const formatter = tx.monedaPrecio === 'ARS' ? arsFormatter : usdFormatter;
                         const total = (parseFloat(tx.cantidad) || 0) * (parseFloat(tx.precioUnitario) || 0);
                         
@@ -173,7 +189,7 @@ export default function OperationsTab({ isGlass, privacyMode }) {
                                         <div className={`text-xs font-semibold ${secondaryTextColor}`}>
                                             <span className={`${config.color} font-black uppercase tracking-wider`}>{config.label}</span>
                                             <span className="mx-1.5 opacity-50">•</span>
-                                            {date.toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                            {formatTxDate(tx.fecha, tx.createdAt)}
                                         </div>
                                     </div>
                                 </div>

@@ -7,12 +7,46 @@ import TradeForm from './TradeForm';
 import CaucionForm from './CaucionForm';
 import CouponForm from './CouponForm';
 
+const getTodayLocalDate = () => {
+    const d = new Date();
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
+
+const formatToLocalDateString = (val) => {
+    if (!val) return getTodayLocalDate();
+    if (typeof val === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(val)) {
+        return val;
+    }
+    const match = typeof val === 'string' && val.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (match) {
+        return `${match[1]}-${match[2]}-${match[3]}`;
+    }
+    const d = new Date(val);
+    if (isNaN(d.getTime())) return getTodayLocalDate();
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
+
+const dateToMiddayISO = (dateStr) => {
+    if (!dateStr) return new Date().toISOString();
+    const match = typeof dateStr === 'string' && dateStr.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (match) {
+        return `${match[1]}-${match[2]}-${match[3]}T12:00:00.000Z`;
+    }
+    return new Date(dateStr).toISOString();
+};
+
 export default function OperationModal({ onClose, isGlass, initialData }) {
     const { addSavingsTransaction, updateSavingsTransaction, savingsTransactions, carterasPersonalizadas } = useSavings();
     const { dolarBlue } = useFinancial();
     const [loading, setLoading] = useState(false);
 
-    // Valores iniciales
+    // Valores iniciales con fecha local
     const [formData, setFormData] = useState({
         tipo: initialData?.tipo || 'compra',
         cartera: initialData?.cartera || '',
@@ -20,17 +54,13 @@ export default function OperationModal({ onClose, isGlass, initialData }) {
         cantidad: initialData?.cantidad?.toString() || '',
         precioUnitario: initialData?.precioUnitario?.toString() || '',
         monedaPrecio: initialData?.monedaPrecio || 'USD',
-        fecha: initialData?.fecha 
-            ? new Date(initialData.fecha).toISOString().split('T')[0] 
-            : new Date().toISOString().split('T')[0],
+        fecha: formatToLocalDateString(initialData?.fecha),
         nota: initialData?.nota || '',
         // campos caución
         montoARS: initialData?.montoARS?.toString() || '',
         tna: initialData?.tna?.toString() || '',
         plazo: initialData?.plazo?.toString() || '7',
-        fechaInicio: initialData?.fechaInicio
-            ? new Date(initialData.fechaInicio).toISOString().split('T')[0]
-            : new Date().toISOString().split('T')[0],
+        fechaInicio: formatToLocalDateString(initialData?.fechaInicio),
         // campos cobro
         montoTotal: initialData?.tipo === 'cobro_cupon' || initialData?.tipo === 'amortizacion' ? initialData?.precioUnitario?.toString() : ''
     });
@@ -74,9 +104,14 @@ export default function OperationModal({ onClose, isGlass, initialData }) {
         const interesEsperadoARS = monto * (tna / 100 / 365) * plazo;
         const montoTotalEsperadoARS = monto + interesEsperadoARS;
 
-        const fechaVenc = new Date(formData.fechaInicio);
+        const fechaInicioLocal = formatToLocalDateString(formData.fechaInicio);
+        const [y, m, d] = fechaInicioLocal.split('-').map(Number);
+        const fechaVenc = new Date(y, m - 1, d);
         fechaVenc.setDate(fechaVenc.getDate() + plazo);
-        const fechaVencimiento = fechaVenc.toISOString().split('T')[0];
+        const yV = fechaVenc.getFullYear();
+        const mV = String(fechaVenc.getMonth() + 1).padStart(2, '0');
+        const dV = String(fechaVenc.getDate()).padStart(2, '0');
+        const fechaVencimiento = `${yV}-${mV}-${dV}`;
 
         return { interesEsperadoARS, montoTotalEsperadoARS, fechaVencimiento };
     }, [isCaucion, formData.montoARS, formData.tna, formData.plazo, formData.fechaInicio]);
@@ -166,8 +201,15 @@ export default function OperationModal({ onClose, isGlass, initialData }) {
                 const plazo = parseInt(formData.plazo) || 0;
                 const interesEsperadoARS = monto * (tna / 100 / 365) * plazo;
                 const montoTotalEsperadoARS = monto + interesEsperadoARS;
-                const fechaVenc = new Date(formData.fechaInicio);
+
+                const fechaInicioLocal = formatToLocalDateString(formData.fechaInicio);
+                const [y, m, d] = fechaInicioLocal.split('-').map(Number);
+                const fechaVenc = new Date(y, m - 1, d);
                 fechaVenc.setDate(fechaVenc.getDate() + plazo);
+                const yV = fechaVenc.getFullYear();
+                const mV = String(fechaVenc.getMonth() + 1).padStart(2, '0');
+                const dV = String(fechaVenc.getDate()).padStart(2, '0');
+                const fechaVencimientoLocal = `${yV}-${mV}-${dV}`;
 
                 payload = {
                     tipo: 'caucion',
@@ -176,11 +218,11 @@ export default function OperationModal({ onClose, isGlass, initialData }) {
                     montoARS: monto,
                     tna,
                     plazo,
-                    fechaInicio: new Date(formData.fechaInicio).toISOString(),
-                    fechaVencimiento: fechaVenc.toISOString(),
+                    fechaInicio: dateToMiddayISO(fechaInicioLocal),
+                    fechaVencimiento: dateToMiddayISO(fechaVencimientoLocal),
                     interesEsperadoARS,
                     montoTotalEsperadoARS,
-                    fecha: new Date(formData.fechaInicio).toISOString(),
+                    fecha: dateToMiddayISO(fechaInicioLocal),
                     nota: formData.nota.trim()
                 };
             } else if (isCobro) {
@@ -191,7 +233,7 @@ export default function OperationModal({ onClose, isGlass, initialData }) {
                     cantidad: 1,
                     precioUnitario: montoTotalParsed,
                     monedaPrecio: formData.monedaPrecio,
-                    fecha: new Date(formData.fecha).toISOString(),
+                    fecha: dateToMiddayISO(formData.fecha),
                     nota: formData.nota.trim()
                 };
             } else {
@@ -202,9 +244,13 @@ export default function OperationModal({ onClose, isGlass, initialData }) {
                     cantidad: cantidadParsed,
                     precioUnitario: isMovimientoFiat ? 1 : precioParsed,
                     monedaPrecio: isMovimientoFiat ? formData.especie.toUpperCase() : formData.monedaPrecio,
-                    fecha: new Date(formData.fecha).toISOString(),
+                    fecha: dateToMiddayISO(formData.fecha),
                     nota: formData.nota.trim()
                 };
+            }
+
+            if (initialData?.caucionId) {
+                await updateSavingsTransaction(initialData.caucionId, { liquidada: true });
             }
 
             if (initialData?.id) {
