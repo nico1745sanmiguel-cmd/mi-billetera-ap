@@ -8,7 +8,7 @@ const usdFormatter = new Intl.NumberFormat('es-AR', { style: 'currency', currenc
 
 export default function SavingsWidget({ setView, privacyMode, size }) {
     const { dolarBlue } = useFinancial();
-    const { posiciones, savingsGoal, cauciones } = useSavings();
+    const { posiciones, savingsGoal, cauciones, liquidezPorCartera } = useSavings();
     const [currencyView, setCurrencyView] = useState('ARS');
     const [imgError, setImgError] = useState(false);
 
@@ -17,7 +17,7 @@ export default function SavingsWidget({ setView, privacyMode, size }) {
         const rate = dolarBlue || 1000;
 
         posiciones.forEach(pos => {
-            totalUSD += pos.valorActualUSD;
+            totalUSD += pos.valorActualUSD || 0;
         });
 
         (cauciones || []).forEach(c => {
@@ -26,13 +26,17 @@ export default function SavingsWidget({ setView, privacyMode, size }) {
             }
         });
 
+        Object.values(liquidezPorCartera || {}).forEach(liq => {
+            totalUSD += (liq.USD || 0) + ((liq.ARS || 0) / rate);
+        });
+
         const computedTotalARS = totalUSD * rate;
         
         return {
             totalARS: computedTotalARS,
             total: currencyView === 'ARS' ? computedTotalARS : totalUSD
         };
-    }, [posiciones, cauciones, dolarBlue, currencyView]);
+    }, [posiciones, cauciones, liquidezPorCartera, dolarBlue, currencyView]);
 
     const formatCurrency = (amount, currency) => {
         if (privacyMode) return '****';

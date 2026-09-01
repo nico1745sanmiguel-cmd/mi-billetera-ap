@@ -11,7 +11,7 @@ const arsFormatter = new Intl.NumberFormat('es-AR', { style: 'currency', currenc
 
 export default function SavingsGoal() {
     const { isGlass, privacyMode } = useUI();
-    const { savingsTransactions, savingsGoal, goalLoading, saveSavingsGoal, deleteSavingsGoal, posiciones, cauciones } = useSavings();
+    const { savingsTransactions, savingsGoal, goalLoading, saveSavingsGoal, deleteSavingsGoal, posiciones, cauciones, liquidezPorCartera } = useSavings();
     const { dolarBlue } = useFinancial();
 
     const [editing, setEditing] = useState(false);
@@ -19,7 +19,7 @@ export default function SavingsGoal() {
     const [imageError, setImageError] = useState(false);
     const [saving, setSaving] = useState(false);
 
-    // Calcula el total general consolidado en ARS (posiciones + cauciones)
+    // Calcula el total general consolidado en ARS (posiciones + cauciones + liquidez)
     const totalARS = useMemo(() => {
         const rate = dolarBlue || 1000;
         let totalUSD = 0;
@@ -29,8 +29,11 @@ export default function SavingsGoal() {
         (cauciones || []).filter(c => c.estado !== 'vencida' && !c.liquidada).forEach(c => {
             totalUSD += c.valorActualUSD || 0;
         });
+        Object.values(liquidezPorCartera || {}).forEach(liq => {
+            totalUSD += (liq.USD || 0) + ((liq.ARS || 0) / rate);
+        });
         return totalUSD * rate;
-    }, [posiciones, cauciones, dolarBlue]);
+    }, [posiciones, cauciones, liquidezPorCartera, dolarBlue]);
 
     const goalAmount = savingsGoal ? (parseFloat(savingsGoal.amount) || 0) : 0;
     const progress = savingsGoal && goalAmount > 0 ? Math.min(100, Math.max(0, (totalARS / goalAmount) * 100)) : 0;

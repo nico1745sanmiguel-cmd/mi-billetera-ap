@@ -27,26 +27,34 @@ export default function SavingsDashboard() {
     useStopLossAlerts();
 
     const { isGlass, privacyMode } = useUI();
-    const { posiciones, cauciones } = useSavings();
+    const { posiciones, cauciones, liquidezPorCartera } = useSavings();
     const { dolarBlue } = useFinancial();
     const [showAddModal, setShowAddModal] = useState(false);
     const [currencyView, setCurrencyView] = useState('ARS');
     const [activeTab, setActiveTab] = useState('portafolio');
 
-    // ── Cálculo del total general ──────────────────────────────────────────────
+    // ── Cálculo del total general consolidado (Activos + Cauciones + Liquidez) ──
     const { total, totalUSD, pnlTotal, pnlPct } = useMemo(() => {
         const rate = dolarBlue || 1000;
         let totalUSD = 0;
         let inversionUSD = 0;
 
         posiciones.forEach(pos => {
-            totalUSD += pos.valorActualUSD;
+            totalUSD += pos.valorActualUSD || 0;
             inversionUSD += pos.inversionTotalUSD || 0;
         });
+
         (cauciones || []).filter(c => c.estado !== 'vencida' && !c.liquidada).forEach(c => {
             totalUSD += c.valorActualUSD || 0;
             inversionUSD += (parseFloat(c.montoARS) || 0) / rate;
         });
+
+        let totalLiquidezUSD = 0;
+        Object.values(liquidezPorCartera || {}).forEach(liq => {
+            totalLiquidezUSD += (liq.USD || 0) + ((liq.ARS || 0) / rate);
+        });
+        totalUSD += totalLiquidezUSD;
+        inversionUSD += Math.max(0, totalLiquidezUSD);
 
         const totalARS = totalUSD * rate;
         const pnlUSD = totalUSD - inversionUSD;
@@ -58,7 +66,7 @@ export default function SavingsDashboard() {
             pnlTotal: currencyView === 'ARS' ? pnlUSD * rate : pnlUSD,
             pnlPct,
         };
-    }, [posiciones, cauciones, dolarBlue, currencyView]);
+    }, [posiciones, cauciones, liquidezPorCartera, dolarBlue, currencyView]);
 
     const formatCurrency = (amount, currency) => {
         if (privacyMode) return '****';

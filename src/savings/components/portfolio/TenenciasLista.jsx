@@ -60,33 +60,73 @@ export default function TenenciasLista({
                         </div>
 
                         {/* ── DINERO LÍQUIDO ── */}
-                        {hasLiquidez && (
-                            <div className={`mb-6 p-4 rounded-2xl flex flex-wrap gap-6 items-center justify-between border ${isGlass ? 'bg-green-500/10 border-green-500/20' : 'bg-green-50 border-green-100'}`}>
-                                <div className="flex items-center gap-2">
-                                    <div className="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center shrink-0">
-                                        <span className="font-black text-xs">$</span>
+                        {hasLiquidez && (() => {
+                            const isNegARS = (carteraData.liquidez?.ARS || 0) < 0;
+                            const isNegUSD = (carteraData.liquidez?.USD || 0) < 0;
+                            const isNeg = isNegARS || isNegUSD;
+
+                            return (
+                                <div className={`mb-6 p-4 rounded-2xl flex flex-wrap gap-6 items-center justify-between border transition-all ${
+                                    isNeg
+                                        ? (isGlass ? 'bg-amber-500/15 border-amber-500/30' : 'bg-amber-50 border-amber-200')
+                                        : (isGlass ? 'bg-green-500/10 border-green-500/20' : 'bg-green-50 border-green-100')
+                                }`}>
+                                    <div className="flex items-center gap-2">
+                                        <div className={`w-8 h-8 rounded-full text-white flex items-center justify-center shrink-0 ${
+                                            isNeg ? 'bg-amber-500' : 'bg-green-500'
+                                        }`}>
+                                            <span className="font-black text-xs">$</span>
+                                        </div>
+                                        <div>
+                                            <span className={`block text-xs font-bold uppercase tracking-wider ${
+                                                isNeg
+                                                    ? (isGlass ? 'text-amber-300' : 'text-amber-800')
+                                                    : (isGlass ? 'text-green-300' : 'text-green-700')
+                                            }`}>
+                                                {isNeg ? 'Dinero Líquido (En Descubierto)' : 'Dinero Líquido'}
+                                            </span>
+                                            <span className={`block text-xs ${
+                                                isNeg
+                                                    ? (isGlass ? 'text-amber-300/70' : 'text-amber-700/70')
+                                                    : (isGlass ? 'text-green-300/70' : 'text-green-600/70')
+                                            }`}>
+                                                {isNeg ? 'Registrá un depósito para regularizar la caja' : 'Disponible para operar'}
+                                            </span>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <span className={`block text-xs font-bold uppercase tracking-wider ${isGlass ? 'text-green-300' : 'text-green-700'}`}>Dinero Líquido</span>
-                                        <span className={`block text-xs ${isGlass ? 'text-green-300/70' : 'text-green-600/70'}`}>Disponible para operar</span>
+                                    <div className="flex gap-6">
+                                        {carteraData.liquidez.ARS !== 0 && (
+                                            <div className="text-right">
+                                                <span className={`text-[10px] font-bold uppercase tracking-wider block ${
+                                                    carteraData.liquidez.ARS < 0
+                                                        ? (isGlass ? 'text-amber-300/70' : 'text-amber-700/70')
+                                                        : (isGlass ? 'text-green-300/70' : 'text-green-600/70')
+                                                }`}>ARS</span>
+                                                <span className={`font-black text-lg ${
+                                                    carteraData.liquidez.ARS < 0
+                                                        ? (isGlass ? 'text-amber-300' : 'text-amber-800')
+                                                        : (isGlass ? 'text-white' : 'text-green-800')
+                                                }`}>{arsFormatter.format(carteraData.liquidez.ARS)}</span>
+                                            </div>
+                                        )}
+                                        {carteraData.liquidez.USD !== 0 && (
+                                            <div className="text-right">
+                                                <span className={`text-[10px] font-bold uppercase tracking-wider block ${
+                                                    carteraData.liquidez.USD < 0
+                                                        ? (isGlass ? 'text-amber-300/70' : 'text-amber-700/70')
+                                                        : (isGlass ? 'text-green-300/70' : 'text-green-600/70')
+                                                }`}>USD</span>
+                                                <span className={`font-black text-lg ${
+                                                    carteraData.liquidez.USD < 0
+                                                        ? (isGlass ? 'text-amber-300' : 'text-amber-800')
+                                                        : (isGlass ? 'text-white' : 'text-green-800')
+                                                }`}>{usdFormatter.format(carteraData.liquidez.USD)}</span>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
-                                <div className="flex gap-6">
-                                    {carteraData.liquidez.ARS !== 0 && (
-                                        <div className="text-right">
-                                            <span className={`text-[10px] font-bold uppercase tracking-wider block ${isGlass ? 'text-green-300/70' : 'text-green-600/70'}`}>ARS</span>
-                                            <span className={`font-black text-lg ${isGlass ? 'text-white' : 'text-green-800'}`}>{arsFormatter.format(carteraData.liquidez.ARS)}</span>
-                                        </div>
-                                    )}
-                                    {carteraData.liquidez.USD !== 0 && (
-                                        <div className="text-right">
-                                            <span className={`text-[10px] font-bold uppercase tracking-wider block ${isGlass ? 'text-green-300/70' : 'text-green-600/70'}`}>USD</span>
-                                            <span className={`font-black text-lg ${isGlass ? 'text-white' : 'text-green-800'}`}>{usdFormatter.format(carteraData.liquidez.USD)}</span>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        )}
+                            );
+                        })()}
 
                         {/* ── HEADER DE ORDENAMIENTO (Mobile-first) ── */}
                         {carteraData.items.length > 0 && (

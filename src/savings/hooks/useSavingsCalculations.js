@@ -16,6 +16,10 @@ export const useSavingsCalculations = (savingsTransactions = [], assetPrices = {
         
         sorted.forEach(tx => {
             const { cartera, especie, tipo, cantidad, precioUnitario, monedaPrecio } = tx;
+            const espUpper = especie?.trim().toUpperCase();
+            // Los saldos y depósitos en dinero fiat (USD, ARS) se gestionan exclusivamente en liquidezPorCartera
+            if (!especie || espUpper === 'USD' || espUpper === 'ARS') return;
+
             const cant = parseFloat(cantidad) || 0;
             const precio = parseFloat(precioUnitario) || 0;
             
