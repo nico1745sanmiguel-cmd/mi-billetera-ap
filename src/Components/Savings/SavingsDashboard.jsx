@@ -1,7 +1,8 @@
 import React, { useState, useMemo, lazy, Suspense } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useSavings } from '../../context/SavingsContext';
 import { useFinancial } from '../../context/FinancialContext';
-import { Plus, ArrowRightLeft, TrendingUp, TrendingDown, BarChart2, ListOrdered, Target } from 'lucide-react';
+import { Plus, ArrowRightLeft, TrendingUp, TrendingDown, BarChart2, ListOrdered, Target, Settings } from 'lucide-react';
 import SavingsGoal from './SavingsGoal';
 import { useUI } from '../../context/UIContext';
 import OperationModal from './OperationModal';
@@ -22,6 +23,7 @@ const TABS = [
 ];
 
 export default function SavingsDashboard() {
+    const navigate = useNavigate();
     useStopLossAlerts();
 
     const { isGlass, privacyMode } = useUI();
@@ -70,15 +72,30 @@ export default function SavingsDashboard() {
     return (
         <div className="relative space-y-5 animate-fade-in pb-24">
 
-            {/* ── HEADER COMPACTO ── */}
-            <div className="flex items-center gap-3">
-                <div className={`p-2.5 rounded-xl ${isGlass ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-600'}`}>
-                    <TrendingUp size={22} />
+            {/* ── HEADER COMPACTO CON ACCESO A SETTINGS ── */}
+            <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                    <div className={`p-2.5 rounded-xl ${isGlass ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-600'}`}>
+                        <TrendingUp size={22} />
+                    </div>
+                    <div>
+                        <h1 className={`text-xl font-black tracking-tight leading-none ${textColor}`}>Mis Ahorros</h1>
+                        <p className={`text-xs mt-0.5 ${isGlass ? 'text-white/50' : 'text-gray-400'}`}>Inversiones y saldos</p>
+                    </div>
                 </div>
-                <div>
-                    <h1 className={`text-xl font-black tracking-tight leading-none ${textColor}`}>Mis Ahorros</h1>
-                    <p className={`text-xs mt-0.5 ${isGlass ? 'text-white/50' : 'text-gray-400'}`}>Inversiones y saldos</p>
-                </div>
+
+                <button
+                    type="button"
+                    aria-label="Configuración de Ahorros"
+                    onClick={() => navigate('/settings_modules/savings')}
+                    className={`p-2.5 rounded-2xl transition-all active:scale-95 flex items-center justify-center ${
+                        isGlass 
+                            ? 'bg-white/10 hover:bg-white/20 text-white border border-white/15 shadow-sm' 
+                            : 'bg-white hover:bg-gray-100 text-gray-700 shadow-sm border border-gray-200/80'
+                    }`}
+                >
+                    <Settings size={20} />
+                </button>
             </div>
 
             {/* ── HERO CARD ── */}

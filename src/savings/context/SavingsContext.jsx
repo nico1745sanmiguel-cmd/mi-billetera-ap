@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useMemo, useCallback } from 'react';
 import { db } from '../../firebase';
-import { doc, deleteDoc } from 'firebase/firestore';
-import { COLLECTIONS } from '../../config/constants';
+import { doc, deleteDoc, collection, getDocs, query, where } from 'firebase/firestore';
+import { COLLECTIONS, CACHE_KEYS } from '../../config/constants';
+import { setCache } from '../../utils/cache';
 import { useAuth } from '../../context/AuthContext';
 import { useFinancial } from '../../context/FinancialContext';
 
@@ -22,7 +23,7 @@ export const useSavings = () => {
 };
 
 export const SavingsProvider = ({ children }) => {
-    const { user } = useAuth();
+    const { user, userData } = useAuth();
     const { dolarBlue } = useFinancial();
 
     // 1. Data bruta (transacciones, carteras)
@@ -45,20 +46,6 @@ export const SavingsProvider = ({ children }) => {
     );
 
     // Re-bind del trailing stop passing posiciones
-    // Esto es un refactor menor de la dependencia cíclica:
-    // Trailing stop necesita posiciones, posiciones necesita stopLosses
-    // En el contexto original el useEffect vivía en el mismo archivo.
-    // Como extrajimos useSavingsStopLoss, le pasamos las posiciones pero 
-    // en React no podemos pasar un valor calculado después del hook.
-    // Solución limpia: el trailing stop hook acepta posiciones como param.
-    // Usamos un componente wrapper o lo pasamos como effect manual aquí si es necesario, 
-    // pero el hook useSavingsStopLoss ya tiene el useEffect. Simplemente le pasamos las posiciones en el hook.
-    
-    // NOTA: Para no violar las reglas de hooks, hacemos el useEffect aquí para el trailing stop,
-    // o ajustamos el hook. Como ya hicimos el useEffect en el hook, solo necesitamos asegurarnos de que reciba `posiciones`.
-    // Una forma limpia en Contextos divididos es llamar otro hook interno o usar un effect aquí.
-    
-    // Mejor pasamos las posiciones al efecto del trailing stop en el context principal:
     const { updateMaxPrice, stopLosses } = stopLossData;
     const { posiciones } = calculations;
     
@@ -76,22 +63,65 @@ export const SavingsProvider = ({ children }) => {
         });
     }, [posiciones, stopLosses, updateMaxPrice]);
 
-    // Clear all savings method (was in context)
+    // Clear all savings method: borrado completo de Firestore y cachés
     const clearAllSavings = useCallback(async () => {
         if (!user) return;
+        const householdId = userData?.householdId;
+        const queryField = householdId ? "householdId" : "userId";
+        const queryValue = householdId ? householdId : user.uid;
+
         try {
-            const promises = savingsTransactions.map(tx => 
-                deleteDoc(doc(db, COLLECTIONS.SAVINGS_TRANSACTIONS, tx.id))
-            );
-            if (goalData.savingsGoal?.id) {
-                promises.push(deleteDoc(doc(db, COLLECTIONS.SAVINGS_GOALS, goalData.savingsGoal.id)));
+            const targetCollections = [
+                COLLECTIONS.SAVINGS_TRANSACTIONS,
+                COLLECTIONS.SAVINGS_GOALS,
+                COLLECTIONS.SAVINGS_STOP_LOSSES,
+                'savings_asset_prices',
+                COLLECTIONS.SAVINGS_CARTERAS
+            ].filter(Boolean);
+
+            const deletePromises = [];
+
+            for (const collName of targetCollections) {
+                // Borrar documentos por householdId o userId
+                const q = query(collection(db, collName), where(queryField, "==", queryValue));
+                const snap = await getDocs(q);
+                snap.forEach(d => {
+                    deletePromises.push(deleteDoc(d.ref));
+                });
+
+                // Si estamos en un household, también asegurar la limpieza de docs asociados al userId directo
+                if (householdId) {
+                    const qUser = query(collection(db, collName), where("userId", "==", user.uid));
+                    const snapUser = await getDocs(qUser);
+                    snapUser.forEach(d => {
+                        deletePromises.push(deleteDoc(d.ref));
+                    });
+                }
             }
-            await Promise.all(promises);
+
+            // Eliminar los que estén cargados en memoria por ID como fallback
+            savingsTransactions.forEach(tx => {
+                if (tx.id) {
+                    deletePromises.push(deleteDoc(doc(db, COLLECTIONS.SAVINGS_TRANSACTIONS, tx.id)).catch(() => {}));
+                }
+            });
+            if (goalData.savingsGoal?.id) {
+                deletePromises.push(deleteDoc(doc(db, COLLECTIONS.SAVINGS_GOALS, goalData.savingsGoal.id)).catch(() => {}));
+            }
+
+            await Promise.all(deletePromises);
+
+            // Limpieza de caché local
+            setCache(CACHE_KEYS.SAVINGS_TRANSACTIONS, []);
+            setCache(CACHE_KEYS.SAVINGS_CARTERAS, []);
+            setCache(CACHE_KEYS.SAVINGS_STOP_LOSSES, {});
+            setCache('savings_goal_data', null);
+            setCache('asset_prices', {});
         } catch (error) {
             console.error("Error clearing all savings:", error);
             throw error;
         }
-    }, [user, savingsTransactions, goalData.savingsGoal]);
+    }, [user, userData, savingsTransactions, goalData.savingsGoal]);
 
     const value = useMemo(() => ({
         ...savingsData,
