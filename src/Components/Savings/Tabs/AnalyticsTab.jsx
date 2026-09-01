@@ -93,7 +93,7 @@ export default function AnalyticsTab({ isGlass, privacyMode }) {
             // Fallback: TNA simplificada (para no-bonos o bonos sin cupones registrados)
             let primeraCompra = null;
             pos.operaciones.forEach(op => {
-                if (op.tipo === 'compra' || op.tipo === 'deposito') {
+                if (op.tipo === 'compra' || op.tipo === 'deposito' || op.tipo === 'ingreso') {
                     const date = new Date(op.fecha || op.createdAt?.toDate?.() || Date.now());
                     if (!primeraCompra || date < primeraCompra) primeraCompra = date;
                 }
@@ -105,10 +105,17 @@ export default function AnalyticsTab({ isGlass, privacyMode }) {
                 const now = new Date();
                 dias = Math.max(1, Math.floor((now - primeraCompra) / (1000 * 60 * 60 * 24)));
                 const ratio = pos.valorActualUSD / pos.inversionTotalUSD;
-                tna = (Math.pow(ratio, 365 / dias) - 1) * 100;
+                // Si la tenencia tiene menos de 15 días, anualizar linealmente con base mínima de 15 días
+                // para evitar distorsiones exorbitantes por fluctuaciones diarias.
+                if (dias < 15) {
+                    const simpleReturn = ratio - 1;
+                    tna = simpleReturn * (365 / Math.max(15, dias)) * 100;
+                } else {
+                    tna = (Math.pow(ratio, 365 / dias) - 1) * 100;
+                }
             }
 
-            return { ...pos, tna, dias, esBono, tieneCobros: false };
+            return { ...pos, tna: isFinite(tna) ? tna : 0, dias, esBono, tieneCobros: false };
         }).sort((a, b) => b.tna - a.tna);
     }, [posiciones, dolarBlue]);
 
@@ -203,7 +210,7 @@ export default function AnalyticsTab({ isGlass, privacyMode }) {
                         <h3 className={`font-bold ${textColor}`}>Rendimiento Global (TNA)</h3>
                     </div>
                     <div className={`text-6xl sm:text-7xl font-black tracking-tighter my-4 ${tnaGlobal >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                        {tnaGlobal >= 0 ? '+' : ''}{tnaGlobal.toFixed(1)}%
+                        {privacyMode ? '**%' : `${tnaGlobal >= 0 ? '+' : ''}${tnaGlobal.toFixed(1)}%`}
                     </div>
                     <p className={`text-sm font-medium ${secondaryTextColor}`}>
                         Tasa Nominal Anual ponderada del portafolio completo, calculada a partir del P&L y el tiempo de inversión.
@@ -257,7 +264,7 @@ export default function AnalyticsTab({ isGlass, privacyMode }) {
                             {privacyMode ? '****' : usdFormatter.format(valorFuturo)}
                         </span>
                         <span className={`block text-xs mt-2 opacity-80 ${isGlass ? 'text-blue-300/80' : 'text-blue-700/80'}`}>
-                            Asumiendo {tnaGlobal >= 0 ? `TNA de ${tnaGlobal.toFixed(1)}%` : 'TNA 0% (no se proyectan pérdidas)'}
+                            Asumiendo {privacyMode ? 'TNA calculada' : (tnaGlobal >= 0 ? `TNA de ${tnaGlobal.toFixed(1)}%` : 'TNA 0% (no se proyectan pérdidas)')}
                         </span>
                     </div>
                 </div>
@@ -293,7 +300,7 @@ export default function AnalyticsTab({ isGlass, privacyMode }) {
                                             {pos.cartera}
                                         </span>
                                         {pos.esBono && pos.tieneCobros && (
-                                            <span className="text-[10px] font-bold text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-md">TIR</span>
+                                             <span className="text-[10px] font-bold text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-md">TIR</span>
                                         )}
                                         {pos.esBono && !pos.tieneCobros && (
                                             <span className="flex items-center gap-1 text-[10px] font-bold text-gray-400 bg-gray-500/10 px-2 py-0.5 rounded-md" title="Faltan cobros de cupón">
@@ -302,7 +309,7 @@ export default function AnalyticsTab({ isGlass, privacyMode }) {
                                         )}
                                     </div>
                                     <div className={`font-black text-sm ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
-                                        {isPositive ? '+' : ''}{pos.tna.toFixed(1)}%
+                                        {privacyMode ? '**%' : `${isPositive ? '+' : ''}${pos.tna.toFixed(1)}%`}
                                     </div>
                                 </div>
                                 {/* Progress Bar Track */}

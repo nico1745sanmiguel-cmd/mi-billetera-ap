@@ -65,6 +65,7 @@ export const useSavingsCalculations = (savingsTransactions = [], assetPrices = {
             let currentPriceUSD = 0;
             let variacionDiaria = 0;
             
+            let sinCotizacionEnVivo = false;
             if (pos.especie === 'USD') {
                 currentPriceUSD = 1;
             } else if (pos.especie === 'ARS') {
@@ -78,6 +79,11 @@ export const useSavingsCalculations = (savingsTransactions = [], assetPrices = {
                     currentPriceUSD = assetData || 0;
                 }
             }
+
+            if (currentPriceUSD === 0 && pos.inversionTotalUSD > 0 && pos.cantidad > 0) {
+                currentPriceUSD = pos.inversionTotalUSD / pos.cantidad;
+                sinCotizacionEnVivo = true;
+            }
             
             const valorActualUSD = pos.cantidad * currentPriceUSD;
             const gananciaPérdidaUSD = valorActualUSD - pos.inversionTotalUSD;
@@ -90,6 +96,7 @@ export const useSavingsCalculations = (savingsTransactions = [], assetPrices = {
             return [{
                 ...pos,
                 precioActualUSD: currentPriceUSD,
+                sinCotizacionEnVivo,
                 variacionDiaria,
                 valorActualUSD,
                 cobradoTotalUSD,

@@ -96,8 +96,12 @@ export default function OperationModal({ onClose, isGlass, initialData }) {
         }
 
         const parseNumber = (val) => {
-            if (!val) return 0;
+            if (val === undefined || val === null) return 0;
+            if (typeof val === 'number') return isNaN(val) ? 0 : val;
             let str = val.toString().trim();
+            // Remover símbolos de moneda y caracteres no numéricos excepto separadores
+            str = str.replace(/[^0-9.,-]/g, '');
+            if (!str) return 0;
             
             const lastComma = str.lastIndexOf(',');
             const lastDot = str.lastIndexOf('.');
@@ -118,26 +122,47 @@ export default function OperationModal({ onClose, isGlass, initialData }) {
                 const parts = str.split('.');
                 if (parts.length > 2) {
                     str = str.replace(/\./g, '');
-                } else {
-                    if (parts[1].length === 3 && parts[0] !== '0') {
-                        str = str.replace('.', '');
-                    }
                 }
             }
-            return parseFloat(str) || 0;
+            const num = parseFloat(str);
+            return isNaN(num) ? 0 : num;
         };
 
         const cantidadParsed = parseNumber(formData.cantidad);
         const precioParsed = parseNumber(formData.precioUnitario);
         const montoTotalParsed = parseNumber(formData.montoTotal);
 
+        if (isCaucion) {
+            const monto = parseNumber(formData.montoARS);
+            const tna = parseNumber(formData.tna);
+            const plazo = parseInt(formData.plazo) || 0;
+            if (monto <= 0 || tna <= 0 || plazo <= 0) {
+                alert("El monto, la TNA y el plazo deben ser mayores a cero.");
+                return;
+            }
+        } else if (isCobro) {
+            if (montoTotalParsed <= 0) {
+                alert("El monto cobrado debe ser mayor a cero.");
+                return;
+            }
+        } else {
+            if (cantidadParsed <= 0) {
+                alert("La cantidad debe ser mayor a cero.");
+                return;
+            }
+            if (!isMovimientoFiat && formData.tipo !== 'ajuste' && precioParsed <= 0) {
+                alert("El precio unitario debe ser mayor a cero.");
+                return;
+            }
+        }
+
         setLoading(true);
         try {
             let payload;
 
             if (isCaucion) {
-                const monto = parseFloat(formData.montoARS) || 0;
-                const tna = parseFloat(formData.tna) || 0;
+                const monto = parseNumber(formData.montoARS);
+                const tna = parseNumber(formData.tna);
                 const plazo = parseInt(formData.plazo) || 0;
                 const interesEsperadoARS = monto * (tna / 100 / 365) * plazo;
                 const montoTotalEsperadoARS = monto + interesEsperadoARS;

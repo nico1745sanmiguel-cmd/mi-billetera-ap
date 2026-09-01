@@ -11,7 +11,7 @@ const arsFormatter = new Intl.NumberFormat('es-AR', { style: 'currency', currenc
 
 export default function SavingsGoal() {
     const { isGlass, privacyMode } = useUI();
-    const { savingsTransactions, savingsGoal, goalLoading, saveSavingsGoal, deleteSavingsGoal } = useSavings();
+    const { savingsTransactions, savingsGoal, goalLoading, saveSavingsGoal, deleteSavingsGoal, posiciones, cauciones } = useSavings();
     const { dolarBlue } = useFinancial();
 
     const [editing, setEditing] = useState(false);
@@ -19,36 +19,23 @@ export default function SavingsGoal() {
     const [imageError, setImageError] = useState(false);
     const [saving, setSaving] = useState(false);
 
-    // Calcula el total general en ARS
+    // Calcula el total general consolidado en ARS (posiciones + cauciones)
     const totalARS = useMemo(() => {
         const rate = dolarBlue || 1000;
-        const balances = {};
-
-        (savingsTransactions || []).forEach(tx => {
-            const { cartera, especie, tipo, cantidad } = tx;
-            if (!balances[cartera]) balances[cartera] = {};
-            if (!balances[cartera][especie]) balances[cartera][especie] = 0;
-            const num = parseFloat(cantidad) || 0;
-            if (tipo === 'ingreso') balances[cartera][especie] += num;
-            else if (tipo === 'egreso') balances[cartera][especie] -= num;
+        let totalUSD = 0;
+        (posiciones || []).forEach(pos => {
+            totalUSD += pos.valorActualUSD || 0;
         });
-
-        let total = 0;
-        Object.values(balances).forEach(cartera => {
-            Object.entries(cartera).forEach(([especie, cant]) => {
-                const es = especie.toUpperCase();
-                if (es === 'ARS') total += cant;
-                else if (es === 'USD') total += cant * rate;
-                else if (['USDT', 'USDC', 'DAI', 'USDP'].includes(es)) total += cant * rate;
-            });
+        (cauciones || []).forEach(c => {
+            totalUSD += c.valorActualUSD || 0;
         });
-        return total;
-    }, [savingsTransactions, dolarBlue]);
+        return totalUSD * rate;
+    }, [posiciones, cauciones, dolarBlue]);
 
-    const goalAmount = savingsGoal ? parseFloat(savingsGoal.amount) : 0;
-    const progress = savingsGoal && goalAmount > 0 ? Math.min(100, (totalARS / goalAmount) * 100) : 0;
-    const remaining = savingsGoal ? Math.max(0, goalAmount - totalARS) : 0;
-    const isComplete = progress >= 100;
+    const goalAmount = savingsGoal ? (parseFloat(savingsGoal.amount) || 0) : 0;
+    const progress = savingsGoal && goalAmount > 0 ? Math.min(100, Math.max(0, (totalARS / goalAmount) * 100)) : 0;
+    const remaining = savingsGoal && goalAmount > 0 ? Math.max(0, goalAmount - totalARS) : 0;
+    const isComplete = goalAmount > 0 && progress >= 100;
 
     const formatCurrency = (amount) => {
         if (privacyMode) return '****';
@@ -66,12 +53,17 @@ export default function SavingsGoal() {
     };
 
     const handleSave = async () => {
-        if (!form.name || !form.amount) return;
+        if (!form.name) return;
+        const parsedAmt = parseFloat(String(form.amount).replace(/\./g, '').replace(',', '.'));
+        if (isNaN(parsedAmt) || parsedAmt <= 0) {
+            alert('Por favor ingresá un monto objetivo mayor a cero.');
+            return;
+        }
         setSaving(true);
         try {
             await saveSavingsGoal({
-                name: form.name,
-                amount: parseFloat(String(form.amount).replace(/\./g, '').replace(',', '.')),
+                name: form.name.trim(),
+                amount: parsedAmt,
                 imageUrl: form.imageUrl.trim(),
             });
             setEditing(false);

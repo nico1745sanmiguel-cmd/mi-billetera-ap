@@ -49,7 +49,7 @@ function QuickSellPanel({ asset, isGlass, currencyView, rate, textColor, seconda
         try {
             const fecha = new Date().toISOString();
 
-            // 1. Registrar la venta del activo
+            // Registrar la venta del activo (la liquidez se computa automáticamente en useSavingsCalculations)
             await addSavingsTransaction({
                 cartera: asset.cartera,
                 especie: asset.especie,
@@ -59,18 +59,6 @@ function QuickSellPanel({ asset, isGlass, currencyView, rate, textColor, seconda
                 monedaPrecio: monedaVenta,
                 fecha,
                 nota: modo === 'total' ? 'Venta total desde portafolio' : 'Venta parcial desde portafolio',
-            });
-
-            // 2. Registrar el dinero resultante como depósito líquido en la misma cartera
-            await addSavingsTransaction({
-                cartera: asset.cartera,
-                especie: monedaVenta, // 'ARS' o 'USD'
-                tipo: 'deposito',
-                cantidad: montoResultante,
-                precioUnitario: 1,
-                monedaPrecio: monedaVenta,
-                fecha,
-                nota: `Líquido por venta de ${asset.especie}`,
             });
 
             setDone(true);

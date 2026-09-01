@@ -45,6 +45,7 @@ export default function SavingsDashboard() {
         });
         (cauciones || []).forEach(c => {
             totalUSD += c.valorActualUSD || 0;
+            inversionUSD += (parseFloat(c.montoARS) || 0) / rate;
         });
 
         const totalARS = totalUSD * rate;

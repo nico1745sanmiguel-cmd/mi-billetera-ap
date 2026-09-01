@@ -147,13 +147,17 @@ export default function TenenciasLista({
                                                 </p>
                                             </div>
                                             <div className={`text-sm font-black px-2.5 py-1 rounded-lg ${
-                                                pos.variacionDiaria > 0 
-                                                    ? 'bg-green-500/10 text-green-500' 
-                                                    : pos.variacionDiaria < 0 
-                                                        ? 'bg-red-500/10 text-red-500' 
-                                                        : isGlass ? 'bg-white/10 text-white/50' : 'bg-gray-100 text-gray-500'
+                                                pos.sinCotizacionEnVivo
+                                                    ? isGlass ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'bg-amber-50 text-amber-600 border border-amber-200'
+                                                    : pos.variacionDiaria > 0 
+                                                        ? 'bg-green-500/10 text-green-500' 
+                                                        : pos.variacionDiaria < 0 
+                                                            ? 'bg-red-500/10 text-red-500' 
+                                                            : isGlass ? 'bg-white/10 text-white/50' : 'bg-gray-100 text-gray-500'
                                             }`}>
-                                                {pos.variacionDiaria !== 0 ? (pos.variacionDiaria > 0 ? '+' : '') + formatPercentage(pos.variacionDiaria) : '-'}
+                                                {pos.sinCotizacionEnVivo 
+                                                    ? 'Costo' 
+                                                    : (pos.variacionDiaria !== 0 ? (pos.variacionDiaria > 0 ? '+' : '') + formatPercentage(pos.variacionDiaria) : '-')}
                                             </div>
                                         </div>
 
