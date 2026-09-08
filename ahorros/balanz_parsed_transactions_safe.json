@@ -14,7 +14,7 @@
     "cartera": "Balanz",
     "especie": "MELI",
     "cantidad": 20,
-    "precioUnitario": 24200,
+    "precioUnitario": 23965.744,
     "monedaPrecio": "ARS",
     "fecha": "2026-08-12T00:00:00.000Z",
     "nota": "Boleto / 8935141 / VENTA / 1 / MELI / $"
@@ -24,7 +24,7 @@
     "cartera": "Balanz",
     "especie": "META",
     "cantidad": 2,
-    "precioUnitario": 38400,
+    "precioUnitario": 38028.29,
     "monedaPrecio": "ARS",
     "fecha": "2026-08-12T00:00:00.000Z",
     "nota": "Boleto / 8935142 / VENTA / 1 / META / $"
@@ -34,7 +34,7 @@
     "cartera": "Balanz",
     "especie": "IBIT",
     "cantidad": 41,
-    "precioUnitario": 5695,
+    "precioUnitario": 5639.872682926829,
     "monedaPrecio": "ARS",
     "fecha": "2026-08-12T00:00:00.000Z",
     "nota": "Boleto / 8935143 / VENTA / 1 / IBIT / $"
@@ -54,7 +54,7 @@
     "cartera": "Balanz",
     "especie": "BYMA",
     "cantidad": 408,
-    "precioUnitario": 299,
+    "precioUnitario": 296.10566176470587,
     "monedaPrecio": "ARS",
     "fecha": "2026-07-30T00:00:00.000Z",
     "nota": "Boleto / 8280370 / VENTA / 1 / BYMA / $"
@@ -84,7 +84,7 @@
     "cartera": "Balanz",
     "especie": "COME",
     "cantidad": 3719,
-    "precioUnitario": 44.15,
+    "precioUnitario": 44.577370260822796,
     "monedaPrecio": "ARS",
     "fecha": "2026-07-07T00:00:00.000Z",
     "nota": "Boleto / 7445365 / COMPRA / 1 / COME / $"
@@ -94,7 +94,7 @@
     "cartera": "Balanz",
     "especie": "TGSU2",
     "cantidad": 15,
-    "precioUnitario": 9350,
+    "precioUnitario": 9440.508,
     "monedaPrecio": "ARS",
     "fecha": "2026-07-07T00:00:00.000Z",
     "nota": "Boleto / 7445366 / COMPRA / 1 / TGSU2 / $"
@@ -104,17 +104,37 @@
     "cartera": "Balanz",
     "especie": "BMA",
     "cantidad": 22,
-    "precioUnitario": 14120,
+    "precioUnitario": 13983.318181818182,
     "monedaPrecio": "ARS",
     "fecha": "2026-07-02T00:00:00.000Z",
     "nota": "Boleto / 7271385 / VENTA / 1 / BMA / $"
+  },
+  {
+    "tipo": "deposito",
+    "cartera": "Balanz",
+    "especie": "USD",
+    "cantidad": 0.03,
+    "precioUnitario": 1,
+    "monedaPrecio": "USD",
+    "fecha": "2026-06-26T00:00:00.000Z",
+    "nota": "Dividendo en efectivo / META"
+  },
+  {
+    "tipo": "deposito",
+    "cartera": "Balanz",
+    "especie": "ARS",
+    "cantidad": 0.19,
+    "precioUnitario": 1,
+    "monedaPrecio": "ARS",
+    "fecha": "2026-06-26T00:00:00.000Z",
+    "nota": "Dividendo en efectivo / META"
   },
   {
     "tipo": "venta",
     "cartera": "Balanz",
     "especie": "DISN",
     "cantidad": 6,
-    "precioUnitario": 12450,
+    "precioUnitario": 12329.485,
     "monedaPrecio": "ARS",
     "fecha": "2026-06-10T00:00:00.000Z",
     "nota": "Boleto / 6422070 / VENTA / 1 / DISN / $"
@@ -124,7 +144,7 @@
     "cartera": "Balanz",
     "especie": "BYMA",
     "cantidad": 408,
-    "precioUnitario": 288,
+    "precioUnitario": 290.7878431372549,
     "monedaPrecio": "ARS",
     "fecha": "2026-06-10T00:00:00.000Z",
     "nota": "Boleto / 6422071 / COMPRA / 1 / BYMA / $"
@@ -134,17 +154,37 @@
     "cartera": "Balanz",
     "especie": "BABA",
     "cantidad": 2,
-    "precioUnitario": 19650,
+    "precioUnitario": 19459.785,
     "monedaPrecio": "ARS",
     "fecha": "2026-06-10T00:00:00.000Z",
     "nota": "Boleto / 6422072 / VENTA / 1 / BABA / $"
+  },
+  {
+    "tipo": "deposito",
+    "cartera": "Balanz",
+    "especie": "ARS",
+    "cantidad": 1683.06,
+    "precioUnitario": 1,
+    "monedaPrecio": "ARS",
+    "fecha": "2026-06-03T00:00:00.000Z",
+    "nota": "Dividendo en efectivo / BMA"
+  },
+  {
+    "tipo": "extraccion",
+    "cartera": "Balanz",
+    "especie": "ARS",
+    "cantidad": 118.09,
+    "precioUnitario": 1,
+    "monedaPrecio": "ARS",
+    "fecha": "2026-06-03T00:00:00.000Z",
+    "nota": "Movimiento Manual / N/D Ret IIGG - BMA"
   },
   {
     "tipo": "compra",
     "cartera": "Balanz",
     "especie": "PAMP",
     "cantidad": 31,
-    "precioUnitario": 4950,
+    "precioUnitario": 4997.916129032258,
     "monedaPrecio": "ARS",
     "fecha": "2026-05-28T00:00:00.000Z",
     "nota": "Boleto / 5829359 / COMPRA / 1 / PAMP / $"
@@ -160,14 +200,44 @@
     "nota": "Recibo de Cobro / 1393034"
   },
   {
+    "tipo": "deposito",
+    "cartera": "Balanz",
+    "especie": "ARS",
+    "cantidad": 1683.06,
+    "precioUnitario": 1,
+    "monedaPrecio": "ARS",
+    "fecha": "2026-05-19T00:00:00.000Z",
+    "nota": "Dividendo en efectivo / BMA"
+  },
+  {
+    "tipo": "extraccion",
+    "cartera": "Balanz",
+    "especie": "ARS",
+    "cantidad": 118.09,
+    "precioUnitario": 1,
+    "monedaPrecio": "ARS",
+    "fecha": "2026-05-19T00:00:00.000Z",
+    "nota": "Movimiento Manual / N/D Ret IIGG - BMA"
+  },
+  {
     "tipo": "compra",
     "cartera": "Balanz",
     "especie": "BMA",
     "cantidad": 12,
-    "precioUnitario": 10820,
+    "precioUnitario": 10924.737500000001,
     "monedaPrecio": "ARS",
     "fecha": "2026-05-12T00:00:00.000Z",
     "nota": "Boleto / 5270009 / COMPRA / 1 / BMA / $"
+  },
+  {
+    "tipo": "deposito",
+    "cartera": "Balanz",
+    "especie": "ARS",
+    "cantidad": 139686.8,
+    "precioUnitario": 1,
+    "monedaPrecio": "ARS",
+    "fecha": "2026-05-11T00:00:00.000Z",
+    "nota": "Renta y Amortización / TX26"
   },
   {
     "tipo": "extraccion",
@@ -184,7 +254,7 @@
     "cartera": "Balanz",
     "especie": "BMA",
     "cantidad": 10,
-    "precioUnitario": 11410,
+    "precioUnitario": 11520.449,
     "monedaPrecio": "ARS",
     "fecha": "2026-04-06T00:00:00.000Z",
     "nota": "Boleto / 3813091 / COMPRA / 1 / BMA / $"
@@ -194,7 +264,7 @@
     "cartera": "Balanz",
     "especie": "COST",
     "cantidad": 4,
-    "precioUnitario": 29680,
+    "precioUnitario": 29392.6975,
     "monedaPrecio": "ARS",
     "fecha": "2026-03-26T00:00:00.000Z",
     "nota": "Boleto / 3497317 / VENTA / 1 / COST / $"
@@ -214,7 +284,7 @@
     "cartera": "Balanz",
     "especie": "DISN",
     "cantidad": 10,
-    "precioUnitario": 12150,
+    "precioUnitario": 12032.388,
     "monedaPrecio": "ARS",
     "fecha": "2026-03-20T00:00:00.000Z",
     "nota": "Boleto / 3384894 / VENTA / 1 / DISN / $"
@@ -224,7 +294,7 @@
     "cartera": "Balanz",
     "especie": "META",
     "cantidad": 2,
-    "precioUnitario": 36440,
+    "precioUnitario": 36792.74,
     "monedaPrecio": "ARS",
     "fecha": "2026-03-20T00:00:00.000Z",
     "nota": "Boleto / 3384895 / COMPRA / 1 / META / $"
@@ -234,7 +304,7 @@
     "cartera": "Balanz",
     "especie": "BABA",
     "cantidad": 2,
-    "precioUnitario": 20260,
+    "precioUnitario": 20456.115,
     "monedaPrecio": "ARS",
     "fecha": "2026-03-20T00:00:00.000Z",
     "nota": "Boleto / 3384896 / COMPRA / 1 / BABA / $"
@@ -244,7 +314,7 @@
     "cartera": "Balanz",
     "especie": "DISN",
     "cantidad": 16,
-    "precioUnitario": 12930,
+    "precioUnitario": 13055.1625,
     "monedaPrecio": "ARS",
     "fecha": "2026-02-27T00:00:00.000Z",
     "nota": "Boleto / 2598465 / COMPRA / 1 / DISN / $"
@@ -254,7 +324,7 @@
     "cartera": "Balanz",
     "especie": "MELI",
     "cantidad": 14,
-    "precioUnitario": 21540,
+    "precioUnitario": 21748.507142857143,
     "monedaPrecio": "ARS",
     "fecha": "2026-02-26T00:00:00.000Z",
     "nota": "Boleto / 2540183 / COMPRA / 1 / MELI / $"
@@ -264,7 +334,7 @@
     "cartera": "Balanz",
     "especie": "VOD",
     "cantidad": 9,
-    "precioUnitario": 23200,
+    "precioUnitario": 22975.424444444445,
     "monedaPrecio": "ARS",
     "fecha": "2026-02-25T00:00:00.000Z",
     "nota": "Boleto / 2489905 / VENTA / 1 / VOD / $"
@@ -280,11 +350,51 @@
     "nota": "Recibo de Cobro / 558104"
   },
   {
+    "tipo": "deposito",
+    "cartera": "Balanz",
+    "especie": "USD",
+    "cantidad": 0.07,
+    "precioUnitario": 1,
+    "monedaPrecio": "USD",
+    "fecha": "2026-02-18T00:00:00.000Z",
+    "nota": "Dividendo en efectivo / COST"
+  },
+  {
+    "tipo": "deposito",
+    "cartera": "Balanz",
+    "especie": "ARS",
+    "cantidad": 0.42,
+    "precioUnitario": 1,
+    "monedaPrecio": "ARS",
+    "fecha": "2026-02-18T00:00:00.000Z",
+    "nota": "Dividendo en efectivo / COST"
+  },
+  {
+    "tipo": "deposito",
+    "cartera": "Balanz",
+    "especie": "USD",
+    "cantidad": 2.05,
+    "precioUnitario": 1,
+    "monedaPrecio": "USD",
+    "fecha": "2026-02-06T00:00:00.000Z",
+    "nota": "Dividendo en efectivo / VOD"
+  },
+  {
+    "tipo": "deposito",
+    "cartera": "Balanz",
+    "especie": "ARS",
+    "cantidad": 15.77,
+    "precioUnitario": 1,
+    "monedaPrecio": "ARS",
+    "fecha": "2026-02-06T00:00:00.000Z",
+    "nota": "Dividendo en efectivo / VOD"
+  },
+  {
     "tipo": "venta",
     "cartera": "Balanz",
     "especie": "BMA",
     "cantidad": 26,
-    "precioUnitario": 12710,
+    "precioUnitario": 12586.967307692308,
     "monedaPrecio": "ARS",
     "fecha": "2025-12-02T00:00:00.000Z",
     "nota": "Boleto / 11941282 / VENTA / 1 / BMA / $"
@@ -294,17 +404,57 @@
     "cartera": "Balanz",
     "especie": "IBIT",
     "cantidad": 41,
-    "precioUnitario": 7870,
+    "precioUnitario": 7946.1819512195125,
     "monedaPrecio": "ARS",
     "fecha": "2025-12-02T00:00:00.000Z",
     "nota": "Boleto / 11941283 / COMPRA / 1 / IBIT / $"
+  },
+  {
+    "tipo": "deposito",
+    "cartera": "Balanz",
+    "especie": "USD",
+    "cantidad": 0.07,
+    "precioUnitario": 1,
+    "monedaPrecio": "USD",
+    "fecha": "2025-12-02T00:00:00.000Z",
+    "nota": "Dividendo en efectivo / V"
+  },
+  {
+    "tipo": "deposito",
+    "cartera": "Balanz",
+    "especie": "ARS",
+    "cantidad": 0.44,
+    "precioUnitario": 1,
+    "monedaPrecio": "ARS",
+    "fecha": "2025-12-02T00:00:00.000Z",
+    "nota": "Dividendo en efectivo / V"
+  },
+  {
+    "tipo": "deposito",
+    "cartera": "Balanz",
+    "especie": "ARS",
+    "cantidad": 1519.05,
+    "precioUnitario": 1,
+    "monedaPrecio": "ARS",
+    "fecha": "2025-11-27T00:00:00.000Z",
+    "nota": "Dividendo en efectivo / BMA"
+  },
+  {
+    "tipo": "extraccion",
+    "cartera": "Balanz",
+    "especie": "ARS",
+    "cantidad": 106.59,
+    "precioUnitario": 1,
+    "monedaPrecio": "ARS",
+    "fecha": "2025-11-27T00:00:00.000Z",
+    "nota": "Movimiento Manual / N/D Ret IIGG - BMA"
   },
   {
     "tipo": "compra",
     "cartera": "Balanz",
     "especie": "BMA",
     "cantidad": 26,
-    "precioUnitario": 11790,
+    "precioUnitario": 11904.127307692308,
     "monedaPrecio": "ARS",
     "fecha": "2025-11-25T00:00:00.000Z",
     "nota": "Boleto / 11687741 / COMPRA / 1 / BMA / $"
@@ -314,7 +464,7 @@
     "cartera": "Balanz",
     "especie": "MRK",
     "cantidad": 10,
-    "precioUnitario": 31880,
+    "precioUnitario": 31571.402000000002,
     "monedaPrecio": "ARS",
     "fecha": "2025-11-25T00:00:00.000Z",
     "nota": "Boleto / 11687742 / VENTA / 1 / MRK / $"
@@ -324,7 +474,7 @@
     "cartera": "Balanz",
     "especie": "COST",
     "cantidad": 4,
-    "precioUnitario": 27780,
+    "precioUnitario": 28048.91,
     "monedaPrecio": "ARS",
     "fecha": "2025-11-20T00:00:00.000Z",
     "nota": "Boleto / 11629529 / COMPRA / 1 / COST / $"
@@ -334,7 +484,7 @@
     "cartera": "Balanz",
     "especie": "V",
     "cantidad": 3,
-    "precioUnitario": 26720,
+    "precioUnitario": 26461.350000000002,
     "monedaPrecio": "ARS",
     "fecha": "2025-11-20T00:00:00.000Z",
     "nota": "Boleto / 11629530 / VENTA / 1 / V / $"
@@ -354,7 +504,7 @@
     "cartera": "Balanz",
     "especie": "MELI",
     "cantidad": 6,
-    "precioUnitario": 25420,
+    "precioUnitario": 25666.065000000002,
     "monedaPrecio": "ARS",
     "fecha": "2025-11-19T00:00:00.000Z",
     "nota": "Boleto / 11580873 / COMPRA / 1 / MELI / $"
@@ -364,7 +514,7 @@
     "cartera": "Balanz",
     "especie": "JD",
     "cantidad": 16,
-    "precioUnitario": 10550,
+    "precioUnitario": 10447.87625,
     "monedaPrecio": "ARS",
     "fecha": "2025-11-19T00:00:00.000Z",
     "nota": "Boleto / 11580874 / VENTA / 1 / JD / $"
@@ -374,7 +524,7 @@
     "cartera": "Balanz",
     "especie": "VOD",
     "cantidad": 5,
-    "precioUnitario": 18650,
+    "precioUnitario": 18830.534,
     "monedaPrecio": "ARS",
     "fecha": "2025-11-11T00:00:00.000Z",
     "nota": "Boleto / 11250909 / COMPRA / 0 / VOD / $"
@@ -384,7 +534,7 @@
     "cartera": "Balanz",
     "especie": "MRK",
     "cantidad": 10,
-    "precioUnitario": 26600,
+    "precioUnitario": 26857.488,
     "monedaPrecio": "ARS",
     "fecha": "2025-11-11T00:00:00.000Z",
     "nota": "Boleto / 11278073 / COMPRA / 1 / MRK / $"
@@ -394,17 +544,37 @@
     "cartera": "Balanz",
     "especie": "VOD",
     "cantidad": 4,
-    "precioUnitario": 18690,
+    "precioUnitario": 18870.92,
     "monedaPrecio": "ARS",
     "fecha": "2025-11-11T00:00:00.000Z",
     "nota": "Boleto / 11278074 / COMPRA / 1 / VOD / $"
+  },
+  {
+    "tipo": "venta",
+    "cartera": "Balanz",
+    "especie": "S10N5",
+    "cantidad": 263976,
+    "precioUnitario": 1.2225399657544627,
+    "monedaPrecio": "ARS",
+    "fecha": "2025-11-10T00:00:00.000Z",
+    "nota": "Amortización / S10N5"
+  },
+  {
+    "tipo": "deposito",
+    "cartera": "Balanz",
+    "especie": "ARS",
+    "cantidad": 120560.19,
+    "precioUnitario": 1,
+    "monedaPrecio": "ARS",
+    "fecha": "2025-11-10T00:00:00.000Z",
+    "nota": "Renta y Amortización / TX26"
   },
   {
     "tipo": "compra",
     "cartera": "Balanz",
     "especie": "S10N5",
     "cantidad": 263976,
-    "precioUnitario": 1.21579,
+    "precioUnitario": 1.2182337409461466,
     "monedaPrecio": "ARS",
     "fecha": "2025-10-31T00:00:00.000Z",
     "nota": "Boleto / 10859762 / COMPRA / 1 / S10N5 / $"
@@ -420,11 +590,31 @@
     "nota": "Recibo de Cobro / 2865580"
   },
   {
+    "tipo": "deposito",
+    "cartera": "Balanz",
+    "especie": "ARS",
+    "cantidad": 285.43,
+    "precioUnitario": 1,
+    "monedaPrecio": "ARS",
+    "fecha": "2025-10-30T00:00:00.000Z",
+    "nota": "Dividendo en efectivo / BMA"
+  },
+  {
+    "tipo": "extraccion",
+    "cartera": "Balanz",
+    "especie": "ARS",
+    "cantidad": 20.02,
+    "precioUnitario": 1,
+    "monedaPrecio": "ARS",
+    "fecha": "2025-10-30T00:00:00.000Z",
+    "nota": "Movimiento Manual / N/D Ret IIGG - BMA"
+  },
+  {
     "tipo": "venta",
     "cartera": "Balanz",
     "especie": "BMA",
     "cantidad": 5,
-    "precioUnitario": 12710,
+    "precioUnitario": 12586.966,
     "monedaPrecio": "ARS",
     "fecha": "2025-10-29T00:00:00.000Z",
     "nota": "Boleto / 10715081 / VENTA / 1 / BMA / $"
@@ -434,7 +624,7 @@
     "cartera": "Balanz",
     "especie": "BMA",
     "cantidad": 5,
-    "precioUnitario": 12360,
+    "precioUnitario": 12240.354,
     "monedaPrecio": "ARS",
     "fecha": "2025-10-28T00:00:00.000Z",
     "nota": "Boleto / 10643625 / VENTA / 1 / BMA / $"
@@ -444,7 +634,7 @@
     "cartera": "Balanz",
     "especie": "TX26",
     "cantidad": 13415,
-    "precioUnitario": 15.78,
+    "precioUnitario": 15.898744688781216,
     "monedaPrecio": "ARS",
     "fecha": "2025-10-23T00:00:00.000Z",
     "nota": "Boleto / 10432106 / COMPRA / 1 / TX26 / $"
@@ -464,7 +654,7 @@
     "cartera": "Balanz",
     "especie": "MELI",
     "cantidad": 3,
-    "precioUnitario": 25800,
+    "precioUnitario": 26049.74666666667,
     "monedaPrecio": "ARS",
     "fecha": "2025-10-14T00:00:00.000Z",
     "nota": "Boleto / 10006707 / COMPRA / 1 / MELI / $"
@@ -474,7 +664,7 @@
     "cartera": "Balanz",
     "especie": "BMA",
     "cantidad": 10,
-    "precioUnitario": 7670,
+    "precioUnitario": 7744.245,
     "monedaPrecio": "ARS",
     "fecha": "2025-10-13T00:00:00.000Z",
     "nota": "Boleto / 9934658 / COMPRA / 1 / BMA / $"
@@ -484,7 +674,7 @@
     "cartera": "Balanz",
     "especie": "V",
     "cantidad": 3,
-    "precioUnitario": 27440,
+    "precioUnitario": 27705.61666666667,
     "monedaPrecio": "ARS",
     "fecha": "2025-10-13T00:00:00.000Z",
     "nota": "Boleto / 9934659 / COMPRA / 1 / V / $"
@@ -504,7 +694,7 @@
     "cartera": "Balanz",
     "especie": "MELI",
     "cantidad": 9,
-    "precioUnitario": 27620,
+    "precioUnitario": 27887.36111111111,
     "monedaPrecio": "ARS",
     "fecha": "2025-10-07T00:00:00.000Z",
     "nota": "Boleto / 9737672 / COMPRA / 1 / MELI / $"
@@ -524,7 +714,7 @@
     "cartera": "Balanz",
     "especie": "JD",
     "cantidad": 8,
-    "precioUnitario": 12010,
+    "precioUnitario": 12129.16375,
     "monedaPrecio": "ARS",
     "fecha": "2025-09-26T00:00:00.000Z",
     "nota": "Boleto / 9306395 / COMPRA / 1 / JD / $"
@@ -534,7 +724,7 @@
     "cartera": "Balanz",
     "especie": "JD",
     "cantidad": 8,
-    "precioUnitario": 12240,
+    "precioUnitario": 12361.445,
     "monedaPrecio": "ARS",
     "fecha": "2025-09-25T00:00:00.000Z",
     "nota": "Boleto / 9256276 / COMPRA / 1 / JD / $"
@@ -554,7 +744,7 @@
     "cartera": "Balanz",
     "especie": "TX26",
     "cantidad": 7084,
-    "precioUnitario": 13.875,
+    "precioUnitario": 13.9794099378882,
     "monedaPrecio": "ARS",
     "fecha": "2025-08-26T00:00:00.000Z",
     "nota": "Boleto / 7844371 / COMPRA / 1 / TX26 / $"

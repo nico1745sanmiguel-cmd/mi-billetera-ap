@@ -26,15 +26,23 @@ function parseBalanz() {
         if (!descripcion && !concertacion) continue;
 
         let tipo = '';
-        if (descripcion.toUpperCase().includes('COMPRA')) tipo = 'compra';
-        else if (descripcion.toUpperCase().includes('VENTA')) tipo = 'venta';
-        else if (descripcion.toUpperCase().includes('RECIBO DE COBRO')) tipo = 'deposito';
-        else if (descripcion.toUpperCase().includes('COMPROBANTE DE PAGO')) tipo = 'extraccion';
-        else if (descripcion.toUpperCase().includes('PAGO DE DIVIDENDOS')) tipo = 'deposito';
-        else continue; // Podría haber otros, los ignoramos por ahora
+        let descUpper = descripcion.toUpperCase();
+        
+        if (descUpper.includes('COMPRA')) tipo = 'compra';
+        else if (descUpper.includes('VENTA')) tipo = 'venta';
+        else if (descUpper.includes('AMORTIZACIÓN') && descUpper.includes('RENTA')) tipo = 'deposito';
+        else if (descUpper.includes('AMORTIZACIÓN')) tipo = 'venta'; // S10N5 maturity
+        else if (descUpper.includes('RECIBO DE COBRO')) tipo = 'deposito';
+        else if (descUpper.includes('COMPROBANTE DE PAGO')) tipo = 'extraccion';
+        else if (descUpper.includes('DIVIDENDO')) tipo = 'deposito';
+        else if (descUpper.includes('RENTA')) tipo = 'deposito';
+        else if (descUpper.includes('MOVIMIENTO MANUAL')) {
+            tipo = importeRaw < 0 ? 'extraccion' : 'deposito';
+        }
+        else continue;
 
         let especie = ticker;
-        if (!especie) {
+        if (!especie || tipo === 'deposito' || tipo === 'extraccion') {
             especie = monedaRaw.toUpperCase().includes('PESOS') ? 'ARS' : 'USD';
         }
 
@@ -45,7 +53,8 @@ function parseBalanz() {
 
         if (tipo === 'compra' || tipo === 'venta') {
             cantidad = Math.abs(cantidadRaw);
-            precioUnitario = Math.abs(precioRaw);
+            // Calculamos el precio real pagado/recibido incluyendo comisiones
+            precioUnitario = cantidad !== 0 ? Math.abs(importeRaw) / cantidad : Math.abs(precioRaw);
         } else if (tipo === 'deposito' || tipo === 'extraccion') {
             cantidad = Math.abs(importeRaw);
             precioUnitario = 1;
@@ -53,7 +62,6 @@ function parseBalanz() {
 
         let fecha = new Date(concertacion);
         if (isNaN(fecha.getTime())) {
-            // fallback
             fecha = new Date();
         }
 
