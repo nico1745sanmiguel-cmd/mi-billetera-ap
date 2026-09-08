@@ -9,6 +9,7 @@ import StopLossModal from '../../../Components/Savings/StopLossModal';
 import ResumenPortfolio from './ResumenPortfolio';
 import TenenciasLista from './TenenciasLista';
 import CaucionesActivas from './CaucionesActivas';
+import NexoInjector from './NexoInjector';
 
 const COLORS = ['#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#14B8A6', '#F97316'];
 
@@ -239,6 +240,7 @@ export default function PortfolioTab({ isGlass, privacyMode, currencyView = 'USD
     if (posiciones.length === 0 && !hasCauciones && !hasLiquidez) {
         return (
             <div className={`text-center p-8 rounded-2xl ${cardBg}`}>
+                <NexoInjector isGlass={isGlass} />
                 <p className={isGlass ? 'text-white/60' : 'text-gray-500'}>
                     Todavía no agregaste operaciones a tu portafolio.<br/>Hacé clic en "Nueva Operación" para empezar.
                 </p>
@@ -248,6 +250,9 @@ export default function PortfolioTab({ isGlass, privacyMode, currencyView = 'USD
 
     return (
         <div className="space-y-6 animate-fade-in">
+            {/* Injector Temporal */}
+            <NexoInjector isGlass={isGlass} />
+
             {/* Distribución de Carteras */}
             <ResumenPortfolio 
                 isGlass={isGlass}
