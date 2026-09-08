@@ -148,7 +148,14 @@ export default function PortfolioTab({ isGlass, privacyMode, currencyView = 'USD
                     c.items.forEach(p => {
                         const pValue = currencyView === 'ARS' ? p.valorActualUSD * rate : p.valorActualUSD;
                         if (pValue > 0) {
-                            outerData.push({ name: `${p.especie} (${c.name})`, value: pValue, parentFill: COLORS[index % COLORS.length] });
+                            outerData.push({
+                                name: `${p.especie} (${c.name})`,
+                                value: pValue,
+                                parentFill: COLORS[index % COLORS.length],
+                                variacionDiaria: p.variacionDiaria,
+                                gananciaPorcentaje: p.gananciaPorcentaje,
+                                gananciaPérdidaUSD: p.gananciaPérdidaUSD,
+                            });
                         }
                     });
 
@@ -170,10 +177,17 @@ export default function PortfolioTab({ isGlass, privacyMode, currencyView = 'USD
         
         if (chartView === 'global') {
             const grouped = {};
+            const perfMap = {};
             posiciones.forEach(p => {
                 const val = currencyView === 'ARS' ? p.valorActualUSD * rate : p.valorActualUSD;
-                if (!grouped[p.especie]) grouped[p.especie] = 0;
+                if (!grouped[p.especie]) {
+                    grouped[p.especie] = 0;
+                    perfMap[p.especie] = { totalUSD: 0, weightedPct: 0, totalPnl: 0, variacion: p.variacionDiaria };
+                }
                 grouped[p.especie] += val;
+                perfMap[p.especie].totalUSD += p.valorActualUSD;
+                perfMap[p.especie].weightedPct += (p.gananciaPorcentaje || 0) * p.valorActualUSD;
+                perfMap[p.especie].totalPnl += (p.gananciaPérdidaUSD || 0);
             });
             caucionesFiltradas.forEach(cau => {
                 const val = currencyView === 'ARS' ? cau.valorActualARS : cau.valorActualUSD;
@@ -196,7 +210,10 @@ export default function PortfolioTab({ isGlass, privacyMode, currencyView = 'USD
             const outerData = Object.keys(grouped).map((k, i) => ({
                 name: k,
                 value: grouped[k],
-                fill: COLORS[i % COLORS.length]
+                fill: COLORS[i % COLORS.length],
+                gananciaPorcentaje: perfMap[k] && perfMap[k].totalUSD > 0 ? perfMap[k].weightedPct / perfMap[k].totalUSD : null,
+                gananciaPérdidaUSD: perfMap[k]?.totalPnl ?? null,
+                variacionDiaria: perfMap[k]?.variacion ?? null,
             })).sort((a,b) => b.value - a.value);
             return { outerData, type: '1-level' };
         }
@@ -205,7 +222,14 @@ export default function PortfolioTab({ isGlass, privacyMode, currencyView = 'USD
         if (carteraInfo) {
             const outerData = carteraInfo.items.reduce((acc, p, i) => {
                  const value = currencyView === 'ARS' ? p.valorActualUSD * rate : p.valorActualUSD;
-                 if (value > 0) acc.push({ name: p.especie, value, fill: COLORS[i % COLORS.length] });
+                 if (value > 0) acc.push({
+                     name: p.especie,
+                     value,
+                     fill: COLORS[i % COLORS.length],
+                     gananciaPorcentaje: p.gananciaPorcentaje,
+                     gananciaPérdidaUSD: p.gananciaPérdidaUSD,
+                     variacionDiaria: p.variacionDiaria,
+                 });
                  return acc;
             }, []);
             
