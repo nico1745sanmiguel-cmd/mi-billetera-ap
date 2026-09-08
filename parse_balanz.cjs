@@ -33,16 +33,16 @@ function parseBalanz() {
         else if (descUpper.includes('AMORTIZACIÓN') && descUpper.includes('RENTA')) tipo = 'deposito';
         else if (descUpper.includes('AMORTIZACIÓN')) tipo = 'venta'; // S10N5 maturity
         else if (descUpper.includes('RECIBO DE COBRO')) tipo = 'deposito';
-        else if (descUpper.includes('COMPROBANTE DE PAGO')) tipo = 'extraccion';
+        else if (descUpper.includes('COMPROBANTE DE PAGO')) tipo = 'retiro';
         else if (descUpper.includes('DIVIDENDO')) tipo = 'deposito';
         else if (descUpper.includes('RENTA')) tipo = 'deposito';
         else if (descUpper.includes('MOVIMIENTO MANUAL')) {
-            tipo = importeRaw < 0 ? 'extraccion' : 'deposito';
+            tipo = importeRaw < 0 ? 'retiro' : 'deposito';
         }
         else continue;
 
         let especie = ticker;
-        if (!especie || tipo === 'deposito' || tipo === 'extraccion') {
+        if (!especie || tipo === 'deposito' || tipo === 'retiro') {
             especie = monedaRaw.toUpperCase().includes('PESOS') ? 'ARS' : 'USD';
         }
 
@@ -55,7 +55,7 @@ function parseBalanz() {
             cantidad = Math.abs(cantidadRaw);
             // Calculamos el precio real pagado/recibido incluyendo comisiones
             precioUnitario = cantidad !== 0 ? Math.abs(importeRaw) / cantidad : Math.abs(precioRaw);
-        } else if (tipo === 'deposito' || tipo === 'extraccion') {
+        } else if (tipo === 'deposito' || tipo === 'retiro') {
             cantidad = Math.abs(importeRaw);
             precioUnitario = 1;
         }

@@ -1,6 +1,6 @@
 [
   {
-    "tipo": "extraccion",
+    "tipo": "retiro",
     "cartera": "Balanz",
     "especie": "ARS",
     "cantidad": 786606.24,
@@ -40,7 +40,7 @@
     "nota": "Boleto / 8935143 / VENTA / 1 / IBIT / $"
   },
   {
-    "tipo": "extraccion",
+    "tipo": "retiro",
     "cartera": "Balanz",
     "especie": "ARS",
     "cantidad": 120811.11,
@@ -60,7 +60,7 @@
     "nota": "Boleto / 8280370 / VENTA / 1 / BYMA / $"
   },
   {
-    "tipo": "extraccion",
+    "tipo": "retiro",
     "cartera": "Balanz",
     "especie": "ARS",
     "cantidad": 301281.48,
@@ -170,7 +170,7 @@
     "nota": "Dividendo en efectivo / BMA"
   },
   {
-    "tipo": "extraccion",
+    "tipo": "retiro",
     "cartera": "Balanz",
     "especie": "ARS",
     "cantidad": 118.09,
@@ -210,7 +210,7 @@
     "nota": "Dividendo en efectivo / BMA"
   },
   {
-    "tipo": "extraccion",
+    "tipo": "retiro",
     "cartera": "Balanz",
     "especie": "ARS",
     "cantidad": 118.09,
@@ -240,7 +240,7 @@
     "nota": "Renta y Amortización / TX26"
   },
   {
-    "tipo": "extraccion",
+    "tipo": "retiro",
     "cartera": "Balanz",
     "especie": "ARS",
     "cantidad": 160994.11,
@@ -440,7 +440,7 @@
     "nota": "Dividendo en efectivo / BMA"
   },
   {
-    "tipo": "extraccion",
+    "tipo": "retiro",
     "cartera": "Balanz",
     "especie": "ARS",
     "cantidad": 106.59,
@@ -600,7 +600,7 @@
     "nota": "Dividendo en efectivo / BMA"
   },
   {
-    "tipo": "extraccion",
+    "tipo": "retiro",
     "cartera": "Balanz",
     "especie": "ARS",
     "cantidad": 20.02,
