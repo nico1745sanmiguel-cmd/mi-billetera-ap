@@ -1,0 +1,76 @@
+Transaction,Type,Input Currency,Input Amount,Output Currency,Output Amount,USD Equivalent,Fee,Fee Currency,Details,Date / Time (UTC)
+NXTbJ2VpYHacp3cOUy4S4AX0,Interest,BTC,0.00000008,BTC,0.00000008,$0.01,-,-,"approved / BTC Interest Earned",2026-09-08 05:00:00
+NXT2MixtnJIYV0WSoVcd5Ia89,Interest,USDT,0.01581600,USDT,0.01581600,$0.02,-,-,"approved / USDT Interest Earned",2026-09-08 05:00:00
+NXT4e36Oohi4wuDUsCrwTOr45,Interest,BTC,0.00000008,BTC,0.00000008,$0.01,-,-,"approved / BTC Interest Earned",2026-09-07 05:00:00
+NXT6KbaUGsylmQmNmxhvbw2rf,Interest,USDT,0.01581300,USDT,0.01581300,$0.02,-,-,"approved / USDT Interest Earned",2026-09-07 05:00:00
+NXT3Qu2hJurMeF8xPdMzxJEBm,Interest,BTC,0.00000008,BTC,0.00000008,$0.01,-,-,"approved / BTC Interest Earned",2026-09-06 05:00:00
+NXTjlcKvoBIu7EyIKq6WhpIT,Interest,USDT,0.01581100,USDT,0.01581100,$0.02,-,-,"approved / USDT Interest Earned",2026-09-06 05:00:00
+NXT3SCW5eNgLAJl5yJR7uMhUE,Interest,BTC,0.00000008,BTC,0.00000008,$0.01,-,-,"approved / BTC Interest Earned",2026-09-05 05:00:00
+NXT5dlXPrnimXoCpvptUuW5an,Interest,USDT,0.01580900,USDT,0.01580900,$0.02,-,-,"approved / USDT Interest Earned",2026-09-05 05:00:00
+NXT4llU0mrJ5kZZQRVFDS35j4,Exchange Deposited On,USD,1.09000000,USDX,1.09000000,$1.09,-,-,"approved / Cash Dividend UPS - US Dollar to USDX",2026-09-04 08:18:36
+NXT5WXMor4ESMCoPksVTy6fGi,Deposit To Exchange,USD,1.09000000,-,0.00000000,$1.09,-,-,"approved / Cash Dividend UPS - US Dollar Top Up",2026-09-04 08:18:36
+NXT3JjgSS8VcSowWo60cHwlf9,Interest,BTC,0.00000008,BTC,0.00000008,$0.01,-,-,"approved / BTC Interest Earned",2026-09-04 05:00:00
+NXTqt6bua6GRxwyW6lYmRLsN,Interest,USDT,0.01580600,USDT,0.01580600,$0.02,-,-,"approved / USDT Interest Earned",2026-09-04 05:00:00
+NXT1akZfeaCz7RrzAg8C2PPRd,Exchange Stock,USDT,0.60735707,MCD,0.60735707,$158.58,-,-,"approved / Exchange Tether to McDonald's Corp",2026-09-03 13:31:37
+NXT14Vj8dRitMopGW5jhCcCzb,Interest,BTC,0.00000008,BTC,0.00000008,$0.01,-,-,"approved / BTC Interest Earned",2026-09-03 05:00:00
+NXT2kqKJQYlC2WGfWJIHO6DR7,Exchange Stock,USDT,0.06903595,CAT,0.06903595,$54.56,-,-,"approved / Exchange Tether to Caterpillar Inc.",2026-09-02 19:16:45
+NXT16Jhg2TJlXdnFqko4YuGpw,Exchange Stock,VIST,322.72066300,USDT,322.72066300,$324.98,-,-,"approved / Exchange Vista Energy SAB de CV - ADR to Tether",2026-09-02 19:14:20
+NXT2rkAWTPJHGjfdTA6ByjOY3,Exchange Stock,USDT,0.12279450,CAT,0.12279450,$96.79,-,-,"approved / Exchange Tether to Caterpillar Inc.",2026-09-02 19:06:34
+NXT3GH1XcysFNaoLkq3yBH10P,Exchange Stock,UPS,97.55760800,USDT,97.55760800,$98.24,-,-,"approved / Exchange United Parcel Service, Inc. to Tether",2026-09-02 19:05:49
+NXTxoU7nSgCE0dI06fnCRFOg,Interest,BTC,0.00000008,BTC,0.00000008,$0.01,-,-,"approved / BTC Interest Earned",2026-09-02 05:00:00
+NXT2hXoFf40328QqCPU4W97Vl,Exchange Stock,USDT,1.53441664,WMT,1.53441664,$161.67,-,-,"approved / Exchange Tether to Walmart Inc",2026-09-01 13:47:02
+NXT63dVF9CGyOPBW4AVnRUzo4,Exchange Stock,USDT,0.37549127,UNH,0.37549127,$148.67,-,-,"approved / Exchange Tether to UnitedHealth Group Inc",2026-09-01 13:46:22
+NXT1DykV51XeIe6snWAFqyl9q,Interest,BTC,0.00000008,BTC,0.00000008,$0.01,-,-,"approved / BTC Interest Earned",2026-09-01 05:00:00
+NXT4M6a3c7SWANS27ezunEPKq,Interest,USDT,0.04592500,USDT,0.04592500,$0.05,-,-,"approved / USDT Interest Earned",2026-09-01 05:00:00
+NXT7iSnUb0OHQu5rWBP47woEy,Exchange Stock,USDT,3.35758549,GGAL,3.35758549,$148.84,-,-,"approved / Exchange Tether to Grupo Financiero Galicia S.A.",2026-08-31 18:14:30
+NXT18P0IYsxLKhvOwennyoJmu,Exchange,BTC,-0.00220577,USDT,169.25610600,$169.20,0.00000667,BTC,"approved / Exchange Bitcoin to Tether",2026-08-31 14:02:55
+NXT74NM8778p4oXecFlPURjyL,Interest,BTC,0.00000016,BTC,0.00000016,$0.01,-,-,"approved / BTC Interest Earned",2026-08-31 05:00:00
+NXT3lSaMg4grXpf1uTq53iazC,Interest,USDT,0.04309200,USDT,0.04309200,$0.04,-,-,"approved / USDT Interest Earned",2026-08-31 05:00:00
+NXTGBIV8FmrYiJRlKzXZiXeX,Interest,BTC,0.00000016,BTC,0.00000016,$0.01,-,-,"approved / BTC Interest Earned",2026-08-30 05:00:00
+NXT5hAMjyRX1FsZ3oKgHRG63K,Interest,USDT,0.04308600,USDT,0.04308600,$0.04,-,-,"approved / USDT Interest Earned",2026-08-30 05:00:00
+NXT3s0WbZGaJd4ZbC70k4XfkP,Interest,BTC,0.00000016,BTC,0.00000016,$0.01,-,-,"approved / BTC Interest Earned",2026-08-29 05:00:00
+NXT6mbsGxkYs2fVqJhJ7HzTlx,Interest,USDT,0.04307900,USDT,0.04307900,$0.04,-,-,"approved / USDT Interest Earned",2026-08-29 05:00:00
+NXT2xBhDTOXJHiWSYnEgFwSqs,Exchange Stock,USDT,0.98768633,ORCL,0.98768633,$148.56,-,-,"approved / Exchange Tether to Oracle Corp",2026-08-28 17:42:01
+NXT2RsgB2NVVhM5Bagdgf9uM0,Exchange Stock,MSFT,119.29712200,USDT,119.29712200,$120.44,-,-,"approved / Exchange Microsoft Corp to Tether",2026-08-28 15:19:30
+NXT41xnghzw7RjIt0jov5BmKb,Interest,BTC,0.00000016,BTC,0.00000016,$0.01,-,-,"approved / BTC Interest Earned",2026-08-28 05:00:00
+NXT40ND2t5PYcwTiClqgsjaSj,Interest,USDT,0.04757500,USDT,0.04757500,$0.05,-,-,"approved / USDT Interest Earned",2026-08-28 05:00:00
+NXT5BskDLqNyf3kasxsI0I4pP,Interest,BTC,0.00000016,BTC,0.00000016,$0.01,-,-,"approved / BTC Interest Earned",2026-08-27 05:00:00
+NXT4xIYYiveDSEXTyFDeDYEJK,Interest,USDT,0.04756800,USDT,0.04756800,$0.05,-,-,"approved / USDT Interest Earned",2026-08-27 05:00:00
+NXT7MGPp5InurUHFza3E3oC3p,Interest,BTC,0.00000016,BTC,0.00000016,$0.01,-,-,"approved / BTC Interest Earned",2026-08-26 05:00:00
+NXTWb6tzG4fijszXPu1L9cKt,Interest,USDT,0.04756100,USDT,0.04756100,$0.05,-,-,"approved / USDT Interest Earned",2026-08-26 05:00:00
+NXT2YB1NVqsBtUbgLPRsQnCbf,Interest,BTC,0.00000016,BTC,0.00000016,$0.01,-,-,"approved / BTC Interest Earned",2026-08-25 05:00:00
+NXT5zcuVf2r7bIqDETcW6DJnN,Interest,USDT,0.02759100,USDT,0.02759100,$0.03,-,-,"approved / USDT Interest Earned",2026-08-25 05:00:00
+NXT6MqfneiPMYzp76z4gQUNcU,Exchange,ARS,-220000.00000000,USDT,136.10480200,$136.08,661.29032258,ARS,"approved / Exchange ARS to Tether",2026-08-25 02:26:33
+NXT5EzHfshnf3NbhhDIPQfUjv,Deposit To Exchange,ARS,220000.00000000,ARS,220000.00000000,$136.40,-,-,"approved / ARS Top Up",2026-08-25 02:18:29
+NXT2jNrMwewB5eF7kFndUe0Kb,Exchange,ARS,-300719.05000000,USDT,188.07263400,$187.88,904.76190476,ARS,"approved / Exchange ARS to Tether",2026-08-17 15:22:06
+NXT4CejQYQixTp3Dn6kVxcdlC,Deposit To Exchange,ARS,300703.00000000,ARS,300703.00000000,$189.44,-,-,"approved / ARS Top Up",2026-08-17 15:20:55
+NXT7dkGoa0wwZFbNeZtZMwFfD,Exchange Stock,USDT,1.64882506,BMA,1.64882506,$138.94,-,-,"approved / Exchange Tether to Banco Macro S.A. ",2026-08-10 19:28:41
+NXT1YRxI0H7cJF9iDAfvKZuIa,Exchange Stock,VIST,95.18708500,USDT,95.18708500,$95.80,-,-,"approved / Exchange Vista Energy SAB de CV - ADR to Tether",2026-08-10 19:26:36
+NXT3IDqiCPxU4i41KLkJXCilf,Exchange Stock,NKE,44.93437100,USDT,44.93437100,$45.22,-,-,"approved / Exchange Nike Inc to Tether",2026-08-10 19:23:13
+NXT6tYZwwRwMLalSQXezJuYni,Exchange Stock,ARS,0.13230518,MU,0.13230518,$124.61,-,-,"approved / Exchange ARS to Micron Technology Inc",2026-07-24 15:21:37
+NXT3d8UgvA480Q0ApwzZ5wLkR,Deposit To Exchange,ARS,200000.00000000,ARS,200000.00000000,$125.75,-,-,"approved / ARS Top Up",2026-07-24 15:15:09
+NXT6NnTScWZUOObaL7WlDU8OS,Exchange Stock,USDT,5.58006367,VIST,5.58006367,$352.81,-,-,"approved / Exchange Tether to Vista Energy SAB de CV - ADR",2026-07-16 17:30:52
+NXT1ae5LUHNDM2jQWd7T62mSY,Exchange,ARS,-180000.00000000,USDT,113.22720200,$113.14,534.50715296,ARS,"approved / Exchange ARS to Tether",2026-07-06 23:35:57
+NXT75TBm4Ae8HyTV1sxxi60sZ,Deposit To Exchange,ARS,180000.00000000,ARS,180000.00000000,$114.50,-,-,"approved / ARS Top Up",2026-07-06 21:57:02
+NXT2rdqiMYHLXfPIataA7hOKV,Exchange,BTC,-0.00189017,USDT,115.91169100,$115.79,0.00000563,BTC,"approved / Exchange Bitcoin to Tether",2026-07-03 19:22:18
+NXT2GVpoGwEetTQpYmVT8Q7nw,Exchange Stock,VZ,127.31094300,USDT,127.31094300,$128.40,-,-,"approved / Exchange Verizon Communications Inc. to Tether",2026-07-02 18:07:15
+NXT5Y6TYH1gELliVRMWRME0Jy,Exchange,USDX,-0.31270576,NEXO,0.40141255,$0.31,-,-,"approved / Convert Small Balances / Exchange USDX to NEXO Token",2026-07-02 17:04:12
+NXT7Ej2A9Cw5xJvZNcM9VkJoF,Exchange,USDT,-0.01010700,NEXO,0.01296800,$0.01,-,-,"approved / Convert Small Balances / Exchange Tether to NEXO Token",2026-07-02 17:04:12
+NXTCsEG6EGnPBr9in1JhmJHO,Exchange Stock,USDT,0.46798756,MSFT,0.46798756,$180.88,-,-,"approved / Exchange Tether to Microsoft Corp",2026-07-02 13:57:55
+NXT13PVhRAp86Hm6PkA9zzuMM,Exchange Deposited On,USD,0.31000000,USDX,0.31000000,$0.31,-,-,"approved / Cash Dividend NKE - US Dollar to USDX",2026-07-02 12:28:18
+NXT5skmkWXb49QbstieYg12QO,Deposit To Exchange,USD,0.31000000,-,0.00000000,$0.31,-,-,"approved / Cash Dividend NKE - US Dollar Top Up",2026-07-02 12:28:18
+NXT6s4ybDIvzIVW3sQ3amWjpW,Exchange,USDT,-182.82824300,BTC,0.00299638,$177.93,0.55098800,USDT,"approved / Exchange Tether to Bitcoin",2026-06-29 14:56:02
+NXT1Xt2ZCf2mSKAYv6lZWaJJ1,Exchange,USDX,-100.88000000,USDT,100.24689400,$100.14,0.30000000,USDX,"approved / Exchange USDX to Tether",2026-06-22 13:35:54
+NXT67z7w7Azq4gFrs8P4zdYdh,Exchange,ARS,-300000.00000000,USDT,193.62470400,$193.42,903.79901960,ARS,"approved / Exchange ARS to Tether",2026-06-22 13:35:28
+NXT439gVgRkR7enrcUUrWniws,Deposit To Exchange,ARS,300000.00000000,ARS,300000.00000000,$195.72,-,-,"approved / ARS Top Up",2026-06-22 13:32:54
+NXT2EcWnKJGyjmAkmoiTKMXBl,Exchange Stock,MSFT,100.88270576,USDX,100.88270576,$101.39,-,-,"approved / Exchange Microsoft Corp to USDX",2026-06-18 13:33:48
+NXT3nx1xfqvoshWKdPdXhyX1j,Exchange,USDT,-215.35466300,BTC,0.00330421,$210.04,0.65085400,USDT,"approved / Exchange Tether to Bitcoin",2026-06-04 19:56:42
+NXT5wsqAgI5FJgktEE7WCDZC,Exchange,ARS,-150000.00000000,USDT,99.34847000,$99.22,447.88152040,ARS,"approved / Exchange ARS to Tether",2026-05-30 11:03:17
+NXT5PntVOhAamymVFVHG5gNBD,Deposit To Exchange,ARS,150000.00000000,ARS,150000.00000000,$100.47,-,-,"approved / ARS Top Up",2026-05-30 11:01:11
+NXTphB7XLAA9VubTDJRcV7wy,Exchange Stock,USDT,0.95048536,UPS,0.95048536,$99.09,-,-,"approved / Exchange Tether to United Parcel Service, Inc.",2026-05-27 17:49:58
+NXT7GxzAAf1EpqqBTNzNRBBWB,Exchange Stock,USDT,1.07887974,NKE,1.07887974,$49.55,-,-,"approved / Exchange Tether to Nike Inc",2026-05-27 17:43:35
+NXT5djDXHqrPskDmZpZuOqRrX,Exchange Stock,USDT,0.26855767,MSFT,0.26855767,$111.38,-,-,"approved / Exchange Tether to Microsoft Corp",2026-05-26 16:58:26
+NXT76pVnKB5aT71O26oR0BNOW,Exchange Stock,USDT,3.09423200,VZ,3.09423200,$148.85,-,-,"approved / Exchange Tether to Verizon Communications Inc.",2026-05-21 18:54:23
+NXT4xAnLw1hUMd3RsoPWUMg7F,Exchange,ARS,-1000.00000000,NEXO,0.74607607,$0.66,-,-,"approved / Convert Small Balances / Exchange ARS to NEXO Token",2026-04-30 01:29:50
+NXT22274x8mv7vd2Xzj2XdoPu,Deposit To Exchange,ARS,1000.00000000,ARS,1000.00000000,$0.68,-,-,"approved / ARS Top Up",2026-04-30 01:27:28
+NXT1YkBmIufDmTw9nYPkGw74C,Top up Crypto,USDT,600.51747700,USDT,600.51747774,$600.70,-,-,"approved / 0x723b680f743a3f03dbf4f6f4048d2960617f815796207c77660b3a2de96d7ea5",2026-04-20 21:40:03

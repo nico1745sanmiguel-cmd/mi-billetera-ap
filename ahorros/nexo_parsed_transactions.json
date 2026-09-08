@@ -1,0 +1,842 @@
+[
+  {
+    "tipo": "deposito",
+    "cartera": "Nexo",
+    "especie": "USDT",
+    "cantidad": 600.51747774,
+    "precioUnitario": 1,
+    "monedaPrecio": "USD",
+    "fecha": "2026-04-20 21:40:03",
+    "nota": "Top up Crypto"
+  },
+  {
+    "tipo": "deposito",
+    "cartera": "Nexo",
+    "especie": "ARS",
+    "cantidad": 1000,
+    "precioUnitario": 1,
+    "monedaPrecio": "ARS",
+    "fecha": "2026-04-30 01:27:28",
+    "nota": "Deposit To Exchange"
+  },
+  {
+    "tipo": "venta",
+    "cartera": "Nexo",
+    "especie": "ARS",
+    "cantidad": 1000,
+    "precioUnitario": 0.00066,
+    "monedaPrecio": "USD",
+    "fecha": "2026-04-30 01:29:50",
+    "nota": "Vendido por NEXO"
+  },
+  {
+    "tipo": "compra",
+    "cartera": "Nexo",
+    "especie": "NEXO",
+    "cantidad": 0.74607607,
+    "precioUnitario": 0.8846282926618998,
+    "monedaPrecio": "USD",
+    "fecha": "2026-04-30 01:29:50",
+    "nota": "Comprado con ARS"
+  },
+  {
+    "tipo": "compra",
+    "cartera": "Nexo",
+    "especie": "VZ",
+    "cantidad": 3.094232,
+    "precioUnitario": 48.10563655213959,
+    "monedaPrecio": "USD",
+    "fecha": "2026-05-21 18:54:23",
+    "nota": "Comprado con USDT"
+  },
+  {
+    "tipo": "retiro",
+    "cartera": "Nexo",
+    "especie": "USDT",
+    "cantidad": 148.85,
+    "precioUnitario": 1,
+    "monedaPrecio": "USD",
+    "fecha": "2026-05-21 18:54:23",
+    "nota": "Pago por VZ"
+  },
+  {
+    "tipo": "compra",
+    "cartera": "Nexo",
+    "especie": "MSFT",
+    "cantidad": 0.26855767,
+    "precioUnitario": 414.7340122514467,
+    "monedaPrecio": "USD",
+    "fecha": "2026-05-26 16:58:26",
+    "nota": "Comprado con USDT"
+  },
+  {
+    "tipo": "retiro",
+    "cartera": "Nexo",
+    "especie": "USDT",
+    "cantidad": 111.38,
+    "precioUnitario": 1,
+    "monedaPrecio": "USD",
+    "fecha": "2026-05-26 16:58:26",
+    "nota": "Pago por MSFT"
+  },
+  {
+    "tipo": "compra",
+    "cartera": "Nexo",
+    "especie": "NKE",
+    "cantidad": 1.07887974,
+    "precioUnitario": 45.927268965121165,
+    "monedaPrecio": "USD",
+    "fecha": "2026-05-27 17:43:35",
+    "nota": "Comprado con USDT"
+  },
+  {
+    "tipo": "retiro",
+    "cartera": "Nexo",
+    "especie": "USDT",
+    "cantidad": 49.55,
+    "precioUnitario": 1,
+    "monedaPrecio": "USD",
+    "fecha": "2026-05-27 17:43:35",
+    "nota": "Pago por NKE"
+  },
+  {
+    "tipo": "compra",
+    "cartera": "Nexo",
+    "especie": "UPS",
+    "cantidad": 0.95048536,
+    "precioUnitario": 104.25200026226602,
+    "monedaPrecio": "USD",
+    "fecha": "2026-05-27 17:49:58",
+    "nota": "Comprado con USDT"
+  },
+  {
+    "tipo": "retiro",
+    "cartera": "Nexo",
+    "especie": "USDT",
+    "cantidad": 99.09,
+    "precioUnitario": 1,
+    "monedaPrecio": "USD",
+    "fecha": "2026-05-27 17:49:58",
+    "nota": "Pago por UPS"
+  },
+  {
+    "tipo": "deposito",
+    "cartera": "Nexo",
+    "especie": "ARS",
+    "cantidad": 150000,
+    "precioUnitario": 1,
+    "monedaPrecio": "ARS",
+    "fecha": "2026-05-30 11:01:11",
+    "nota": "Deposit To Exchange"
+  },
+  {
+    "tipo": "venta",
+    "cartera": "Nexo",
+    "especie": "ARS",
+    "cantidad": 150000,
+    "precioUnitario": 0.0006614666666666666,
+    "monedaPrecio": "USD",
+    "fecha": "2026-05-30 11:03:17",
+    "nota": "Vendido por USDT"
+  },
+  {
+    "tipo": "compra",
+    "cartera": "Nexo",
+    "especie": "USDT",
+    "cantidad": 99.34847,
+    "precioUnitario": 0.9987068749020492,
+    "monedaPrecio": "USD",
+    "fecha": "2026-05-30 11:03:17",
+    "nota": "Comprado con ARS"
+  },
+  {
+    "tipo": "venta",
+    "cartera": "Nexo",
+    "especie": "USDT",
+    "cantidad": 215.354663,
+    "precioUnitario": 0.9753213470005059,
+    "monedaPrecio": "USD",
+    "fecha": "2026-06-04 19:56:42",
+    "nota": "Vendido por BTC"
+  },
+  {
+    "tipo": "compra",
+    "cartera": "Nexo",
+    "especie": "BTC",
+    "cantidad": 0.00330421,
+    "precioUnitario": 63567.38827132658,
+    "monedaPrecio": "USD",
+    "fecha": "2026-06-04 19:56:42",
+    "nota": "Comprado con USDT"
+  },
+  {
+    "tipo": "venta",
+    "cartera": "Nexo",
+    "especie": "MSFT",
+    "cantidad": 0.22969702707253303,
+    "precioUnitario": 441.4075414567006,
+    "monedaPrecio": "USD",
+    "fecha": "2026-06-18 13:33:48",
+    "nota": "Vendido por USDX"
+  },
+  {
+    "tipo": "deposito",
+    "cartera": "Nexo",
+    "especie": "USDX",
+    "cantidad": 100.88270576,
+    "precioUnitario": 1,
+    "monedaPrecio": "USD",
+    "fecha": "2026-06-18 13:33:48",
+    "nota": "Cobro venta MSFT"
+  },
+  {
+    "tipo": "deposito",
+    "cartera": "Nexo",
+    "especie": "ARS",
+    "cantidad": 300000,
+    "precioUnitario": 1,
+    "monedaPrecio": "ARS",
+    "fecha": "2026-06-22 13:32:54",
+    "nota": "Deposit To Exchange"
+  },
+  {
+    "tipo": "venta",
+    "cartera": "Nexo",
+    "especie": "ARS",
+    "cantidad": 300000,
+    "precioUnitario": 0.0006447333333333332,
+    "monedaPrecio": "USD",
+    "fecha": "2026-06-22 13:35:28",
+    "nota": "Vendido por USDT"
+  },
+  {
+    "tipo": "compra",
+    "cartera": "Nexo",
+    "especie": "USDT",
+    "cantidad": 193.624704,
+    "precioUnitario": 0.9989427795329257,
+    "monedaPrecio": "USD",
+    "fecha": "2026-06-22 13:35:28",
+    "nota": "Comprado con ARS"
+  },
+  {
+    "tipo": "venta",
+    "cartera": "Nexo",
+    "especie": "USDX",
+    "cantidad": 100.88,
+    "precioUnitario": 0.9926645519429025,
+    "monedaPrecio": "USD",
+    "fecha": "2026-06-22 13:35:54",
+    "nota": "Vendido por USDT"
+  },
+  {
+    "tipo": "compra",
+    "cartera": "Nexo",
+    "especie": "USDT",
+    "cantidad": 100.246894,
+    "precioUnitario": 0.9989336926488716,
+    "monedaPrecio": "USD",
+    "fecha": "2026-06-22 13:35:54",
+    "nota": "Comprado con USDX"
+  },
+  {
+    "tipo": "venta",
+    "cartera": "Nexo",
+    "especie": "USDT",
+    "cantidad": 182.828243,
+    "precioUnitario": 0.973208499301719,
+    "monedaPrecio": "USD",
+    "fecha": "2026-06-29 14:56:02",
+    "nota": "Vendido por BTC"
+  },
+  {
+    "tipo": "compra",
+    "cartera": "Nexo",
+    "especie": "BTC",
+    "cantidad": 0.00299638,
+    "precioUnitario": 59381.65386232721,
+    "monedaPrecio": "USD",
+    "fecha": "2026-06-29 14:56:02",
+    "nota": "Comprado con USDT"
+  },
+  {
+    "tipo": "deposito",
+    "cartera": "Nexo",
+    "especie": "USD",
+    "cantidad": 0.31,
+    "precioUnitario": 1,
+    "monedaPrecio": "USD",
+    "fecha": "2026-07-02 12:28:18",
+    "nota": "Deposit To Exchange"
+  },
+  {
+    "tipo": "deposito",
+    "cartera": "Nexo",
+    "especie": "USDX",
+    "cantidad": 0.31,
+    "precioUnitario": 1,
+    "monedaPrecio": "USD",
+    "fecha": "2026-07-02 12:28:18",
+    "nota": "Exchange Deposited On"
+  },
+  {
+    "tipo": "compra",
+    "cartera": "Nexo",
+    "especie": "MSFT",
+    "cantidad": 0.46798756,
+    "precioUnitario": 386.5060002876999,
+    "monedaPrecio": "USD",
+    "fecha": "2026-07-02 13:57:55",
+    "nota": "Comprado con USDT"
+  },
+  {
+    "tipo": "retiro",
+    "cartera": "Nexo",
+    "especie": "USDT",
+    "cantidad": 180.88,
+    "precioUnitario": 1,
+    "monedaPrecio": "USD",
+    "fecha": "2026-07-02 13:57:55",
+    "nota": "Pago por MSFT"
+  },
+  {
+    "tipo": "venta",
+    "cartera": "Nexo",
+    "especie": "USDT",
+    "cantidad": 0.010107,
+    "precioUnitario": 0.9894132779261898,
+    "monedaPrecio": "USD",
+    "fecha": "2026-07-02 17:04:12",
+    "nota": "Vendido por NEXO"
+  },
+  {
+    "tipo": "compra",
+    "cartera": "Nexo",
+    "especie": "NEXO",
+    "cantidad": 0.012968,
+    "precioUnitario": 0.771128932757557,
+    "monedaPrecio": "USD",
+    "fecha": "2026-07-02 17:04:12",
+    "nota": "Comprado con USDT"
+  },
+  {
+    "tipo": "venta",
+    "cartera": "Nexo",
+    "especie": "USDX",
+    "cantidad": 0.31270576,
+    "precioUnitario": 0.9913472652374552,
+    "monedaPrecio": "USD",
+    "fecha": "2026-07-02 17:04:12",
+    "nota": "Vendido por NEXO"
+  },
+  {
+    "tipo": "compra",
+    "cartera": "Nexo",
+    "especie": "NEXO",
+    "cantidad": 0.40141255,
+    "precioUnitario": 0.77227281508762,
+    "monedaPrecio": "USD",
+    "fecha": "2026-07-02 17:04:12",
+    "nota": "Comprado con USDX"
+  },
+  {
+    "tipo": "venta",
+    "cartera": "Nexo",
+    "especie": "VZ",
+    "cantidad": 3.094232,
+    "precioUnitario": 41.496565222000164,
+    "monedaPrecio": "USD",
+    "fecha": "2026-07-02 18:07:15",
+    "nota": "Vendido por USDT"
+  },
+  {
+    "tipo": "deposito",
+    "cartera": "Nexo",
+    "especie": "USDT",
+    "cantidad": 127.310943,
+    "precioUnitario": 1,
+    "monedaPrecio": "USD",
+    "fecha": "2026-07-02 18:07:15",
+    "nota": "Cobro venta VZ"
+  },
+  {
+    "tipo": "venta",
+    "cartera": "Nexo",
+    "especie": "BTC",
+    "cantidad": 0.00189017,
+    "precioUnitario": 61259.04019215203,
+    "monedaPrecio": "USD",
+    "fecha": "2026-07-03 19:22:18",
+    "nota": "Vendido por USDT"
+  },
+  {
+    "tipo": "compra",
+    "cartera": "Nexo",
+    "especie": "USDT",
+    "cantidad": 115.911691,
+    "precioUnitario": 0.99895014041336,
+    "monedaPrecio": "USD",
+    "fecha": "2026-07-03 19:22:18",
+    "nota": "Comprado con BTC"
+  },
+  {
+    "tipo": "deposito",
+    "cartera": "Nexo",
+    "especie": "ARS",
+    "cantidad": 180000,
+    "precioUnitario": 1,
+    "monedaPrecio": "ARS",
+    "fecha": "2026-07-06 21:57:02",
+    "nota": "Deposit To Exchange"
+  },
+  {
+    "tipo": "venta",
+    "cartera": "Nexo",
+    "especie": "ARS",
+    "cantidad": 180000,
+    "precioUnitario": 0.0006285555555555556,
+    "monedaPrecio": "USD",
+    "fecha": "2026-07-06 23:35:57",
+    "nota": "Vendido por USDT"
+  },
+  {
+    "tipo": "compra",
+    "cartera": "Nexo",
+    "especie": "USDT",
+    "cantidad": 113.227202,
+    "precioUnitario": 0.9992298493784205,
+    "monedaPrecio": "USD",
+    "fecha": "2026-07-06 23:35:57",
+    "nota": "Comprado con ARS"
+  },
+  {
+    "tipo": "compra",
+    "cartera": "Nexo",
+    "especie": "VIST",
+    "cantidad": 5.58006367,
+    "precioUnitario": 63.22687712271211,
+    "monedaPrecio": "USD",
+    "fecha": "2026-07-16 17:30:52",
+    "nota": "Comprado con USDT"
+  },
+  {
+    "tipo": "retiro",
+    "cartera": "Nexo",
+    "especie": "USDT",
+    "cantidad": 352.81,
+    "precioUnitario": 1,
+    "monedaPrecio": "USD",
+    "fecha": "2026-07-16 17:30:52",
+    "nota": "Pago por VIST"
+  },
+  {
+    "tipo": "deposito",
+    "cartera": "Nexo",
+    "especie": "ARS",
+    "cantidad": 200000,
+    "precioUnitario": 1,
+    "monedaPrecio": "ARS",
+    "fecha": "2026-07-24 15:15:09",
+    "nota": "Deposit To Exchange"
+  },
+  {
+    "tipo": "compra",
+    "cartera": "Nexo",
+    "especie": "MU",
+    "cantidad": 0.13230518,
+    "precioUnitario": 941.8376514056366,
+    "monedaPrecio": "USD",
+    "fecha": "2026-07-24 15:21:37",
+    "nota": "Comprado con ARS"
+  },
+  {
+    "tipo": "retiro",
+    "cartera": "Nexo",
+    "especie": "ARS",
+    "cantidad": 124.61,
+    "precioUnitario": 1,
+    "monedaPrecio": "USD",
+    "fecha": "2026-07-24 15:21:37",
+    "nota": "Pago por MU"
+  },
+  {
+    "tipo": "venta",
+    "cartera": "Nexo",
+    "especie": "NKE",
+    "cantidad": 1.07887974,
+    "precioUnitario": 41.913846672104526,
+    "monedaPrecio": "USD",
+    "fecha": "2026-08-10 19:23:13",
+    "nota": "Vendido por USDT"
+  },
+  {
+    "tipo": "deposito",
+    "cartera": "Nexo",
+    "especie": "USDT",
+    "cantidad": 44.934371,
+    "precioUnitario": 1,
+    "monedaPrecio": "USD",
+    "fecha": "2026-08-10 19:23:13",
+    "nota": "Cobro venta NKE"
+  },
+  {
+    "tipo": "venta",
+    "cartera": "Nexo",
+    "especie": "VIST",
+    "cantidad": 1.2704265877323067,
+    "precioUnitario": 75.40774171847397,
+    "monedaPrecio": "USD",
+    "fecha": "2026-08-10 19:26:36",
+    "nota": "Vendido por USDT"
+  },
+  {
+    "tipo": "deposito",
+    "cartera": "Nexo",
+    "especie": "USDT",
+    "cantidad": 95.187085,
+    "precioUnitario": 1,
+    "monedaPrecio": "USD",
+    "fecha": "2026-08-10 19:26:36",
+    "nota": "Cobro venta VIST"
+  },
+  {
+    "tipo": "compra",
+    "cartera": "Nexo",
+    "especie": "BMA",
+    "cantidad": 1.64882506,
+    "precioUnitario": 84.26606519432691,
+    "monedaPrecio": "USD",
+    "fecha": "2026-08-10 19:28:41",
+    "nota": "Comprado con USDT"
+  },
+  {
+    "tipo": "retiro",
+    "cartera": "Nexo",
+    "especie": "USDT",
+    "cantidad": 138.94,
+    "precioUnitario": 1,
+    "monedaPrecio": "USD",
+    "fecha": "2026-08-10 19:28:41",
+    "nota": "Pago por BMA"
+  },
+  {
+    "tipo": "deposito",
+    "cartera": "Nexo",
+    "especie": "ARS",
+    "cantidad": 300703,
+    "precioUnitario": 1,
+    "monedaPrecio": "ARS",
+    "fecha": "2026-08-17 15:20:55",
+    "nota": "Deposit To Exchange"
+  },
+  {
+    "tipo": "venta",
+    "cartera": "Nexo",
+    "especie": "ARS",
+    "cantidad": 300719.05,
+    "precioUnitario": 0.0006247691990248041,
+    "monedaPrecio": "USD",
+    "fecha": "2026-08-17 15:22:06",
+    "nota": "Vendido por USDT"
+  },
+  {
+    "tipo": "compra",
+    "cartera": "Nexo",
+    "especie": "USDT",
+    "cantidad": 188.072634,
+    "precioUnitario": 0.998975746785149,
+    "monedaPrecio": "USD",
+    "fecha": "2026-08-17 15:22:06",
+    "nota": "Comprado con ARS"
+  },
+  {
+    "tipo": "deposito",
+    "cartera": "Nexo",
+    "especie": "ARS",
+    "cantidad": 220000,
+    "precioUnitario": 1,
+    "monedaPrecio": "ARS",
+    "fecha": "2026-08-25 02:18:29",
+    "nota": "Deposit To Exchange"
+  },
+  {
+    "tipo": "venta",
+    "cartera": "Nexo",
+    "especie": "ARS",
+    "cantidad": 220000,
+    "precioUnitario": 0.0006185454545454546,
+    "monedaPrecio": "USD",
+    "fecha": "2026-08-25 02:26:33",
+    "nota": "Vendido por USDT"
+  },
+  {
+    "tipo": "compra",
+    "cartera": "Nexo",
+    "especie": "USDT",
+    "cantidad": 136.104802,
+    "precioUnitario": 0.9998177727777746,
+    "monedaPrecio": "USD",
+    "fecha": "2026-08-25 02:26:33",
+    "nota": "Comprado con ARS"
+  },
+  {
+    "tipo": "venta",
+    "cartera": "Nexo",
+    "especie": "MSFT",
+    "cantidad": 0.272854422927467,
+    "precioUnitario": 441.4075414567006,
+    "monedaPrecio": "USD",
+    "fecha": "2026-08-28 15:19:30",
+    "nota": "Vendido por USDT"
+  },
+  {
+    "tipo": "deposito",
+    "cartera": "Nexo",
+    "especie": "USDT",
+    "cantidad": 119.297122,
+    "precioUnitario": 1,
+    "monedaPrecio": "USD",
+    "fecha": "2026-08-28 15:19:30",
+    "nota": "Cobro venta MSFT"
+  },
+  {
+    "tipo": "compra",
+    "cartera": "Nexo",
+    "especie": "ORCL",
+    "cantidad": 0.98768633,
+    "precioUnitario": 150.41212527463048,
+    "monedaPrecio": "USD",
+    "fecha": "2026-08-28 17:42:01",
+    "nota": "Comprado con USDT"
+  },
+  {
+    "tipo": "retiro",
+    "cartera": "Nexo",
+    "especie": "USDT",
+    "cantidad": 148.56,
+    "precioUnitario": 1,
+    "monedaPrecio": "USD",
+    "fecha": "2026-08-28 17:42:01",
+    "nota": "Pago por ORCL"
+  },
+  {
+    "tipo": "venta",
+    "cartera": "Nexo",
+    "especie": "BTC",
+    "cantidad": 0.00220577,
+    "precioUnitario": 76707.90698939598,
+    "monedaPrecio": "USD",
+    "fecha": "2026-08-31 14:02:55",
+    "nota": "Vendido por USDT"
+  },
+  {
+    "tipo": "compra",
+    "cartera": "Nexo",
+    "especie": "USDT",
+    "cantidad": 169.256106,
+    "precioUnitario": 0.9996685141746082,
+    "monedaPrecio": "USD",
+    "fecha": "2026-08-31 14:02:55",
+    "nota": "Comprado con BTC"
+  },
+  {
+    "tipo": "compra",
+    "cartera": "Nexo",
+    "especie": "GGAL",
+    "cantidad": 3.35758549,
+    "precioUnitario": 44.32947439262373,
+    "monedaPrecio": "USD",
+    "fecha": "2026-08-31 18:14:30",
+    "nota": "Comprado con USDT"
+  },
+  {
+    "tipo": "retiro",
+    "cartera": "Nexo",
+    "especie": "USDT",
+    "cantidad": 148.84,
+    "precioUnitario": 1,
+    "monedaPrecio": "USD",
+    "fecha": "2026-08-31 18:14:30",
+    "nota": "Pago por GGAL"
+  },
+  {
+    "tipo": "compra",
+    "cartera": "Nexo",
+    "especie": "UNH",
+    "cantidad": 0.37549127,
+    "precioUnitario": 395.93463784124725,
+    "monedaPrecio": "USD",
+    "fecha": "2026-09-01 13:46:22",
+    "nota": "Comprado con USDT"
+  },
+  {
+    "tipo": "retiro",
+    "cartera": "Nexo",
+    "especie": "USDT",
+    "cantidad": 148.67,
+    "precioUnitario": 1,
+    "monedaPrecio": "USD",
+    "fecha": "2026-09-01 13:46:22",
+    "nota": "Pago por UNH"
+  },
+  {
+    "tipo": "compra",
+    "cartera": "Nexo",
+    "especie": "WMT",
+    "cantidad": 1.53441664,
+    "precioUnitario": 105.36251744506627,
+    "monedaPrecio": "USD",
+    "fecha": "2026-09-01 13:47:02",
+    "nota": "Comprado con USDT"
+  },
+  {
+    "tipo": "retiro",
+    "cartera": "Nexo",
+    "especie": "USDT",
+    "cantidad": 161.67,
+    "precioUnitario": 1,
+    "monedaPrecio": "USD",
+    "fecha": "2026-09-01 13:47:02",
+    "nota": "Pago por WMT"
+  },
+  {
+    "tipo": "venta",
+    "cartera": "Nexo",
+    "especie": "UPS",
+    "cantidad": 0.95048536,
+    "precioUnitario": 103.35772031249383,
+    "monedaPrecio": "USD",
+    "fecha": "2026-09-02 19:05:49",
+    "nota": "Vendido por USDT"
+  },
+  {
+    "tipo": "deposito",
+    "cartera": "Nexo",
+    "especie": "USDT",
+    "cantidad": 97.557608,
+    "precioUnitario": 1,
+    "monedaPrecio": "USD",
+    "fecha": "2026-09-02 19:05:49",
+    "nota": "Cobro venta UPS"
+  },
+  {
+    "tipo": "compra",
+    "cartera": "Nexo",
+    "especie": "CAT",
+    "cantidad": 0.1227945,
+    "precioUnitario": 788.227485758727,
+    "monedaPrecio": "USD",
+    "fecha": "2026-09-02 19:06:34",
+    "nota": "Comprado con USDT"
+  },
+  {
+    "tipo": "retiro",
+    "cartera": "Nexo",
+    "especie": "USDT",
+    "cantidad": 96.79,
+    "precioUnitario": 1,
+    "monedaPrecio": "USD",
+    "fecha": "2026-09-02 19:06:34",
+    "nota": "Pago por CAT"
+  },
+  {
+    "tipo": "venta",
+    "cartera": "Nexo",
+    "especie": "VIST",
+    "cantidad": 4.3096370822676935,
+    "precioUnitario": 75.40774171847397,
+    "monedaPrecio": "USD",
+    "fecha": "2026-09-02 19:14:20",
+    "nota": "Vendido por USDT"
+  },
+  {
+    "tipo": "deposito",
+    "cartera": "Nexo",
+    "especie": "USDT",
+    "cantidad": 322.720663,
+    "precioUnitario": 1,
+    "monedaPrecio": "USD",
+    "fecha": "2026-09-02 19:14:20",
+    "nota": "Cobro venta VIST"
+  },
+  {
+    "tipo": "compra",
+    "cartera": "Nexo",
+    "especie": "CAT",
+    "cantidad": 0.06903595,
+    "precioUnitario": 790.3128732204019,
+    "monedaPrecio": "USD",
+    "fecha": "2026-09-02 19:16:45",
+    "nota": "Comprado con USDT"
+  },
+  {
+    "tipo": "retiro",
+    "cartera": "Nexo",
+    "especie": "USDT",
+    "cantidad": 54.56,
+    "precioUnitario": 1,
+    "monedaPrecio": "USD",
+    "fecha": "2026-09-02 19:16:45",
+    "nota": "Pago por CAT"
+  },
+  {
+    "tipo": "compra",
+    "cartera": "Nexo",
+    "especie": "MCD",
+    "cantidad": 0.60735707,
+    "precioUnitario": 261.09846716693363,
+    "monedaPrecio": "USD",
+    "fecha": "2026-09-03 13:31:37",
+    "nota": "Comprado con USDT"
+  },
+  {
+    "tipo": "retiro",
+    "cartera": "Nexo",
+    "especie": "USDT",
+    "cantidad": 158.58,
+    "precioUnitario": 1,
+    "monedaPrecio": "USD",
+    "fecha": "2026-09-03 13:31:37",
+    "nota": "Pago por MCD"
+  },
+  {
+    "tipo": "deposito",
+    "cartera": "Nexo",
+    "especie": "USD",
+    "cantidad": 1.09,
+    "precioUnitario": 1,
+    "monedaPrecio": "USD",
+    "fecha": "2026-09-04 08:18:36",
+    "nota": "Deposit To Exchange"
+  },
+  {
+    "tipo": "deposito",
+    "cartera": "Nexo",
+    "especie": "USDX",
+    "cantidad": 1.09,
+    "precioUnitario": 1,
+    "monedaPrecio": "USD",
+    "fecha": "2026-09-04 08:18:36",
+    "nota": "Exchange Deposited On"
+  },
+  {
+    "tipo": "deposito",
+    "cartera": "Nexo",
+    "especie": "USDT",
+    "cantidad": 0.4245320000000001,
+    "precioUnitario": 1,
+    "monedaPrecio": "USD",
+    "fecha": "2026-09-08 05:00:00",
+    "nota": "Intereses consolidados (13 días)"
+  },
+  {
+    "tipo": "deposito",
+    "cartera": "Nexo",
+    "especie": "BTC",
+    "cantidad": 0.0000017600000000000005,
+    "precioUnitario": 1,
+    "monedaPrecio": "USD",
+    "fecha": "2026-09-08 05:00:00",
+    "nota": "Intereses consolidados (15 días)"
+  }
+]
