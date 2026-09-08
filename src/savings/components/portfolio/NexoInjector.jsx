@@ -7,7 +7,7 @@ import { useAuth } from '../../../context/AuthContext';
 import nexoData from '../../../../ahorros/nexo_parsed_transactions_safe.json';
 
 export default function NexoInjector({ isGlass }) {
-    const { addSavingsTransaction } = useSavings();
+    const { addSavingsTransaction, savingsTransactions, deleteSavingsTransaction } = useSavings();
     const { user } = useAuth();
     const [status, setStatus] = useState('idle');
 
@@ -16,17 +16,23 @@ export default function NexoInjector({ isGlass }) {
             alert("No estás logueado.");
             return;
         }
-        if (!window.confirm(`¿Estás seguro de inyectar ${nexoData.length} transacciones de Nexo en tu historial?`)) return;
+        if (!window.confirm(`¿Estás seguro de inyectar las transacciones y LIMPIAR las anteriores de Nexo para corregir los saldos?`)) return;
         
         setStatus('loading');
         try {
-            // Inyectar de a una para que Firebase asigne IDs y fechas de creación (createdAt)
+            // Borrar transacciones de Nexo previas (para evitar duplicados y purgar el error)
+            const oldNexoTxs = savingsTransactions.filter(tx => tx.cartera === 'Nexo');
+            for (let i = 0; i < oldNexoTxs.length; i++) {
+                await deleteSavingsTransaction(oldNexoTxs[i].id);
+            }
+
+            // Inyectar el JSON corregido
             for (let i = 0; i < nexoData.length; i++) {
                 const tx = nexoData[i];
                 await addSavingsTransaction(tx);
             }
             setStatus('success');
-            alert("¡Inyección completada perfectamente!");
+            alert("¡Corrección e inyección completadas perfectamente! La caja ya debe estar en cero.");
         } catch (error) {
             console.error(error);
             setStatus('error');
