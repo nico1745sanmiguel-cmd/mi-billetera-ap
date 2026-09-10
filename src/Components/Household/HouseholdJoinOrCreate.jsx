@@ -47,9 +47,9 @@ export default function HouseholdJoinOrCreate({
                     </button>
                 </div>
                 {joinStatus === 'searching' && <p className="text-indigo-400 text-sm mt-2 text-center animate-pulse">Buscando hogar...</p>}
-                {joinStatus === 'success' && <p className="text-green-500 text-sm mt-2 text-center font-bold">¡Éxito! Recargando...</p>}
+                {joinStatus === 'success' && <p className="text-green-500 text-sm mt-2 text-center font-bold">¡Te uniste con éxito al hogar!</p>}
                 {joinStatus === 'error_not_found' && <p className="text-red-400 text-sm mt-2 text-center">Código incorrecto.</p>}
-                {joinStatus === 'error' && <p className="text-red-400 text-sm mt-2 text-center">Ocurrió un error.</p>}
+                {joinStatus === 'error' && <p className="text-red-400 text-sm mt-2 text-center">Ocurrió un error al unirte al hogar.</p>}
             </div>
         </div>
     );

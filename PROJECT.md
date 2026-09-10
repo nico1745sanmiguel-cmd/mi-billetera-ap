@@ -1,53 +1,54 @@
-# Project: mi-billetera-ap (Módulo de Movilidad)
+# Project: mi-billetera-ap (Módulo de Grupo Familiar y Reparto de Gastos)
 
 ## Architecture
-El módulo de Movilidad gestiona los ingresos, jornadas laborales de aplicaciones (Uber, DiDi, Cabify, etc.), gastos operativos de vehículos (GNC, combustible, mantenimiento) y métricas de rentabilidad para conductores.
+El módulo de Grupo Familiar y Reparto de Gastos gestiona la convivencia financiera de los integrantes del hogar, el cálculo de aportes (equitativo vs proporcional por ingresos), el pozo de gastos compartidos (servicios, tarjetas, supermercado, compras frescas y gastos en efectivo) y la liquidación neta de compensaciones ("quién le debe transferir a quién").
 
-- **Capa de Persistencia e Integración**:
-  - `src/repositories/mobilityRepository.js`: Acceso a Firestore (`mobility_sessions`, `mobility_expenses`).
-  - `src/utils/security.js`: Sanitización de entradas, filtrado de `undefined`, parsing numérico seguro.
-  - `src/utils/cache.js`: Gestión de caché en `localStorage` con claves prefijadas.
-- **Capa de Estado React**:
-  - `src/context/MobilityContext.jsx`: `MobilityStateContext` (datos) y `MobilityDispatchContext` (acciones).
-- **Capa de Presentación y Componentes**:
-  - `src/Components/Mobility/MobilityDashboard.jsx`: Contenedor principal con pestañas y navegación.
-  - `src/Components/Mobility/MobilityExpenses.jsx` & `MobilityExpensesList.jsx`: Gestión y desglose de gastos.
-  - `src/Components/Mobility/MobilityForm.jsx`: Registro de jornadas con soporte de borradores multidía.
-  - `src/Components/Mobility/MobilityHistory.jsx`: Historial con filtros, edición y eliminación.
-  - `src/Components/Mobility/MobilityStats.jsx`, `MobilityTrendChart.jsx`, `MobilityWeeklyBreakdown.jsx`: Análisis de KPIs, tendencias y desgloses.
-  - `src/Components/Mobility/MobilityImport.jsx`: Importación de archivos CSV y migración de datos.
-  - `src/Components/Mobility/MobilitySettings.jsx`: Configuración del módulo y zona de peligro.
-- **Widgets de Dashboard**:
-  - `src/Components/Dashboard/Widgets/MobilityWidget.jsx`: Visualización resumida en Home.
+- **Capa de Utilidades Matemáticas y Lógica de Reparto**:
+  - `src/utils/salaryUtils.js`: Obtención de sueldos recientes, ordenamiento seguro retrocompatible, sanitización de montos.
+  - `src/utils/repartoUtils.js`: Algoritmo de cuotas sin drift (Largest Remainder / Hare-Niemeyer), balances netos, cálculo de compensaciones ("quién debe a quién") y selector unificado de gastos compartidos del mes.
+- **Capa de Estado y Persistencia**:
+  - `src/context/SalaryContext.jsx`: Estado de sueldos, proporciones familiares y reactividad de integrantes.
+  - `src/Components/Household/HouseholdManager.jsx`: Administración de miembros, código de invitación, preferencias de reparto y salida limpia del hogar.
+  - `src/Components/Household/HouseholdMembersList.jsx` & `SalarySection.jsx`: Carga resiliente de integrantes y sueldos.
+- **Capa de Presentación y Tableros de Reparto**:
+  - `src/Components/Shared/SharedExpensesDashboard.jsx`: Tablero principal con Hero Card de Liquidación Neta, navegación temporal de meses, filtros, desglose por categorías y gestión de aportes (creación, edición, borrado).
+  - `src/Components/Services/RepartoPanel.jsx`: Visualización tabular responsiva de la división de servicios.
+  - `src/Components/Dashboard/Widgets/SplitSummaryWidget.jsx`: Widget de resumen en Home con datos sincronizados y consistentes.
 
 ## Feature Inventory
 | # | Feature | Description | Milestone | Source |
 |---|---|---|---|---|
-| 1 | F1: Sanitización y Batching Firestore | Sanitización con security.js, blindaje ante undefined y borrado/importación en lotes <= 400 docs | M1 | Survey (Explorer 1 & 3) |
-| 2 | F2: Optimización y Estabilidad Contexto | Desacoplar sessions de dispatchValue, captura de excepciones en promesas y limpieza de estado en logout | M1 | Survey (Explorer 1) |
-| 3 | F3: Fechas Locales y Zona Horaria | Helper de fecha local (en-CA) para evitar saltos UTC a las 21hs y corrección de mes previo en widget | M1, M2 | Survey (Explorer 1 & 2) |
-| 4 | F4: Lógica de Estadísticas y Gráficos | Reemplazo de toSorted (ES2023), cómputo correcto de días trabajados (gastos != días) y rediseño de barras de tendencia | M2 | Survey (Explorer 2 & 3) |
-| 5 | F5: Parser CSV Robusto y Exportación | Parser RFC 4180 con autodetección de delimitador (, o ;) y decimales, más exportación a CSV | M3 | Survey (Explorer 2 & 3) |
-| 6 | F6: UX/UI Premium y Formularios | Campos Horas/Km en formulario, estados de carga Skeletons, botones táctiles en móviles y animaciones suaves | M3 | Survey (Explorer 2 & 3) |
-| 7 | F7: Suite E2E y Pruebas Automatizadas | Arnés de pruebas automatizadas Tiers 1-4, publicación de TEST_READY.md y hardening adversarial Tier 5 | E2E, M4 | Survey (Explorer 3) |
+| 1 | F1: Núcleo Matemático y Compatibilidad | Eliminación de error de linter (`calcularTotalesMes`), retrocompatibilidad de `toSorted` y sanitización numérica (anti-NaN/Infinity/negativos). | M1 | Survey (Explorer 1 & 2) |
+| 2 | F2: Reparto sin Drift y Modalidades | Reparto sin pérdidas ni sobrantes de centavos (*Largest Remainder* / Hare-Niemeyer) y soporte de modalidad (Equitativo vs Proporcional). | M1 | Survey (Explorer 1) |
+| 3 | F3: Liquidación Neta ("Quién debe a quién") | Algoritmo de compensación cruzada directa entre pagadores reales y cuotas teóricas con simplificación de transferencias. | M1 | Survey (Explorer 1 & 3) |
+| 4 | F4: Resiliencia en Carga de Miembros | Prevención de cuelgues infinitos de spinner en `HouseholdMembersList` y `SalarySection` cuando hay 0 miembros. | M2 | Survey (Explorer 2) |
+| 5 | F5: Ciclo de Vida y Limpieza del Hogar | Desvinculación limpia al salir del hogar sin arrastrar deudas huérfanas, reactividad sin `window.location.reload()` ni `alert()`, unificación de badges a `VOS`. | M2 | Survey (Explorer 2 & 3) |
+| 6 | F6: Hero Card de Liquidación Neta | Visualización clara y destacada de quién le transfiere a quién, montos netos y botón para copiar resumen para WhatsApp. | M3 | Survey (Explorer 3) |
+| 7 | F7: Rediseño Mobile sin Truncamiento | Desacoplamiento de textos y cifras numéricas de los anchos porcentuales CSS, y tabla responsiva en `RepartoPanel`. | M3 | Survey (Explorer 1 & 3) |
+| 8 | F8: Navegación de Períodos y CRUD Aportes | Selector de `< Mes >`, filtros por miembro y categoría, y edición/eliminación de aportes en `ContributionModal`. | M3 | Survey (Explorer 3) |
+| 9 | F9: Unificación de Gastos Compartidos | Sincronización del total compartido entre Dashboard, Widget Home y Reparto mediante utilidad unificada. | M3 | Survey (Explorer 1 & 2) |
+| 10 | F10: Suite de Pruebas E2E y Hardening | Arnés automatizado con Tiers 1-4, publicación de `TEST_READY.md` y hardening adversarial de casos límite (Tier 5). | E2E, M4 | Survey (Explorer 1, 2 & 3) |
 
 ## Milestones
 | # | Name | Scope | Dependencies | Status |
 |---|---|---|---|---|
-| M1 | Núcleo de Persistencia y Estado | `mobilityRepository.js`, `MobilityContext.jsx`, sanitización y batching seguro | none | DONE |
-| M2 | Lógica de Negocio y Gráficos | `MobilityStats.jsx`, `MobilityTrendChart.jsx`, `MobilityWeeklyBreakdown.jsx`, `MobilityWidget.jsx` | M1 | DONE |
-| M3 | Formularios, CSV y UX/UI Premium | `MobilityForm.jsx`, `MobilityExpenses.jsx`, `MobilityExpensesList.jsx`, `MobilityImport.jsx`, `MobilityDashboard.jsx`, `MobilitySettings.jsx`, `MobilityHistory.jsx` | M1, M2 | DONE |
-| E2E | Suite de Pruebas E2E (Tiers 1-4) | Arnés de pruebas automatizadas, casos de prueba y publicación de `TEST_READY.md` | none (paralelo) | DONE |
-| M4 | Integración Final y Hardening | Aprobación del 100% de tests E2E y hardening adversarial (Tier 5) | M1, M2, M3, E2E | DONE |
+| M1 | Núcleo Matemático y Liquidación Neta | `salaryUtils.js`, `repartoUtils.js` | none | IN_PROGRESS (worker: 3c42abcd) |
+| M2 | Gestión de Hogar y Resiliencia de Estado | `HouseholdManager.jsx`, `HouseholdMembersList.jsx`, `SalarySection.jsx`, `SalaryContext.jsx` | M1 | PLANNED |
+| M3 | UX/UI Premium y Tableros de Reparto | `SharedExpensesDashboard.jsx`, `RepartoPanel.jsx`, `SplitSummaryWidget.jsx` | M1, M2 | PLANNED |
+| E2E | Suite de Pruebas E2E (Tiers 1-4) | Arnés automatizado, casos de prueba (Tiers 1-4) y publicación de `TEST_READY.md` | none (paralelo) | READY (87/87 tests PASS, exit code 0) |
+| M4 | Integración Final y Hardening Adversarial | Aprobación 100% tests E2E y hardening adversarial (Tier 5) | M1, M2, M3, E2E | PLANNED |
 
 ## Interface Contracts
-### `mobilityRepository.js` ↔ `MobilityContext.jsx`
-- `deleteAllSessions(userId)`: Consulta y elimina en chunks de máximo 400 por `writeBatch`. [IMPLEMENTADO & VERIFICADO]
-- `importSessions(userId, rows)`: Valida filas mediante `sanitizeMobilitySession` y persiste en lotes (`writeBatch`) de 200 documentos. [IMPLEMENTADO & VERIFICADO]
-- `sanitizeMobilitySession(data)`: Limpia strings, convierte números con `parseAmount`, elimina `undefined` y previene `NaN`/`Infinity`. [IMPLEMENTADO & VERIFICADO]
-- `sanitizeMobilityExpense(data)`: Sanitiza fecha, categoría, monto y notas. [IMPLEMENTADO & VERIFICADO]
-- `getLocalDateString(d, timeZone)`: Retorna formato `YYYY-MM-DD` en hora local argentina (`America/Argentina/Buenos_Aires`). [IMPLEMENTADO & VERIFICADO]
+### `src/utils/repartoUtils.js` & `src/utils/salaryUtils.js`
+- `calcularProporciones(members, splitMode = 'proportional')`: Devuelve arreglo de miembros con `proportion` (0 a 1) y `percentage` exacto (suma 100.0% mediante Largest Remainder). Si no todos tienen sueldo en modo proporcional, añade `hasIncompleteSalaries: true` y aplica fallback equitativo con alerta.
+- `calcularAportesExactos(total, proporciones)`: Asigna cuotas enteras/centavos cuya suma coincide al 100% con `total` sin perder ni crear dinero.
+- `calcularLiquidacionNeta(miembros, gastosCompartidos, aportesManuales)`: Calcula para cada integrante `totalPagado`, `totalDebe` y genera `transferencias: [{ fromUid, fromName, toUid, toName, amount }]`.
+- `obtenerTotalGastosCompartidos(servicios, tarjetas, supermercado, frescos, efectivo)`: Selector único canónico para evitar discrepancias entre widgets y vistas.
 
-### `MobilityContext.jsx` ↔ Componentes de UI
-- `useMobilityState()`: `{ sessions, expenses, loading, settings }`.
-- `useMobilityDispatch()`: Funciones con referencias estables inmutables ante cambios en jornadas o gastos. [IMPLEMENTADO & VERIFICADO]
+## Code Layout
+- `src/utils/salaryUtils.js`: Funciones de sanitización de sueldos y parsing retrocompatible.
+- `src/utils/repartoUtils.js`: Lógica pura de cálculo de reparto, liquidación de saldos y compensaciones.
+- `src/Components/Household/`: Componentes de gestión de miembros, sueldos y preferencias.
+- `src/Components/Shared/`: Tableros de visualización, filtros y modales de aportes.
+- `src/Components/Services/`: Paneles y tablas de reparto de servicios.
+- `src/Components/Dashboard/Widgets/`: Widgets de resumen de gastos compartidos en Home.

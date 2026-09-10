@@ -1,115 +1,92 @@
-# TEST_READY: Módulo de Movilidad (Automated Test Suite)
+# TEST_READY: Módulo de Grupo Familiar y Reparto de Gastos (Automated Test Suite)
 
 **Estado de la Suite**: `READY` (100% de tests aprobados, código de salida 0)  
 **Fecha de Publicación**: 2026-09-10  
-**Autor**: `test_writer_1` (Test Architect & QA Specialist)  
+**Autor**: `test_writer_fam_1` (Test Architect & QA Lead)  
 **Comando de Ejecución Maestro**:  
 ```bash
-node tests/mobility/runAllTests.mjs
+node test-reparto-e2e.js
+```
+o también:
+```bash
+node tests/reparto/runAllTests.mjs
 ```
 
 ---
 
 ## 1. Resumen Ejecutivo de Cobertura
 
-La suite de pruebas automatizadas para el módulo de Movilidad ha sido implementada íntegramente utilizando Node.js nativo (`node:test` y `node:assert/strict`) con arquitectura ESM (.mjs), eliminando dependencias externas pesadas y garantizando ejecución instantánea y determinista en cualquier entorno.
+La suite de pruebas automatizadas para el módulo de Grupo Familiar y Reparto de Gastos ha sido construida e integrada íntegramente utilizando Node.js nativo (`node:test` y `node:assert/strict`) con arquitectura ESM (.mjs / .js), sin dependencias externas pesadas, garantizando una ejecución ultrarrápida (~3 segundos) y 100% determinista en cualquier entorno.
 
 | Nivel | Archivo de Prueba | Tests | Estado | Alcance y Capacidades Validadas |
 |---|---|:---:|:---:|---|
-| **Tier 1: Feature Coverage** | `tests/mobility/tier1-features.test.mjs` | **25** | `PASSED` | Sanitización de jornadas y gastos, parser `parseAmount`, rentabilidad neta, margen y KPIs operativos. |
-| **Tier 2: Boundary & Corner Cases** | `tests/mobility/tier2-boundaries.test.mjs` | **35** | `PASSED` | Valores vacíos, `undefined`, protección anti-`NaN`/`Infinity`, números negativos, fin de mes (bisiestos), RFC 4180 y lotes Firestore > 500. |
-| **Tier 3: Cross-Feature Interactions** | `tests/mobility/tier3-interactions.test.mjs` | **20** | `PASSED` | Jornadas multiplataforma (Uber, DiDi, Cabify, Otros), interacción ingresos vs gastos, desglose semanal y eficiencia h/km. |
-| **Tier 4: Real-World Scenarios** | `tests/mobility/tier4-scenarios.test.mjs` | **12** | `PASSED` | Turnos nocturnos post 21hs (UTC-3), importación CSV Excel en español con punto y coma (;) y ciclo mensual completo de 30 días. |
-| **TOTAL GENERAL** | **4 Tiers + Runner Maestro** | **92** | **100% PASS** | **Tiempo total de ejecución: ~1.45s** |
+| **Tier 1: Feature Coverage** | `tests/reparto/tier1-features.test.mjs` | **30** | `PASSED` | Proporciones salariales, cuotas Largest Remainder sin drift, suma 100%, selector unificado de 5 categorías, balances netos de acreedores/deudores y transferencias. |
+| **Tier 2: Boundary & Corner Cases** | `tests/reparto/tier2-boundaries.test.mjs` | **40** | `PASSED` | 0 miembros, 1 miembro, 3+ miembros, sueldos en 0, asimetría extrema ($5.000.000 vs $0), división por 0, gastos en 0, inputs negativos, `NaN`/`Infinity` y formatos con coma/punto. |
+| **Tier 3: Cross-Feature Combinations** | `tests/reparto/tier3-combinations.test.mjs` | **12** | `PASSED` | Modalidad Equitativo vs Proporcional, compensaciones cruzadas (servicios vs tarjetas vs súper), aportes manuales a caja común, superávit y cancelación circular de deudas. |
+| **Tier 4: Real-World Scenarios** | `tests/reparto/tier4-scenarios.test.mjs` | **5** | `PASSED` | Escenarios realistas de hogares en Argentina: pareja 65/35 con liquidación Mercado Pago, roommates en Palermo, desempleo temporal con absorción, pozo en efectivo y mes inflacionario ($777.067). |
+| **TOTAL GENERAL** | **4 Tiers + Runner Maestro** | **87** | **100% PASS** | **Tiempo total de ejecución: ~3.2s** |
 
 ---
 
-## 2. Catálogo Detallado de Pruebas por Nivel
+## 2. Invariantes Matemáticos Certificados
 
-### Tier 1: Feature Coverage (25 tests)
-- **Sanitización de Jornadas (`sanitizeMobilitySession`)**:
-  - Suma de 4 plataformas (`total = uber + didi + cabify + others`).
-  - Cálculo de `earningsPerHour` y `earningsPerKm` redondeado a 2 decimales.
-  - Protección de división por cero cuando horas o km son 0.
-  - Derivación automática del día de la semana en español (`jueves`, etc.).
-  - Supresión de propiedades `undefined` y limpieza de inyecciones invisibles.
-- **Sanitización de Gastos (`sanitizeMobilityExpense`)**:
-  - Saneamiento completo de fecha, categoría, monto y notas.
-  - Categoría por defecto (`varios`) si no se provee o es vacía.
-  - Parsing de cadenas de moneda formateadas (`"$ 15.450,50"`).
-  - Bloqueo de montos negativos forzados a 0.
-  - Recorte seguro de notas extensas a 200 caracteres.
-- **Parser Monetario (`parseAmount`)**:
-  - Integrales y decimales estándar.
-  - Formato argentino con separador de miles por punto (`85.000` -> 85000).
-  - Formato con coma decimal y miles (`1.250.000,50` -> 1250000.5).
-  - Símbolos de moneda y espacios (`"$ 35.000 ARS"`).
-  - Retorno de 0 para negativos, nulos, undefined y cadenas corruptas.
-- **Rentabilidad Neta y Margen de Ganancia**:
-  - Beneficio positivo y margen porcentual exacto (`ingresos > gastos`).
-  - Margen del 100% ante cero gastos.
-  - Punto de equilibrio con margen 0% (`ingresos == gastos`).
-  - Margen negativo y déficit ante gastos superiores a ingresos.
-  - Prevención de división por cero ante 0 ingresos con gastos.
-- **KPIs Operativos**:
-  - Días trabajados calculados exclusivamente a partir de jornadas (gastos no suman días).
-  - Promedio diario (`totalEarnings / daysWorked`).
-  - Identificación determinista de la mejor jornada (`bestDay`).
-  - Promedios ponderados de eficiencia horaria y por kilómetro.
-  - Desglose consolidado por plataforma.
+1. **Conservación Absoluta del Dinero**:
+   $$\sum_{i=1}^N \text{cuota}_i = \text{totalGastos}$$
+   Para cualquier monto total (divisible, par, impar o primo como $777.067) el algoritmo de *Largest Remainder* (Hare-Niemeyer) asegura que no se crea ni se pierde ni un solo peso o centavo.
 
-### Tier 2: Boundary & Corner Cases (35 tests)
-- **Valores Vacíos**: Objetos vacíos `{}` generan defaults seguros; tipos null o no-objeto lanzan excepciones controladas; arrays y cadenas vacías retornan 0 o colecciones vacías.
-- **Valores Undefined**: Eliminación sistemática de claves con valor `undefined`; soporte de campos opcionales ausentes; fecha por defecto ante `date: undefined`.
-- **Protección Anti-NaN e Infinity**: `parseAmount(NaN)` e `Infinity` devuelven 0; división por cero en fórmulas de rendimiento previene `Infinity` o `NaN`.
-- **Valores Negativos**: Forzado estricto a 0 para ingresos, gastos, horas y kilómetros negativos.
-- **Fronteras de Calendario y Fin de Mes**:
-  - 31 de Marzo a Febrero seguro: ajusta a 28 de Febrero en años comunes y a 29 en bisiestos (evita el bug de avance a 2 o 3 de Marzo).
-  - 31 de Mayo a 30 de Abril.
-  - Retroceso de año en Enero (15 Ene -> 15 Dic anterior, 31 Ene -> 31 Dic anterior).
-- **Delimitadores CSV y RFC 4180**:
-  - Autodetección de delimitador `,` y `;` (Excel en español).
-  - Comas dentro de comillas (ej: `"35,000.50"`).
-  - Filas vacías o con ceros descartadas.
-  - Errores sintácticos aislados sin abortar el resto del archivo.
-- **Particionamiento en Chunks (Límite Firestore 500 operaciones)**:
-  - 400 docs -> 1 lote.
-  - 501 docs -> 2 lotes (400 y 101) garantizando `<= 500`.
-  - 1000 docs -> 3 lotes (400, 400, 200).
-  - Límite superior forzado a 500 ante peticiones excesivas.
-  - Manejo de lote unitario.
+2. **Cierre Exacto de Porcentajes al 100.0%**:
+   $$\sum_{i=1}^N \text{porcentaje}_i = 100.0\%$$
+   Se elimina definitivamente el problema de sumas de $99.9\%$ en hogares de 3, 6, 7 o más integrantes.
 
-### Tier 3: Cross-Feature Interactions (20 tests)
-- **Multiplataforma**: Aislamiento y consolidación de cuota de mercado entre Uber, DiDi, Cabify y Otros; primacía de la suma de plataformas frente a totales arbitrarios.
-- **Ingresos vs Gastos**: Días con déficit puntual dentro de meses rentables; acumulación por categoría de gasto (`gnc`, `nafta`, `repuestos`, `lavadero`); meses en déficit por reparaciones de taller; meses con gastos fijos y 0 ingresos.
-- **Desglose Semanal (`calculateWeeklyBreakdown`)**:
-  - **Aislamiento crítico de días**: Se verificó exhaustivamente que registrar múltiples gastos en una semana NO incrementa los días trabajados.
-  - Semanas con solo gastos reflejan `days: 0`, `total: 0`, `net: -gastos`.
-  - Ajuste dinámico ante cambio de inicio de semana (`Lunes=1` vs `Domingo=0`).
-  - Orden cronológico garantizado independientemente del orden de inserción.
-- **Eficiencia Operativa**: Jornadas urbanas congestionadas (muchas horas, pocos km) vs autopista (pocas horas, muchos km); promedios globales ponderados.
+3. **Conservación de Saldos Netos**:
+   $$\sum_{i=1}^N \text{saldoNeto}_i = 0$$
+   Todo lo que un deudor debe equivale exactamente a lo que los acreedores tienen a favor.
 
-### Tier 4: Real-World Scenarios (12 tests)
-- **Turnos Nocturnos post 21:00 hs (UTC-3 Argentina)**:
-  - Fin de turno a las 21:15 UTC-3 (00:15 UTC del día siguiente) registra la fecha local argentina correcta (`YYYY-MM-DD`).
-  - Fin de turno a las 23:45 UTC-3 (02:45 UTC del día siguiente) no salta al día siguiente.
-  - Carga de GNC a medianoche (23:55 UTC-3) queda vinculada a la jornada en curso.
-- **Importación Real de Excel en Español**:
-  - Archivos con punto y coma (`;`), comillas y decimales con coma (`8,5` horas se preserva en 8.5 y no muta a 85).
-  - Descarte automático de francos y captura no fatal de filas corruptas.
-- **Ciclo Mensual Completo (30 Días)**:
-  - Simulación de conductor profesional con 22 jornadas y 8 francos (fines de semana).
-  - 11 cargas de GNC intercaladas cada 2 días, 2 lavaderos y 1 service mayor de aceite/filtro.
-  - Reconciliación de sumatorias: la suma de semanas S1..S5 coincide exactamente con los totales mensuales (`total`, `gastos`, `daysWorked`).
+4. **Minimización de Transferencias**:
+   El algoritmo de liquidación neta garantiza que las deudas se compensan en un máximo de $N-1$ transferencias directas, eliminando triangulaciones circulares.
+
+5. **Protección Anti-Crash y Fallback Resiliente**:
+   Ante datos salariales incompletos o en cero en modo proporcional, el sistema previene la exigencia del 100% a un único miembro y activa de forma transparente el fallback equitativo con alerta informativa (`hasIncompleteSalaries: true`).
 
 ---
 
-## 3. Checklist de Verificación para Agentes Implementadores y Reviewers
+## 3. Evidencia de Ejecución Limpia
 
-- [x] Arnés de pruebas ejecutable con Node nativo sin dependencias externas (`node tests/mobility/runAllTests.mjs`).
-- [x] Código de salida `0` ante éxito y `1` ante fallo.
-- [x] 100% de tests unitarios y de integración aprobados (92/92).
-- [x] Verificación de blindaje de Firestore ante operaciones masivas (> 500 docs).
-- [x] Verificación de la corrección del cómputo de días trabajados (los gastos no suman días).
-- [x] Verificación de preservación de decimales en importación CSV (horas y montos).
-- [x] Verificación de zona horaria local argentina para jornadas nocturnas.
+Salida del comando `node test-reparto-e2e.js`:
+
+```
+==================================================================================
+  MI BILLETERA — SUITE E2E AUTOMATIZADA: GRUPO FAMILIAR Y REPARTO DE GASTOS
+==================================================================================
+  Fecha de ejecución : 10/9/2026, 15:17:35
+  Versión de Node.js : v24.13.1
+  Modo de ejecución  : ESM Nativo (node:test)
+
+[1/4] Ejecutando Tier 1: Feature Coverage...
+✔ Tier 1: Feature Coverage — Módulo Grupo Familiar y Reparto (30 tests)
+
+[2/4] Ejecutando Tier 2: Boundary & Corner Cases...
+✔ Tier 2: Boundary & Corner Cases — Robustez y Límites Extremos (40 tests)
+
+[3/4] Ejecutando Tier 3: Cross-Feature Combinations...
+✔ Tier 3: Cross-Feature Combinations — Interacciones y Modalidades (12 tests)
+
+[4/4] Ejecutando Tier 4: Real-World Scenarios...
+✔ Tier 4: Real-World Application Scenarios — Hogares y Parejas (5 tests)
+
+==================================================================================
+  RESUMEN EJECUTIVO DE EJECUCIÓN DE PRUEBAS — GRUPO FAMILIAR
+==================================================================================
+  ✔  Tier 1: Feature Coverage               : [PASÓ] (0.88s)
+  ✔  Tier 2: Boundary & Corner Cases        : [PASÓ] (1.19s)
+  ✔  Tier 3: Cross-Feature Combinations     : [PASÓ] (0.46s)
+  ✔  Tier 4: Real-World Scenarios           : [PASÓ] (0.70s)
+----------------------------------------------------------------------------------
+  Tiers Aprobados : 4 de 4
+  Tiers Fallados  : 0
+  Tiempo Total    : 3.23s
+==================================================================================
+
+✅ ÉXITO: Todos los niveles de pruebas (Tiers 1-4) pasaron satisfactoriamente.
+Exit code: 0
+```

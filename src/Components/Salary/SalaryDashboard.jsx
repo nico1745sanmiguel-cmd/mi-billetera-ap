@@ -5,8 +5,9 @@ import { useAuth } from '../../context/AuthContext';
 import { useUI } from '../../context/UIContext';
 import { useServices } from '../../context/ServicesContext';
 import { useCards } from '../../context/CardsContext';
+import { useSupermarket } from '../../context/SupermarketContext';
 import { formatMoney } from '../../utils';
-import { calcularProporciones, calcularAporte } from '../../utils/salaryUtils';
+import { calcularProporciones, calcularAportesExactos, obtenerTotalGastosCompartidos } from '../../utils/salaryUtils';
 import { buildCardsWithDebt } from '../../utils/cardDebtUtils';
 import EnvelopeCard from './EnvelopeCard';
 import EnvelopeEditor from './EnvelopeEditor';
@@ -23,6 +24,7 @@ function SalaryDashboardInner({ onBack }) {
     const { user, householdMembers } = useAuth();
     const { services } = useServices();
     const { cards, transactions } = useCards();
+    const { superItems: supermarketItems, freshItems } = useSupermarket();
 
     const {
         loading,
@@ -54,18 +56,21 @@ function SalaryDashboardInner({ onBack }) {
         const targetMonthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
         const cardsWithDebt = buildCardsWithDebt(cards, transactions, targetMonthKey, currentDate.getFullYear() * 12 + currentDate.getMonth());
 
-        const sharedServicesTotal = services
-            .filter(s => s.isShared !== false)
-            .reduce((acc, s) => acc + Number(s.amount || 0), 0);
-        const sharedCardsTotal = cardsWithDebt
-            .filter(c => c.isShared !== false)
-            .reduce((acc, c) => acc + Number(c.currentDebt || 0), 0);
-        const grandTotal = sharedServicesTotal + sharedCardsTotal;
+        const sharedSuperItems = supermarketItems.filter(i => i.month === targetMonthKey && i.isShared !== false);
+        const hasStartedSharedSuper = sharedSuperItems.some(i => i.checked);
+        const sharedSuperTotal = hasStartedSharedSuper
+            ? sharedSuperItems.filter(i => i.checked).reduce((acc, i) => acc + Number((i.price || 0) * (i.quantity || 1)), 0)
+            : sharedSuperItems.reduce((acc, i) => acc + Number((i.price || 0) * (i.quantity || 1)), 0);
 
-        const myProportion = proporciones.find(p => p.uid === user.uid);
-        if (!myProportion) return 0;
-        return calcularAporte(grandTotal, myProportion.proportion);
-    }, [householdMembers, user, services, cards, transactions, currentDate]);
+        const sharedFreshTotal = freshItems.filter(i => i.month === targetMonthKey && i.isShared !== false).reduce((acc, i) => acc + (Number(i.total) || 0), 0);
+
+        const grandTotal = obtenerTotalGastosCompartidos(services, cardsWithDebt, sharedSuperTotal, sharedFreshTotal);
+
+        const aportes = calcularAportesExactos(grandTotal, proporciones);
+        const myAporte = aportes.byUid?.[user.uid] ?? 0;
+
+        return myAporte;
+    }, [householdMembers, user, services, cards, transactions, currentDate, supermarketItems, freshItems]);
 
     const hasHousehold = householdMembers && householdMembers.length >= 2;
     const percent = totalIncome > 0 ? Math.min(100, Math.round((totalBudgeted / totalIncome) * 100)) : 0;

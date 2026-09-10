@@ -23,7 +23,7 @@ import HouseholdJoinOrCreate from './HouseholdJoinOrCreate';
  */
 export default function HouseholdManager({ onBack }) {
     const { isGlass } = useUI();
-    const { user, userData } = useAuth();
+    const { user, userData, refreshUserData } = useAuth();
     const householdId = userData?.householdId;
     const [household, setHousehold] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -32,6 +32,7 @@ export default function HouseholdManager({ onBack }) {
     const [createStatus, setCreateStatus] = useState("idle");
     const [joinCode, setJoinCode] = useState("");
     const [joinStatus, setJoinStatus] = useState("");
+    const [leaveError, setLeaveError] = useState("");
 
     const [sharePreferences, setSharePreferences] = useState({ shareCards: true, shareSupermarket: true, shareServices: true });
     const [savingPrefs, setSavingPrefs] = useState(false);
@@ -113,7 +114,7 @@ export default function HouseholdManager({ onBack }) {
             await batch.commit();
 
             setJoinStatus("success");
-            setTimeout(() => window.location.reload(), 2000);
+            await refreshUserData();
         } catch (error) {
             console.error(error);
             setJoinStatus("error");
@@ -125,6 +126,7 @@ export default function HouseholdManager({ onBack }) {
         try {
             const newId = await checkAndMigrateToHousehold(user);
             if (!newId) return setCreateStatus("error");
+            await refreshUserData();
             const snap = await getDoc(doc(db, 'households', newId));
             if (snap.exists()) setHousehold(snap.data());
             setCreateStatus("success");
@@ -140,16 +142,19 @@ export default function HouseholdManager({ onBack }) {
 
     const confirmLeave = async () => {
         setLoading(true);
+        setLeaveError("");
         try {
             await updateDoc(doc(db, 'users', user.uid), { householdId: null });
             if (householdId && household) {
                 const newMembers = (household.members || []).filter(id => id !== user.uid);
                 await updateDoc(doc(db, 'households', householdId), { members: newMembers });
             }
-            window.location.reload();
+            await refreshUserData();
+            setHousehold(null);
+            setLoading(false);
         } catch (error) {
             console.error(error);
-            alert("Hubo un error al salir del grupo.");
+            setLeaveError("Hubo un error al salir del grupo. Intentá de nuevo.");
             setLoading(false);
         }
     };
@@ -243,6 +248,11 @@ export default function HouseholdManager({ onBack }) {
                         </div>
 
                         <div className="pt-4">
+                            {leaveError && (
+                                <div className="mb-3 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm text-center font-medium">
+                                    {leaveError}
+                                </div>
+                            )}
                             <button aria-label="Acción" type="button" onClick={handleLeaveRequest} className="w-full py-4 text-red-500 font-bold text-sm tracking-widest hover:bg-red-50 rounded-2xl transition-colors border border-transparent hover:border-red-100">
                                 Salir del Grupo de Hogar
                             </button>

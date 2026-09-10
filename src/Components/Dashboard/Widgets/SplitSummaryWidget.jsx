@@ -5,7 +5,7 @@ import { useCards } from '../../../context/CardsContext';
 import { useSupermarket } from '../../../context/SupermarketContext';
 import { useServices } from '../../../context/ServicesContext';
 import { buildCardsWithDebt } from '../../../utils/cardDebtUtils';
-import { calcularProporciones, getLatestSalary } from '../../../utils/salaryUtils';
+import { calcularProporciones, getLatestSalary, obtenerTotalGastosCompartidos, calcularAportesExactos } from '../../../utils/salaryUtils';
 
 export default function SplitSummaryWidget({ setView, householdMembers, currentDate, privacyMode, user, size = 'full', targetMonthKey, targetMonthVal }) {
     const { cards, transactions } = useCards();
@@ -28,9 +28,6 @@ export default function SplitSummaryWidget({ setView, householdMembers, currentD
             salaryHistory: m.salaryHistory || []
         })));
 
-        const sharedServicesTotal = services.filter(s => s.isShared !== false).reduce((acc, s) => acc + Number(s.amount || 0), 0);
-        const sharedCardsTotal = cardsWithDebt.filter(c => c.isShared !== false).reduce((acc, c) => acc + Number(c.currentDebt || 0), 0);
-        
         const sharedSuperItems = supermarketItems.filter(i => i.month === targetMonthKey && i.isShared !== false);
         const hasStartedSharedSuper = sharedSuperItems.some(i => i.checked);
         const sharedSuperTotal = hasStartedSharedSuper 
@@ -39,17 +36,9 @@ export default function SplitSummaryWidget({ setView, householdMembers, currentD
 
         const sharedFreshTotal = freshItems.filter(i => i.month === targetMonthKey && i.isShared !== false).reduce((acc, i) => acc + (Number(i.total) || 0), 0);
         
-        const grandTotal = sharedServicesTotal + sharedCardsTotal + sharedSuperTotal + sharedFreshTotal;
+        const grandTotal = obtenerTotalGastosCompartidos(services, cardsWithDebt, sharedSuperTotal, sharedFreshTotal);
 
-        const breakdown = proporciones.map(p => ({
-            uid: p.uid,
-            displayName: p.displayName,
-            photoURL: p.photoURL,
-            salary: p.salary,
-            proportion: p.proportion,
-            percentage: p.percentage,
-            aporte: Math.round(grandTotal * p.proportion)
-        }));
+        const breakdown = calcularAportesExactos(grandTotal, proporciones);
 
         return { grandTotal, breakdown, proporciones };
     }, [householdMembers, services, cardsWithDebt, supermarketItems, freshItems, targetMonthKey]);

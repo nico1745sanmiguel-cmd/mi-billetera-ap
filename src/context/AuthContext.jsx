@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import { db, auth } from '../firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
@@ -21,6 +21,36 @@ export const AuthProvider = ({ children }) => {
     const [userData, setUserData] = useState(null); // userData contiene householdId
     const [householdMembers, setHouseholdMembers] = useState(() => getCache('householdMembers', []));
     const [loadingUser, setLoadingUser] = useState(true);
+
+    /**
+     * Re-fetches userData and householdMembers from Firebase.
+     * Use this instead of window.location.reload() when household state changes.
+     */
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const refreshUserData = useCallback(async () => {
+        if (!user) return;
+        try {
+            const currentHouseholdId = await checkAndMigrateToHousehold(user);
+            setUserData({ householdId: currentHouseholdId });
+            setCache('userData', { householdId: currentHouseholdId });
+
+            if (currentHouseholdId) {
+                const hhSnap = await getDoc(doc(db, 'households', currentHouseholdId));
+                if (hhSnap.exists()) {
+                    const memberIds = hhSnap.data().members || [];
+                    const memberSnaps = await Promise.all(memberIds.map(uid => getDoc(doc(db, 'users', uid))));
+                    const members = memberSnaps.map(s => s.exists() ? { uid: s.id, ...s.data() } : { uid: s.id });
+                    setHouseholdMembers(members);
+                    setCache('householdMembers', members);
+                }
+            } else {
+                setHouseholdMembers([]);
+                setCache('householdMembers', []);
+            }
+        } catch (e) {
+            console.error('Error refreshing user data:', e);
+        }
+    }, [user]);
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -79,8 +109,9 @@ export const AuthProvider = ({ children }) => {
         user,
         userData,
         householdMembers,
-        loadingUser
-    }), [user, userData, householdMembers, loadingUser]);
+        loadingUser,
+        refreshUserData
+    }), [user, userData, householdMembers, loadingUser, refreshUserData]);
 
     return (
         <AuthContext.Provider value={value}>

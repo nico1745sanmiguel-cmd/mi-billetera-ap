@@ -59,3 +59,47 @@ Revisar posibles vulnerabilidades o baches groseros de seguridad (manejo de dato
 ### Calidad de Código y UX
 - [ ] Interfaz limpia, fluida y con UX/UI cuidada sin baches estéticos ni retardos de respuesta.
 - [ ] Compilación y build limpios sin errores de bundling.
+
+## Follow-up — 2026-09-10T18:00:00Z
+
+Un desarrollador Senior (10+ años de experiencia) y un QA Experto trabajan en conjunto auditando, detectando debilidades/bugs y optimizando la sección de Grupo Familiar y Reparto de Gastos de la app personal "Mi Billetera". El QA reporta fallas y casos borde, mientras el Dev los soluciona manteniendo altos estándares de calidad y UX/UI.
+
+Working directory: c:\Users\Nico\.gemini\antigravity\scratch\mi-billetera-ap
+Integrity mode: development
+
+## Requirements
+
+### R1. Auditoría QA y Corrección de Bugs en Reparto de Gastos
+- Revisar y probar exhaustivamente los componentes RepartoPanel.jsx, SharedExpensesDashboard.jsx, HouseholdManager.jsx y widgets/contextos relacionados (SalaryContext.jsx, salaryUtils.js).
+- Corregir cualquier error en cálculos de distribución de gastos (equitativa o proporcional por salarios), actualización de saldos, división de servicios o deudas entre miembros de la familia.
+
+### R2. Seguridad Práctica y Resiliencia en App Personal
+- Asegurar validaciones rigurosas en la entrada de datos: prevenir cantidades negativas no deseadas, entradas vacías, NaN, división por cero al calcular proporciones salariales, y estados inconsistentes si un miembro o gasto se borra.
+- Garantizar que la app maneje errores de forma elegante sin romper la interfaz (crashes de React).
+
+### R3. Optimización de UX/UI y Claridad de Balances
+- Mejorar la legibilidad de la interfaz: visualización clara de quién le debe a quién, totales compartidos, filtros por miembro o fecha y feedback visual inmediato tras cada cambio.
+- Mantener una experiencia de usuario fluida, limpia y con un acabado visual premium acorde al resto de la aplicación.
+
+## Verification Plan
+
+### Automated Verification
+- Ejecutar npm run build para asegurar que el empaquetado del proyecto no contenga errores de sintaxis o compilación TypeScript/JSX.
+- Ejecutar npm run lint para garantizar limpieza de código y ausencia de variables no utilizadas o reglas violadas.
+
+### Manual & QA Inspection
+- Simulación por parte del QA de casos límite: salarios en cero, 0 miembros en el grupo, montos decimales complejos, eliminación de miembros con gastos pendientes y cambio rápido de pestañas/filtros.
+
+## Acceptance Criteria
+
+### Estabilidad y Corrección Funcional
+- [ ] No hay errores en consola ni cierres inesperados (React crash) durante el flujo de creación, edición y cálculo de reparto de gastos.
+- [ ] Los cálculos de balance entre integrantes ("quién debe a quién" y saldos netos) concuerdan exactamente con las operaciones matemáticas esperadas.
+
+### Robustez y Manejo de Bordes
+- [ ] La interfaz bloquea o maneja limpiamente valores inválidos (como salarios nulos/cero en repartos proporcionales o montos vacíos).
+- [ ] Si un miembro o servicio se modifica o elimina, la vista de reparto actualiza adecuadamente los saldos sin dejar referencias huérfanas.
+
+### Calidad de Código y UX
+- [ ] El proyecto compila limpiamente mediante npm run build.
+- [ ] La UI de la sección de Grupo Familiar y Reparto presenta un diseño limpio, intuitivo y sin inconsistencias visuales.

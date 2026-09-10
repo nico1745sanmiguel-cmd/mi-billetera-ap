@@ -2,14 +2,14 @@ import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db, auth } from '../../firebase';
 import { doc, getDoc, collection, query, where, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
-import { Scale, Users, ChevronLeft, CreditCard, ShoppingCart, Lightbulb, User, LayoutList, Plus, X, CheckCircle, Clock, TrendingUp, Wallet } from 'lucide-react';
+import { Scale, Users, ChevronLeft, CreditCard, ShoppingCart, Lightbulb, User, LayoutList, Plus, X, CheckCircle, Clock, TrendingUp, Wallet, ArrowLeftRight, AlertTriangle, Copy, Share2, Check } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useCards } from '../../context/CardsContext';
 import { useSupermarket } from '../../context/SupermarketContext';
 import { useServices } from '../../context/ServicesContext';
 import { useUI } from '../../context/UIContext';
 import { formatMoney } from '../../utils';
-import { calcularProporciones } from '../../utils/salaryUtils';
+import { calcularProporciones, calcularAportesExactos, calcularLiquidacionNeta } from '../../utils/salaryUtils';
 import { buildCardsWithDebt, formatMonthKey } from '../../utils/cardDebtUtils';
 import { COLLECTIONS } from '../../config/constants';
 
@@ -145,7 +145,7 @@ function ContributionModal({ person, totalTarget, monthKey, householdId, isGlass
                             isGlass ? 'bg-white/5 border-white/10' : 'bg-gray-50 border-gray-200'
                         }`}>
                             <span className={`text-sm font-bold ${isGlass ? 'text-gray-400' : 'text-gray-400'}`}>$</span>
-                            <input autoComplete="off" id="input-field"
+                            <input autoComplete="off" id="contribution-amount"
                                 type="text"
                                 inputMode="numeric"
                                 placeholder="0"
@@ -167,7 +167,7 @@ function ContributionModal({ person, totalTarget, monthKey, householdId, isGlass
                     </div>
 
                     {/* Nota opcional */}
-                    <input autoComplete="off" id="input-field"
+                    <input autoComplete="off" id="contribution-note"
                         type="text"
                         placeholder="Nota (opcional)..."
                         value={note}
@@ -239,8 +239,11 @@ export default function SharedExpensesDashboard({ onBack }) {
     const { services } = useServices();
     const [proporciones, setProporciones] = useState([]);
     const [loadingProps, setLoadingProps] = useState(false);
+    const [propsError, setPropsError] = useState('');
+    const [splitMode, setSplitMode] = useState('proportional');
     const [selectedPerson, setSelectedPerson] = useState(null); // { uid, displayName, proportion }
     const [allContributions, setAllContributions] = useState([]);
+    const [copiedSettlement, setCopiedSettlement] = useState(false);
 
     const currentUid = auth.currentUser?.uid;
     const showMoney = (amount) => privacyMode ? '****' : formatMoney(amount);
@@ -294,6 +297,7 @@ export default function SharedExpensesDashboard({ onBack }) {
         if (!householdId) return;
         const loadProps = async () => {
             setLoadingProps(true);
+            setPropsError('');
             try {
                 const hhSnap = await getDoc(doc(db, 'households', householdId));
                 if (!hhSnap.exists()) return;
@@ -301,13 +305,16 @@ export default function SharedExpensesDashboard({ onBack }) {
                 const memberIds = data.members || [];
                 const snaps = await Promise.all(memberIds.map(uid => getDoc(doc(db, 'users', uid))));
                 const members = snaps.map(s => s.exists() ? { uid: s.id, ...s.data() } : { uid: s.id, displayName: '?', salaryHistory: [] });
-                setProporciones(calcularProporciones(members));
-            } catch (e) { console.error(e); }
+                setProporciones(calcularProporciones(members, splitMode));
+            } catch (e) {
+                console.error(e);
+                setPropsError('No se pudieron cargar los datos del grupo familiar.');
+            }
             finally { setLoadingProps(false); }
         };
         loadProps();
          
-    }, [householdId]);
+    }, [householdId, splitMode]);
 
     // 3. ESCUCHAR TODOS LOS APORTES DEL MES (tiempo real, para las barras de las tarjetas)
     useEffect(() => {
@@ -333,6 +340,34 @@ export default function SharedExpensesDashboard({ onBack }) {
 
     const allHaveProportions = proporciones.length > 0;
 
+    // Aportes exactos por miembro con Hare-Niemeyer (sin drift de centavos)
+    const aportesPorMiembro = useMemo(() => {
+        if (!allHaveProportions || grandTotal <= 0) return [];
+        return calcularAportesExactos(grandTotal, proporciones);
+    }, [allHaveProportions, grandTotal, proporciones]);
+
+    // Liquidación neta: quién le debe a quién
+    const liquidacion = useMemo(() => {
+        if (!allHaveProportions) return null;
+        return calcularLiquidacionNeta(proporciones, sharedItems, allContributions, { splitMode });
+    }, [allHaveProportions, proporciones, sharedItems, allContributions, splitMode]);
+
+    const handleCopySettlement = () => {
+        if (!liquidacion || !liquidacion.transferencias || liquidacion.transferencias.length === 0) return;
+        const monthLabel = currentDate.toLocaleString('es-AR', { month: 'long', year: 'numeric' });
+        const modeLabel = splitMode === 'proportional' ? 'Proporcional por sueldos' : 'Equitativo (partes iguales)';
+        let text = `💳 *Liquidación Neta - Mi Billetera (${monthLabel})*\n`;
+        text += `Modo: ${modeLabel}\n`;
+        text += `Total Gastos Compartidos: ${formatMoney(grandTotal)}\n\n`;
+        text += `*Transferencias de Compensación:*\n`;
+        liquidacion.transferencias.forEach(t => {
+            text += `• ${t.fromName} ➔ ${t.toName}: ${formatMoney(t.amount)}\n`;
+        });
+        navigator.clipboard.writeText(text);
+        setCopiedSettlement(true);
+        setTimeout(() => setCopiedSettlement(false), 2500);
+    };
+
     return (
         <div className="space-y-6 animate-fade-in pb-20">
             {/* HEADER */}
@@ -348,12 +383,149 @@ export default function SharedExpensesDashboard({ onBack }) {
                 </div>
             </div>
 
+            {/* TOGGLE: Proporcional / Equitativo */}
+            {allHaveProportions && (
+                <div className={`flex items-center justify-between px-4 py-3 rounded-2xl ${isGlass ? 'bg-white/5' : 'bg-gray-50'}`}>
+                    <div className="flex items-center gap-2">
+                        <Scale size={16} className={isGlass ? 'text-indigo-300' : 'text-indigo-500'} />
+                        <span className="text-sm font-bold">Modo de reparto</span>
+                    </div>
+                    <div className={`flex rounded-xl overflow-hidden border ${isGlass ? 'border-white/10' : 'border-gray-200'}`}>
+                        <button
+                            type="button"
+                            onClick={() => setSplitMode('proportional')}
+                            className={`px-3 py-1.5 text-xs font-bold transition-all ${
+                                splitMode === 'proportional'
+                                    ? 'bg-indigo-600 text-white'
+                                    : isGlass ? 'bg-white/5 text-gray-400 hover:bg-white/10' : 'bg-white text-gray-500 hover:bg-gray-100'
+                            }`}
+                        >
+                            Proporcional
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setSplitMode('equal')}
+                            className={`px-3 py-1.5 text-xs font-bold transition-all ${
+                                splitMode === 'equal'
+                                    ? 'bg-indigo-600 text-white'
+                                    : isGlass ? 'bg-white/5 text-gray-400 hover:bg-white/10' : 'bg-white text-gray-500 hover:bg-gray-100'
+                            }`}
+                        >
+                            Equitativo
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* AVISO: Sueldos incompletos (fallback a equitativo) */}
+            {proporciones.hasIncompleteSalaries && (
+                <div className={`flex items-start gap-3 px-4 py-3 rounded-2xl ${isGlass ? 'bg-amber-500/10 border border-amber-500/20' : 'bg-amber-50 border border-amber-200'}`}>
+                    <AlertTriangle size={18} className="text-amber-500 mt-0.5 shrink-0" />
+                    <div>
+                        <p className={`text-xs font-bold ${isGlass ? 'text-amber-300' : 'text-amber-700'}`}>Reparto equitativo temporal</p>
+                        <p className={`text-[11px] mt-0.5 ${isGlass ? 'text-amber-400/70' : 'text-amber-600'}`}>
+                            Faltan datos de sueldo en uno o más miembros. El reparto se divide en partes iguales hasta que todos carguen su sueldo.
+                        </p>
+                    </div>
+                </div>
+            )}
+
+            {/* ERROR: Carga de proporciones */}
+            {propsError && (
+                <div className="flex items-center gap-2 px-4 py-3 rounded-2xl bg-red-500/10 border border-red-500/20">
+                    <AlertTriangle size={16} className="text-red-400 shrink-0" />
+                    <p className="text-xs font-bold text-red-400">{propsError}</p>
+                </div>
+            )}
+
+            {/* LIQUIDACIÓN NETA / TRANSFERENCIAS DE COMPENSACIÓN */}
+            {allHaveProportions && liquidacion && (
+                <div className={`rounded-3xl border overflow-hidden p-5 ${
+                    isGlass ? 'bg-indigo-950/40 border-indigo-500/20' : 'bg-indigo-50/70 border-indigo-100'
+                }`}>
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-2.5">
+                            <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-500">
+                                <ArrowLeftRight size={20} />
+                            </div>
+                            <div>
+                                <h2 className="text-sm font-bold">Liquidación Neta</h2>
+                                <p className={`text-xs ${isGlass ? 'text-indigo-300/70' : 'text-indigo-600/80'}`}>
+                                    Compensación de cuentas
+                                </p>
+                            </div>
+                        </div>
+
+                        {liquidacion.transferencias?.length > 0 && (
+                            <button
+                                type="button"
+                                onClick={handleCopySettlement}
+                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95 ${
+                                    copiedSettlement
+                                        ? 'bg-emerald-600 text-white'
+                                        : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm'
+                                }`}
+                            >
+                                {copiedSettlement ? (
+                                    <>
+                                        <Check size={14} /> ¡Copiado!
+                                    </>
+                                ) : (
+                                    <>
+                                        <Copy size={14} /> Copiar Resumen
+                                    </>
+                                )}
+                            </button>
+                        )}
+                    </div>
+
+                    {liquidacion.transferencias?.length > 0 ? (
+                        <div className="space-y-2.5">
+                            {liquidacion.transferencias.map((t, i) => {
+                                const isFromMe = t.from === currentUid;
+                                const isToMe = t.to === currentUid;
+                                return (
+                                    <div
+                                        key={i}
+                                        className={`flex items-center justify-between p-3.5 rounded-2xl border ${
+                                            isGlass ? 'bg-white/5 border-white/10' : 'bg-white border-gray-100 shadow-sm'
+                                        }`}
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className="flex items-center gap-1.5 text-xs font-semibold">
+                                                <span className={`px-2 py-0.5 rounded-lg ${isFromMe ? 'bg-amber-500/20 text-amber-500 font-bold' : isGlass ? 'bg-white/10' : 'bg-gray-100'}`}>
+                                                    {t.fromName}
+                                                </span>
+                                                <span className="text-indigo-400">➔</span>
+                                                <span className={`px-2 py-0.5 rounded-lg ${isToMe ? 'bg-emerald-500/20 text-emerald-500 font-bold' : isGlass ? 'bg-white/10' : 'bg-gray-100'}`}>
+                                                    {t.toName}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <span className="font-mono font-bold text-sm text-indigo-500">
+                                            {showMoney(t.amount)}
+                                        </span>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    ) : (
+                        <div className={`flex items-center justify-center gap-2 py-4 rounded-2xl border border-dashed ${
+                            isGlass ? 'border-emerald-500/30 bg-emerald-500/5 text-emerald-400' : 'border-emerald-200 bg-emerald-50/50 text-emerald-700'
+                        }`}>
+                            <CheckCircle size={18} />
+                            <span className="text-sm font-bold">¡Cuentas al día!</span>
+                        </div>
+                    )}
+                </div>
+            )}
+
             {/* RESUMEN DE APORTES — Botones con barra de progreso */}
             {allHaveProportions && (
                 <div className="grid grid-cols-2 gap-4 px-1">
-                    {proporciones.map((p) => {
+                    {proporciones.map((p, idx) => {
                         const isMe = p.uid === currentUid;
-                        const aporte = Math.round(grandTotal * p.proportion);
+                        const aporte = aportesPorMiembro[idx]?.aporte ?? Math.round(grandTotal * (p.proportion || 0));
                         const pagado = getPagadoPor(p.uid);
                         const progreso = aporte > 0 ? Math.min((pagado / aporte) * 100, 100) : 0;
                         const falta = Math.max(aporte - pagado, 0);
@@ -429,10 +601,12 @@ export default function SharedExpensesDashboard({ onBack }) {
                                 </div>
                             </div>
 
-                            {allHaveProportions && (
+                            {allHaveProportions && (() => {
+                                const itemAportes = calcularAportesExactos(item.amount || 0, proporciones);
+                                return (
                                 <div className="flex gap-1 pt-2 border-t border-white/5 w-full">
                                     {proporciones.map((p, index) => {
-                                        const aporteIndividual = Math.round(item.amount * p.proportion);
+                                        const aporteIndividual = itemAportes[index]?.aporte ?? 0;
                                         const isMe = p.uid === currentUid;
                                         
                                         const isFirst = index === 0;
@@ -441,22 +615,25 @@ export default function SharedExpensesDashboard({ onBack }) {
                                             ? (isFirst ? "rounded-l-xl rounded-r-md" : isLast ? "rounded-r-xl rounded-l-md" : "rounded-md")
                                             : "rounded-xl";
 
+                                        const pctWidth = Math.max((p.proportion || 0) * 100, 20);
+
                                         return (
                                             <div 
                                                 key={p.uid} 
-                                                style={{ width: `${p.proportion * 100}%` }}
+                                                style={{ width: `${pctWidth}%`, minWidth: '4.5rem' }}
                                                 className={`p-2 flex justify-between items-center overflow-hidden ${radiusClass} ${
                                                 isMe 
                                                 ? (isGlass ? 'bg-indigo-500/20 text-indigo-200' : 'bg-indigo-50 text-indigo-700')
                                                 : (isGlass ? 'bg-emerald-500/10 text-emerald-200' : 'bg-emerald-50 text-emerald-700')
                                             }`}>
-                                                <span className="text-[10px] font-bold uppercase opacity-70 truncate mr-2">{p.displayName?.split(' ')[0]}</span>
+                                                <span className="text-[10px] font-bold uppercase opacity-70 truncate mr-1">{p.displayName?.split(' ')[0]}</span>
                                                 <span className="text-xs font-mono font-bold whitespace-nowrap">{showMoney(aporteIndividual)}</span>
                                             </div>
                                         );
                                     })}
                                 </div>
-                            )}
+                                );
+                            })()}
                         </div>
                     ))}
 
@@ -468,7 +645,9 @@ export default function SharedExpensesDashboard({ onBack }) {
                                 <p className="text-2xl font-bold font-mono">{showMoney(grandTotal)}</p>
                             </div>
                             <div className="text-right">
-                                <p className="text-[10px] text-gray-400 font-medium">Dividido por sueldos netos</p>
+                                <p className="text-[10px] text-gray-400 font-medium">
+                                    {splitMode === 'proportional' ? 'Proporcional por sueldos' : 'Equitativo (partes iguales)'}
+                                </p>
                                 <button aria-label="Acción" type="button" onClick={() => navigate('/household')} className="text-[10px] font-bold text-indigo-500 underline mt-1 block">Configurar Sueldos</button>
                             </div>
                         </div>
