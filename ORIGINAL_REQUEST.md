@@ -29,3 +29,33 @@ Optimizar visual y funcionalmente la sección "Mis Tarjetas" garantizando estado
 
 ### UX/UI
 - [ ] Interfaz pulida, moderna y responsivo con feedback inmediato al usuario.
+
+## Follow-up — 2026-09-10T13:00:00Z
+
+Revisión, auditoría y optimización integral del módulo de Movilidad (`src/Components/Mobility` y `src/context/MobilityContext.jsx`) de la aplicación personal "mi-billetera-ap".
+
+Working directory: z:\Mi billetera
+Integrity mode: development
+
+Requested team: Un desarrollador Senior con 10 años de experiencia y un QA experto trabajando en conjunto. El QA prueba y busca debilidades, y el Dev Senior las corrige de manera profesional.
+
+## Requirements
+
+### R1. Auditoría de Código y Corrección de Bugs (QA + Dev)
+El equipo de QA identificará fallos de flujo, estados inconsistentes, errores de renderizado o excepciones no capturadas en la sección de Movilidad. El Dev Senior corregirá cada hallazgo manteniendo la solidez del código.
+
+### R2. Optimización UX/UI y Rendimiento
+Refinar la experiencia de usuario y la interfaz visual del módulo de Movilidad acorde a estándares premium (re-renders innecesarios, responsividad, animaciones y fluidez de interacción).
+
+### R3. Seguridad Sanitaria para App Personal
+Revisar posibles vulnerabilidades o baches groseros de seguridad (manejo de datos sensibles en almacenamiento local, sanitización básica de entradas, fugas de memoria o validaciones de importación de datos).
+
+## Acceptance Criteria
+
+### Funcionalidad y Estabilidad
+- [ ] Cero excepciones no capturadas o errores en consola durante el flujo completo de movilidad (agregar, editar, historial, importación, estadísticas).
+- [ ] Validación correcta de formularios e importación de datos.
+
+### Calidad de Código y UX
+- [ ] Interfaz limpia, fluida y con UX/UI cuidada sin baches estéticos ni retardos de respuesta.
+- [ ] Compilación y build limpios sin errores de bundling.

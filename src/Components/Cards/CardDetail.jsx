@@ -50,17 +50,20 @@ export default function CardDetail({ card, isNewCard, currentDate, onBack }) {
         transactions: card?.monthlyStatements?.[monthKey]?.transactions || []
     });
 
-    const [prevCardId, setPrevCardId] = useState(card?.id || null);
+    const currentCardId = card?.id || null;
+    const currentCardUpdatedAt = card?.updatedAt || null;
+
+    const [prevCardId, setPrevCardId] = useState(currentCardId);
     const [prevIsNewCard, setPrevIsNewCard] = useState(isNewCard);
     const [prevMonthKey, setPrevMonthKey] = useState(monthKey);
-    const [prevCardUpdatedAt, setPrevCardUpdatedAt] = useState(card?.updatedAt || null);
+    const [prevCardUpdatedAt, setPrevCardUpdatedAt] = useState(currentCardUpdatedAt);
 
     // Sincronización limpia al cambiar de tarjeta, modo, mes o actualización externa
-    if (card?.id !== prevCardId || isNewCard !== prevIsNewCard || monthKey !== prevMonthKey || (!isSaving && card?.updatedAt !== prevCardUpdatedAt)) {
-        setPrevCardId(card?.id || null);
+    if (currentCardId !== prevCardId || isNewCard !== prevIsNewCard || monthKey !== prevMonthKey || (!isSaving && currentCardUpdatedAt !== prevCardUpdatedAt)) {
+        setPrevCardId(currentCardId);
         setPrevIsNewCard(isNewCard);
         setPrevMonthKey(monthKey);
-        setPrevCardUpdatedAt(card?.updatedAt || null);
+        setPrevCardUpdatedAt(currentCardUpdatedAt);
         setFormErrors({});
 
         if (card && !isNewCard) {

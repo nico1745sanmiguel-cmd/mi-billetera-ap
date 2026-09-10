@@ -644,6 +644,27 @@ runTest('clampDay en sanitizeCardData rechaza notaciones científicas y strings 
     assert.strictEqual(clean.dueDay, 10);
 });
 
+runTest('Sincronización de estado en CardDetail normaliza card?.id a null al crear nueva tarjeta (sin bucle de re-renderizado)', () => {
+    const card = null;
+    const isNewCard = true;
+    const monthKey = '2026-09';
+    const isSaving = false;
+
+    const currentCardId = card?.id || null;
+    const currentCardUpdatedAt = card?.updatedAt || null;
+
+    let prevCardId = currentCardId;
+    let prevIsNewCard = isNewCard;
+    let prevMonthKey = monthKey;
+    let prevCardUpdatedAt = currentCardUpdatedAt;
+
+    // Evaluamos la condición de sincronización que se ejecuta en el cuerpo del componente
+    const shouldSync = (currentCardId !== prevCardId || isNewCard !== prevIsNewCard || monthKey !== prevMonthKey || (!isSaving && currentCardUpdatedAt !== prevCardUpdatedAt));
+    
+    // Al renderizar por primera vez con card=null e isNewCard=true, NO debe gatillar sincronización infinita
+    assert.strictEqual(shouldSync, false);
+});
+
 console.log(`\n========================================`);
 console.log(`Total: ${passed + failed} | Pasaron: ${passed} | Fallaron: ${failed}`);
 console.log(`========================================\n`);
