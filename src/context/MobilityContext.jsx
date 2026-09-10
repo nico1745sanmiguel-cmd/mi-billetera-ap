@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import { getCache, setCache } from '../utils/cache';
 import { CACHE_KEYS } from '../config/constants';
-import { useFinancial } from './FinancialContext';
+import { useAuth } from './AuthContext';
 import { useUIDispatch } from './UIContext';
 import { mobilityRepository } from '../repositories/mobilityRepository';
 
@@ -39,7 +39,7 @@ const DEFAULT_SETTINGS = {
 };
 
 export const MobilityProvider = ({ children }) => {
-    const { user } = useFinancial();
+    const { user } = useAuth();
     const { showToast } = useUIDispatch();
 
     // ─── JORNADAS ─────────────────────────────────────────────────────────────
@@ -77,7 +77,11 @@ export const MobilityProvider = ({ children }) => {
 
     // ── Sync jornadas ─────────────────────────────────────────────────────────
     useEffect(() => {
-        if (!user) { setLoadingSessions(false); return; }
+        if (!user) {
+            setSessions([]);
+            setLoadingSessions(false);
+            return;
+        }
 
         const unsub = mobilityRepository.subscribeToSessions(
             user.uid,
@@ -98,7 +102,11 @@ export const MobilityProvider = ({ children }) => {
 
     // ── Sync gastos ───────────────────────────────────────────────────────────
     useEffect(() => {
-        if (!user) { setLoadingExpenses(false); return; }
+        if (!user) {
+            setExpenses([]);
+            setLoadingExpenses(false);
+            return;
+        }
 
         const unsub = mobilityRepository.subscribeToExpenses(
             user.uid,
@@ -154,18 +162,24 @@ export const MobilityProvider = ({ children }) => {
     const deleteAllSessions = useCallback(async () => {
         if (!user) return;
         try {
-            await mobilityRepository.deleteAllSessions(sessions);
+            await mobilityRepository.deleteAllSessions(user.uid);
         } catch (error) {
             console.error('Error deleting all sessions:', error);
             showToast('Hubo un error al eliminar las jornadas.', 'error');
             throw error;
         }
-    }, [user, sessions, showToast]);
+    }, [user, showToast]);
 
     const importSessions = useCallback(async (rows) => {
         if (!user) return { ok: 0, errors: 0 };
-        return await mobilityRepository.importSessions(user.uid, rows);
-    }, [user]);
+        try {
+            return await mobilityRepository.importSessions(user.uid, rows);
+        } catch (error) {
+            console.error('Error importing sessions:', error);
+            showToast('Hubo un error al importar las jornadas.', 'error');
+            throw error;
+        }
+    }, [user, showToast]);
 
     // ─── CRUD GASTOS ──────────────────────────────────────────────────────────
     const addExpense = useCallback(async (expenseData) => {

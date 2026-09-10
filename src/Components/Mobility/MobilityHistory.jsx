@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
-import { Trash2, Pencil, X, Check } from 'lucide-react';
+import { Trash2, Pencil, X, Check, Download } from 'lucide-react';
 import { useMobilityState, useMobilityDispatch } from '../../context/MobilityContext';
+import Skeleton from '../UI/Skeleton';
 import MobilityForm from './MobilityForm';
 
 const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
@@ -8,7 +9,7 @@ const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto
 const fmt = (n) => `$${Number(n || 0).toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
 
 export default function MobilityHistory({ isGlass, privacyMode, month, year }) {
-    const { sessions } = useMobilityState();
+    const { sessions, loading } = useMobilityState();
     const { deleteSession } = useMobilityDispatch();
     const [editingId, setEditingId] = useState(null);
     const [confirmDelete, setConfirmDelete] = useState(null);
@@ -30,13 +31,72 @@ export default function MobilityHistory({ isGlass, privacyMode, month, year }) {
     const text = isGlass ? 'text-white' : 'text-gray-800';
     const sub  = isGlass ? 'text-white/50' : 'text-gray-400';
 
+    const exportToCSV = () => {
+        if (!filtered.length) return;
+        const headers = ['Fecha', 'Día', 'Horas Trabajadas', 'Kilómetros', 'Uber', 'DiDi', 'Cabify', 'Otros', 'Total'];
+        const csvRows = filtered.map(s => [
+            s.date || '',
+            s.dayOfWeek || '',
+            s.hoursWorked || 0,
+            s.kilometers || 0,
+            s.uber || 0,
+            s.didi || 0,
+            s.cabify || 0,
+            s.others || 0,
+            s.total || 0,
+        ].map(val => `"${String(val).replace(/"/g, '""')}"`).join(','));
+
+        const csvContent = '\uFEFF' + [headers.map(h => `"${h}"`).join(','), ...csvRows].join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.setAttribute('href', url);
+        link.setAttribute('download', `jornadas_movilidad_${monthKey}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    };
+
+    // Skeleton de carga para evitar parpadeos y layout shifts
+    if (loading && sessions.length === 0) {
+        return (
+            <div className="space-y-4 animate-pulse">
+                <div className={`${card} grid grid-cols-2 gap-2 text-center`}>
+                    <div className="space-y-2 flex flex-col items-center">
+                        <Skeleton type="title" width="80px" className="!h-6" />
+                        <Skeleton type="text" width="50px" className="!h-3" />
+                    </div>
+                    <div className="space-y-2 flex flex-col items-center">
+                        <Skeleton type="title" width="100px" className="!h-6" />
+                        <Skeleton type="text" width="60px" className="!h-3" />
+                    </div>
+                </div>
+                <div className="space-y-2">
+                    {[1, 2, 3].map(i => (
+                        <div key={i} className={`${card} p-4 space-y-3`}>
+                            <div className="flex justify-between items-center">
+                                <Skeleton type="text" width="120px" className="!h-4" />
+                                <Skeleton type="text" width="70px" className="!h-5" />
+                            </div>
+                            <div className="flex gap-2">
+                                <Skeleton type="rectangular" width="80px" height="24px" className="rounded-full" />
+                                <Skeleton type="rectangular" width="80px" height="24px" className="rounded-full" />
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
+    }
+
     if (editingId) {
         const session = sessions.find(s => s.id === editingId);
         return (
             <div className="space-y-4">
                 <div className={`${card} flex items-center gap-3`}>
-                    <button aria-label="Acción" type="button" onClick={() => setEditingId(null)} className={`p-2 rounded-xl ${isGlass ? 'bg-white/10 hover:bg-white/20' : 'bg-gray-100 hover:bg-gray-200'} transition-all`}>
-                        <X size={16} />
+                    <button aria-label="Acción" type="button" onClick={() => setEditingId(null)} className={`min-h-[44px] min-w-[44px] p-2 rounded-xl ${isGlass ? 'bg-white/10 hover:bg-white/20' : 'bg-gray-100 hover:bg-gray-200'} flex items-center justify-center transition-all`}>
+                        <X size={18} />
                     </button>
                     <p className={`font-bold text-sm ${text}`}>Editando jornada del {session?.date}</p>
                 </div>
@@ -54,16 +114,36 @@ export default function MobilityHistory({ isGlass, privacyMode, month, year }) {
         <div className="space-y-4">
             {/* RESUMEN DEL MES */}
             {filtered.length > 0 && (
-                <div className={`${card} grid grid-cols-2 gap-2 text-center`}>
-                    {[
-                        { label: 'Jornadas', value: totals.days },
-                        { label: 'Ingreso Bruto', value: privacyMode ? '••••' : fmt(totals.total) },
-                    ].map(({ label, value }) => (
-                        <div key={label}>
-                            <p className={`text-base font-bold ${text}`}>{value}</p>
-                            <p className={`text-xs ${sub}`}>{label}</p>
-                        </div>
-                    ))}
+                <div className={`${card} space-y-3`}>
+                    <div className="flex items-center justify-between">
+                        <p className={`text-xs font-bold uppercase tracking-wide ${sub}`}>
+                            {MONTHS[month]} {year}
+                        </p>
+                        <button
+                            type="button"
+                            onClick={exportToCSV}
+                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                                isGlass
+                                    ? 'bg-white/10 hover:bg-white/20 text-violet-300'
+                                    : 'bg-violet-50 hover:bg-violet-100 text-violet-700'
+                            }`}
+                        >
+                            <Download size={14} />
+                            Exportar a CSV
+                        </button>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 text-center pt-2 border-t border-gray-100 dark:border-white/5">
+                        {[
+                            { label: 'Jornadas', value: totals.days },
+                            { label: 'Ingreso Bruto', value: privacyMode ? '••••' : fmt(totals.total) },
+                        ].map(({ label, value }) => (
+                            <div key={label}>
+                                <p className={`text-base font-bold ${text}`}>{value}</p>
+                                <p className={`text-xs ${sub}`}>{label}</p>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             )}
 
@@ -82,12 +162,12 @@ export default function MobilityHistory({ isGlass, privacyMode, month, year }) {
                                 /* CONFIRM DELETE */
                                 <div className="flex items-center justify-between gap-3">
                                     <p className={`text-sm font-medium ${text}`}>¿Eliminar esta jornada?</p>
-                                    <div className="flex gap-2">
-                                        <button aria-label="Acción" type="button" onClick={() => setConfirmDelete(null)} className={`p-2 rounded-xl ${isGlass ? 'bg-white/10' : 'bg-gray-100'}`}><X size={14} /></button>
-                                        <button aria-label="Acción" type="button"
+                                    <div className="flex items-center gap-2">
+                                        <button aria-label="Cancelar" type="button" onClick={() => setConfirmDelete(null)} className={`min-h-[44px] min-w-[44px] p-2 rounded-xl flex items-center justify-center ${isGlass ? 'bg-white/10 hover:bg-white/20' : 'bg-gray-100 hover:bg-gray-200'}`}><X size={16} /></button>
+                                        <button aria-label="Confirmar borrado" type="button"
                                             onClick={async () => { await deleteSession(session.id); setConfirmDelete(null); }}
-                                            className="p-2 rounded-xl bg-red-500 text-white"
-                                        ><Check size={14} /></button>
+                                            className="min-h-[44px] min-w-[44px] p-2 rounded-xl bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition-colors shadow-sm"
+                                        ><Check size={16} /></button>
                                     </div>
                                 </div>
                             ) : (
@@ -120,15 +200,15 @@ export default function MobilityHistory({ isGlass, privacyMode, month, year }) {
                                         <p className={`text-base font-bold ${text}`}>
                                             {privacyMode ? '••••' : fmt(session.total)}
                                         </p>
-                                        <div className="flex gap-1">
-                                            <button aria-label="Acción" type="button"
+                                        <div className="flex items-center gap-1">
+                                            <button aria-label="Editar jornada" type="button"
                                                 onClick={() => setEditingId(session.id)}
-                                                className={`p-1.5 rounded-lg transition-all ${isGlass ? 'bg-white/10 hover:bg-white/20 text-white/60' : 'bg-gray-100 hover:bg-gray-200 text-gray-500'}`}
-                                            ><Pencil size={13} /></button>
-                                            <button aria-label="Acción" type="button"
+                                                className={`min-h-[44px] min-w-[44px] p-2 rounded-xl flex items-center justify-center transition-all ${isGlass ? 'bg-white/10 hover:bg-white/20 text-white/60' : 'bg-gray-100 hover:bg-gray-200 text-gray-500'}`}
+                                            ><Pencil size={15} /></button>
+                                            <button aria-label="Eliminar jornada" type="button"
                                                 onClick={() => setConfirmDelete(session.id)}
-                                                className="p-1.5 rounded-lg bg-red-50 text-red-400 hover:bg-red-100 transition-all"
-                                            ><Trash2 size={13} /></button>
+                                                className="min-h-[44px] min-w-[44px] p-2 rounded-xl flex items-center justify-center bg-red-50 text-red-500 hover:bg-red-100 transition-all"
+                                            ><Trash2 size={15} /></button>
                                         </div>
                                     </div>
                                 </div>

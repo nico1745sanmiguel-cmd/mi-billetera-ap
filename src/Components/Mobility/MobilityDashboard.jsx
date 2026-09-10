@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
+import { m, AnimatePresence } from 'framer-motion';
 import { Plus, List, BarChart2, Upload, ArrowLeft, Zap, Settings } from 'lucide-react';
-import { MobilityProvider, useMobility } from '../../context/MobilityContext';
+import { useMobility } from '../../context/MobilityContext';
 import MobilityForm from './MobilityForm';
 import MobilityHistory from './MobilityHistory';
 import MobilityStats from './MobilityStats';
@@ -92,15 +93,23 @@ function DashboardContent({ onBack }) {
 
 
 
-            {/* CONTENIDO */}
-            <div>
-                {tab === 'settings' && <MobilitySettings isGlass={isGlass} onBack={() => setTab(settings?.defaultTab || 'expenses')} />}
-                {tab === 'expenses' && <MobilityExpenses isGlass={isGlass} month={month} year={year} />}
-                {tab === 'register' && <MobilityForm isGlass={isGlass} onSuccess={() => setTab('history')} />}
-                {tab === 'history'  && <MobilityHistory isGlass={isGlass} privacyMode={privacyMode} month={month} year={year} />}
-                {tab === 'stats'    && <MobilityStats isGlass={isGlass} privacyMode={privacyMode} month={month} year={year} />}
-                {tab === 'import'   && <MobilityImport isGlass={isGlass} onSuccess={() => setTab('history')} />}
-            </div>
+            {/* CONTENIDO CON TRANSICIÓN FLUIDA */}
+            <AnimatePresence mode="wait">
+                <m.div
+                    key={tab}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.18, ease: 'easeOut' }}
+                >
+                    {tab === 'settings' && <MobilitySettings isGlass={isGlass} onBack={() => setTab(settings?.defaultTab || 'expenses')} />}
+                    {tab === 'expenses' && <MobilityExpenses isGlass={isGlass} month={month} year={year} />}
+                    {tab === 'register' && <MobilityForm isGlass={isGlass} onSuccess={() => setTab('history')} />}
+                    {tab === 'history'  && <MobilityHistory isGlass={isGlass} privacyMode={privacyMode} month={month} year={year} />}
+                    {tab === 'stats'    && <MobilityStats isGlass={isGlass} privacyMode={privacyMode} month={month} year={year} />}
+                    {tab === 'import'   && <MobilityImport isGlass={isGlass} onSuccess={() => setTab('history')} />}
+                </m.div>
+            </AnimatePresence>
         </div>
     );
 }

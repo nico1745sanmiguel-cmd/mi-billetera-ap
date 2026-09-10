@@ -302,3 +302,157 @@ export const sanitizeStatementData = (data) => {
 
     return removeUndefined(sanitized);
 };
+
+/**
+ * Retorna la fecha en formato YYYY-MM-DD respetando la hora local (evita desfases UTC).
+ *
+ * @param {Date|string|number} [d=new Date()] - Fecha a formatear
+ * @param {string} [timeZone='America/Argentina/Buenos_Aires'] - Zona horaria objetivo
+ * @returns {string} Fecha en formato YYYY-MM-DD
+ */
+export const getLocalDateString = (d = new Date(), timeZone = 'America/Argentina/Buenos_Aires') => {
+    if (typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d.trim())) {
+        return d.trim();
+    }
+    const dateObj = (d instanceof Date && !isNaN(d.getTime())) ? d : new Date(d);
+    if (isNaN(dateObj.getTime())) {
+        return new Date().toLocaleDateString('en-CA', { timeZone });
+    }
+    return dateObj.toLocaleDateString('en-CA', { timeZone });
+};
+
+/**
+ * Sanea y valida los datos de un gasto de movilidad (combustible, repuestos, mantenimiento, etc.),
+ * asegurando tipos numéricos seguros, sanitización de textos y eliminación de campos undefined.
+ *
+ * @param {Object} data - Datos crudos del gasto
+ * @returns {Object} Gasto saneado
+ */
+export const sanitizeMobilityExpense = (data) => {
+    if (!data || typeof data !== 'object') {
+        throw new Error('Datos de gasto inválidos recibidos para sanear.');
+    }
+
+    let date = data.date;
+    if (!date || typeof date !== 'string') {
+        date = getLocalDateString();
+    } else {
+        const trimmed = date.replace(/[\u200B-\u200D\uFEFF\u00AD]/g, '').trim();
+        if (/^\d{4}-\d{2}-\d{2}/.test(trimmed)) {
+            date = trimmed.slice(0, 10);
+        } else if (/^\d{1,2}[/-]\d{1,2}[/-]\d{4}/.test(trimmed)) {
+            const sep = trimmed.includes('/') ? '/' : '-';
+            const parts = trimmed.split(sep);
+            const day = parts[0].padStart(2, '0');
+            const month = parts[1].padStart(2, '0');
+            const year = parts[2].slice(0, 4);
+            date = `${year}-${month}-${day}`;
+        } else {
+            date = getLocalDateString();
+        }
+    }
+
+    const category = cleanSafeString(data.category, 50) || 'varios';
+    const amount = parseAmount(data.amount);
+    const notes = cleanSafeString(data.notes || '', 200);
+
+    const sanitized = {
+        date,
+        category,
+        amount,
+        notes,
+    };
+
+    if (data.id && typeof data.id === 'string') {
+        sanitized.id = cleanSafeString(data.id, 50);
+    }
+
+    return removeUndefined(sanitized);
+};
+
+/**
+ * Sanea y valida los datos de una jornada laboral de aplicaciones de movilidad (Uber, DiDi, Cabify, etc.),
+ * calculando totales, métricas por hora/km y previniendo NaN, Infinity, números negativos o campos undefined.
+ *
+ * @param {Object} data - Datos crudos de la sesión
+ * @returns {Object} Sesión saneada lista para persistencia
+ */
+export const sanitizeMobilitySession = (data) => {
+    if (!data || typeof data !== 'object') {
+        throw new Error('Datos de jornada inválidos recibidos para sanear.');
+    }
+
+    let date = data.date;
+    if (!date || typeof date !== 'string') {
+        date = getLocalDateString();
+    } else {
+        const trimmed = date.replace(/[\u200B-\u200D\uFEFF\u00AD]/g, '').trim();
+        if (/^\d{4}-\d{2}-\d{2}/.test(trimmed)) {
+            date = trimmed.slice(0, 10);
+        } else if (/^\d{1,2}[/-]\d{1,2}[/-]\d{4}/.test(trimmed)) {
+            const sep = trimmed.includes('/') ? '/' : '-';
+            const parts = trimmed.split(sep);
+            const day = parts[0].padStart(2, '0');
+            const month = parts[1].padStart(2, '0');
+            const year = parts[2].slice(0, 4);
+            date = `${year}-${month}-${day}`;
+        } else {
+            date = getLocalDateString();
+        }
+    }
+
+    const getDayName = (dateStr) => {
+        if (!dateStr) return 'lunes';
+        const cleanDate = typeof dateStr === 'string' ? dateStr.slice(0, 10) : '';
+        const days = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+        const d = new Date(cleanDate + 'T12:00:00');
+        return isNaN(d.getTime()) ? 'lunes' : days[d.getDay()];
+    };
+
+    const dayOfWeek = (typeof data.dayOfWeek === 'string' && data.dayOfWeek.trim())
+        ? cleanSafeString(data.dayOfWeek, 20)
+        : getDayName(date);
+
+    const uber = parseAmount(data.uber);
+    const didi = parseAmount(data.didi);
+    const cabify = parseAmount(data.cabify);
+    const others = parseAmount(data.others);
+
+    const platformSum = uber + didi + cabify + others;
+    const total = platformSum > 0 ? platformSum : parseAmount(data.total);
+
+    const hoursWorked = parseAmount(data.hoursWorked);
+    const kilometers = parseAmount(data.kilometers);
+
+    const eph = hoursWorked > 0 ? parseFloat((total / hoursWorked).toFixed(2)) : 0;
+    const epk = kilometers > 0 ? parseFloat((total / kilometers).toFixed(2)) : 0;
+
+    const earningsPerHour = (!isNaN(eph) && isFinite(eph) && eph >= 0) ? eph : 0;
+    const earningsPerKm = (!isNaN(epk) && isFinite(epk) && epk >= 0) ? epk : 0;
+
+    const sanitized = {
+        date,
+        dayOfWeek,
+        hoursWorked,
+        kilometers,
+        uber,
+        didi,
+        cabify,
+        others,
+        total,
+        earningsPerHour,
+        earningsPerKm,
+    };
+
+    if (data.notes !== undefined) {
+        sanitized.notes = cleanSafeString(data.notes, 200);
+    }
+    if (data.importedFromCSV !== undefined) {
+        sanitized.importedFromCSV = Boolean(data.importedFromCSV);
+    }
+    if (data.id && typeof data.id === 'string') {
+        sanitized.id = cleanSafeString(data.id, 50);
+    }
+
+    return removeUndefined(sanitized);
+};

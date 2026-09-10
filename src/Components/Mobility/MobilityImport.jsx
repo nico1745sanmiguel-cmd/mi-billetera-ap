@@ -1,45 +1,114 @@
 import React, { useState, useRef } from 'react';
-import { Upload, FileText, CheckCircle2, AlertCircle, RefreshCw, Info } from 'lucide-react';
+import { Upload, FileText, CheckCircle2, AlertCircle, RefreshCw, Info, Download } from 'lucide-react';
 import { useMobilityDispatch } from '../../context/MobilityContext';
+import { parseAmount, sanitizeMobilitySession } from '../../utils/security';
 
 // Columnas esperadas del CSV (case-insensitive, se mapean por posición también)
 // Formato: Fecha,Dia,Uber ($),Didi ($),Otros ($),Cabify ($),Total,Horas Trabajadas,Kilómetros (KM),...
 const parseCSV = (text) => {
-    const lines = text.split(/\r?\n/).filter(l => l.trim());
-    if (lines.length < 2) throw new Error('El archivo está vacío o solo tiene encabezado.');
+    if (!text || typeof text !== 'string') {
+        throw new Error('El archivo está vacío o el formato es inválido.');
+    }
 
-    const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+    // Dividir líneas respetando posibles saltos de línea dentro de comillas RFC 4180
+    const lines = [];
+    let currentLine = '';
+    let inQuotes = false;
 
-    const colIndex = (keywords) => {
-        const idx = headers.findIndex(h => keywords.some(k => h.includes(k)));
-        return idx;
+    for (let i = 0; i < text.length; i++) {
+        const char = text[i];
+        if (char === '"') {
+            inQuotes = !inQuotes;
+            currentLine += char;
+        } else if ((char === '\n' || char === '\r') && !inQuotes) {
+            if (char === '\r' && text[i + 1] === '\n') {
+                i++; // saltar \r\n
+            }
+            if (currentLine.trim()) {
+                lines.push(currentLine.trim());
+            }
+            currentLine = '';
+        } else {
+            currentLine += char;
+        }
+    }
+    if (currentLine.trim()) {
+        lines.push(currentLine.trim());
+    }
+
+    if (lines.length < 2) {
+        throw new Error('El archivo está vacío o solo tiene encabezado.');
+    }
+
+    // Autodetectar delimitador en la cabecera (, ; \t)
+    const firstLine = lines[0];
+    const commaCount = (firstLine.match(/,/g) || []).length;
+    const semicolonCount = (firstLine.match(/;/g) || []).length;
+    const tabCount = (firstLine.match(/\t/g) || []).length;
+
+    let delimiter = ',';
+    if (semicolonCount > commaCount && semicolonCount >= tabCount) {
+        delimiter = ';';
+    } else if (tabCount > commaCount && tabCount > semicolonCount) {
+        delimiter = '\t';
+    }
+
+    // Función para separar columnas respetando comillas RFC 4180 y comillas escapadas ("")
+    const splitColumns = (line) => {
+        const cols = [];
+        let cur = '';
+        let inside = false;
+        for (let i = 0; i < line.length; i++) {
+            const c = line[i];
+            if (c === '"') {
+                if (inside && line[i + 1] === '"') {
+                    cur += '"';
+                    i++; // escapar comilla doble "" -> "
+                } else {
+                    inside = !inside;
+                }
+            } else if (c === delimiter && !inside) {
+                cols.push(cur.trim());
+                cur = '';
+            } else {
+                cur += c;
+            }
+        }
+        cols.push(cur.trim());
+        return cols;
     };
 
-    const iDate   = colIndex(['fecha']);
-    const iHours  = colIndex(['horas']);
-    const iKm     = colIndex(['kil']);
+    const headers = splitColumns(lines[0]).map(h => h.toLowerCase().replace(/['"]/g, ''));
+
+    const colIndex = (keywords) => {
+        return headers.findIndex(h => keywords.some(k => h.includes(k)));
+    };
+
+    const iDate   = colIndex(['fecha', 'date']);
+    const iHours  = colIndex(['hora', 'horas', 'hours']);
+    const iKm     = colIndex(['kil', 'km', 'kilometros']);
     const iUber   = colIndex(['uber']);
     const iDidi   = colIndex(['didi']);
     const iCabify = colIndex(['cabify']);
-    const iOthers = colIndex(['otros', 'other']);
+    const iOthers = colIndex(['otro', 'otros', 'other']);
+    const iTotal  = colIndex(['total']);
 
     const rows = [];
     const errors = [];
 
     for (let i = 1; i < lines.length; i++) {
-        const cols = lines[i].split(',').map(c => c.trim().replace(/['"]/g, ''));
+        const cols = splitColumns(lines[i]);
         if (cols.every(c => !c || c === '0' || c === '$0')) continue; // fila vacía
 
-        // Leer fecha y normalizar a YYYY-MM-DD
         let rawDate = iDate >= 0 ? cols[iDate] : '';
         let date = '';
 
-        // Formatos posibles: 1/10/2024, 01/10/2024, 2024-10-01
-        const dmyMatch = rawDate.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+        // Formatos posibles: DD/MM/YYYY, D/M/YYYY o YYYY-MM-DD
+        const dmyMatch = rawDate.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/);
         const isoMatch = rawDate.match(/^(\d{4})-(\d{2})-(\d{2})$/);
 
         if (dmyMatch) {
-            date = `${dmyMatch[3]}-${dmyMatch[2].padStart(2,'0')}-${dmyMatch[1].padStart(2,'0')}`;
+            date = `${dmyMatch[3]}-${dmyMatch[2].padStart(2, '0')}-${dmyMatch[1].padStart(2, '0')}`;
         } else if (isoMatch) {
             date = rawDate;
         } else {
@@ -47,34 +116,57 @@ const parseCSV = (text) => {
             continue;
         }
 
-        const cleanNum = (idx) => {
+        const parseCSVNumber = (idx) => {
             if (idx < 0 || !cols[idx]) return 0;
-            // 1. Quitar el signo $, espacios.
-            // 2. Quitar los puntos (separador de miles en AR).
-            // 3. Cambiar comas por puntos (para decimales).
-            let val = cols[idx].replace(/[$\s]/g, '');
-            val = val.replace(/\./g, '');
-            val = val.replace(',', '.');
-            return parseFloat(val) || 0;
+            return parseAmount(cols[idx]);
         };
 
-        const uber = cleanNum(iUber);
-        const didi = cleanNum(iDidi);
-        const cabify = cleanNum(iCabify);
-        const others = cleanNum(iOthers);
+        const uber = parseCSVNumber(iUber);
+        const didi = parseCSVNumber(iDidi);
+        const cabify = parseCSVNumber(iCabify);
+        const others = parseCSVNumber(iOthers);
+        const total = parseCSVNumber(iTotal);
 
-        // EXCLUIR los días donde no hubo ningún ingreso
-        if (uber + didi + cabify + others === 0) continue;
+        // Excluir los días donde no hubo ningún ingreso
+        if (uber + didi + cabify + others === 0 && total === 0) continue;
 
-        rows.push({
+        const hoursWorked = parseCSVNumber(iHours);
+        const kilometers = parseCSVNumber(iKm);
+
+        const session = sanitizeMobilitySession({
             date,
-            hoursWorked: cleanNum(iHours),
-            kilometers:  cleanNum(iKm),
-            uber, didi, cabify, others
+            hoursWorked,
+            kilometers,
+            uber,
+            didi,
+            cabify,
+            others,
+            total,
+            importedFromCSV: true,
         });
+
+        rows.push(session);
     }
 
     return { rows, errors };
+};
+
+const downloadCSVTemplate = () => {
+    const headers = 'Fecha,Horas Trabajadas,Kilómetros (KM),Uber ($),Didi ($),Cabify ($),Otros ($)';
+    const sampleRows = [
+        '2026-09-01,8.5,120,35000,22000,15000,0',
+        '2026-09-02,7.0,95,28000,18500,12000,5000',
+    ];
+    const csvContent = '\uFEFF' + [headers, ...sampleRows].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'plantilla_movilidad.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
 };
 
 export default function MobilityImport({ isGlass, onSuccess }) {
@@ -104,7 +196,7 @@ export default function MobilityImport({ isGlass, onSuccess }) {
         e.preventDefault();
         setDragOver(false);
         const file = e.dataTransfer.files[0];
-        if (file?.name.endsWith('.csv')) processFile(file);
+        if (file?.name && file.name.toLowerCase().endsWith('.csv')) processFile(file);
     };
 
     const handleImport = async () => {
@@ -142,6 +234,18 @@ export default function MobilityImport({ isGlass, onSuccess }) {
                     <p className={`text-xs mt-1 ${sub}`}>
                         Fecha aceptada: <code className={isGlass ? 'text-violet-300' : 'text-violet-600'}>DD/MM/YYYY</code> o <code className={isGlass ? 'text-violet-300' : 'text-violet-600'}>YYYY-MM-DD</code>
                     </p>
+                    <button
+                        type="button"
+                        onClick={downloadCSVTemplate}
+                        className={`mt-2.5 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                            isGlass
+                                ? 'bg-white/10 hover:bg-white/20 text-violet-300'
+                                : 'bg-violet-50 hover:bg-violet-100 text-violet-700'
+                        }`}
+                    >
+                        <Download size={14} />
+                        Descargar Plantilla CSV
+                    </button>
                 </div>
             </div>
 
@@ -163,13 +267,13 @@ export default function MobilityImport({ isGlass, onSuccess }) {
                     <input autoComplete="off" id="input-field"
                         ref={fileRef}
                         type="file"
-                        accept=".csv"
+                        accept=".csv,.CSV,text/csv"
                         className="hidden"
                         onChange={e => processFile(e.target.files[0])}
                     />
                     <Upload size={32} className={`mx-auto mb-3 ${isGlass ? 'text-white/40' : 'text-gray-300'}`} />
                     <p className={`font-semibold text-sm ${text}`}>Arrastrá tu archivo CSV aquí</p>
-                    <p className={`text-xs mt-1 ${sub}`}>o hacé click para seleccionarlo</p>
+                    <p className={`text-xs mt-1 ${sub}`}>o hacé click para seleccionarlo (.csv o .CSV)</p>
                 </div>
             )}
 

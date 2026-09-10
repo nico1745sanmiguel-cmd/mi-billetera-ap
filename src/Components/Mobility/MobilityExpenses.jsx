@@ -1,16 +1,19 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Fuel, Wrench, Car, Droplets, Plus, Trash2, RefreshCw, ChevronDown, ChevronUp, Zap, Tag } from 'lucide-react';
 import { useMobilityState, useMobilityDispatch } from '../../context/MobilityContext';
+import { useUIDispatch } from '../../context/UIContext';
+import { getLocalDateString } from '../../utils/security';
 import CurrencyInput from '../Shared/CurrencyInput';
 import MobilityExpensesList from './MobilityExpensesList';
 
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => getLocalDateString();
 
 const ICONS = { Zap, Fuel, Wrench, Droplets, Tag };
 
 export default function MobilityExpenses({ isGlass, month, year }) {
     const { expenses, settings } = useMobilityState();
     const { addExpense, deleteExpense } = useMobilityDispatch();
+    const { showToast } = useUIDispatch();
 
     const activeCategories = useMemo(() => {
         return (settings?.expenseCategories || []).flatMap(c => c.active ? [{
@@ -46,19 +49,16 @@ export default function MobilityExpenses({ isGlass, month, year }) {
     const [fullSaving, setFullSaving] = useState(false);
 
     // Si las categorías cambian (ej: el usuario agrega una nueva), resincronizar
-    // la categoría seleccionada si la actual ya no existe o es inválida.
-    const [prevActiveCategories, setPrevActiveCategories] = useState([]);
-
-    if (activeCategories !== prevActiveCategories) {
-        setPrevActiveCategories(activeCategories);
+    // la categoría seleccionada mediante un useEffect limpio para evitar setState en render.
+    useEffect(() => {
         const valid = activeCategories.filter(c => c.key !== 'gnc');
         if (valid.length > 0) {
-            const currentOk = valid.find(c => c.key === fullForm.category);
-            if (!currentOk) {
-                setFullForm(f => ({ ...f, category: valid[0].key }));
-            }
+            setFullForm(f => {
+                const currentOk = valid.some(c => c.key === f.category);
+                return currentOk ? f : { ...f, category: valid[0].key };
+            });
         }
-    }
+    }, [activeCategories]);
 
     // ─── Mes visible (viene del Dashboard compartido) ───────────────────────────
     const viewMonth = `${year}-${String(month + 1).padStart(2, '0')}`;
@@ -101,6 +101,10 @@ export default function MobilityExpenses({ isGlass, month, year }) {
         try {
             await addExpense({ date: gncDate, category: 'gnc', amount: gncAmount, notes: '' });
             setGncAmount('');
+            showToast('Carga de GNC registrada con éxito', 'success');
+        } catch (error) {
+            console.error('Error al registrar carga de GNC:', error);
+            showToast('Error al registrar la carga de GNC.', 'error');
         } finally {
             setGncSaving(false);
         }
@@ -115,6 +119,10 @@ export default function MobilityExpenses({ isGlass, month, year }) {
             // Reset: usar la primera categoría no-gnc disponible, no hardcodear 'nafta'
             setFullForm({ date: today(), category: firstNonGnc, amount: '', notes: '' });
             setShowFull(false);
+            showToast('Gasto registrado con éxito', 'success');
+        } catch (error) {
+            console.error('Error al registrar gasto:', error);
+            showToast('Error al registrar el gasto.', 'error');
         } finally {
             setFullSaving(false);
         }

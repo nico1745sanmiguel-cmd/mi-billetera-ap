@@ -59,10 +59,16 @@ export default function MobilitySettings({ isGlass, onBack }) {
 
     const handleDeleteAll = async () => {
         setDeletingAll(true);
-        await deleteAllSessions();
-        setDeletingAll(false);
-        setShowDeleteAll(false);
-        showToast('Historial borrado correctamente', 'success');
+        try {
+            await deleteAllSessions();
+            setShowDeleteAll(false);
+            showToast('Historial borrado correctamente', 'success');
+        } catch (error) {
+            console.error('Error al borrar historial:', error);
+            showToast('Hubo un error al borrar el historial.', 'error');
+        } finally {
+            setDeletingAll(false);
+        }
     };
 
     const card = `rounded-2xl p-4 ${isGlass ? 'bg-white/10 border border-white/10' : 'bg-white shadow-sm border border-gray-100'}`;
@@ -88,8 +94,9 @@ export default function MobilitySettings({ isGlass, onBack }) {
                         <p className={`text-xs font-bold uppercase tracking-wide mb-3 ${sub}`}>General</p>
                         <div className="space-y-3">
                             <div>
-                                <label htmlFor="input-field" className={`block text-xs font-medium mb-1 ${sub}`}>Día de inicio de semana</label>
+                                <label htmlFor="mob-week-start" className={`block text-xs font-medium mb-1 ${sub}`}>Día de inicio de semana</label>
                                 <select 
+                                    id="mob-week-start"
                                     value={weekStartDay} 
                                     onChange={(e) => setWeekStartDay(e.target.value)}
                                     className={inputStyle}
@@ -105,8 +112,9 @@ export default function MobilitySettings({ isGlass, onBack }) {
                             </div>
                             
                             <div>
-                                <label htmlFor="input-field" className={`block text-xs font-medium mb-1 ${sub}`}>Título del Widget</label>
+                                <label htmlFor="mob-widget-title" className={`block text-xs font-medium mb-1 ${sub}`}>Título del Widget</label>
                                 <input autoComplete="off" 
+                                    id="mob-widget-title"
                                     type="text" 
                                     value={widgetTitle}
                                     onChange={(e) => setWidgetTitle(e.target.value)}
@@ -117,8 +125,9 @@ export default function MobilitySettings({ isGlass, onBack }) {
                             </div>
 
                             <div>
-                                <label htmlFor="input-field" className={`block text-xs font-medium mb-1 ${sub}`}>Pestaña por defecto</label>
+                                <label htmlFor="mob-default-tab" className={`block text-xs font-medium mb-1 ${sub}`}>Pestaña por defecto</label>
                                 <select 
+                                    id="mob-default-tab"
                                     value={defaultTab} 
                                     onChange={(e) => setDefaultTab(e.target.value)}
                                     className={inputStyle}
@@ -141,7 +150,11 @@ export default function MobilitySettings({ isGlass, onBack }) {
                                     <span className={`text-sm capitalize ${text}`}>
                                         {key === 'others' ? 'Otros' : key}
                                     </span>
-                                    <button aria-label="Acción" type="button" 
+                                    <button 
+                                        type="button" 
+                                        role="switch"
+                                        aria-checked={Boolean(activePlatforms[key])}
+                                        aria-label={`Activar plataforma ${key === 'others' ? 'Otros' : key}`}
                                         onClick={() => togglePlatform(key)}
                                         className={`w-11 h-6 rounded-full transition-colors relative ${activePlatforms[key] ? 'bg-violet-500' : 'bg-gray-300 dark:bg-white/20'}`}
                                     >
@@ -163,13 +176,22 @@ export default function MobilitySettings({ isGlass, onBack }) {
                                         <span className={`text-sm ${text}`}>{cat.label}</span>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <button aria-label="Acción" type="button" 
+                                        <button 
+                                            type="button" 
+                                            role="switch"
+                                            aria-checked={Boolean(cat.active)}
+                                            aria-label={`Activar categoría ${cat.label}`}
                                             onClick={() => toggleCategory(cat.id)}
                                             className={`w-9 h-5 rounded-full transition-colors relative ${cat.active ? 'bg-violet-500' : 'bg-gray-300 dark:bg-white/20'}`}
                                         >
                                             <div className={`w-3 h-3 rounded-full bg-white absolute top-1 transition-transform ${cat.active ? 'translate-x-5' : 'translate-x-1'}`} />
                                         </button>
-                                        <button aria-label="Acción" type="button" onClick={() => removeCategory(cat.id)} className="p-1 text-red-400 hover:bg-red-400/10 rounded">
+                                        <button 
+                                            aria-label={`Eliminar categoría ${cat.label}`} 
+                                            type="button" 
+                                            onClick={() => removeCategory(cat.id)} 
+                                            className="p-1 text-red-400 hover:bg-red-400/10 rounded transition-colors"
+                                        >
                                             <X size={14} />
                                         </button>
                                     </div>
@@ -178,16 +200,18 @@ export default function MobilitySettings({ isGlass, onBack }) {
                         </div>
                         
                         <div className="flex items-center gap-2">
-                            <input autoComplete="off" id="input-field" 
+                            <input autoComplete="off" 
+                                id="mob-new-category" 
+                                aria-label="Nueva categoría de gasto"
                                 type="text" 
                                 value={newCategory}
                                 onChange={(e) => setNewCategory(e.target.value)}
                                 placeholder="Nueva categoría..."
                                 className={inputStyle}
                             />
-                            <button aria-label="Acción" type="button" 
+                            <button aria-label="Agregar categoría" type="button" 
                                 onClick={addCategory}
-                                className={`p-2 rounded-xl bg-violet-500 text-white hover:bg-violet-600 transition-colors`}
+                                className={`p-2 rounded-xl bg-violet-500 text-white hover:bg-violet-600 transition-colors flex items-center justify-center`}
                             >
                                 <Plus size={18} />
                             </button>

@@ -3,6 +3,7 @@ import {
     collection, 
     query, 
     where, 
+    getDocs,
     addDoc, 
     updateDoc, 
     deleteDoc, 
@@ -12,49 +13,19 @@ import {
     writeBatch
 } from 'firebase/firestore';
 import { COLLECTIONS } from '../config/constants';
+import { 
+    sanitizeMobilitySession, 
+    sanitizeMobilityExpense, 
+    removeUndefined 
+} from '../utils/security';
 
-/**
- * Convierte un valor a número, asegurando que no sea NaN y sea 0 por defecto.
- * @param {any} val - Valor a parsear.
- * @returns {number} Número parseado o 0.
- */
-const parseNumber = (val) => {
-    if (val === undefined || val === null || val === '') return 0;
-    const parsed = Number(val);
-    return isNaN(parsed) ? 0 : parsed;
-};
-
-const getDayOfWeek = (dateStr) => {
+export const getDayOfWeek = (dateStr) => {
     if (!dateStr) return 'lunes';
+    const cleanDate = typeof dateStr === 'string' ? dateStr.slice(0, 10) : '';
     const days = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
     // Ajustar el string para evitar problemas de zona horaria si viene solo como YYYY-MM-DD
-    const d = new Date(dateStr + 'T12:00:00');
-    return days[d.getDay()];
-};
-
-const buildSessionPayload = (data) => {
-    const uber = parseNumber(data.uber);
-    const didi = parseNumber(data.didi);
-    const cabify = parseNumber(data.cabify);
-    const others = parseNumber(data.others);
-    const total = uber + didi + cabify + others;
-    
-    const hoursWorked = parseNumber(data.hoursWorked);
-    const kilometers = parseNumber(data.kilometers);
-
-    return {
-        date: data.date,
-        dayOfWeek: data.dayOfWeek || getDayOfWeek(data.date),
-        hoursWorked,
-        kilometers,
-        uber,
-        didi,
-        cabify,
-        others,
-        total,
-        earningsPerHour: hoursWorked > 0 ? parseFloat((total / hoursWorked).toFixed(2)) : 0,
-        earningsPerKm: kilometers > 0 ? parseFloat((total / kilometers).toFixed(2)) : 0,
-    };
+    const d = new Date(cleanDate + 'T12:00:00');
+    return isNaN(d.getTime()) ? 'lunes' : days[d.getDay()];
 };
 
 export const mobilityRepository = {
@@ -67,7 +38,7 @@ export const mobilityRepository = {
         );
         return onSnapshot(q, (snap) => {
             const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-            data.sort((a, b) => b.date.localeCompare(a.date));
+            data.sort((a, b) => String(b?.date || '').localeCompare(String(a?.date || '')));
             onUpdate(data);
         }, onError);
     },
@@ -80,7 +51,7 @@ export const mobilityRepository = {
         );
         return onSnapshot(q, (snap) => {
             const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-            data.sort((a, b) => b.date.localeCompare(a.date));
+            data.sort((a, b) => String(b?.date || '').localeCompare(String(a?.date || '')));
             onUpdate(data);
         }, onError);
     },
@@ -88,17 +59,24 @@ export const mobilityRepository = {
     // --- CRUD JORNADAS ---
     addSession: async (userId, data) => {
         if (!userId) throw new Error('User no autenticado');
-        const payload = {
-            ...buildSessionPayload(data),
+        const sanitized = sanitizeMobilitySession(data);
+        delete sanitized.id;
+        const payload = removeUndefined({
+            ...sanitized,
             userId,
             createdAt: serverTimestamp(),
-        };
+        });
         return await addDoc(collection(db, COLLECTIONS.MOBILITY_SESSIONS), payload);
     },
 
     updateSession: async (id, data) => {
         if (!id) throw new Error('ID de sesión requerido');
-        const payload = buildSessionPayload(data);
+        const sanitized = sanitizeMobilitySession(data);
+        delete sanitized.id;
+        const payload = removeUndefined({
+            ...sanitized,
+            updatedAt: serverTimestamp(),
+        });
         const docRef = doc(db, COLLECTIONS.MOBILITY_SESSIONS, id);
         return await updateDoc(docRef, payload);
     },
@@ -108,67 +86,107 @@ export const mobilityRepository = {
         return await deleteDoc(doc(db, COLLECTIONS.MOBILITY_SESSIONS, id));
     },
 
-    deleteAllSessions: async (sessions) => {
-        if (!sessions || sessions.length === 0) return;
-        const batch = writeBatch(db);
-        for (const session of sessions) {
-            batch.delete(doc(db, COLLECTIONS.MOBILITY_SESSIONS, session.id));
+    deleteAllSessions: async (target) => {
+        if (!target) return;
+        let sessionDocs = [];
+
+        if (Array.isArray(target)) {
+            sessionDocs = target;
+        } else if (typeof target === 'string') {
+            const q = query(
+                collection(db, COLLECTIONS.MOBILITY_SESSIONS),
+                where('userId', '==', target)
+            );
+            const snap = await getDocs(q);
+            sessionDocs = snap.docs.map(d => ({ id: d.id }));
         }
-        return await batch.commit();
+
+        if (!sessionDocs || sessionDocs.length === 0) return;
+
+        const CHUNK_SIZE = 400;
+        for (let i = 0; i < sessionDocs.length; i += CHUNK_SIZE) {
+            const chunk = sessionDocs.slice(i, i + CHUNK_SIZE);
+            const batch = writeBatch(db);
+            for (const item of chunk) {
+                if (item?.id) {
+                    batch.delete(doc(db, COLLECTIONS.MOBILITY_SESSIONS, item.id));
+                }
+            }
+            await batch.commit();
+        }
     },
 
     importSessions: async (userId, rows) => {
-        if (!userId) return { ok: 0, errors: 0 };
+        if (!userId || !Array.isArray(rows) || rows.length === 0) {
+            return { ok: 0, errors: 0 };
+        }
+
         let ok = 0;
         let errors = 0;
-        const promises = rows.map(async (row) => {
+        const validPayloads = [];
+
+        for (const row of rows) {
             try {
-                const payload = {
-                    ...buildSessionPayload(row),
+                const sanitized = sanitizeMobilitySession(row);
+                delete sanitized.id;
+                const payload = removeUndefined({
+                    ...sanitized,
                     userId,
                     createdAt: serverTimestamp(),
                     importedFromCSV: true,
-                };
-                await addDoc(collection(db, COLLECTIONS.MOBILITY_SESSIONS), payload);
-                return { status: 'fulfilled' };
-            } catch (e) {
-                console.error('Import error for row:', row, e);
-                return { status: 'rejected' };
+                });
+                validPayloads.push(payload);
+            } catch (err) {
+                console.error('Import row validation error:', row, err);
+                errors++;
             }
-        });
-        
-        const results = await Promise.all(promises);
-        results.forEach(res => {
-            if (res.status === 'fulfilled') ok++;
-            else errors++;
-        });
+        }
+
+        const CHUNK_SIZE = 200;
+        for (let i = 0; i < validPayloads.length; i += CHUNK_SIZE) {
+            const chunk = validPayloads.slice(i, i + CHUNK_SIZE);
+            const batch = writeBatch(db);
+
+            for (const payload of chunk) {
+                const newDocRef = doc(collection(db, COLLECTIONS.MOBILITY_SESSIONS));
+                batch.set(newDocRef, payload);
+            }
+
+            try {
+                await batch.commit();
+                ok += chunk.length;
+            } catch (batchErr) {
+                console.error('Error committing import batch:', batchErr);
+                errors += chunk.length;
+            }
+        }
+
         return { ok, errors };
     },
 
     // --- CRUD GASTOS ---
-    addExpense: async (userId, { date, category, amount, notes = '' }) => {
+    addExpense: async (userId, data) => {
         if (!userId) throw new Error('User no autenticado');
-        const parsedAmount = parseNumber(amount);
-        return await addDoc(collection(db, COLLECTIONS.MOBILITY_EXPENSES), {
-            date,
-            category,
-            amount: parsedAmount,
-            notes,
+        const sanitized = sanitizeMobilityExpense(data);
+        delete sanitized.id;
+        const payload = removeUndefined({
+            ...sanitized,
             userId,
             createdAt: serverTimestamp(),
         });
+        return await addDoc(collection(db, COLLECTIONS.MOBILITY_EXPENSES), payload);
     },
 
     updateExpense: async (id, data) => {
         if (!id) throw new Error('ID de gasto requerido');
-        const parsedAmount = parseNumber(data.amount);
-        const docRef = doc(db, COLLECTIONS.MOBILITY_EXPENSES, id);
-        return await updateDoc(docRef, {
-            date: data.date,
-            category: data.category,
-            amount: parsedAmount,
-            notes: data.notes || '',
+        const sanitized = sanitizeMobilityExpense(data);
+        delete sanitized.id;
+        const payload = removeUndefined({
+            ...sanitized,
+            updatedAt: serverTimestamp(),
         });
+        const docRef = doc(db, COLLECTIONS.MOBILITY_EXPENSES, id);
+        return await updateDoc(docRef, payload);
     },
 
     deleteExpense: async (id) => {

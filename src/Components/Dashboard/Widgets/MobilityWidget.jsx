@@ -1,29 +1,31 @@
 import React, { useMemo } from 'react';
 import { Car, TrendingUp, ChevronRight, Target } from 'lucide-react';
-import { useMobilityState, MobilityProvider } from '../../../context/MobilityContext';
+import { useMobilityState } from '../../../context/MobilityContext';
 import Skeleton from '../../UI/Skeleton';
 
 function MobilityWidgetInner({ setView, currentDate, privacyMode, size }) {
     const { sessions, loading, settings } = useMobilityState();
 
-    const monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
-
-    // Mes anterior
-    const prevDate = useMemo(() => {
-        const d = new Date(currentDate);
-        d.setMonth(d.getMonth() - 1);
-        return d;
+    const safeCurrentDate = useMemo(() => {
+        return currentDate instanceof Date && !isNaN(currentDate.getTime()) ? currentDate : new Date();
     }, [currentDate]);
+
+    const monthKey = `${safeCurrentDate.getFullYear()}-${String(safeCurrentDate.getMonth() + 1).padStart(2, '0')}`;
+
+    // Mes anterior garantizado (usando día 1 para evitar desbordes de fin de mes ej. 31/03 -> marzo)
+    const prevDate = useMemo(() => {
+        return new Date(safeCurrentDate.getFullYear(), safeCurrentDate.getMonth() - 1, 1);
+    }, [safeCurrentDate]);
     const prevMonthKey = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}`;
 
     const totals = useMemo(() => {
-        const current = sessions.filter(s => s.date?.startsWith(monthKey));
-        const prev    = sessions.filter(s => s.date?.startsWith(prevMonthKey));
+        const current = (sessions || []).filter(s => s.date?.startsWith(monthKey));
+        const prev    = (sessions || []).filter(s => s.date?.startsWith(prevMonthKey));
         return {
-            total:     current.reduce((a, s) => a + (s.total || 0), 0),
-            hours:     current.reduce((a, s) => a + (s.hoursWorked || 0), 0),
-            km:        current.reduce((a, s) => a + (s.kilometers || 0), 0),
-            prevTotal: prev.reduce((a, s) => a + (s.total || 0), 0),
+            total:     current.reduce((a, s) => a + (Number(s.total) || 0), 0),
+            hours:     current.reduce((a, s) => a + (Number(s.hoursWorked) || 0), 0),
+            km:        current.reduce((a, s) => a + (Number(s.kilometers) || 0), 0),
+            prevTotal: prev.reduce((a, s) => a + (Number(s.total) || 0), 0),
         };
     }, [sessions, monthKey, prevMonthKey]);
 
@@ -42,7 +44,7 @@ function MobilityWidgetInner({ setView, currentDate, privacyMode, size }) {
         ? 'from-amber-400 to-orange-400'
         : 'from-violet-500 to-indigo-500';
 
-    const fmt = (v) => privacyMode ? '••••' : `$${v.toLocaleString('es-AR')}`;
+    const fmt = (v) => privacyMode ? '••••' : `$${(Number(v) || 0).toLocaleString('es-AR')}`;
     const isHalf = size === 'half';
 
     // ─── Modo COMPACTO ────────────────────────────────────────────────────────

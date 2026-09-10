@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Save, RefreshCw, CheckCircle2, Plus, X } from 'lucide-react';
+import { Save, RefreshCw, CheckCircle2, Plus, X, Clock, Gauge } from 'lucide-react';
 import { useMobility } from '../../context/MobilityContext';
+import { getLocalDateString } from '../../utils/security';
 import CurrencyInput from '../Shared/CurrencyInput';
 
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => getLocalDateString();
 
 const PLATFORMS = [
     { key: 'uber',   label: 'Uber',   color: 'from-black to-gray-700',        emoji: '⚫', accentBg: 'bg-gray-900', accentText: 'text-white' },
@@ -21,6 +22,8 @@ const emptyForm = (date) => ({
     didi: '',
     cabify: '',
     others: '',
+    hoursWorked: '',
+    kilometers: '',
 });
 
 // Devuelve el objeto de borradores. Clave: fecha, Valor: form.
@@ -43,7 +46,7 @@ const saveDrafts = (data) => {
 };
 
 const formatDateTab = (dateStr) => {
-    const todayStr = new Date().toLocaleDateString('en-CA');
+    const todayStr = getLocalDateString();
     if (dateStr === todayStr) return 'Hoy';
     const [, m, d] = dateStr.split('-');
     return `${d}/${m}`;
@@ -56,7 +59,14 @@ export default function MobilityForm({ isGlass, onSuccess, initialData = null, o
     // ESTADO: drafts es un objeto con clave = fecha (ej. "2024-07-13")
     const [drafts, setDrafts] = useState(() => {
         if (isEdit) {
-            return { [initialData.date]: initialData };
+            return {
+                [initialData.date]: {
+                    ...emptyForm(initialData.date),
+                    ...initialData,
+                    hoursWorked: initialData.hoursWorked !== undefined && initialData.hoursWorked !== null ? String(initialData.hoursWorked) : '',
+                    kilometers: initialData.kilometers !== undefined && initialData.kilometers !== null ? String(initialData.kilometers) : '',
+                }
+            };
         }
         const saved = loadDrafts();
         if (saved) return saved;
@@ -107,6 +117,10 @@ export default function MobilityForm({ isGlass, onSuccess, initialData = null, o
     const cabify = parseFloat(form.cabify) || 0;
     const others = parseFloat(form.others) || 0;
     const total  = uber + didi + cabify + others;
+    const hoursNum = parseFloat(form.hoursWorked) || 0;
+    const kmNum = parseFloat(form.kilometers) || 0;
+    const perHour = hoursNum > 0 ? total / hoursNum : 0;
+    const perKm = kmNum > 0 ? total / kmNum : 0;
 
     const setField = useCallback((field, val) => {
         setDrafts(prev => ({
@@ -127,15 +141,15 @@ export default function MobilityForm({ isGlass, onSuccess, initialData = null, o
     const handleDateChange = (oldDate, newDate) => {
         if (!newDate || oldDate === newDate) return;
         setDrafts(prev => {
+            // Si ya existe la nueva fecha en los drafts, no sobreescribir ni corromper
+            if (prev[newDate]) return prev;
             const copy = { ...prev };
-            // Si ya existe la nueva fecha en los drafts, no sobreescribir
-            if (copy[newDate]) return prev;
-            
             copy[newDate] = { ...copy[oldDate], date: newDate };
             delete copy[oldDate];
             return copy;
         });
         setConfirmed(prev => {
+            if (prev[newDate]) return prev;
             const copy = { ...prev };
             copy[newDate] = copy[oldDate] || {};
             delete copy[oldDate];
@@ -159,12 +173,12 @@ export default function MobilityForm({ isGlass, onSuccess, initialData = null, o
         let target = new Date();
         target.setDate(target.getDate() - 1); // empezamos probando con ayer
         
-        // Buscar un día libre
-        let dateStr = target.toISOString().slice(0, 10);
+        // Buscar un día libre con fecha local segura
+        let dateStr = getLocalDateString(target);
         let attempts = 0;
         while (drafts[dateStr] && attempts < 30) {
             target.setDate(target.getDate() - 1);
-            dateStr = target.toISOString().slice(0, 10);
+            dateStr = getLocalDateString(target);
             attempts++;
         }
 
@@ -222,10 +236,22 @@ export default function MobilityForm({ isGlass, onSuccess, initialData = null, o
         setSaving(true);
         try {
             if (isEdit) {
-                await updateSession(initialData.id, form);
+                const payload = {
+                    ...form,
+                    hoursWorked: Number(form.hoursWorked) || 0,
+                    kilometers: Number(form.kilometers) || 0,
+                };
+                await updateSession(initialData.id, payload);
             } else {
                 // Guardar concurrentemente
-                await Promise.all(draftsWithIncome.map(draft => addSession(draft)));
+                await Promise.all(draftsWithIncome.map(draft => {
+                    const payload = {
+                        ...draft,
+                        hoursWorked: Number(draft.hoursWorked) || 0,
+                        kilometers: Number(draft.kilometers) || 0,
+                    };
+                    return addSession(payload);
+                }));
                 
                 // Limpiar storage
                 localStorage.removeItem(STORAGE_KEY);
@@ -308,6 +334,53 @@ export default function MobilityForm({ isGlass, onSuccess, initialData = null, o
                         className={inputCls}
                         required
                     />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 pt-1">
+                    <div>
+                        <label className={labelCls} htmlFor="mobHours">
+                            <span className="inline-flex items-center gap-1">
+                                <Clock size={12} className="text-violet-400" />
+                                Horas trabajadas
+                            </span>
+                        </label>
+                        <div className="relative">
+                            <input autoComplete="off"
+                                id="mobHours"
+                                type="number"
+                                step="0.5"
+                                min="0"
+                                max="24"
+                                value={form.hoursWorked || ''}
+                                onChange={e => setField('hoursWorked', e.target.value)}
+                                placeholder="0"
+                                className={inputCls}
+                            />
+                            <span className={`absolute end-3 top-1/2 -translate-y-1/2 text-xs font-semibold ${isGlass ? 'text-white/40' : 'text-gray-400'}`}>hs</span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className={labelCls} htmlFor="mobKm">
+                            <span className="inline-flex items-center gap-1">
+                                <Gauge size={12} className="text-violet-400" />
+                                Kilómetros
+                            </span>
+                        </label>
+                        <div className="relative">
+                            <input autoComplete="off"
+                                id="mobKm"
+                                type="number"
+                                step="1"
+                                min="0"
+                                value={form.kilometers || ''}
+                                onChange={e => setField('kilometers', e.target.value)}
+                                placeholder="0"
+                                className={inputCls}
+                            />
+                            <span className={`absolute end-3 top-1/2 -translate-y-1/2 text-xs font-semibold ${isGlass ? 'text-white/40' : 'text-gray-400'}`}>km</span>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -404,11 +477,36 @@ export default function MobilityForm({ isGlass, onSuccess, initialData = null, o
                 )}
             </div>
 
-            {/* PREVIEW DE TOTALES */}
+            {/* PREVIEW DE TOTALES Y RENDIMIENTO ESTIMADO */}
             {total > 0 && (
-                <div className={`rounded-2xl p-4 text-center ${isGlass ? 'bg-violet-500/20 border border-violet-400/30' : 'bg-violet-50 border border-violet-100'}`}>
-                    <p className={`text-xs font-semibold uppercase mb-1 ${isGlass ? 'text-violet-300' : 'text-violet-500'}`}>Ingreso Bruto Total</p>
-                    <p className={`text-2xl font-bold ${isGlass ? 'text-white' : 'text-gray-800'}`}>${total.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</p>
+                <div className={`rounded-2xl p-4 text-center space-y-3 ${isGlass ? 'bg-violet-500/20 border border-violet-400/30' : 'bg-violet-50 border border-violet-100'}`}>
+                    <div>
+                        <p className={`text-xs font-semibold uppercase mb-1 ${isGlass ? 'text-violet-300' : 'text-violet-500'}`}>Ingreso Bruto Total</p>
+                        <p className={`text-2xl font-bold ${isGlass ? 'text-white' : 'text-gray-800'}`}>
+                            ${total.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                        </p>
+                    </div>
+
+                    {(hoursNum > 0 || kmNum > 0) && (
+                        <div className="grid grid-cols-2 gap-2 pt-2 border-t border-violet-200/30 dark:border-white/10">
+                            <div className={`p-2.5 rounded-xl ${isGlass ? 'bg-white/5' : 'bg-white/80'}`}>
+                                <p className={`text-[11px] font-semibold flex items-center justify-center gap-1 ${isGlass ? 'text-violet-200' : 'text-violet-600'}`}>
+                                    <Clock size={12} /> $/hora
+                                </p>
+                                <p className={`text-base font-bold ${isGlass ? 'text-white' : 'text-gray-800'}`}>
+                                    {perHour > 0 ? `$${Math.round(perHour).toLocaleString('es-AR')}` : '—'}
+                                </p>
+                            </div>
+                            <div className={`p-2.5 rounded-xl ${isGlass ? 'bg-white/5' : 'bg-white/80'}`}>
+                                <p className={`text-[11px] font-semibold flex items-center justify-center gap-1 ${isGlass ? 'text-violet-200' : 'text-violet-600'}`}>
+                                    <Gauge size={12} /> $/km
+                                </p>
+                                <p className={`text-base font-bold ${isGlass ? 'text-white' : 'text-gray-800'}`}>
+                                    {perKm > 0 ? `$${Math.round(perKm).toLocaleString('es-AR')}` : '—'}
+                                </p>
+                            </div>
+                        </div>
+                    )}
                 </div>
             )}
 
