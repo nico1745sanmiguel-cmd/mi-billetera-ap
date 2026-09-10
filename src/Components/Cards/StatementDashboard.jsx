@@ -12,11 +12,12 @@ export default function StatementDashboard({ statement, isGlass, onReload }) {
         const totals = txs.reduce((acc, tx) => {
             if (tx.isPayment) return acc; // No sumar los pagos que el usuario hizo a la tarjeta
             const cat = tx.category || 'Varios';
-            acc[cat] = (acc[cat] || 0) + (tx.amount || 0);
+            const amt = Number(tx.amount);
+            acc[cat] = (acc[cat] || 0) + ((!isNaN(amt) && isFinite(amt) && amt > 0) ? amt : 0);
             return acc;
         }, {});
 
-        const totalSpent = Object.values(totals).reduce((a, b) => a + b, 0);
+        const totalSpent = Object.values(totals).reduce((a, b) => a + Number(b || 0), 0);
 
         const breakdown = Object.entries(totals)
             .map(([category, amount]) => ({
@@ -40,10 +41,11 @@ export default function StatementDashboard({ statement, isGlass, onReload }) {
                     <p className={`font-bold ${textColor}`}>Sin detalle de consumos</p>
                     <p className={`text-xs ${subTextColor}`}>Este resumen fue cargado manualmente o no tiene detalles guardados.</p>
                 </div>
-                <button aria-label="Acción" 
+                <button 
+                    aria-label="Subir PDF para analizar" 
                     onClick={onReload}
                     type="button"
-                    className="mt-2 px-5 py-2.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold text-sm rounded-xl hover:bg-emerald-500/20 transition-colors shadow-sm"
+                    className="mt-2 px-5 py-2.5 min-h-[44px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold text-sm rounded-xl hover:bg-emerald-500/20 transition-colors shadow-sm flex items-center justify-center"
                 >
                     Subir PDF para analizar
                 </button>
@@ -66,10 +68,10 @@ export default function StatementDashboard({ statement, isGlass, onReload }) {
                 <button 
                     onClick={onReload}
                     type="button"
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors shadow-sm ${isGlass ? 'bg-white/10 text-white/80 hover:bg-white/20' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'}`}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 min-h-[44px] rounded-lg text-xs font-bold transition-colors shadow-sm ${isGlass ? 'bg-white/10 text-white/80 hover:bg-white/20' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'}`}
                     title="Volver a cargar el PDF"
                 >
-                    <RotateCcw size={12} />
+                    <RotateCcw size={14} />
                     Recargar
                 </button>
             </div>
@@ -102,16 +104,19 @@ export default function StatementDashboard({ statement, isGlass, onReload }) {
                         <div key={tx.id || i} className={`flex justify-between items-center pb-2 border-b last:border-0 ${isGlass ? 'border-white/10' : 'border-gray-200'}`}>
                             <div className="flex-1 min-w-0 pr-2">
                                 <p className={`text-xs font-bold truncate ${textColor}`}>
-                                    {tx.cleanName || tx.originalDescription}
+                                    {tx.cleanName || tx.originalDescription || 'Movimiento'}
                                 </p>
                                 <p className={`text-[9px] uppercase tracking-wider ${subTextColor}`}>
-                                    {tx.date} • {tx.category}
-                                    {tx.isInstallment && tx.installmentTotal > 1 ? ` • ${tx.installmentCurrent}/${tx.installmentTotal}` : ''}
+                                    {[
+                                        tx.date,
+                                        tx.category,
+                                        tx.isInstallment && tx.installmentTotal > 1 ? `${tx.installmentCurrent}/${tx.installmentTotal}` : null
+                                    ].filter(Boolean).join(' • ')}
                                 </p>
                             </div>
                             <div className="text-right whitespace-nowrap">
                                 <p className={`text-xs font-bold ${tx.isPayment ? 'text-emerald-500' : textColor}`}>
-                                    {tx.isPayment ? '+' : ''}{formatMoney(tx.amount || 0)}
+                                    {tx.isPayment ? '+' : ''}{formatMoney(Number(tx.amount) || 0)}
                                 </p>
                             </div>
                         </div>

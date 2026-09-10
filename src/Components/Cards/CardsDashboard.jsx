@@ -7,40 +7,45 @@ import { formatMonthKey } from '../../utils/cardDebtUtils';
 import CardsList from './CardsList';
 import CardDetail from './CardDetail';
 
-
 export default function CardsDashboard({ initialCard }) {
     const { isGlass, privacyMode, currentDate } = useUI();
     const navigate = useNavigate();
     const { userData } = useAuth();
     const householdId = userData?.householdId;
-    const { cards } = useCards();
-    const [selectedCard, setSelectedCard] = useState(null);
+    const { cards, loading } = useCards();
+    
+    const [selectedCardId, setSelectedCardId] = useState(() => initialCard?.id || null);
     const [isNew, setIsNew] = useState(false);
-
-    const [prevInitialCard, setPrevInitialCard] = useState(null);
+    const [prevInitialCard, setPrevInitialCard] = useState(initialCard);
 
     if (initialCard !== prevInitialCard) {
-        // react-doctor-disable-next-line react-doctor/no-impure-state-updater
         setPrevInitialCard(initialCard);
-        if (initialCard) {
-            // react-doctor-disable-next-line react-doctor/no-impure-state-updater
-            setSelectedCard(initialCard);
+        if (initialCard?.id) {
+            setSelectedCardId(initialCard.id);
+            setIsNew(false);
+        } else if (!initialCard) {
+            setSelectedCardId(null);
             setIsNew(false);
         }
     }
 
+    // Buscamos la versión más fresca en el contexto global, con fallback a initialCard mientras sincroniza
+    const activeCard = selectedCardId 
+        ? (cards.find(c => c.id === selectedCardId) || (initialCard?.id === selectedCardId ? initialCard : null)) 
+        : null;
+
     const monthKey = formatMonthKey(currentDate);
 
-    if (selectedCard || isNew) {
+    if (activeCard || isNew) {
         return (
             <CardDetail
-                card={selectedCard}
+                card={activeCard}
                 isNewCard={isNew}
                 currentDate={currentDate}
                 privacyMode={privacyMode}
                 isGlass={isGlass}
                 householdId={householdId}
-                onBack={() => { setSelectedCard(null); setIsNew(false); }}
+                onBack={() => { setSelectedCardId(null); setIsNew(false); }}
             />
         );
     }
@@ -48,13 +53,13 @@ export default function CardsDashboard({ initialCard }) {
     return (
         <CardsList
             cards={cards}
+            loading={loading}
             monthKey={monthKey}
             privacyMode={privacyMode}
             isGlass={isGlass}
-            // react-doctor-disable-next-line react-doctor/no-impure-state-updater
-            onSelectCard={(card) => { setSelectedCard(card); setIsNew(false); }}
-            onNewCard={() => { setSelectedCard(null); setIsNew(true); }}
-            onBack={() => { setSelectedCard(null); navigate('/dashboard'); }}
+            onSelectCard={(card) => { setSelectedCardId(card.id); setIsNew(false); }}
+            onNewCard={() => { setSelectedCardId(null); setIsNew(true); }}
+            onBack={() => { setSelectedCardId(null); navigate('/dashboard'); }}
         />
     );
 }

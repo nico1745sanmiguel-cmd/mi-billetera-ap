@@ -19,7 +19,7 @@ const VisaDownloadGuide = () => {
     return (
         <div className="w-full max-w-xl mx-auto mb-4 rounded-2xl border border-blue-200 dark:border-blue-800/60 bg-blue-50 dark:bg-blue-950/30 overflow-hidden shadow-sm">
             {/* Header */}
-            <button aria-label="Acción" type="button"
+            <button aria-label="Alternar guía de descarga de resumen" type="button"
                 onClick={() => setIsOpen(v => !v)}
                 className="w-full flex items-center justify-between px-5 py-3.5 text-left"
             >
@@ -65,7 +65,7 @@ const VisaDownloadGuide = () => {
                         href={VISA_URL}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center justify-center gap-2 w-full py-3 px-4 bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white rounded-xl font-semibold text-sm transition-all shadow-md hover:shadow-blue-500/30 hover:-translate-y-0.5 active:translate-y-0"
+                        className="flex items-center justify-center gap-2 w-full py-3 px-4 min-h-[44px] bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white rounded-xl font-semibold text-sm transition-all shadow-md hover:shadow-blue-500/30 hover:-translate-y-0.5 active:translate-y-0"
                     >
                         <ExternalLink className="w-4 h-4" />
                         Ir al sitio de Visa / Prisma
@@ -100,7 +100,13 @@ const StatementUploader = ({ onAnalysisComplete }) => {
     }, []);
 
     const processFile = async (file, pdfPassword = null) => {
-        if (file.type !== 'application/pdf') {
+        if (!file) return;
+
+        const isPdf = file.type === 'application/pdf' || 
+                      file.type === 'application/x-pdf' || 
+                      (typeof file.name === 'string' && file.name.toLowerCase().endsWith('.pdf'));
+
+        if (!isPdf) {
             setError('Por favor sube un archivo PDF válido.');
             return;
         }
@@ -142,6 +148,10 @@ const StatementUploader = ({ onAnalysisComplete }) => {
     };
 
     const handlePasswordSubmit = () => {
+        if (!currentFile.current) {
+            setNeedsPassword(false);
+            return;
+        }
         if (!password.trim()) {
             setError('Por favor ingresá la contraseña.');
             return;
@@ -173,9 +183,19 @@ const StatementUploader = ({ onAnalysisComplete }) => {
             <VisaDownloadGuide />
 
             {error && !needsPassword && (
-                <div className="mb-4 p-4 bg-red-100 dark:bg-red-900/30 border border-red-500/50 rounded-xl flex items-center gap-3 text-red-600 dark:text-red-400 shadow-sm">
-                    <AlertCircle className="w-5 h-5 shrink-0" />
-                    <p className="text-sm font-medium">{error}</p>
+                <div className="mb-4 p-4 bg-red-100 dark:bg-red-900/30 border border-red-500/50 rounded-xl flex items-center justify-between gap-3 text-red-600 dark:text-red-400 shadow-sm animate-in fade-in duration-200">
+                    <div className="flex items-center gap-3 min-w-0">
+                        <AlertCircle className="w-5 h-5 shrink-0" />
+                        <p className="text-sm font-medium break-words">{error}</p>
+                    </div>
+                    <button
+                        type="button"
+                        aria-label="Cerrar mensaje de error"
+                        onClick={() => setError(null)}
+                        className="text-xs font-bold opacity-70 hover:opacity-100 p-1 min-w-[28px] min-h-[28px] rounded-lg transition-opacity flex items-center justify-center"
+                    >
+                        ✕
+                    </button>
                 </div>
             )}
 
@@ -221,7 +241,10 @@ const StatementUploader = ({ onAnalysisComplete }) => {
                             </p>
                         </div>
                         <div className="flex w-full gap-2 mt-2">
-                            <input autoComplete="off" id="input-field"
+                            <input 
+                                autoComplete="off" 
+                                id="statement-pdf-password"
+                                aria-label="Contraseña del archivo PDF"
                                 type="password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
@@ -230,16 +253,17 @@ const StatementUploader = ({ onAnalysisComplete }) => {
                                 className="flex-1 px-4 py-2.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:text-white shadow-inner"
                                 autoFocus
                             />
-                            <button aria-label="Acción" type="button"
+                            <button aria-label="Desbloquear archivo PDF" type="button"
                                 onClick={handlePasswordSubmit}
-                                className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-medium transition-colors shadow-md hover:shadow-lg"
+                                disabled={isProcessing}
+                                className="px-6 py-2.5 min-h-[44px] bg-emerald-600 hover:bg-emerald-500 active:scale-95 disabled:opacity-50 text-white rounded-xl font-medium transition-all shadow-md hover:shadow-lg flex items-center justify-center"
                             >
                                 Abrir
                             </button>
                         </div>
-                        <button aria-label="Acción" type="button" 
+                        <button aria-label="Cancelar ingreso de contraseña" type="button" 
                             onClick={() => { setNeedsPassword(false); setError(null); currentFile.current = null; }}
-                            className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 mt-2 transition-colors"
+                            className="text-xs min-h-[44px] px-4 flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
                         >
                             Cancelar
                         </button>

@@ -16,26 +16,42 @@
  * @param {Date} date
  * @returns {number}
  */
-const dateToMonthVal = (date) => date.getFullYear() * 12 + date.getMonth();
+export const dateToMonthVal = (date) => date.getFullYear() * 12 + date.getMonth();
 
 /**
  * Convierte un string "YYYY-MM" a monthVal numérico.
  * @param {string} monthKey - Ej: "2026-05"
  * @returns {number}
  */
-const monthKeyToVal = (monthKey) => {
-    const [year, month] = monthKey.split('-').map(Number);
+export const monthKeyToVal = (monthKey) => {
+    if (!monthKey || typeof monthKey !== 'string') return 0;
+    const parts = monthKey.split('-');
+    if (parts.length < 2) return 0;
+    const year = Number(parts[0]);
+    const month = Number(parts[1]);
+    if (isNaN(year) || isNaN(month) || month < 1 || month > 12) return 0;
     return year * 12 + (month - 1);
 };
 
 /**
- * Genera la clave "YYYY-MM" a partir de un Date.
+ * Genera la clave "YYYY-MM" a partir de un Date o string ISO.
  * Esta función estaba duplicada en 6+ archivos como código inline.
- * @param {Date} date
+ * @param {Date|string} date
  * @returns {string} Ej: "2026-05"
  */
 export const formatMonthKey = (date) => {
     if (!date) return '';
+    if (typeof date === 'string') {
+        if (/^\d{4}-\d{2}/.test(date)) {
+            return date.slice(0, 7);
+        }
+        const parsed = new Date(date);
+        if (!isNaN(parsed.getTime())) {
+            return `${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, '0')}`;
+        }
+        return '';
+    }
+    if (!(date instanceof Date) || isNaN(date.getTime())) return '';
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
 };
 
@@ -43,31 +59,49 @@ export const formatMonthKey = (date) => {
  * Calcula la deuda de UNA tarjeta para UN mes específico,
  * sumando las cuotas activas de las transacciones de esa tarjeta.
  *
- * Nota sobre timezone: usamos el truco de agregar el offset del timezone para
- * asegurarnos de trabajar siempre en hora local, no UTC. Esto evita que una
- * compra hecha el 1ro del mes aparezca en el mes anterior por diferencia horaria.
- *
  * @param {Array} transactions - Todas las transacciones
  * @param {string} cardId - ID de la tarjeta
  * @param {number} targetMonthVal - Mes objetivo en formato numérico (año * 12 + mes 0-indexed)
  * @returns {number} - Deuda total de esa tarjeta en ese mes
  */
 export const calcularDeudaTarjetaMes = (transactions, cardId, targetMonthVal) => {
+    if (!Array.isArray(transactions) || typeof targetMonthVal !== 'number' || !Number.isFinite(targetMonthVal)) return 0;
+
     return transactions
         .filter(t => {
+            if (!t || typeof t !== 'object') return false;
             // Si cardId es null, suma todas las tarjetas (usado en proyecciones globales)
             const matchesCard = cardId === null ? true : t.cardId === cardId;
             return matchesCard && t.type !== 'cash';
         })
         .reduce((acc, t) => {
-            const tDate = new Date(t.date);
-            // Fix de timezone: normalizamos a hora local
-            const tLocal = new Date(tDate.valueOf() + tDate.getTimezoneOffset() * 60000);
-            const startMonthVal = tLocal.getFullYear() * 12 + tLocal.getMonth();
-            const endMonthVal = startMonthVal + (t.installments || 1);
+            if (!t.date) return acc;
+
+            let startMonthVal = null;
+            if (typeof t.date === 'string' && /^\d{4}-\d{2}/.test(t.date)) {
+                const parts = t.date.split('-');
+                const y = Number(parts[0]);
+                const m = Number(parts[1]);
+                if (!isNaN(y) && !isNaN(m) && m >= 1 && m <= 12) {
+                    startMonthVal = y * 12 + (m - 1);
+                }
+            }
+
+            if (startMonthVal === null) {
+                const tDate = new Date(t.date);
+                if (isNaN(tDate.getTime())) return acc;
+                // Fix de timezone: normalizamos a hora local si viene de objeto Date
+                const tLocal = new Date(tDate.valueOf() + tDate.getTimezoneOffset() * 60000);
+                startMonthVal = tLocal.getFullYear() * 12 + tLocal.getMonth();
+            }
+
+            const installments = Math.max(1, parseInt(t.installments, 10) || 1);
+            const endMonthVal = startMonthVal + installments;
 
             if (targetMonthVal >= startMonthVal && targetMonthVal < endMonthVal) {
-                return acc + Number(t.monthlyInstallment || 0);
+                const monthlyAmt = Number(t.monthlyInstallment);
+                const safeAmt = (!isNaN(monthlyAmt) && isFinite(monthlyAmt) && monthlyAmt > 0) ? monthlyAmt : 0;
+                return acc + safeAmt;
             }
             return acc;
         }, 0);
@@ -85,14 +119,17 @@ export const calcularDeudaTarjetaMes = (transactions, cardId, targetMonthVal) =>
  * @returns {number}
  */
 export const calcularDeudaEfectivaTarjeta = (card, transactions, targetMonthKey, targetMonthVal) => {
+    if (!card || typeof card !== 'object') return 0;
+
     const manualAmount = card.monthlyStatements?.[targetMonthKey]?.totalDue
         ?? card.adjustments?.[targetMonthKey];
 
     if (manualAmount !== undefined) {
-        return Number(manualAmount);
+        const num = Number(manualAmount);
+        return (!isNaN(num) && isFinite(num) && num >= 0) ? num : 0;
     }
 
-    return calcularDeudaTarjetaMes(transactions, card.id, targetMonthVal);
+    return calcularDeudaTarjetaMes(transactions, card.id || null, targetMonthVal);
 };
 
 /**
@@ -106,6 +143,7 @@ export const calcularDeudaEfectivaTarjeta = (card, transactions, targetMonthKey,
  * @returns {Array} cards con campo `currentDebt` agregado
  */
 export const buildCardsWithDebt = (cards, transactions, targetMonthKey, targetMonthVal) => {
+    if (!Array.isArray(cards)) return [];
     return cards.map(card => ({
         ...card,
         currentDebt: calcularDeudaEfectivaTarjeta(card, transactions, targetMonthKey, targetMonthVal),
