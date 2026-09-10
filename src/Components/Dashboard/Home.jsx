@@ -22,6 +22,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useCards } from '../../context/CardsContext';
 import { useSupermarket } from '../../context/SupermarketContext';
 import { useServices } from '../../context/ServicesContext';
+import { savePreferences } from '../../services/preferencesService';
 
 const SplitSummaryWidget = React.lazy(() => import('./Widgets/SplitSummaryWidget'));
 const SavingsWidget = React.lazy(() => import('./Widgets/SavingsWidget'));
@@ -143,7 +144,12 @@ const Home = memo(({ onLogout, notifications = EMPTY_ARRAY, onCardClick }) => {
 
 
     const { order, getDragProps, draggingItem } = useDragReorder(getInitialOrder());
-    useEffect(() => { setCache(CACHE_KEYS.WIDGET_ORDER, order); }, [order]);
+    useEffect(() => {
+        setCache(CACHE_KEYS.WIDGET_ORDER, order);
+        if (user?.uid) {
+            savePreferences(user.uid, { widget_order: order });
+        }
+    }, [order, user?.uid]);
 
     const cardsWithDebt = useMemo(() => {
         return buildCardsWithDebt(cards, transactions, targetMonthKey, targetMonthVal);
@@ -241,7 +247,7 @@ const Home = memo(({ onLogout, notifications = EMPTY_ARRAY, onCardClick }) => {
         return { grandTotal, breakdown, proporciones };
     }, [householdMembers, services, cardsWithDebt, supermarketItems, freshItems, targetMonthKey]);
 
-    const { getSize, toggleSize } = useWidgetSizes();
+    const { getSize, toggleSize } = useWidgetSizes(user?.uid);
 
     const WIDGETS = {
         ...(isModuleEnabled('planner') ? { target: () => (

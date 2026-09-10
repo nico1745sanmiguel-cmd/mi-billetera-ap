@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Shield, Bell, RefreshCw, Trash } from 'lucide-react';
 import { useSavings } from '../../context/SavingsContext';
 import { getStopLossPercentage, mapBetaToVol, mapVolToBeta } from '../../utils/stopLossService';
@@ -140,7 +141,8 @@ export default function StopLossModal({ isOpen, onClose, asset, isGlass, currenc
     };
 
     return (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 animate-fade-in">
+        createPortal(
+<div className="fixed inset-0 z-[110] flex items-center justify-center p-4 animate-fade-in">
             <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={onClose}></div>
             <div className={`relative w-full max-w-md rounded-3xl shadow-2xl p-6 md:p-8 animate-scale-in ${bgClass}`}>
                 
@@ -303,6 +305,8 @@ export default function StopLossModal({ isOpen, onClose, asset, isGlass, currenc
                     </div>
                 </form>
             </div>
-        </div>
+        </div>,
+    document.body
+)
     );
 }

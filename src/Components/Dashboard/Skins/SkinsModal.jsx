@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { X, Check } from 'lucide-react';
 
 const SKINS = [
@@ -20,7 +21,7 @@ const SkinsModal = ({ isOpen, onClose, currentSkin, onSelectSkin }) => {
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-start justify-center p-4 pt-10 sm:pt-16 animate-fade-in">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-fade-in">
             <div 
                 className="absolute inset-0 bg-black/60 backdrop-blur-md transition-opacity" 
                 onClick={onClose}

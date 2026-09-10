@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getCache, setCache } from '../utils/cache';
 import { CACHE_KEYS, DEFAULT_WIDGET_SIZES, WIDGET_SIZE_FIXED } from '../config/constants';
+import { savePreferences } from '../services/preferencesService';
 
 /**
  * useWidgetSizes
@@ -9,9 +10,10 @@ import { CACHE_KEYS, DEFAULT_WIDGET_SIZES, WIDGET_SIZE_FIXED } from '../config/c
  *
  * Los widgets en WIDGET_SIZE_FIXED siempre devuelven 'full' y no pueden cambiarse.
  *
+ * @param {string} uid - ID del usuario actual.
  * @returns {{ sizes, toggleSize, getSize }}
  */
-export function useWidgetSizes() {
+export function useWidgetSizes(uid) {
     const [sizes, setSizes] = useState(() => {
         const cached = getCache(CACHE_KEYS.WIDGET_SIZES, null);
         return cached || DEFAULT_WIDGET_SIZES;
@@ -20,7 +22,10 @@ export function useWidgetSizes() {
     // Persistir en cache cada vez que cambia
     useEffect(() => {
         setCache(CACHE_KEYS.WIDGET_SIZES, sizes);
-    }, [sizes]);
+        if (uid) {
+            savePreferences(uid, { widget_sizes: sizes });
+        }
+    }, [sizes, uid]);
 
     /**
      * Alterna el tamaño de un widget entre 'full' y 'half'.

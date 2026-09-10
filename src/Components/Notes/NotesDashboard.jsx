@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 // eslint-disable-next-line no-unused-vars
 import { m, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
@@ -33,7 +34,8 @@ const EditNoteModal = ({ note, categories, isGlass, onClose, onSave }) => {
         : "w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-gray-800 focus:border-blue-500 outline-none transition-colors";
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
+        createPortal(
+<div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
             <m.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -102,7 +104,9 @@ const EditNoteModal = ({ note, categories, isGlass, onClose, onSave }) => {
                     </div>
                 </form>
             </m.div>
-        </div>
+        </div>,
+    document.body
+)
     );
 };
 

@@ -4,7 +4,8 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { checkAndMigrateToHousehold } from '../utils/householdMigration';
 import { getCache, setCache } from '../utils/cache';
-import { LOADING_DELAY_MS } from '../config/constants';
+import { LOADING_DELAY_MS, CACHE_KEYS } from '../config/constants';
+import { loadPreferences } from '../services/preferencesService';
 
 const AuthContext = createContext();
 
@@ -77,6 +78,17 @@ export const AuthProvider = ({ children }) => {
 
                 // Apagar el loading de usuario (se puede usar cache o delay)
                 setLoadingUser(false);
+
+                // Traer preferencias en background
+                loadPreferences(currentUser.uid).then((prefs) => {
+                    if (prefs) {
+                        if (prefs.enabled_modules) setCache(CACHE_KEYS.ENABLED_MODULES, prefs.enabled_modules);
+                        if (prefs.widget_order) setCache(CACHE_KEYS.WIDGET_ORDER, prefs.widget_order);
+                        if (prefs.widget_sizes) setCache(CACHE_KEYS.WIDGET_SIZES, prefs.widget_sizes);
+                        // Disparar eventos por si la vista ya renderizó con el cache viejo
+                        window.dispatchEvent(new CustomEvent('modulesChanged'));
+                    }
+                }).catch(e => console.error('Error loading preferences:', e));
 
                 // Traer miembros en background (sin bloquear con await)
                 if (currentHouseholdId) {

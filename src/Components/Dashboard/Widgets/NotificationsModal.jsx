@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Bell, X, Wallet, CheckCheck, Loader2 } from 'lucide-react';
 import { formatMoney } from '../../../utils';
 import { messaging, db } from '../../../firebase';
@@ -86,7 +87,8 @@ export default function NotificationsModal({ notifications, user, privacyMode, s
     };
 
     return (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[100] flex items-start justify-center p-4 pt-10 sm:pt-16 animate-fade-in" onClick={() => setIsNotificationsOpen(false)}>
+        createPortal(
+<div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-fade-in" onClick={() => setIsNotificationsOpen(false)}>
             <div className="relative w-full max-w-md max-h-[85vh] bg-[#f3f4f6] dark:bg-[#1a1b4b] p-6 rounded-3xl shadow-2xl animate-scale-in flex flex-col" onClick={e => e.stopPropagation()}>
                 <div className="flex justify-between items-center mb-6">
                     <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
@@ -186,6 +188,8 @@ export default function NotificationsModal({ notifications, user, privacyMode, s
                     )}
                 </div>
             </div>
-        </div>
+        </div>,
+    document.body
+)
     );
 }

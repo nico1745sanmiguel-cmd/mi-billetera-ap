@@ -1,11 +1,13 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { X, AlertTriangle } from 'lucide-react';
 
 export default function ConfirmDialog({ isOpen, title, message, onConfirm, onCancel, confirmText = 'Confirmar', cancelText = 'Cancelar', isDanger = false }) {
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[100] flex items-start justify-center p-4 pt-10 sm:pt-16 animate-fade-in" onClick={onCancel}>
+        createPortal(
+<div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-fade-in" onClick={onCancel}>
             <div 
                 className="bg-white dark:bg-[#1a1b4b] w-full max-w-sm rounded-3xl p-6 shadow-2xl animate-scale-in"
                 onClick={e => e.stopPropagation()}
@@ -35,6 +37,8 @@ export default function ConfirmDialog({ isOpen, title, message, onConfirm, onCan
                     </button>
                 </div>
             </div>
-        </div>
+        </div>,
+    document.body
+)
     );
 }

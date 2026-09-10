@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Plus, Briefcase, Trash2, Pencil } from 'lucide-react';
 import { formatMoney, formatInputNumber, parseInputNumber } from '../../utils';
 import { useSalaryState, useSalaryDispatch } from '../../context/SalaryContext';
@@ -69,7 +70,7 @@ export default function SalarySourcesEditor({ onClose, isGlass }) {
         ${isGlass ? 'bg-white/10 border border-white/20 text-white placeholder-white/40' : 'bg-gray-50 border border-gray-200 text-gray-800 placeholder-gray-400'}`;
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-start justify-center p-4 pt-10 sm:pt-16 animate-fade-in" onClick={onClose}>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-fade-in" onClick={onClose}>
             <div className="absolute inset-0 bg-black/60 backdrop-blur-md" />
             <div
                 onClick={e => e.stopPropagation()}

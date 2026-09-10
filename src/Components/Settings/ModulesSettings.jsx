@@ -6,22 +6,28 @@ import { useUI } from '../../context/UIContext';
 import { AVAILABLE_MODULES } from '../../config/modules';
 import { useNavigate } from 'react-router-dom';
 import { loadModules } from '../../utils/modulesUtils';
+import { useAuth } from '../../context/AuthContext';
+import { savePreferences } from '../../services/preferencesService';
 
-const saveModules = (state) => {
+const saveModules = (state, uid) => {
     setCache(CACHE_KEYS.ENABLED_MODULES, state);
+    if (uid) {
+        savePreferences(uid, { enabled_modules: state });
+    }
     // Notificar a App.jsx que los módulos cambiaron para forzar re-render
     window.dispatchEvent(new CustomEvent('modulesChanged'));
 };
 
 export default function ModulesSettings({ onBack }) {
     const { isGlass, motionPreference, setMotionPreference } = useUI();
+    const { user } = useAuth();
     const [enabled, setEnabled] = useState(loadModules);
     const navigate = useNavigate();
 
     const toggle = (id) => {
         setEnabled(prev => {
             const next = { ...prev, [id]: !prev[id] };
-            saveModules(next);
+            saveModules(next, user?.uid);
             return next;
         });
     };

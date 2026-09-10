@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Save } from 'lucide-react';
 import { useSavings } from '../../context/SavingsContext';
 import { useFinancial } from '../../../context/FinancialContext';
@@ -272,9 +273,10 @@ export default function OperationModal({ onClose, isGlass, initialData }) {
         : 'bg-gray-50 border-gray-200 text-gray-800 focus:border-green-500 focus:bg-white focus:ring-4 focus:ring-green-500/10'
     }`;
 
-    return (
-        <div className="fixed inset-0 z-[100] flex items-start justify-center p-4 pt-10 sm:pt-16 animate-fade-in">
+    return createPortal(
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-fade-in">
             <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={onClose}></div>
+
             <div className={`relative w-full max-w-md max-h-[85vh] overflow-y-auto rounded-3xl p-6 sm:p-8 shadow-2xl animate-scale-in ${
                 isGlass ? 'bg-[#0f0c29]/90 border border-white/20 backdrop-blur-xl' : 'bg-white'
             }`}>
@@ -391,5 +393,6 @@ export default function OperationModal({ onClose, isGlass, initialData }) {
                 </form>
             </div>
         </div>
+        , document.body
     );
 }

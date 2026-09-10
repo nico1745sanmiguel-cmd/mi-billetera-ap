@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { X, CheckCircle2, Circle } from 'lucide-react';
 
 export default function ServicesCalendarView({
@@ -111,7 +112,7 @@ export default function ServicesCalendarView({
             {/* ── MODAL ZOOM DE DÍA ── */}
             {selectedDay !== null && (
                 <div
-                    className="fixed inset-0 z-[100] flex items-start justify-center p-4 pt-10 sm:pt-16 animate-fade-in"
+                    className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-fade-in"
                     onClick={() => setSelectedDay(null)}
                 >
                     {/* Backdrop */}

@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom';
 import { useState } from 'react';
 import { X, TrendingUp, TrendingDown, Info, Activity, Shield, DollarSign, CheckCircle2, AlertCircle } from 'lucide-react';
 import { getAssetDescription } from '../../utils/assetDescriptions';
@@ -290,7 +291,8 @@ export default function AssetDetailsModal({ isOpen, onClose, asset, currencyView
     const description = getAssetDescription(asset.especie);
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-start justify-center p-4 pt-10 sm:pt-16 animate-fade-in">
+        createPortal(
+<div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-fade-in">
             <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={onClose}></div>
             <div className={`relative w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-3xl shadow-2xl p-6 md:p-8 animate-scale-in ${bgClass}`}>
                 
@@ -422,6 +424,8 @@ export default function AssetDetailsModal({ isOpen, onClose, asset, currencyView
                     </div>
                 )}
             </div>
-        </div>
+        </div>,
+    document.body
+)
     );
 }

@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { Briefcase, Plus, Trash2, ArrowRightLeft, X } from 'lucide-react';
 import { useSavings } from '../../context/SavingsContext';
 import { useUI } from '../../context/UIContext';
@@ -74,7 +75,8 @@ export default function CarterasPanel({ isGlass }) {
         <div className={`rounded-3xl p-6 ${cardBg}`}>
             {/* Modal de Migración */}
             {migratingTo && (
-                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+                createPortal(
+<div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
                     <div className={`w-full max-w-sm rounded-3xl p-6 shadow-2xl animate-scale-in ${isGlass ? 'bg-[#0f0c29] border border-white/20' : 'bg-white'}`}>
                         <div className="flex justify-between items-center mb-4">
                             <h3 className={`text-lg font-bold ${textColor}`}>Migrar Operaciones</h3>
@@ -105,7 +107,9 @@ export default function CarterasPanel({ isGlass }) {
                             {isSubmitting ? 'Migrando...' : 'Confirmar Migración'}
                         </button>
                     </div>
-                </div>
+                </div>,
+    document.body
+)
             )}
 
             <div className="flex items-start gap-4 mb-6">

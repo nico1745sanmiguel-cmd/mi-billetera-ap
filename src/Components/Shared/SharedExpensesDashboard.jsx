@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { db, auth } from '../../firebase';
 import { doc, getDoc, collection, query, where, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
@@ -89,7 +90,7 @@ function ContributionModal({ person, totalTarget, monthKey, householdId, isGlass
 
     return (
         <div
-            className="fixed inset-0 z-[100] flex items-start justify-center p-4 pt-10 sm:pt-16 animate-fade-in"
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-fade-in"
             onClick={onClose}
         >
             {/* Fondo oscuro */}

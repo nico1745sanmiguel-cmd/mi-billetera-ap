@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Briefcase, Tag, Palette } from 'lucide-react';
 import { formatInputNumber, parseInputNumber } from '../../utils';
 
@@ -60,7 +61,7 @@ export default function EnvelopeEditor({ envelope, onSave, onClose, isGlass }) {
         : 'bg-gray-50 border border-gray-200 text-gray-800 placeholder-gray-400';
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-start justify-center p-4 pt-10 sm:pt-16 animate-fade-in" onClick={onClose}>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-fade-in" onClick={onClose}>
             <div className="absolute inset-0 bg-black/60 backdrop-blur-md" />
             <div
                 onClick={e => e.stopPropagation()}
