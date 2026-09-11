@@ -50,6 +50,14 @@ export default function NotificationsModal({ notifications, user, privacyMode, s
         return () => unsubscribe();
     }, []);
 
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (e.key === 'Escape') setIsNotificationsOpen(false);
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [setIsNotificationsOpen]);
+
     const handleEnablePush = async () => {
         if (!messaging) {
             showToast("Tu navegador no soporta notificaciones Push.", "error");
@@ -88,23 +96,23 @@ export default function NotificationsModal({ notifications, user, privacyMode, s
 
     return (
         createPortal(
-<div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-fade-in" onClick={() => setIsNotificationsOpen(false)}>
-            <div className="relative w-full max-w-md max-h-[85vh] bg-[#f3f4f6] dark:bg-[#1a1b4b] p-6 rounded-3xl shadow-2xl animate-scale-in flex flex-col" onClick={e => e.stopPropagation()}>
-                <div className="flex justify-between items-center mb-6">
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                        <Bell className="text-indigo-500" /> Notificaciones
-                    </h3>
-                    <button aria-label="Cerrar panel de notificaciones" type="button" onClick={() => setIsNotificationsOpen(false)} className="p-2 bg-gray-200 dark:bg-white/10 rounded-full text-gray-500 dark:text-white/50 hover:bg-gray-300 dark:hover:bg-white/20 transition-colors">
-                        <X size={20} />
-                    </button>
-                </div>
-                
-                <div className="mb-4">
-                    <button aria-label="Activar notificaciones push en el dispositivo" type="button" 
-                        onClick={handleEnablePush} 
-                        disabled={isPushLoading}
-                        className="w-full bg-indigo-100 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 py-3 px-4 rounded-xl font-bold text-sm hover:bg-indigo-200 dark:hover:bg-indigo-500/30 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
+            <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-fade-in" onClick={() => setIsNotificationsOpen(false)}>
+                <div className="relative w-full max-w-md max-h-[85vh] bg-[#f3f4f6] dark:bg-[#1a1b4b] p-6 rounded-3xl shadow-2xl animate-scale-in flex flex-col" onClick={e => e.stopPropagation()}>
+                    <div className="flex justify-between items-center mb-6">
+                        <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                            <Bell className="text-indigo-500" /> Notificaciones
+                        </h3>
+                        <button aria-label="Cerrar panel de notificaciones" type="button" onClick={() => setIsNotificationsOpen(false)} className="w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center bg-gray-200 dark:bg-white/10 rounded-full text-gray-500 dark:text-white/50 hover:bg-gray-300 dark:hover:bg-white/20 transition-colors">
+                            <X size={20} />
+                        </button>
+                    </div>
+                    
+                    <div className="mb-4">
+                        <button aria-label="Activar notificaciones push en el dispositivo" type="button" 
+                            onClick={handleEnablePush} 
+                            disabled={isPushLoading}
+                            className="w-full min-h-[44px] bg-indigo-100 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 py-3 px-4 rounded-xl font-bold text-sm hover:bg-indigo-200 dark:hover:bg-indigo-500/30 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
                         {isPushLoading ? <Loader2 size={16} className="animate-spin" /> : <Bell size={16} />} 
                         {isPushLoading ? 'Activando...' : 'Activar Notificaciones en el celular'}
                     </button>

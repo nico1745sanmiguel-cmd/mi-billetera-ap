@@ -118,13 +118,17 @@ export default function FloatingNotes({ user }) {
                                     exit={{ opacity: 0, scale: 0.9 }}
                                     className="flex items-start gap-2 group"
                                 >
-                                    <button aria-label="Acción" 
+                                    <button 
+                                        aria-label={`Completar tarea: ${note.text}`} 
+                                        type="button"
                                         onClick={() => handleCheck(note.id)}
-                                        className={`mt-1 w-5 h-5 border-2 rounded flex items-center justify-center shrink-0 transition-colors ${isGlass ? 'border-white/50 hover:bg-white/20' : 'border-gray-800/40 hover:bg-black/10'}`}
+                                        className="min-w-[36px] min-h-[36px] flex items-center justify-center shrink-0 -ml-1 active:scale-90 transition-transform"
                                     >
-                                        <Check size={14} className={`${textColor} opacity-0 group-hover:opacity-100 transition-opacity`} />
+                                        <span className={`w-5 h-5 border-2 rounded flex items-center justify-center transition-colors ${isGlass ? 'border-white/50 hover:bg-white/20' : 'border-gray-800/40 hover:bg-black/10'}`}>
+                                            <Check size={14} className={`${textColor} opacity-0 group-hover:opacity-100 transition-opacity`} />
+                                        </span>
                                     </button>
-                                    <span className={`${textColor} leading-tight pt-0.5`}>
+                                    <span className={`${textColor} leading-tight pt-1`}>
                                         {note.text}
                                     </span>
                                 </m.div>
@@ -136,15 +140,21 @@ export default function FloatingNotes({ user }) {
                     </div>
 
                     <form onSubmit={handleAdd} className={`mt-auto border-t pt-2 flex items-center gap-1 ${borderColor}`}>
-                        <input autoComplete="off" id="input-field" 
+                        <input autoComplete="off" id="floating-notes-input" 
+                            aria-label="Nueva tarea pendiente"
                             ref={inputRef}
                             type="text"
                             value={inputValue}
                             onChange={(e) => setInputValue(e.target.value)}
                             placeholder="Escribí acá..."
-                            className={`flex-1 bg-transparent border-none outline-none text-sm placeholder:opacity-50 ${textColor}`}
+                            className={`flex-1 min-h-[44px] bg-transparent border-none outline-none text-sm placeholder:opacity-50 px-2 ${textColor}`}
                         />
-                        <button aria-label="Acción" type="submit" disabled={!inputValue.trim()} className={`${textColor} hover:opacity-100 opacity-70 disabled:opacity-30 transition-opacity`}>
+                        <button 
+                            aria-label="Agregar nueva nota" 
+                            type="submit" 
+                            disabled={!inputValue.trim()} 
+                            className={`w-11 h-11 flex items-center justify-center shrink-0 ${textColor} hover:opacity-100 opacity-70 disabled:opacity-30 transition-opacity active:scale-95`}
+                        >
                             <Plus size={20} />
                         </button>
                     </form>

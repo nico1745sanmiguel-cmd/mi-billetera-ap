@@ -64,7 +64,9 @@ export default function FinancialTarget({
     const [tab, setTab] = useState('resumen');
     const [categoryFilter, setCategoryFilter] = useState('all');
 
-    const remaining = totalNeed - totalPaid;
+    const remaining = Math.max(0, totalNeed - totalPaid);
+    const isFullyCovered = totalNeed > 0 && totalPaid >= totalNeed;
+    const hasNoDebts = totalNeed === 0;
     const percentage = totalNeed > 0 ? Math.min(100, (totalPaid / totalNeed) * 100) : 0;
 
     // SVG ring
@@ -136,12 +138,16 @@ export default function FinancialTarget({
         <div className="bg-white dark:bg-white/5 rounded-[30px] shadow-[0_4px_20px_-5px_rgba(0,0,0,0.1)] border border-gray-100 dark:border-white/10 overflow-hidden dark:backdrop-blur-md">
 
             {/* ── TABS ── */}
-            <div className="flex items-center gap-1 px-4 pt-4 pb-2">
+            <div className="flex items-center gap-1 px-4 pt-4 pb-2" role="tablist">
                 {[{ id: 'resumen', label: 'Resumen' }, { id: 'desglose', label: 'Desglose' }].map(t => (
-                    <button aria-label="Acción" type="button"
+                    <button 
+                        aria-label={`Ver vista ${t.label}`}
+                        aria-selected={tab === t.id}
+                        role="tab"
+                        type="button"
                         key={t.id}
                         onClick={() => setTab(t.id)}
-                        className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all duration-200 ${
+                        className={`min-h-[44px] px-4 py-2 rounded-full text-xs font-bold transition-all duration-200 active:scale-95 ${
                             tab === t.id
                                 ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-200 dark:shadow-indigo-900/50'
                                 : 'text-gray-400 dark:text-white/40 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-white/10'
@@ -160,13 +166,23 @@ export default function FinancialTarget({
                     <div className="flex justify-between items-center">
                         {/* Izquierda: datos */}
                         <div className="flex flex-col justify-center">
-                            <div className="mb-4">
+                            <div className="mb-4 flex items-center">
                                 <span className="text-3xl font-bold text-gray-800 dark:text-white tracking-tighter">
                                     {showMoney(remaining)}
                                 </span>
-                                <p className="text-[10px] font-bold text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-500/10 inline-block px-2 py-0.5 rounded-full ml-2">
-                                    Falta Cubrir
-                                </p>
+                                {hasNoDebts ? (
+                                    <p className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 inline-block px-2.5 py-1 rounded-full ml-2">
+                                        Sin deudas este mes
+                                    </p>
+                                ) : isFullyCovered ? (
+                                    <p className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 inline-block px-2.5 py-1 rounded-full ml-2">
+                                        ¡Meta 100% Cubierta!
+                                    </p>
+                                ) : (
+                                    <p className="text-[10px] font-bold text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-500/10 inline-block px-2.5 py-1 rounded-full ml-2">
+                                        Falta Cubrir
+                                    </p>
+                                )}
                             </div>
                             <div className="flex gap-4 text-xs">
                                 <div>
@@ -209,13 +225,15 @@ export default function FinancialTarget({
 
                     {/* CTA compacto */}
                     {showStats && (
-                        <button aria-label="Acción" type="button"
+                        <button 
+                            aria-label="Ver análisis financiero completo" 
+                            type="button"
                             onClick={onNavigateStats}
-                            className="mt-4 w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-300 text-xs font-bold hover:bg-indigo-100 dark:hover:bg-indigo-500/20 transition-colors group"
+                            className="mt-4 w-full min-h-[44px] flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-300 text-xs font-bold hover:bg-indigo-100 dark:hover:bg-indigo-500/20 transition-colors group active:scale-95"
                         >
-                            <BarChart3 size={13} />
+                            <BarChart3 size={15} />
                             <span>Ver Análisis Completo</span>
-                            <ChevronRight size={13} className="group-hover:translate-x-0.5 transition-transform" />
+                            <ChevronRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
                         </button>
                     )}
                 </div>
@@ -231,14 +249,17 @@ export default function FinancialTarget({
                             const Icon = cat.icon;
                             const active = categoryFilter === cat.key;
                             return (
-                                <button aria-label="Acción" type="button"
+                                <button 
+                                    aria-label={`Filtrar por categoría ${cat.label}`}
+                                    aria-pressed={active}
+                                    type="button"
                                     key={cat.key}
                                     onClick={() => setCategoryFilter(cat.key)}
-                                    className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold transition-all duration-150 ${
+                                    className={`min-h-[38px] flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all duration-150 active:scale-95 ${
                                         active ? c.pill : `bg-gray-50 dark:bg-white/5 ${c.pillOff}`
                                     }`}
                                 >
-                                    <Icon size={10} />
+                                    <Icon size={12} />
                                     {cat.label}
                                 </button>
                             );
@@ -298,7 +319,9 @@ export default function FinancialTarget({
 
                     {/* CTA Ver Análisis */}
                     {showStats && (
-                        <button aria-label="Acción" type="button"
+                        <button 
+                            aria-label="Ver análisis financiero completo y estadísticas" 
+                            type="button"
                             onClick={onNavigateStats}
                             className="mt-5 w-full h-14 rounded-2xl relative overflow-hidden group shadow-md shadow-indigo-100 dark:shadow-indigo-900/20 active:scale-95 transition-all"
                         >

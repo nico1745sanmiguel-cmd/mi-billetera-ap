@@ -9,7 +9,7 @@ const getCardLogo = (name) => {
     return match?.path || null;
 };
 
-export default function CardsWidget({ cards, targetMonthKey, privacyMode, onCardClick, size = 'full' }) {
+export default function CardsWidget({ cards = [], targetMonthKey, privacyMode, onCardClick, size = 'full' }) {
     const showMoney = (amount) => privacyMode ? '****' : formatMoney(amount);
     const isHalf = size === 'half';
 
@@ -32,9 +32,13 @@ export default function CardsWidget({ cards, targetMonthKey, privacyMode, onCard
                         return (
                             <div
                                 key={card.id}
+                                role="button"
+                                tabIndex={0}
+                                aria-label={`Tarjeta ${card.name}, deuda ${debt != null ? showMoney(debt) : 'sin resumen'}`}
                                 onClick={() => onCardClick(card)}
+                                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onCardClick(card); }}
                                 snap-center="true"
-                                className="cursor-pointer flex-shrink-0 rounded-2xl p-3 text-white relative overflow-hidden active:scale-95 transition-transform snap-center"
+                                className="cursor-pointer flex-shrink-0 rounded-2xl p-3 text-white relative overflow-hidden active:scale-95 transition-transform snap-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
                                 style={{ background: `linear-gradient(135deg, ${card.color || '#1f2937'} 0%, ${card.color || '#111827'}DD 100%)` }}
                             >
                                 {/* Glow */}
@@ -59,8 +63,12 @@ export default function CardsWidget({ cards, targetMonthKey, privacyMode, onCard
 
                     {/* Add card compacto */}
                     <div
+                        role="button"
+                        tabIndex={0}
+                        aria-label="Agregar nueva tarjeta"
                         onClick={() => onCardClick(null)}
-                        className="flex-shrink-0 rounded-2xl border-2 border-dashed border-gray-300 dark:border-white/20 flex items-center justify-center gap-2 py-2 cursor-pointer hover:bg-white dark:hover:bg-white/5 active:scale-95 transition-all snap-center"
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onCardClick(null); }}
+                        className="flex-shrink-0 min-h-[44px] rounded-2xl border-2 border-dashed border-gray-300 dark:border-white/20 flex items-center justify-center gap-2 py-2 cursor-pointer hover:bg-white dark:hover:bg-white/5 active:scale-95 transition-all snap-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                     >
                         <Plus size={14} className="text-gray-400 dark:text-white/40" />
                         <span className="text-gray-400 dark:text-white/40 text-xs font-bold">Agregar</span>
@@ -82,8 +90,18 @@ export default function CardsWidget({ cards, targetMonthKey, privacyMode, onCard
             <div className="flex overflow-x-auto gap-3 pb-8 px-2 snap-x snap-mandatory hide-scrollbar">
                 {cards.map((card) => {
                     const logo = getCardLogo(card.name);
+                    const debt = card.monthlyStatements?.[targetMonthKey]?.totalDue;
                     return (
-                        <div key={card.id} onClick={() => onCardClick(card)} className="cursor-pointer flex-shrink-0 w-[85%] max-w-[280px] h-48 rounded-[30px] shadow-lg p-5 text-white relative overflow-hidden snap-center transition-transform active:scale-95 group" style={{ background: `linear-gradient(135deg, ${card.color || '#1f2937'} 0%, ${card.color || '#111827'}DD 100%)` }}>
+                        <div 
+                            key={card.id} 
+                            role="button"
+                            tabIndex={0}
+                            aria-label={`Tarjeta ${card.name}, deuda ${debt != null ? showMoney(debt) : 'sin resumen'}`}
+                            onClick={() => onCardClick(card)} 
+                            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onCardClick(card); }}
+                            className="cursor-pointer flex-shrink-0 w-[85%] max-w-[280px] h-48 rounded-[30px] shadow-lg p-5 text-white relative overflow-hidden snap-center transition-transform active:scale-95 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white" 
+                            style={{ background: `linear-gradient(135deg, ${card.color || '#1f2937'} 0%, ${card.color || '#111827'}DD 100%)` }}
+                        >
 
                             {/* Background Glow */}
                             <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full -mr-10 -mt-10 blur-xl"></div>
@@ -116,7 +134,12 @@ export default function CardsWidget({ cards, targetMonthKey, privacyMode, onCard
                                     <p className="text-[9px] opacity-70 uppercase mb-0.5 font-medium tracking-wide">Total a pagar</p>
                                     <p className="font-mono text-2xl font-bold tracking-tight text-shadow-sm">{card.monthlyStatements?.[targetMonthKey] ? showMoney(card.monthlyStatements[targetMonthKey].totalDue) : <span className="text-sm opacity-60">Sin resumen</span>}</p>
                                 </div>
-                                <button aria-label="Acción" type="button" className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-white/70 hover:text-white transition-colors backdrop-blur-md opacity-0 group-hover:opacity-100" onClick={(e) => { e.stopPropagation(); onCardClick(card); }}>
+                                <button 
+                                    aria-label={`Ver resumen de ${card.name}`} 
+                                    type="button" 
+                                    className="w-11 h-11 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white/70 hover:text-white transition-colors backdrop-blur-md opacity-90 group-hover:opacity-100" 
+                                    onClick={(e) => { e.stopPropagation(); onCardClick(card); }}
+                                >
                                     <ExternalLink size={16} />
                                 </button>
                             </div>
@@ -125,7 +148,14 @@ export default function CardsWidget({ cards, targetMonthKey, privacyMode, onCard
                 })}
 
                 {/* Add New Card Placeholder */}
-                <div onClick={() => onCardClick(null)} className="flex-shrink-0 w-[85%] max-w-[280px] h-48 rounded-[30px] border-2 border-dashed border-gray-300 dark:border-white/20 flex flex-col items-center justify-center gap-3 cursor-pointer hover:bg-white dark:hover:bg-white/5 hover:border-gray-400 dark:hover:border-white/40 active:scale-95 transition-all snap-center group">
+                <div 
+                    role="button"
+                    tabIndex={0}
+                    aria-label="Agregar nueva tarjeta"
+                    onClick={() => onCardClick(null)} 
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onCardClick(null); }}
+                    className="flex-shrink-0 w-[85%] max-w-[280px] h-48 rounded-[30px] border-2 border-dashed border-gray-300 dark:border-white/20 flex flex-col items-center justify-center gap-3 cursor-pointer hover:bg-white dark:hover:bg-white/5 hover:border-gray-400 dark:hover:border-white/40 active:scale-95 transition-all snap-center group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                >
                     <div className="w-12 h-12 bg-gray-100 dark:bg-white/10 rounded-full flex items-center justify-center text-gray-400 dark:text-white/40 group-hover:bg-gray-200 dark:group-hover:bg-white/20 group-hover:text-gray-600 dark:group-hover:text-white/80 transition-colors">
                         <Plus size={24} />
                     </div>

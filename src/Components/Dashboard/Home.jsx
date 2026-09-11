@@ -41,6 +41,7 @@ import WPTileGrid from './Skins/WindowsPhone/WPTileGrid';
 import UserMenu from './UserMenu';
 import ThemeSelector from './ThemeSelector';
 import CriticalAlert from './CriticalAlert';
+import SkeletonDashboard from '../UI/SkeletonDashboard';
 
 const handleCacheRefresh = async () => {
     if ('serviceWorker' in navigator) {
@@ -120,27 +121,31 @@ const Home = memo(({ onLogout, notifications = EMPTY_ARRAY, onCardClick }) => {
     };
 
     const handleToggleAgendaPaid = useCallback(async (item) => {
-        const collectionName = item.type === 'card_item' ? 'cards' : 'services';
-        const ref = doc(db, collectionName, item.id);
-        if (item.isPaid) {
-            await updateDoc(ref, { paidPeriods: arrayRemove(targetMonthKey) });
-        } else {
-            await updateDoc(ref, { paidPeriods: arrayUnion(targetMonthKey) });
-            if (householdId && auth.currentUser) {
-                try {
-                    const { serverTimestamp } = await import('firebase/firestore');
-                    await addDoc(collection(db, 'households', householdId, 'notifications'), {
-                        type: 'payment', itemName: item.name, amount: item.amount,
-                        dueDate: item.day, itemType: item.type,
-                        paidByUid: auth.currentUser.uid,
-                        paidByName: auth.currentUser.displayName || 'Alguien',
-                        createdAt: serverTimestamp(), readBy: [auth.currentUser.uid]
-                    });
-                } catch (e) { console.error('Error saving notification', e); }
+        try {
+            const collectionName = item.type === 'card_item' ? 'cards' : 'services';
+            const ref = doc(db, collectionName, item.id);
+            if (item.isPaid) {
+                await updateDoc(ref, { paidPeriods: arrayRemove(targetMonthKey) });
+            } else {
+                await updateDoc(ref, { paidPeriods: arrayUnion(targetMonthKey) });
+                if (householdId && auth.currentUser) {
+                    try {
+                        const { serverTimestamp } = await import('firebase/firestore');
+                        await addDoc(collection(db, 'households', householdId, 'notifications'), {
+                            type: 'payment', itemName: item.name, amount: item.amount,
+                            dueDate: item.day, itemType: item.type,
+                            paidByUid: auth.currentUser.uid,
+                            paidByName: auth.currentUser.displayName || 'Alguien',
+                            createdAt: serverTimestamp(), readBy: [auth.currentUser.uid]
+                        });
+                    } catch (e) { console.error('Error saving notification', e); }
+                }
             }
+        } catch (error) {
+            console.error('Error al actualizar estado de pago:', error);
+            if (showToast) showToast('Error al actualizar el pago', 'error');
         }
-         
-    }, [targetMonthKey, householdId]);
+    }, [targetMonthKey, householdId, showToast]);
 
 
     const { order, getDragProps, draggingItem } = useDragReorder(getInitialOrder());
@@ -197,14 +202,20 @@ const Home = memo(({ onLogout, notifications = EMPTY_ARRAY, onCardClick }) => {
     }, [services, cardsWithDebt, targetMonthKey]);
 
     const superEnabled = isModuleEnabled('supermarket');
-    const totalNeed = services.reduce((acc, s) => acc + s.amount, 0) + cardsWithDebt.reduce((acc, c) => acc + c.currentDebt, 0) + (superEnabled ? superData.totalBudget : 0);
-    const totalPaid = services.filter(s => s.paidPeriods?.includes(targetMonthKey)).reduce((acc, s) => acc + s.amount, 0) + cardsWithDebt.filter(c => c.paidPeriods?.includes(targetMonthKey)).reduce((acc, c) => acc + c.currentDebt, 0) + (superEnabled ? superData.realSpent : 0);
+    const totalNeed = services.reduce((acc, s) => acc + (Number(s.amount) || 0), 0) + cardsWithDebt.reduce((acc, c) => acc + (Number(c.currentDebt) || 0), 0) + (superEnabled ? (Number(superData.totalBudget) || 0) : 0);
+    const totalPaid = services.filter(s => s.paidPeriods?.includes(targetMonthKey)).reduce((acc, s) => acc + (Number(s.amount) || 0), 0) + cardsWithDebt.filter(c => c.paidPeriods?.includes(targetMonthKey)).reduce((acc, c) => acc + (Number(c.currentDebt) || 0), 0) + (superEnabled ? (Number(superData.realSpent) || 0) : 0);
     const showMoney = (amount) => privacyMode ? '****' : formatMoney(amount);
 
     const criticalAlert = useMemo(() => {
         const firstItem = agenda[0];
         if (firstItem && firstItem.day <= CRITICAL_DUE_DAY_THRESHOLD) {
-            return { active: true, msg: `Vencimiento próx: ${firstItem.name} (Día ${firstItem.day})`, amount: firstItem.amount };
+            return {
+                active: true,
+                msg: `Vencimiento próx: ${firstItem.name} (Día ${firstItem.day})`,
+                amount: firstItem.amount,
+                itemType: firstItem.type,
+                itemName: firstItem.name
+            };
         }
         return { active: false };
     }, [agenda]);
@@ -319,7 +330,7 @@ const Home = memo(({ onLogout, notifications = EMPTY_ARRAY, onCardClick }) => {
                     splitData={splitData}
                 />
             ) : (
-                <React.Suspense fallback={<div className="h-40 animate-pulse bg-gray-100 dark:bg-white/5 rounded-3xl flex items-center justify-center text-xs text-gray-400">Cargando módulos...</div>}>
+                <React.Suspense fallback={<SkeletonDashboard isGlass={isGlass} />}>
                     <WidgetGrid
                         order={order}
                         getWidgetNode={getWidgetNode}
@@ -335,9 +346,9 @@ const Home = memo(({ onLogout, notifications = EMPTY_ARRAY, onCardClick }) => {
 
             <ThemeSelector theme={theme} setTheme={setTheme} isGlass={isGlass} />
 
-            <button aria-label="Acción" type="button"
+            <button aria-label="Actualizar aplicación y recargar datos" type="button"
                 onClick={handleCacheRefresh}
-                className="w-full py-4 mt-3 rounded-full border border-gray-100 dark:border-white/10 text-gray-400 dark:text-white/40 text-xs font-bold uppercase tracking-widest hover:bg-gray-50 dark:hover:bg-white/5 hover:text-gray-600 dark:hover:text-white/80 transition-all flex items-center justify-center gap-2 group"
+                className="w-full py-4 mt-3 rounded-full border border-gray-100 dark:border-white/10 text-gray-400 dark:text-white/40 text-xs font-bold uppercase tracking-widest hover:bg-gray-50 dark:hover:bg-white/5 hover:text-gray-600 dark:hover:text-white/80 transition-all flex items-center justify-center gap-2 group min-h-[44px]"
             >
                 <RefreshCw size={16} className="group-hover:rotate-180 transition-transform duration-500 ease-out" />
                 <span>Actualizar Aplicación</span>

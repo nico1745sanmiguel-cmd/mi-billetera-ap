@@ -109,18 +109,21 @@ export default function SuperActionsWidget({ privacyMode, setView, size = '1x1',
                     </div>
 
                     {!isAdding && (
-                        <button aria-label="Acción" 
+                        <button 
+                            aria-label="Abrir campo para agregar producto" 
+                            type="button"
                             onClick={(e) => { e.stopPropagation(); setIsAdding(true); }}
-                            className="bg-gray-50 text-gray-400 hover:text-purple-600 dark:bg-white/5 dark:text-white/40 dark:hover:text-purple-300 p-2 rounded-full transition-colors"
+                            className="w-11 h-11 flex items-center justify-center bg-gray-50 text-gray-400 hover:text-purple-600 dark:bg-white/5 dark:text-white/40 dark:hover:text-purple-300 rounded-full transition-colors active:scale-95"
                         >
-                            <Plus size={16} />
+                            <Plus size={18} />
                         </button>
                     )}
                 </div>
 
                 {isAdding ? (
                     <div className="relative z-10 mt-2 flex items-center" onClick={(e) => e.stopPropagation()}>
-                        <input autoComplete="off" id="input-field"
+                        <input autoComplete="off" id="super-compact-input"
+                            aria-label="Nombre del producto para el supermercado"
                             type="text"
                             placeholder="Producto..."
                             value={inputValue}
@@ -128,10 +131,15 @@ export default function SuperActionsWidget({ privacyMode, setView, size = '1x1',
                             onKeyDown={handleKeyDown}
                             autoFocus
                             onBlur={() => setTimeout(() => setIsAdding(false), 200)}
-                            className="w-full bg-gray-50 dark:bg-black/20 text-xs px-2 py-1.5 rounded-lg border border-gray-200 dark:border-white/10 text-gray-700 dark:text-white focus:outline-none focus:border-purple-400 pr-8"
+                            className="w-full min-h-[44px] bg-gray-50 dark:bg-black/20 text-xs px-3 py-2 rounded-lg border border-gray-200 dark:border-white/10 text-gray-700 dark:text-white focus:outline-none focus:border-purple-400 pr-10"
                         />
-                        <button aria-label="Acción" onClick={handleQuickAdd} className="absolute right-1 text-purple-500 p-1">
-                            <Check size={14} />
+                        <button 
+                            aria-label="Guardar producto en changuito" 
+                            type="button"
+                            onClick={handleQuickAdd} 
+                            className="absolute right-1 w-10 h-10 flex items-center justify-center text-purple-500 hover:text-purple-600 active:scale-95"
+                        >
+                            <Check size={16} />
                         </button>
                     </div>
                 ) : (
@@ -172,20 +180,23 @@ export default function SuperActionsWidget({ privacyMode, setView, size = '1x1',
             
             <div className="mt-auto" onClick={(e) => e.stopPropagation()}>
                 <div className="relative">
-                    <input autoComplete="off" id="input-field"
+                    <input autoComplete="off" id="super-quick-input"
+                        aria-label="Agregar producto rápido al supermercado"
                         type="text"
                         placeholder="Agregar rápido al súper..."
                         value={inputValue}
                         onChange={(e) => setInputValue(e.target.value)}
                         onKeyDown={handleKeyDown}
-                        className="w-full bg-gray-50 dark:bg-black/20 text-sm px-4 py-2.5 rounded-xl border border-gray-200 dark:border-white/10 text-gray-700 dark:text-white focus:outline-none focus:border-purple-400 pr-10"
+                        className="w-full min-h-[44px] bg-gray-50 dark:bg-black/20 text-sm px-4 py-2.5 rounded-xl border border-gray-200 dark:border-white/10 text-gray-700 dark:text-white focus:outline-none focus:border-purple-400 pr-12"
                     />
-                    <button aria-label="Acción" type="button" 
+                    <button 
+                        aria-label="Agregar producto a la lista de compras" 
+                        type="button" 
                         onClick={handleQuickAdd}
                         disabled={!inputValue.trim()}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 text-white bg-purple-500 hover:bg-purple-600 p-1.5 rounded-lg disabled:opacity-50 disabled:bg-gray-300 transition-colors"
+                        className="absolute right-1.5 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center text-white bg-purple-500 hover:bg-purple-600 rounded-lg disabled:opacity-50 disabled:bg-gray-300 transition-colors active:scale-95"
                     >
-                        <Plus size={16} />
+                        <Plus size={18} />
                     </button>
                 </div>
                 

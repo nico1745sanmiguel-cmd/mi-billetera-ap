@@ -15,8 +15,12 @@ function SalaryWidgetInner({ setView, privacyMode, size }) {
     if (isHalf) {
         return (
             <div
+                role="button"
+                tabIndex={0}
+                aria-label={`Ver gestión de sueldo, total ${showMoney(totalIncome)}`}
                 onClick={() => setView('salary')}
-                className="h-full flex flex-col items-center justify-center rounded-2xl p-3 shadow-sm border border-violet-100 bg-gradient-to-br from-violet-50 to-indigo-50 dark:from-white/10 dark:to-white/5 dark:border-white/10 relative overflow-hidden cursor-pointer transition-all active:scale-95 group text-center gap-2"
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setView('salary'); }}
+                className="h-full flex flex-col items-center justify-center rounded-2xl p-3 shadow-sm border border-violet-100 bg-gradient-to-br from-violet-50 to-indigo-50 dark:from-white/10 dark:to-white/5 dark:border-white/10 relative overflow-hidden cursor-pointer transition-all active:scale-95 group text-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
             >
                 <div className="absolute right-0 top-0 w-24 h-24 bg-gradient-to-br from-violet-200/40 to-indigo-200/40 dark:from-violet-500/10 dark:to-indigo-500/10 rounded-full -mr-8 -mt-8 blur-2xl" />
                 <div className="relative z-10 bg-violet-200 dark:bg-violet-500/20 p-2.5 rounded-xl text-violet-700 dark:text-violet-300">
@@ -50,9 +54,13 @@ function SalaryWidgetInner({ setView, privacyMode, size }) {
     // ─── Modo COMPLETO ────────────────────────────────────────────────────────
     return (
         <div
+            role="button"
+            tabIndex={0}
+            aria-label={`Ver gestión de sueldo, total ${showMoney(totalIncome)}`}
             onClick={() => setView('salary')}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setView('salary'); }}
             className="h-full flex flex-col justify-center rounded-2xl p-5 shadow-sm border border-violet-100 bg-gradient-to-r from-violet-50 to-indigo-50
-                dark:from-white/10 dark:to-white/5 dark:border-white/10 relative overflow-hidden group cursor-pointer transition-all active:scale-95"
+                dark:from-white/10 dark:to-white/5 dark:border-white/10 relative overflow-hidden group cursor-pointer transition-all active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
         >
             <div className="absolute right-0 top-0 w-32 h-32 bg-gradient-to-br from-violet-200/50 to-indigo-200/50 dark:from-violet-500/10 dark:to-indigo-500/10 rounded-full -mr-10 -mt-10 blur-2xl transition-all group-hover:scale-110" />
 
@@ -66,7 +74,7 @@ function SalaryWidgetInner({ setView, privacyMode, size }) {
                         <p className="text-[10px] uppercase font-bold text-gray-500 dark:text-white/50 tracking-wider">Plan de ingresos</p>
                     </div>
                 </div>
-                <button aria-label="Acción" type="button" className="text-gray-400 dark:text-white/40 group-hover:text-violet-600 dark:group-hover:text-violet-300 transition-colors">
+                <button aria-label="Ver detalle de sueldos e ingresos" type="button" className="w-11 h-11 flex items-center justify-center text-gray-400 dark:text-white/40 group-hover:text-violet-600 dark:group-hover:text-violet-300 transition-colors">
                     <ChevronRight size={20} />
                 </button>
             </div>

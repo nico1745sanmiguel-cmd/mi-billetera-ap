@@ -54,11 +54,13 @@ function UndoToast({ toast, onUndo, onDismiss }) {
                 <div className="flex items-center gap-3 px-4 py-3">
                     <CheckCircle2 size={18} className="text-green-400 flex-shrink-0" />
                     <p className="flex-1 text-sm font-medium">{toast.name} marcado como pagado</p>
-                    <button aria-label="Acción" type="button"
+                    <button 
+                        aria-label={`Deshacer pago de ${toast.name}`} 
+                        type="button"
                         onClick={onUndo}
-                        className="flex items-center gap-1.5 text-xs font-bold text-indigo-300 hover:text-indigo-200 active:scale-95 transition-all px-2 py-1 rounded-lg bg-white/10 hover:bg-white/20"
+                        className="min-h-[44px] flex items-center gap-1.5 text-xs font-bold text-indigo-300 hover:text-indigo-200 active:scale-95 transition-all px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20"
                     >
-                        <RotateCcw size={13} />
+                        <RotateCcw size={14} />
                         Deshacer
                     </button>
                 </div>
@@ -256,32 +258,42 @@ export default function AgendaWidget({ currentDate, privacyMode, setView, onTogg
             <div className="h-full flex flex-col bg-white dark:bg-white/5 rounded-3xl border border-gray-100 dark:border-white/10 shadow-sm overflow-hidden mx-1 dark:backdrop-blur-md">
                 {/* HEADER */}
                 <div className="px-5 py-4 border-b border-gray-50 dark:border-white/5 flex justify-between items-center bg-gray-50/50 dark:bg-transparent">
-                    <button aria-label="Acción" type="button"
-                        className="font-bold text-gray-800 dark:text-white text-sm flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+                    <button 
+                        aria-label={`Ver agenda completa de ${currentDate.toLocaleString('es-AR', { month: 'long' })}`} 
+                        type="button"
+                        className="font-bold text-gray-800 dark:text-white text-sm flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity min-h-[44px]"
                         onClick={() => setView('services_manager')}
                     >
                         <CalendarDays size={18} /> Agenda {currentDate.toLocaleString('es-AR', { month: 'long' })}
                     </button>
                     <div className="flex items-center gap-2">
                         {/* Switch lista / semana */}
-                        <div className="flex bg-gray-100 dark:bg-white/10 rounded-xl p-0.5">
-                            <button aria-label="Acción" type="button"
+                        <div className="flex bg-gray-100 dark:bg-white/10 rounded-xl p-0.5" role="group" aria-label="Selector de vista de agenda">
+                            <button 
+                                aria-label="Vista de lista"
+                                aria-pressed={viewMode === 'list'}
+                                type="button"
                                 onClick={() => switchMode('list')}
                                 title="Vista Lista"
-                                className={`p-1.5 rounded-lg transition-all ${viewMode === 'list' ? 'bg-white dark:bg-white/20 shadow text-indigo-600 dark:text-white' : 'text-gray-400 dark:text-white/30 hover:text-gray-600 dark:hover:text-white/60'}`}
+                                className={`w-9 h-9 flex items-center justify-center rounded-lg transition-all ${viewMode === 'list' ? 'bg-white dark:bg-white/20 shadow text-indigo-600 dark:text-white' : 'text-gray-400 dark:text-white/30 hover:text-gray-600 dark:hover:text-white/60'}`}
                             >
-                                <LayoutList size={14} />
+                                <LayoutList size={16} />
                             </button>
-                            <button aria-label="Acción" type="button"
+                            <button 
+                                aria-label="Vista de semana"
+                                aria-pressed={viewMode === 'week'}
+                                type="button"
                                 onClick={() => switchMode('week')}
                                 title="Vista Semana"
-                                className={`p-1.5 rounded-lg transition-all ${viewMode === 'week' ? 'bg-white dark:bg-white/20 shadow text-indigo-600 dark:text-white' : 'text-gray-400 dark:text-white/30 hover:text-gray-600 dark:hover:text-white/60'}`}
+                                className={`w-9 h-9 flex items-center justify-center rounded-lg transition-all ${viewMode === 'week' ? 'bg-white dark:bg-white/20 shadow text-indigo-600 dark:text-white' : 'text-gray-400 dark:text-white/30 hover:text-gray-600 dark:hover:text-white/60'}`}
                             >
-                                <CalendarRange size={14} />
+                                <CalendarRange size={16} />
                             </button>
                         </div>
-                        <button aria-label="Acción" type="button"
-                            className="text-xs font-bold text-gray-400 dark:text-white/40 cursor-pointer hover:text-gray-600 dark:hover:text-white/60 transition-colors"
+                        <button 
+                            aria-label="Ver todos los servicios y vencimientos" 
+                            type="button"
+                            className="text-xs font-bold text-gray-400 dark:text-white/40 cursor-pointer hover:text-gray-600 dark:hover:text-white/60 transition-colors min-h-[44px] px-2 flex items-center"
                             onClick={() => setView('services_manager')}
                         >
                             Ver todo →
@@ -311,13 +323,15 @@ export default function AgendaWidget({ currentDate, privacyMode, setView, onTogg
                                     <p className="font-mono font-bold text-gray-800 dark:text-white">{showMoney(item.amount)}</p>
                                     {/* Botón marcar como pagado */}
                                     {onTogglePaid && (
-                                        <button aria-label="Acción" type="button"
+                                        <button 
+                                            aria-label={`Marcar como pagado ${item.name}`} 
+                                            type="button"
                                             id={`pay-btn-${item.id}`}
                                             onClick={() => handleTogglePaid(item)}
                                             title="Marcar como pagado"
-                                            className="w-8 h-8 rounded-xl bg-gray-100 dark:bg-white/10 text-gray-400 dark:text-white/30 hover:bg-green-100 dark:hover:bg-green-500/20 hover:text-green-600 dark:hover:text-green-400 active:scale-90 transition-all flex items-center justify-center flex-shrink-0"
+                                            className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-xl bg-gray-100 dark:bg-white/10 text-gray-400 dark:text-white/30 hover:bg-green-100 dark:hover:bg-green-500/20 hover:text-green-600 dark:hover:text-green-400 active:scale-90 transition-all flex items-center justify-center flex-shrink-0"
                                         >
-                                            <CheckCircle2 size={16} />
+                                            <CheckCircle2 size={18} />
                                         </button>
                                     )}
                                 </div>

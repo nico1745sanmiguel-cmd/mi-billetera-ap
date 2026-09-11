@@ -18,10 +18,13 @@ const ThemeSelector = ({ theme, setTheme, isGlass }) => {
                 {THEME_OPTIONS.map(({ key, label, Icon }) => {
                     const isActive = theme === key;
                     return (
-                        <button aria-label="Acción" type="button"
+                        <button 
+                            aria-label={`Cambiar tema a ${label}`}
+                            aria-pressed={isActive}
+                            type="button"
                             key={key}
                             onClick={() => setTheme(key)}
-                            className={`relative flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold transition-all duration-300 ${
+                            className={`relative min-h-[44px] flex items-center justify-center gap-2 px-4 py-2.5 rounded-full text-xs font-bold transition-all duration-300 active:scale-95 ${
                                 isActive
                                     ? isGlass
                                         ? 'bg-white/20 text-white shadow-lg shadow-black/20'
@@ -32,7 +35,7 @@ const ThemeSelector = ({ theme, setTheme, isGlass }) => {
                             }`}
                         >
                             <Icon
-                                size={13}
+                                size={15}
                                 className={`transition-colors duration-300 ${
                                     isActive && key === 'light'  ? 'text-amber-500' :
                                     isActive && key === 'dark'   ? 'text-indigo-400' :

@@ -14,9 +14,11 @@ function SizeMenu({ currentSize, onSelect, onClose }) {
                 <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-white/10 rounded-2xl shadow-2xl shadow-black/20 dark:shadow-black/60 p-1.5 flex flex-col gap-1 min-w-[160px]">
                     <p className="text-[9px] uppercase font-bold text-gray-400 dark:text-white/30 tracking-widest px-2 pt-1 pb-0.5">Tamaño del widget</p>
 
-                    <button aria-label="Acción" type="button"
+                    <button 
+                        aria-label="Cambiar a tamaño completo"
+                        type="button"
                         onClick={(e) => { e.stopPropagation(); onSelect('full'); onClose(); }}
-                        className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                        className={`min-h-[44px] flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all active:scale-95 ${
                             currentSize === 'full'
                                 ? 'bg-indigo-500 text-white shadow-md shadow-indigo-500/30'
                                 : 'text-gray-600 dark:text-white/70 hover:bg-gray-50 dark:hover:bg-white/5'
@@ -29,9 +31,11 @@ function SizeMenu({ currentSize, onSelect, onClose }) {
                         </span>
                     </button>
 
-                    <button aria-label="Acción" type="button"
+                    <button 
+                        aria-label="Cambiar a tamaño compacto"
+                        type="button"
                         onClick={(e) => { e.stopPropagation(); onSelect('half'); onClose(); }}
-                        className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                        className={`min-h-[44px] flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all active:scale-95 ${
                             currentSize === 'half'
                                 ? 'bg-indigo-500 text-white shadow-md shadow-indigo-500/30'
                                 : 'text-gray-600 dark:text-white/70 hover:bg-gray-50 dark:hover:bg-white/5'
@@ -93,6 +97,15 @@ function WidgetWrapper({ widgetKey, children, size, onToggleSize, getDragProps, 
 // ─── WidgetGrid ────────────────────────────────────────────────────────────────
 export function WidgetGrid({ order, getWidgetNode, getSize, toggleSize, getDragProps, draggingItem }) {
     const activeKeys = order.filter(key => !!getWidgetNode(key, 'full'));
+
+    if (activeKeys.length === 0) {
+        return (
+            <div className="p-8 text-center bg-gray-50 dark:bg-white/5 rounded-3xl border border-dashed border-gray-200 dark:border-white/10 my-2">
+                <p className="text-sm font-bold text-gray-700 dark:text-white/80 mb-1">Sin widgets activos</p>
+                <p className="text-xs text-gray-400 dark:text-white/40">Podés activar módulos desde el menú superior en Ajustes de Módulos.</p>
+            </div>
+        );
+    }
 
     const rows = [];
     let i = 0;

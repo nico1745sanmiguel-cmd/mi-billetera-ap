@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Check } from 'lucide-react';
 
@@ -18,9 +18,18 @@ const SKINS = [
 ];
 
 const SkinsModal = ({ isOpen, onClose, currentSkin, onSelectSkin }) => {
+    useEffect(() => {
+        if (!isOpen) return;
+        const handleKeyDown = (e) => {
+            if (e.key === 'Escape') onClose();
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [isOpen, onClose]);
+
     if (!isOpen) return null;
 
-    return (
+    return createPortal(
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-fade-in">
             <div 
                 className="absolute inset-0 bg-black/60 backdrop-blur-md transition-opacity" 
@@ -38,8 +47,9 @@ const SkinsModal = ({ isOpen, onClose, currentSkin, onSelectSkin }) => {
                     </div>
                     <button 
                         type="button"
+                        aria-label="Cerrar personalización de skins"
                         onClick={onClose}
-                        className="p-2 bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-white/70 rounded-full hover:bg-gray-200 dark:hover:bg-white/20 transition-colors"
+                        className="w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-white/70 rounded-full hover:bg-gray-200 dark:hover:bg-white/20 transition-colors"
                     >
                         <X size={20} />
                     </button>
@@ -51,12 +61,23 @@ const SkinsModal = ({ isOpen, onClose, currentSkin, onSelectSkin }) => {
                         return (
                             <div 
                                 key={s.id}
+                                role="button"
+                                tabIndex={0}
+                                aria-pressed={isActive}
+                                aria-label={`Seleccionar diseño ${s.name}`}
                                 onClick={() => {
                                     onSelectSkin(s.id);
                                     setTimeout(onClose, 150);
                                 }}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                        e.preventDefault();
+                                        onSelectSkin(s.id);
+                                        setTimeout(onClose, 150);
+                                    }
+                                }}
                                 className={`
-                                    relative p-4 rounded-2xl border-2 transition-all cursor-pointer overflow-hidden
+                                    relative p-4 rounded-2xl border-2 transition-all cursor-pointer overflow-hidden focus:outline-none focus:ring-2 focus:ring-blue-500
                                     ${isActive 
                                         ? 'border-blue-500 bg-blue-50/50 dark:bg-blue-500/10' 
                                         : 'border-gray-200 dark:border-white/10 hover:border-blue-300 dark:hover:border-white/30'}
@@ -89,7 +110,8 @@ const SkinsModal = ({ isOpen, onClose, currentSkin, onSelectSkin }) => {
                     })}
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 

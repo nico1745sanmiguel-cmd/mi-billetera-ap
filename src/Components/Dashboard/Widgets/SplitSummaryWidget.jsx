@@ -47,8 +47,12 @@ export default function SplitSummaryWidget({ setView, householdMembers, currentD
 
     return (
         <div 
+            role="button"
+            tabIndex={0}
+            aria-label="Ver reparto de gastos compartidos"
             onClick={() => setView('reparto')}
-            className="h-full flex flex-col bg-white dark:bg-white/5 rounded-3xl border border-gray-100 dark:border-white/10 shadow-sm overflow-hidden mx-1 cursor-pointer hover:border-emerald-200 dark:hover:bg-white/10 transition-all dark:backdrop-blur-md group"
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setView('reparto'); }}
+            className="h-full flex flex-col bg-white dark:bg-white/5 rounded-3xl border border-gray-100 dark:border-white/10 shadow-sm overflow-hidden mx-1 cursor-pointer hover:border-emerald-200 dark:hover:bg-white/10 transition-all dark:backdrop-blur-md group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
         >
             {/* Header */}
             <div className={`px-5 py-4 border-b border-gray-50 dark:border-white/5 flex ${size === 'half' ? 'flex-col items-start gap-2' : 'justify-between items-center'} bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-transparent dark:to-transparent`}>
@@ -57,9 +61,11 @@ export default function SplitSummaryWidget({ setView, householdMembers, currentD
                     {size !== 'half' && <p className="text-[10px] text-gray-400 dark:text-white/40 font-medium capitalize">{currentDate.toLocaleString('es-AR', { month: 'long', year: 'numeric' })}</p>}
                 </div>
                 {size !== 'half' && (
-                    <button aria-label="Acción" type="button" 
+                    <button 
+                        aria-label="Gestionar sueldos del hogar" 
+                        type="button" 
                         onClick={(e) => { e.stopPropagation(); setView('household'); }} 
-                        className="text-[10px] font-bold text-emerald-600 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-500/10 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 px-2 py-1 rounded-full transition-colors dark:border dark:border-emerald-500/20"
+                        className="min-h-[44px] px-3.5 py-2 text-xs font-bold text-emerald-600 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-500/10 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 rounded-full transition-colors dark:border dark:border-emerald-500/20 active:scale-95 flex items-center justify-center"
                     >
                         Sueldos
                     </button>
@@ -125,8 +131,33 @@ export default function SplitSummaryWidget({ setView, householdMembers, currentD
             ) : (
                 <div className={`p-5 text-center ${size === 'half' ? 'flex flex-col items-center justify-center' : ''}`}>
                     {size !== 'half' && <div className="flex justify-center mb-2"><Wallet size={32} className="text-yellow-500 dark:text-yellow-400 drop-shadow-sm" /></div>}
-                    <p className={`text-sm font-bold text-gray-700 dark:text-white/80 ${size === 'half' ? 'mb-0 text-xs' : 'mb-1'}`}>Cargá los sueldos</p>
-                    {size !== 'half' && <p className="text-xs text-gray-400 dark:text-white/40 mb-3">Ingresen su sueldo para calcular el reparto.</p>}
+                    {(!householdMembers || householdMembers.length < 2) ? (
+                        <>
+                            <p className={`text-sm font-bold text-gray-700 dark:text-white/80 ${size === 'half' ? 'mb-0 text-xs' : 'mb-1'}`}>Hogar no configurado</p>
+                            {size !== 'half' && <p className="text-xs text-gray-400 dark:text-white/40 mb-2">Sumá a los miembros para calcular el reparto.</p>}
+                            <button 
+                                aria-label="Ir a configurar hogar"
+                                type="button" 
+                                onClick={(e) => { e.stopPropagation(); setView('household'); }} 
+                                className="min-h-[44px] text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline px-2 py-1 inline-flex items-center justify-center"
+                            >
+                                Configurar hogar →
+                            </button>
+                        </>
+                    ) : (
+                        <>
+                            <p className={`text-sm font-bold text-gray-700 dark:text-white/80 ${size === 'half' ? 'mb-0 text-xs' : 'mb-1'}`}>Cargá los sueldos</p>
+                            {size !== 'half' && <p className="text-xs text-gray-400 dark:text-white/40 mb-2">Ingresen su sueldo para calcular el reparto.</p>}
+                            <button 
+                                aria-label="Ir a cargar sueldos"
+                                type="button" 
+                                onClick={(e) => { e.stopPropagation(); setView('household'); }} 
+                                className="min-h-[44px] text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline px-2 py-1 inline-flex items-center justify-center"
+                            >
+                                Cargar sueldos →
+                            </button>
+                        </>
+                    )}
                 </div>
             )}
         </div>

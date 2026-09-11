@@ -57,8 +57,12 @@ export default function SavingsWidget({ setView, privacyMode, size }) {
     if (isHalf) {
         return (
             <div
+                role="button"
+                tabIndex={0}
+                aria-label="Ver detalles de ahorros e inversiones"
                 onClick={() => setView('savings')}
-                className={`h-full flex flex-col justify-between rounded-3xl overflow-hidden cursor-pointer transition-all group relative ${hasGoalImage ? 'bg-gray-800 dark:bg-gray-900' : ''}`}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setView('savings'); }}
+                className={`h-full flex flex-col justify-between rounded-3xl overflow-hidden cursor-pointer transition-all group relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${hasGoalImage ? 'bg-gray-800 dark:bg-gray-900' : ''}`}
             >
                 {/* Fondo imagen (idéntico al full) */}
                 {hasGoalImage && (
@@ -82,11 +86,13 @@ export default function SavingsWidget({ setView, privacyMode, size }) {
                             <TrendingUp size={13} className="text-green-400" />
                             Mis Ahorros
                         </h3>
-                        <button aria-label={`Cambiar moneda a ${currencyView === 'ARS' ? 'USD' : 'ARS'}`} type="button"
+                        <button 
+                            aria-label={`Cambiar moneda a ${currencyView === 'ARS' ? 'USD' : 'ARS'}`} 
+                            type="button"
                             onClick={(e) => { e.stopPropagation(); setCurrencyView(prev => prev === 'ARS' ? 'USD' : 'ARS'); }}
-                            className={`flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full transition-colors ${hasGoalImage ? 'text-white/70 bg-white/10 hover:bg-white/20' : 'text-gray-400 dark:text-white/40 bg-gray-50 dark:bg-white/5 hover:text-green-600 dark:hover:text-green-400'}`}
+                            className={`min-h-[36px] flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full transition-colors active:scale-95 ${hasGoalImage ? 'text-white/80 bg-white/15 hover:bg-white/25' : 'text-gray-500 dark:text-white/50 bg-gray-100 dark:bg-white/10 hover:text-green-600 dark:hover:text-green-400'}`}
                         >
-                            <ArrowRightLeft size={10} />
+                            <ArrowRightLeft size={11} />
                             {currencyView === 'ARS' ? 'USD' : 'ARS'}
                         </button>
                     </div>
@@ -125,8 +131,12 @@ export default function SavingsWidget({ setView, privacyMode, size }) {
     // ─── Modo COMPLETO ────────────────────────────────────────────────────────
     return (
         <div
+            role="button"
+            tabIndex={0}
+            aria-label="Ver detalles de ahorros e inversiones"
             onClick={() => setView('savings')}
-            className={`h-full flex flex-col justify-between rounded-3xl overflow-hidden mx-1 cursor-pointer transition-all group relative ${hasGoalImage ? 'bg-gray-800 dark:bg-gray-900' : ''}`}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setView('savings'); }}
+            className={`h-full flex flex-col justify-between rounded-3xl overflow-hidden mx-1 cursor-pointer transition-all group relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${hasGoalImage ? 'bg-gray-800 dark:bg-gray-900' : ''}`}
             style={{ minHeight: hasGoalImage ? '160px' : undefined }}
         >
             {/* Fondo: imagen del objetivo con revelado progresivo */}
@@ -189,19 +199,21 @@ export default function SavingsWidget({ setView, privacyMode, size }) {
                         <TrendingUp size={16} className="text-green-400" />
                         Mis Ahorros
                     </h3>
-                    <button aria-label={`Cambiar moneda a ${currencyView === 'ARS' ? 'USD' : 'ARS'}`} type="button"
+                    <button 
+                        aria-label={`Cambiar moneda a ${currencyView === 'ARS' ? 'USD' : 'ARS'}`} 
+                        type="button"
                         onClick={(e) => {
                             e.stopPropagation();
                             setCurrencyView(prev => prev === 'ARS' ? 'USD' : 'ARS');
                         }}
-                        className={`flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-full transition-colors ${
+                        className={`min-h-[38px] flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full transition-colors active:scale-95 ${
                             hasGoalImage
-                                ? 'text-white/70 bg-white/10 hover:bg-white/20'
-                                : 'text-gray-400 dark:text-white/40 bg-gray-50 dark:bg-white/5 hover:text-green-600 dark:hover:text-green-400'
+                                ? 'text-white/80 bg-white/15 hover:bg-white/25'
+                                : 'text-gray-500 dark:text-white/50 bg-gray-100 dark:bg-white/10 hover:text-green-600 dark:hover:text-green-400'
                         }`}
                         title={`Ver en ${currencyView === 'ARS' ? 'USD' : 'ARS'}`}
                     >
-                        <ArrowRightLeft size={12} />
+                        <ArrowRightLeft size={13} />
                         {currencyView === 'ARS' ? 'USD' : 'ARS'}
                     </button>
                 </div>
