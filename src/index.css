@@ -14,7 +14,7 @@ html, body {
 }
 
 body { background-color: #f3f4f6; }
-
+.dark body { background-color: #0f0c29; }
 
 /* BLOQUEO DE SELECCIÓN DE TEXTO (Efecto App Nativa) */
 body {
@@ -34,6 +34,39 @@ input, textarea {
   -webkit-user-select: text !important;
   user-select: text !important;
   -webkit-touch-callout: default !important;
+}
+
+/* Selección de texto para datos financieros clave (alias, CBU, totales) */
+.selectable-text {
+  -webkit-user-select: text !important;
+  user-select: text !important;
+}
+
+/* ── UTILIDADES DE SCROLLBAR ────────────────────────────────────── */
+/* Ocultar barra de desplazamiento manteniendo funcionalidad táctil */
+.no-scrollbar::-webkit-scrollbar,
+.hide-scrollbar::-webkit-scrollbar,
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar,
+.hide-scrollbar,
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Scrollbar sutil y moderno */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(156, 163, 175, 0.4);
+  border-radius: 9999px;
+}
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
 }
 
 /* ANIMACIÓN: Modal deslizante desde abajo (Bottom Sheet) */

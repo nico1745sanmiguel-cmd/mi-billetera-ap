@@ -103,3 +103,102 @@ Integrity mode: development
 ### Calidad de Código y UX
 - [ ] El proyecto compila limpiamente mediante npm run build.
 - [ ] La UI de la sección de Grupo Familiar y Reparto presenta un diseño limpio, intuitivo y sin inconsistencias visuales.
+
+## Follow-up — 2026-09-10T23:18:40Z
+
+Requested team: Equipo de 3 especialistas:
+- 🕵️♂️ AGENTE QA: usar modelo flash (Auditor de Seguridad)
+- 🛠️ AGENTE DEV: usar modelo pro (Desarrollador Firebase)
+- 🔍 AGENTE REVIEWER: usar modelo pro (Verificador Final)
+
+Auditoría integral de seguridad y blindaje de reglas de Firebase en "Mi Billetera" (React + Vite + Firebase), garantizando estricto aislamiento de datos entre usuarios y verificación de fugas de credenciales.
+
+Working directory: c:\Users\Nico\.gemini\antigravity\scratch\mi-billetera-ap
+Integrity mode: development
+
+## Requirements
+
+### R1. Auditoría de Seguridad e Informe de Vulnerabilidades (QA - Flash)
+- Analizar `firestore.rules`, `firebase.json` y `functions/index.js`.
+- Identificar colecciones o rutas donde los datos de un usuario puedan ser leídos, modificados o eliminados por otro, o donde no se exija autenticación (`request.auth != null`).
+- Verificar que en el código cliente y archivos de configuración no existan llaves privadas de servicio ni secretos sensibles expuestos.
+- Generar un informe estructurado de vulnerabilidades con impacto y ubicación exacta, sin modificar código fuente.
+
+### R2. Corrección y Blindaje de Reglas (DEV - Pro)
+- Implementar las correcciones necesarias en `firestore.rules` y `functions/`.
+- Garantizar que cada regla exija autenticación obligatoria y restrinja el acceso exclusivamente al propietario del recurso (`request.auth.uid == userId` o validación correspondiente según la estructura del documento).
+- Notificar al Agente Reviewer con el detalle de los cambios aplicados.
+
+### R3. Validación y Aprobación Final (REVIEWER - Pro)
+- Revisar exhaustivamente las reglas y funciones corregidas.
+- Validar que el endurecimiento de la seguridad no rompa el flujo legítimo de lectura y escritura del usuario sobre sus propios datos en la aplicación cliente.
+- Emitir la aprobación final técnica o requerir ajustes específicos.
+
+## Acceptance Criteria
+
+### Aislamiento de Datos y Autenticación
+- [ ] Ninguna colección ni documento de usuario puede ser leído o modificado sin sesión activa (`request.auth != null`).
+- [ ] Cada usuario puede acceder única y exclusivamente a sus propios registros (`request.auth.uid == userId`).
+- [ ] No existen reglas permisivas globales (como `allow read, write: if true;` o lectura pública no intencionada).
+
+### Seguridad de Credenciales y Backend
+- [ ] No hay llaves privadas de Service Account ni variables de entorno sensibles commiteadas o expuestas al bundle de frontend.
+- [ ] Las Cloud Functions en `functions/index.js` validan contexto de autenticación en llamadas invocables (Callable / HTTP).
+
+### Continuidad Operativa
+- [ ] La estructura de reglas respeta las consultas reales que hace la aplicación React para no bloquear la UX del usuario.
+
+## Follow-up — 2026-09-10T23:59:44Z
+
+# Teamwork Project Prompt
+
+Requested team: Equipo de 3 especialistas (QA Inspector [flash], DEV Frontend/CSS [flash], REVIEWER Diseñador Líder [inherit])
+
+Auditar y refinar el Sistema de Diseño y los componentes UX/UI base de "Mi Billetera" (React, Vite, Tailwind CSS), garantizando una experiencia financiera sobria, moderna y premium con plena responsividad móvil (sin desbordes ni touch targets diminutos) y coherencia de estados interactivos y de carga.
+
+Working directory: z:\Mi billetera
+Integrity mode: development
+
+## Requested Team & Workflow
+
+1. 🕵️♂️ AGENTE QA — UX Inspector (flash):
+   - Audita estilos globales (index.css, tailwind.config.js), botones, modales, inputs y tarjetas (`src/Components/UI/*` y componentes comunes).
+   - Revisa responsividad en pantallas chicas (celular): desbordes horizontales, touch targets menores a 44x44px, textos con contraste insuficiente o ilegibles.
+   - Detecta incoherencias de paleta, falta de contraste o estados de carga (spinners / skeletons) ausentes o toscos.
+   - Emite un reporte técnico detallado al Dev. NO modifica código directamente.
+
+2. 🛠️ AGENTE DEV — Frontend & CSS Specialist (flash):
+   - Toma el reporte del QA y ajusta los componentes base de UI y la configuración de estilos.
+   - Asegura una estética financiera "Premium": sobria, moderna, sin bordes toscos, espaciados consistentes, feedback háptico/visual en hover/active/focus.
+   - Mantiene la compatibilidad y no rompe lógica funcional ni imports.
+
+3. 🔍 AGENTE REVIEWER — Diseñador Líder (inherit):
+   - Audita el diff y los cambios introducidos por el Dev.
+   - Valida que la estructura visual no se haya roto y que se cumpla la estética premium solicitada.
+   - Da el veredicto final.
+
+## Requirements
+
+### R1. Auditoría exhaustiva de componentes base y estilos globales
+Inspeccionar `tailwind.config.js`, `index.css` y los componentes en `src/Components/UI/` (botones, tarjetas GlassCard, modales ConfirmDialog, estados de carga Skeleton/LoadingState, Inputs). Identificar desalineaciones de color, falta de variantes consistentes, contrastes pobres y áreas no responsivas.
+
+### R2. Refactorización y estandarización UI/UX base
+Implementar mejoras en los componentes base para garantizar touch targets mínimos de 44px en móviles, variantes claras (primary, secondary, danger, ghost), estados focus/active visibles y elegantes, skeletons pulidos y una paleta financiera oscura/clara sin elementos estridentes ni placeholders genéricos.
+
+### R3. Preservación funcional y verificación de compilación
+Garantizar que no existan errores de sintaxis, variables de Tailwind rotas ni imports quebrados en Vite. El proyecto debe compilar limpiamente (`npm run build`).
+
+## Acceptance Criteria
+
+### UX & Responsividad Móvil
+- [ ] Todos los botones e inputs interactivos en pantallas móviles tienen un área de toque accesible (mínimo 44x44px o padding suficiente).
+- [ ] No existen desbordes horizontales (`overflow-x` no deseado) causados por componentes base o modales en anchos de pantalla reducidos (360px - 414px).
+- [ ] Los estados de carga (skeletons / spinners) existen y están armonizados con la paleta de la aplicación.
+
+### Estética Financiera Premium
+- [ ] Jerarquía tipográfica definida y sobria, con contrastes de texto que cumplan legibilidad sin saturación innecesaria.
+- [ ] Modales y diálogos de confirmación estilizados con efectos modernos (glassmorphism sutil, bordes suaves, backdrop blur coherente).
+
+### Estabilidad del Código
+- [ ] El comando de compilación del proyecto se ejecuta exitosamente sin errores de Tailwind o JSX.
+- [ ] Los componentes existentes que consumen `Components/UI` mantienen su contrato de props y funcionamiento.

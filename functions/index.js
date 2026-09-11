@@ -315,6 +315,11 @@ exports.onNotificationCreated = functions.firestore
 
 // Función para obtener precios de Yahoo Finance saltándose el CORS
 exports.fetchYahooFinance = functions.https.onCall(async (data, context) => {
+    // [SEGURIDAD VULN-02]: Validación obligatoria de sesión activa
+    if (!context.auth) {
+        throw new functions.https.HttpsError('unauthenticated', 'El usuario debe estar autenticado.');
+    }
+
     // data.symbols debe ser un array ['AAPL', 'MSFT', 'NKE']
     const symbols = data.symbols;
     if (!symbols || !Array.isArray(symbols)) {

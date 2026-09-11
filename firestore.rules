@@ -9,21 +9,51 @@ service cloud.firestore {
     }
     
     // Función auxiliar: obtiene el householdId del usuario actual leyendo su documento en "users"
-    // Devuelve null si el campo no existe (usuario sin familia configurada)
+    // Robustece comprobando exists() para evitar excepciones en usuarios nuevos sin perfil (VULN-06)
     function getUserHouseholdId() {
-      let userData = get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
-      return userData.keys().hasAll(['householdId']) ? userData.householdId : null;
+      let userDoc = /databases/$(database)/documents/users/$(request.auth.uid);
+      return exists(userDoc) && ('householdId' in get(userDoc).data)
+        ? get(userDoc).data.householdId
+        : null;
     }
 
-    // Colección de Usuarios: 
+    // Funciones auxiliares de pertenencia para documentos
+    function isOwner(docData) {
+      return ('userId' in docData && docData.userId == request.auth.uid) ||
+             ('ownerId' in docData && docData.ownerId == request.auth.uid) ||
+             ('uid' in docData && docData.uid == request.auth.uid) ||
+             ('createdBy' in docData && docData.createdBy == request.auth.uid);
+    }
+
+    function isHouseholdMember(docData) {
+      return getUserHouseholdId() != null &&
+             'householdId' in docData &&
+             docData.householdId != null &&
+             docData.householdId == getUserHouseholdId();
+    }
+
+    // Colección de Usuarios:
     // Un usuario puede leer/escribir su propio documento
-    // O puede leer el documento de otra persona si comparten el mismo householdId
+    // O puede leer el documento de otra persona solo si ambos pertenecen explícitamente al mismo hogar (evita null == null, VULN-01)
     match /users/{userId} {
-      allow read: if isAuthenticated() && (request.auth.uid == userId || resource.data.householdId == getUserHouseholdId());
+      allow read: if isAuthenticated() && (
+        request.auth.uid == userId ||
+        (
+          getUserHouseholdId() != null &&
+          'householdId' in resource.data &&
+          resource.data.householdId != null &&
+          resource.data.householdId == getUserHouseholdId()
+        )
+      );
       allow write: if isAuthenticated() && request.auth.uid == userId;
 
       // Subcolección privada: plan de sueldo mensual (solo el propio usuario)
       match /salary_config/{monthKey} {
+        allow read, write: if isAuthenticated() && request.auth.uid == userId;
+      }
+
+      // Subcolección privada: notificaciones individuales (alertas stop loss, VULN-08)
+      match /notifications/{notificationId} {
         allow read, write: if isAuthenticated() && request.auth.uid == userId;
       }
     }
@@ -31,53 +61,92 @@ service cloud.firestore {
     // Colección de Hogares (Households)
     match /households/{householdId} {
       allow create: if isAuthenticated();
-      // Solo pueden leer/escribir si el ID del hogar coincide con el del usuario
-      allow read, update, delete: if isAuthenticated() && householdId == getUserHouseholdId();
+
+      // Lectura: miembros actuales o consulta por inviteCode al intentar unirse (VULN-05)
+      allow read: if isAuthenticated() && (
+        householdId == getUserHouseholdId() ||
+        ('members' in resource.data && resource.data.members.hasAny([request.auth.uid])) ||
+        ('inviteCode' in resource.data && resource.data.inviteCode != null)
+      );
+
+      // Actualización: miembros actuales o nuevo usuario agregándose a members manteniendo los anteriores
+      allow update: if isAuthenticated() && (
+        householdId == getUserHouseholdId() ||
+        ('members' in resource.data && resource.data.members.hasAny([request.auth.uid])) ||
+        (
+          'members' in resource.data &&
+          'members' in request.resource.data &&
+          request.resource.data.members.hasAll(resource.data.members) &&
+          request.resource.data.members.hasAny([request.auth.uid])
+        )
+      );
+
+      // Eliminación: solo miembros legítimos del hogar
+      allow delete: if isAuthenticated() && (
+        householdId == getUserHouseholdId() ||
+        ('members' in resource.data && resource.data.members.hasAny([request.auth.uid]))
+      );
       
       match /notifications/{document=**} {
-        allow read, write: if isAuthenticated() && householdId == getUserHouseholdId();
+        allow read, write: if isAuthenticated() && (
+          householdId == getUserHouseholdId() ||
+          ('members' in get(/databases/$(database)/documents/households/$(householdId)).data &&
+           get(/databases/$(database)/documents/households/$(householdId)).data.members.hasAny([request.auth.uid]))
+        );
       }
     }
 
-    // Regla general para colecciones que comparten el campo householdId:
-    // transactions, cards, supermarket_items, fresh_purchases, services, 
-    // planner_categories, contributions, savings_transactions, savings_goals, savings_asset_prices
+    // Colecciones de la aplicación (unificadas para evitar comodines superpuestos, VULN-09)
     match /{collection}/{document} {
-      allow read, write: if isAuthenticated() && 
-                            // Aseguramos que solo afecte a las colecciones con aislamiento por familia
-                            collection in ['transactions', 'cards', 'supermarket_items', 'fresh_purchases', 'services', 'planner_categories', 'contributions', 'savings_transactions', 'savings_goals', 'savings_asset_prices', 'savings_stop_losses', 'savings_carteras'] &&
-                            // Validamos acceso: con household (comparte con familia) o sin household (solo el propio userId)
-                            (
-                              // Caso 1: usuario CON household → el householdId del documento debe coincidir
-                              (
-                                getUserHouseholdId() != null &&
-                                (
-                                  (resource == null && request.resource.data.householdId == getUserHouseholdId()) ||
-                                  (resource != null && resource.data.householdId == getUserHouseholdId())
-                                )
-                              ) ||
-                              // Caso 2: usuario SIN household → el userId del documento debe coincidir
-                              (
-                                getUserHouseholdId() == null &&
-                                (
-                                  (resource == null && request.resource.data.userId == request.auth.uid) ||
-                                  (resource != null && resource.data.userId == request.auth.uid)
-                                )
-                              )
-                            );
-    }
+      // --- Colecciones estrictamente personales ---
+      // mobility_sessions, mobility_expenses, notes
+      allow read, delete: if isAuthenticated() &&
+        collection in ['mobility_sessions', 'mobility_expenses', 'notes'] &&
+        isOwner(resource.data);
 
-    // Regla general para colecciones que son personales (solo requieren coincidir el userId)
-    // mobility_sessions, mobility_expenses, notes
-    match /{collection}/{document} {
-      allow read, write: if isAuthenticated() && 
-                            // Aseguramos que solo afecte a colecciones personales
-                            collection in ['mobility_sessions', 'mobility_expenses', 'notes'] &&
-                            // Validamos que el recurso pertenezca al usuario
-                            (
-                              (resource == null && request.resource.data.userId == request.auth.uid) || 
-                              (resource != null && resource.data.userId == request.auth.uid)
-                            );
+      allow create: if isAuthenticated() &&
+        collection in ['mobility_sessions', 'mobility_expenses', 'notes'] &&
+        isOwner(request.resource.data);
+
+      allow update: if isAuthenticated() &&
+        collection in ['mobility_sessions', 'mobility_expenses', 'notes'] &&
+        isOwner(resource.data) &&
+        (!('userId' in resource.data) || request.resource.data.userId == resource.data.userId);
+
+      // --- Colecciones compartidas (aislamiento por hogar o personal/migración, VULN-04, VULN-07) ---
+      // transactions, cards, supermarket_items, fresh_purchases, services, 
+      // planner_categories, contributions, savings_*, merchant_aliases
+      allow read, delete: if isAuthenticated() &&
+        collection in [
+          'transactions', 'cards', 'supermarket_items', 'fresh_purchases',
+          'services', 'planner_categories', 'contributions',
+          'savings_transactions', 'savings_goals', 'savings_asset_prices',
+          'savings_stop_losses', 'savings_carteras', 'merchant_aliases'
+        ] &&
+        (isHouseholdMember(resource.data) || isOwner(resource.data));
+
+      allow create: if isAuthenticated() &&
+        collection in [
+          'transactions', 'cards', 'supermarket_items', 'fresh_purchases',
+          'services', 'planner_categories', 'contributions',
+          'savings_transactions', 'savings_goals', 'savings_asset_prices',
+          'savings_stop_losses', 'savings_carteras', 'merchant_aliases'
+        ] &&
+        (isOwner(request.resource.data) || isHouseholdMember(request.resource.data));
+
+      allow update: if isAuthenticated() &&
+        collection in [
+          'transactions', 'cards', 'supermarket_items', 'fresh_purchases',
+          'services', 'planner_categories', 'contributions',
+          'savings_transactions', 'savings_goals', 'savings_asset_prices',
+          'savings_stop_losses', 'savings_carteras', 'merchant_aliases'
+        ] &&
+        (isHouseholdMember(resource.data) || isOwner(resource.data)) &&
+        // Inmutabilidad de propiedad (VULN-03)
+        (!('userId' in resource.data) || request.resource.data.userId == resource.data.userId) &&
+        (!('ownerId' in resource.data) || request.resource.data.ownerId == resource.data.ownerId) &&
+        // Asignación de hogar controlada (solo el hogar del usuario o null)
+        (!('householdId' in request.resource.data) || request.resource.data.householdId == null || getUserHouseholdId() == null || request.resource.data.householdId == getUserHouseholdId());
     }
   }
 }

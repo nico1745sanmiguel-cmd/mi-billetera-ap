@@ -42,16 +42,20 @@ export default function InstallPrompt() {
         <p className="font-bold text-sm">¿Instalar App?</p>
         <p className="text-xs text-gray-300">Acceso rápido y sin barras.</p>
       </div>
-      <div className="flex gap-3">
-        <button aria-label="Acción" type="button" 
+      <div className="flex items-center gap-3">
+        <button 
+            aria-label="Cerrar aviso de instalación" 
+            type="button" 
             onClick={() => setShow(false)} 
-            className="text-gray-400 text-xs font-bold hover:text-white"
+            className="min-h-[44px] px-3.5 flex items-center justify-center text-gray-400 text-xs font-bold hover:text-white rounded-xl transition-all active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
         >
             LUEGO
         </button>
-        <button aria-label="Acción" type="button" 
+        <button 
+            aria-label="Instalar aplicación en dispositivo" 
+            type="button" 
             onClick={handleInstallClick} 
-            className="bg-blue-600 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-blue-500 shadow-lg"
+            className="min-h-[44px] px-4 flex items-center justify-center bg-blue-600 hover:bg-blue-500 active:scale-95 rounded-xl text-xs font-bold shadow-lg shadow-blue-600/30 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
         >
             INSTALAR
         </button>

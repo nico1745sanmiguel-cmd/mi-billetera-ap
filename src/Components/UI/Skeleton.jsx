@@ -1,32 +1,35 @@
 import React from 'react';
 
-const Skeleton = ({ className = '', type = 'text', width, height }) => {
-  // Configuración base de estilos
-  let baseStyle = 'animate-pulse bg-gray-200 dark:bg-gray-700';
+/**
+ * Skeleton — Placeholder de carga translúcido con efecto Shimmer.
+ */
+export default function Skeleton({ className = '', type = 'text', width, height }) {
+    let baseStyle = 'relative overflow-hidden bg-gray-200/80 dark:bg-white/10 rounded-xl';
 
-  // Tipos de esqueleto
-  if (type === 'text') {
-    baseStyle += ' h-4 rounded';
-  } else if (type === 'title') {
-    baseStyle += ' h-8 rounded';
-  } else if (type === 'circle') {
-    baseStyle += ' rounded-full';
-  } else if (type === 'rectangular') {
-    baseStyle += ' rounded-xl';
-  }
+    if (type === 'text') {
+        baseStyle = 'relative overflow-hidden bg-gray-200/80 dark:bg-white/10 h-4 rounded-lg';
+    } else if (type === 'title') {
+        baseStyle = 'relative overflow-hidden bg-gray-200/80 dark:bg-white/10 h-7 rounded-xl';
+    } else if (type === 'circle') {
+        baseStyle = 'relative overflow-hidden bg-gray-200/80 dark:bg-white/10 rounded-full';
+    } else if (type === 'rectangular') {
+        baseStyle = 'relative overflow-hidden bg-gray-200/80 dark:bg-white/10 rounded-2xl';
+    }
 
-  // Estilos en línea para anchos/altos específicos que no estén en Tailwind
-  const style = {};
-  if (width) style.width = width;
-  if (height) style.height = height;
+    const style = {};
+    if (width) style.width = width;
+    if (height) style.height = height;
 
-  return (
-    <div 
-      className={`${baseStyle} ${className}`} 
-      style={style}
-      aria-hidden="true"
-    ></div>
-  );
-};
+    return (
+        <div 
+            className={`${baseStyle} ${className}`} 
+            style={style}
+            aria-hidden="true"
+        >
+            {/* Shimmer de barrido de luz */}
+            <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 dark:via-white/5 to-transparent animate-shimmer" />
+        </div>
+    );
+}
 
-export default Skeleton;
+export { Skeleton };

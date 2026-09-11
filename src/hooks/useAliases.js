@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { collection, query, onSnapshot, addDoc, doc, deleteDoc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, addDoc, doc, deleteDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 
 const deleteAlias = async (id) => {
@@ -29,16 +29,9 @@ export const useAliases = (userId, householdId = null) => {
         }
 
         // Definir dónde buscar: si hay householdId, buscamos por ese ID, sino por userId
-        // NOTA: Para aliases, quizás convenga que sean personales O compartidos. 
-        // Por simplicidad inicial, usemos la misma lógica que las Transactions (Household first)
-
-        // Simplificación v1: Traer todos los aliases creados por el usuario o su hogar
-        // Dependiendo de rules, acá podríamos filtrar
-
-        // Por ahora, asumimos una colección 'merchant_aliases' plana y filtramos en cliente o query simple
-        // Para no complicar indices compuestos ahora mismo.
-
-        const q = query(collection(db, 'merchant_aliases'));
+        const queryField = householdId ? "householdId" : "userId";
+        const queryValue = householdId ? householdId : userId;
+        const q = query(collection(db, 'merchant_aliases'), where(queryField, "==", queryValue));
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const loadedAliases = snapshot.docs.map(doc => ({
