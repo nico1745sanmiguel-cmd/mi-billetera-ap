@@ -17,8 +17,8 @@ export default function SuperActionsWidget({ privacyMode, setView, size = '1x1',
             return targetMonthKey === realKey;
         });
 
-        const rawBudget = monthlyItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
-        const realSpent = monthlyItems.filter(i => i.checked).reduce((acc, item) => acc + (item.price * item.quantity), 0);
+        const rawBudget = monthlyItems.reduce((acc, item) => acc + ((Number(item.price) || 0) * (Number(item.quantity) || 1)), 0);
+        const realSpent = monthlyItems.filter(i => i.checked).reduce((acc, item) => acc + ((Number(item.price) || 0) * (Number(item.quantity) || 1)), 0);
         const hasStartedShopping = monthlyItems.some(i => i.checked);
 
         const totalBudget = hasStartedShopping ? realSpent : rawBudget;

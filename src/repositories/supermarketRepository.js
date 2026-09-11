@@ -57,5 +57,5 @@ export const toggleSuperChecked = (id, checked) =>
  * @param {string} id
  * @param {Object} fields
  */
-const updateSuperFields = (id, fields) =>
+export const updateSuperFields = (id, fields) =>
     updateDoc(doc(db, COL, id), fields);

@@ -9,7 +9,7 @@ import React, { useId } from 'react';
  * @param {React.ComponentType} [props.icon]
  * @param {string} [props.id]
  */
-export default function Input({
+const Input = React.forwardRef(function Input({
     label,
     error,
     helperText,
@@ -18,7 +18,7 @@ export default function Input({
     className = '',
     disabled = false,
     ...props
-}) {
+}, ref) {
     const autoId = useId();
     const inputId = explicitId || autoId;
 
@@ -39,6 +39,7 @@ export default function Input({
                     </div>
                 )}
                 <input
+                    ref={ref}
                     id={inputId}
                     disabled={disabled}
                     autoComplete="off"
@@ -65,6 +66,7 @@ export default function Input({
             )}
         </div>
     );
-}
+});
 
+export default Input;
 export { Input };

@@ -8,7 +8,7 @@
  */
 
 import { db } from '../firebase';
-import { collection, addDoc, deleteDoc, doc, updateDoc } from 'firebase/firestore';
+import { collection, addDoc, deleteDoc, doc, updateDoc, writeBatch } from 'firebase/firestore';
 import { COLLECTIONS } from '../config/constants';
 
 const COL = COLLECTIONS.FRESH_PURCHASES;
@@ -53,21 +53,29 @@ export const toggleFreshCompleted = (id, completed) =>
  * @param {string} date - Formato "YYYY-MM-DD"
  */
 export const updateFreshDate = (id, date) =>
-    updateDoc(doc(db, COL, id), { date });
+    updateDoc(doc(db, COL, id), { 
+        date, 
+        month: date.slice(0, 7) 
+    });
 
 /**
- * Copia una lista de ítems a un mes nuevo (herencia de presupuesto).
+ * Copia una lista de ítems a un mes nuevo (herencia de presupuesto) de forma atómica.
  * Se omiten id, createdAt y completed (se resetea a false).
  * @param {Array} items - Ítems del mes origen a copiar
  * @param {string} newMonthKey - Mes destino en formato "YYYY-MM"
  * @returns {Promise<void>}
  */
-export const copyItemsToMonth = (items, newMonthKey) => {
-    const promises = items.map(({ id: _id, createdAt: _createdAt, completed: _completed, date: _date, ...rest }) => {
+export const copyItemsToMonth = async (items, newMonthKey) => {
+    if (!items || items.length === 0) return;
+    const batch = writeBatch(db);
+    const colRef = collection(db, COL);
+
+    items.forEach(({ id: _id, createdAt: _createdAt, completed: _completed, date: _date, ...rest }) => {
         // Ajustamos la fecha al primer día del mes destino para mantener coherencia
         const [year, month] = newMonthKey.split('-');
         const newDate = `${year}-${month}-01`;
-        return addDoc(collection(db, COL), {
+        const newDocRef = doc(colRef);
+        batch.set(newDocRef, {
             ...rest,
             month: newMonthKey,
             date: newDate,
@@ -75,6 +83,21 @@ export const copyItemsToMonth = (items, newMonthKey) => {
             createdAt: new Date().toISOString(),
         });
     });
-    return Promise.all(promises);
+
+    return batch.commit();
+};
+
+/**
+ * Elimina múltiples ítems de mercado fresco de forma atómica.
+ * @param {string[]} ids
+ * @returns {Promise<void>}
+ */
+export const batchDeleteFreshItems = async (ids) => {
+    if (!ids || ids.length === 0) return;
+    const batch = writeBatch(db);
+    ids.forEach(id => {
+        batch.delete(doc(db, COL, id));
+    });
+    return batch.commit();
 };
 

@@ -30,7 +30,7 @@ export default function PlannerWidget({ setView, size }) {
     const faltante = useMemo(() => {
         // En PlannerSection, total = budget (si está pendiente) o real (si está completo)
         // Lo que falta gastar es la suma de los "totales" (presupuestos) de los pendientes
-        return pendingItems.reduce((acc, t) => acc + (t.total || 0), 0);
+        return pendingItems.reduce((acc, t) => acc + (Number(t.total) || 0), 0);
     }, [pendingItems]);
 
     // ---- MODO COMPACTO: mismo diseño pero sin lista de tareas ----

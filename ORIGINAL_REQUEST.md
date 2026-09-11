@@ -202,3 +202,49 @@ Garantizar que no existan errores de sintaxis, variables de Tailwind rotas ni im
 ### Estabilidad del Código
 - [ ] El comando de compilación del proyecto se ejecuta exitosamente sin errores de Tailwind o JSX.
 - [ ] Los componentes existentes que consumen `Components/UI` mantienen su contrato de props y funcionamiento.
+
+## Follow-up — 2026-09-11T01:58:01Z
+
+# Teamwork Project Prompt — Draft
+
+> Goal: Poner a punto el módulo Freshmarket en Mi Billetera con validaciones, UX de carga, listas vacías y robustez en CRUD.
+> Requested team: 🕵️♂️ AGENTE QA (flash), 🛠️ AGENTE DEV (pro), 🔍 AGENTE REVIEWER (inherit)
+
+Poner a punto y robustecer el módulo Freshmarket de "Mi Billetera", auditando y corrigiendo validaciones en formularios, estados de carga/esqueletos, estados vacíos y manejo de montos/fechas.
+
+Working directory: z:\Mi billetera
+Integrity mode: development
+
+## Requirements
+
+### R1. Auditoría y Robustez de Flujos de Negocio (QA)
+Auditar el flujo completo de Freshmarket (`FreshShop.jsx`, `PlannerSection.jsx`, `TripCard.jsx`):
+- Creación, edición, eliminación y filtrado de gastos/ítems por fecha y categoría.
+- Detección de casos borde: montos negativos, montos en cero o no numéricos, campos de nombre/nota vacíos, fechas inválidas o fuera de rango, y errores al sincronizar con Firestore.
+- Verificación de estados vacíos ("Sin movimientos aún" o feedback visual correspondiente) y estados de carga (`loading`, skeletons/spinners).
+
+### R2. Correcciones de Desarrollo y Experiencia de Usuario (DEV)
+- Validaciones consistentes antes de enviar o persistir datos en `freshRepository`.
+- Mensajes de error claros, comprensibles y accionables para el usuario (toasts/alertas contextuales).
+- Skeletons o spinners en cargas asíncronas para evitar saltos visuales o pantallas congeladas.
+- Prevención de montos negativos sin control y protección contra entradas malformadas.
+
+### R3. Control de Calidad y No Regresión (REVIEWER)
+- Verificación cruzada de cada fallo reportado por QA contra las correcciones implementadas por DEV.
+- Asegurar que no se introduzcan regresiones de estado, bugs de renderizado ni degradación en la estética Glassmorphic/UI existente.
+
+## Acceptance Criteria
+
+### Formularios y Validaciones
+- [ ] No es posible ingresar ni guardar montos negativos, nulos o cadenas no numéricas en creación ni en edición rápida de total (`TripCard`).
+- [ ] La fecha de ítems y compras no permite valores vacíos ni formatos inválidos.
+- [ ] Los nombres de nuevas categorías o notas de gastos no se pueden guardar en blanco o con solo espacios.
+
+### Feedback Visual y UX
+- [ ] Se muestran estados de carga (skeletons/spinners) mientras `freshItems` o las categorías están cargando.
+- [ ] Cuando una categoría no tiene movimientos, se muestra un estado vacío amigable e instructivo ("Sin movimientos aún" o similar con icono).
+- [ ] Los mensajes de error al usuario son claros, pedagógicos y sin tecnicismos crudos.
+
+### Integridad y Rendimiento
+- [ ] Cero regresiones en el cálculo de totales por categoría y presupuesto mensual.
+- [ ] Sincronización limpia con Firestore sin llamadas redundantes o errores en consola.

@@ -1,11 +1,14 @@
 import React from 'react';
-import { Sparkles, Check, Loader2, Plus } from 'lucide-react';
+import { Sparkles, Check, Plus } from 'lucide-react';
 import { formatMoney } from '../../utils';
+import Button from '../UI/Button';
 
 const SuperListSuggestions = ({ 
     prediction, selectedSuggestions, setSelectedSuggestions, 
     setShowSuggestions, handleConfirmSuggestions, isAddingSuggestions, isGlass 
 }) => {
+    const selectedCount = Object.values(selectedSuggestions).filter(Boolean).length;
+
     return (
         <div className={`rounded-3xl border p-4 animate-fade-in ${
             isGlass ? 'bg-purple-900/20 border-purple-500/30' : 'bg-purple-50 border-purple-200'
@@ -22,11 +25,12 @@ const SuperListSuggestions = ({
                     const key = s.name.toLowerCase();
                     const isSelected = selectedSuggestions[key] ?? true;
                     return (
-                        <button aria-label="Acción"
+                        <button
+                            aria-label={isSelected ? `Deseleccionar sugerencia ${s.name}` : `Seleccionar sugerencia ${s.name}`}
                             key={key}
                             type="button"
                             onClick={() => setSelectedSuggestions(prev => ({ ...prev, [key]: !prev[key] }))}
-                            className={`w-full flex items-center gap-3 p-2.5 rounded-2xl border transition-all ${
+                            className={`w-full min-h-[44px] flex items-center gap-3 p-2.5 rounded-2xl border transition-all ${
                                 isSelected
                                     ? (isGlass ? 'bg-purple-500/20 border-purple-500/40' : 'bg-white border-purple-300 shadow-sm')
                                     : (isGlass ? 'bg-white/5 border-white/10 opacity-50' : 'bg-gray-50 border-gray-200 opacity-50')
@@ -46,23 +50,27 @@ const SuperListSuggestions = ({
                     );
                 })}
             </div>
-            <div className="flex gap-2">
-                <button aria-label="Acción" type="button"
+            <div className="flex items-center gap-2">
+                <Button
+                    variant="ghost"
+                    size="md"
                     onClick={() => setShowSuggestions(false)}
-                    className={`flex-1 py-2.5 rounded-2xl text-sm font-bold border transition-all ${
-                        isGlass ? 'border-white/10 text-white/50 hover:bg-white/5' : 'border-gray-200 text-gray-500 hover:bg-gray-50'
-                    }`}
-                >Ignorar</button>
-                <button aria-label="Acción" type="button"
-                    onClick={handleConfirmSuggestions}
-                    disabled={isAddingSuggestions}
-                    className={`flex-2 px-6 py-2.5 rounded-2xl text-sm font-bold text-white shadow-md transition-all active:scale-95 disabled:opacity-50 flex items-center gap-2 ${
-                        isGlass ? 'bg-purple-500 hover:bg-purple-400' : 'bg-purple-600 hover:bg-purple-700'
-                    }`}
+                    aria-label="Ignorar sugerencias de compras"
+                    className="flex-1"
                 >
-                    {isAddingSuggestions ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
-                    {isAddingSuggestions ? 'Agregando...' : `Agregar ${Object.values(selectedSuggestions).filter(Boolean).length} seleccionados`}
-                </button>
+                    Ignorar
+                </Button>
+                <Button
+                    variant="primary"
+                    size="md"
+                    onClick={handleConfirmSuggestions}
+                    isLoading={isAddingSuggestions}
+                    leftIcon={<Plus size={16} />}
+                    aria-label={`Agregar ${selectedCount} sugerencias a la lista`}
+                    className="flex-[2] !bg-purple-600 hover:!bg-purple-700 !shadow-purple-500/20"
+                >
+                    {`Agregar ${selectedCount} seleccionados`}
+                </Button>
             </div>
         </div>
     );

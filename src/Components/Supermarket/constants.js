@@ -1,7 +1,7 @@
-import { Folder, Wrench, Car, Gift, Home as HomeIcon, Plane, GraduationCap, Heart, Palette, LayoutList } from 'lucide-react';
+import { Folder, Wrench, Car, Gift, Home as HomeIcon, Plane, GraduationCap, Heart, Palette, LayoutList, Leaf, Beef } from 'lucide-react';
 
 export const AVAILABLE_ICONS = {
-    Folder, Wrench, Car, Gift, Home: HomeIcon, Plane, GraduationCap, Heart, Palette, LayoutList
+    Folder, Wrench, Car, Gift, Home: HomeIcon, Plane, GraduationCap, Heart, Palette, LayoutList, Leaf, Beef
 };
 
 export const AVAILABLE_COLORS = {

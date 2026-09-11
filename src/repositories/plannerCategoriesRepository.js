@@ -13,5 +13,5 @@ export const addPlannerCategory = (payload) =>
 export const deletePlannerCategory = (id) =>
     deleteDoc(doc(db, COL, id));
 
-const updatePlannerCategory = (id, data) =>
+export const updatePlannerCategory = (id, data) =>
     updateDoc(doc(db, COL, id), data);

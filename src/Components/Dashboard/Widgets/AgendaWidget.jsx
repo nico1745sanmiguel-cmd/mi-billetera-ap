@@ -163,6 +163,7 @@ export default function AgendaWidget({ currentDate, privacyMode, setView, onTogg
         freshItems.forEach(fi => {
             if (!fi.date) return;
             const fiDate = new Date(fi.date + 'T12:00:00');
+            if (isNaN(fiDate.getTime())) return;
             const dayKey = fiDate.toISOString().split('T')[0];
             if (!map[dayKey]) map[dayKey] = [];
             const colorName = catColorMap[fi.category] || 'green';
