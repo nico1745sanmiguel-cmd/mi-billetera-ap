@@ -248,3 +248,42 @@ Auditar el flujo completo de Freshmarket (`FreshShop.jsx`, `PlannerSection.jsx`,
 ### Integridad y Rendimiento
 - [ ] Cero regresiones en el cálculo de totales por categoría y presupuesto mensual.
 - [ ] Sincronización limpia con Firestore sin llamadas redundantes o errores en consola.
+
+## 2026-09-11T15:12:27Z
+
+# Teamwork Project Prompt
+
+> Requested team: 🕵️♂️ AGENTE QA (flash), 🛠️ AGENTE DEV (pro), 🔍 AGENTE REVIEWER (inherit)
+
+Poner a punto de forma robusta y con UX premium el flujo de Purchase (gastos/compras) en "Mi Billetera", incluyendo validaciones estrictas, manejo de errores, estados de carga y gestión de transacciones.
+
+Working directory: z:\Mi billetera
+
+## Requirements
+
+### R1. Robustez en Carga y Validación de Compras (NewPurchase)
+- Validación de montos (impedir negativos, ceros, valores no numéricos).
+- Manejo de errores en UI (reemplazar alert() nativo por toasts/mensajes en pantalla integrados con el diseño Glassmorphism).
+- Skeletons y estados de carga claros mientras se guardan o leen datos.
+- Preselección y validación de tarjeta cuando el tipo de gasto es "Crédito".
+
+### R2. Flujo Completo de Transacciones (CRUD & Filtros)
+- Identificar y cubrir las operaciones de creación, edición, borrado y filtrado de transacciones (por fecha y categoría).
+- Soporte en CardsContext para actualización y eliminación segura de movimientos.
+- Estados vacíos informativos ("Sin movimientos aún") amigables para el usuario.
+
+### R3. Flujo Multi-Agente Secuencial
+- **Agente QA (Flash)**: Auditoría exhaustiva de casos borde (negativos, vacíos, fechas inválidas, filtros rotos). Entrega informe sin modificar código.
+- **Agente Dev (Pro)**: Implementación de validaciones, mensajes de error UX y estados de carga.
+- **Agente Reviewer (Inherit)**: Verificación contra el reporte de QA, asegurando cero regresiones.
+
+## Acceptance Criteria
+
+### Validaciones y UX
+- [ ] No es posible ingresar montos negativos, vacíos o inválidos en NewPurchase.
+- [ ] No existen alert() nativos; todos los avisos se muestran mediante toasts o mensajes inline con diseño consistente.
+- [ ] Las operaciones asíncronas muestran feedback visual inmediato (spinners/skeletons).
+
+### Integridad de Datos
+- [ ] Las transacciones se guardan saneadas en Firestore/Context sin campos corruptos.
+- [ ] Los estados vacíos están presentes y estilizados cuando no hay registros.

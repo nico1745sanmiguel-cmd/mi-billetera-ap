@@ -13,7 +13,7 @@ import { db } from '../../firebase';
 const ReconciliationDesk = ({
     onBack
 }) => {
-    const { isGlass } = useUI();
+    const { isGlass, showToast } = useUI();
     const { user, userData } = useAuth();
     const householdId = userData?.householdId;
     const { transactions: existingTransactions } = useCards();
@@ -26,9 +26,9 @@ const ReconciliationDesk = ({
     const { addAlias, findAlias } = useAliases(user?.uid, householdId);
 
     // --- HANDLERS PDF ---
-    const processFile = async (file) => {
+    const processFile = useCallback(async (file) => {
         if (file.type !== 'application/pdf') {
-            alert("Por favor subí un archivo PDF.");
+            showToast("Por favor subí un archivo PDF.", 'error');
             return;
         }
 
@@ -39,11 +39,11 @@ const ReconciliationDesk = ({
             // Auto-analyze could be triggered here or let user review text first
         } catch (e) {
             console.error(e);
-            alert("Error leyendo el PDF. Asegurate que no sea una imagen escaneada.");
+            showToast("Error leyendo el PDF. Asegurate que no sea una imagen escaneada.", 'error');
         } finally {
             setIsProcessing(false);
         }
-    };
+    }, [showToast]);
 
     const onDrop = useCallback((e) => {
         e.preventDefault();
@@ -52,7 +52,7 @@ const ReconciliationDesk = ({
         if (e.dataTransfer.files && e.dataTransfer.files[0]) {
             processFile(e.dataTransfer.files[0]);
         }
-    }, []);
+    }, [processFile]);
 
     const onDragOver = useCallback((e) => {
         e.preventDefault();
@@ -135,7 +135,7 @@ const ReconciliationDesk = ({
 
         } catch (e) {
             console.error("Error saving", e);
-            alert("Error al guardar");
+            showToast("Error al guardar la transacción.", 'error');
         }
     };
 

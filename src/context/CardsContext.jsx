@@ -78,10 +78,18 @@ export const CardsProvider = ({ children }) => {
     }, [transactions, userData, user]);
 
     const addTransaction = useCallback(async (t) => {
-        if (!user) return;
+        if (!user) {
+            showToast('Debe iniciar sesión para registrar una transacción.', 'error');
+            throw new Error('Usuario no autenticado');
+        }
 
         // Validamos y saneamos los datos antes de enviarlos (evitar negativos, NaN)
         const safeData = sanitizeFinancialData(t, ['amount', 'installments'], false);
+
+        if (Number(safeData.amount) <= 0) {
+            showToast("El monto debe ser mayor a $ 0.", 'error');
+            throw new Error('Monto inválido');
+        }
 
         const payload = { 
             ...safeData, 
@@ -94,10 +102,73 @@ export const CardsProvider = ({ children }) => {
         try {
             await addDoc(collection(db, COLLECTIONS.TRANSACTIONS), payload);
         } catch (error) {
+            console.error("Error al guardar transacción:", error);
             showToast("Hubo un error al guardar la transacción.", 'error');
             throw error;
         }
     }, [user, userData, showToast]);
+
+    const updateTransaction = useCallback(async (transactionId, updatedData) => {
+        if (!user) {
+            showToast("Debe iniciar sesión para modificar una transacción.", 'error');
+            throw new Error('Usuario no autenticado');
+        }
+        if (!transactionId) {
+            showToast("ID de transacción no válido.", 'error');
+            throw new Error('ID no válido');
+        }
+
+        const safeData = sanitizeFinancialData(updatedData, ['amount', 'installments'], false);
+
+        if (safeData.amount !== undefined && Number(safeData.amount) <= 0) {
+            showToast("El monto debe ser mayor a $ 0.", 'error');
+            throw new Error('Monto inválido');
+        }
+
+        if (safeData.type === 'credit' && safeData.installments) {
+            const safeInstallments = Math.max(1, Math.min(60, parseInt(safeData.installments, 10) || 1));
+            safeData.installments = safeInstallments;
+            if (safeData.amount) {
+                safeData.monthlyInstallment = Math.round((Number(safeData.amount) / safeInstallments) * 100) / 100;
+            }
+        }
+
+        const payload = {
+            ...safeData,
+            updatedAt: new Date().toISOString()
+        };
+
+        try {
+            const transRef = doc(db, COLLECTIONS.TRANSACTIONS, transactionId);
+            await updateDoc(transRef, payload);
+            showToast("Transacción actualizada exitosamente.", 'success');
+        } catch (error) {
+            console.error("Error al actualizar transacción:", error);
+            showToast("Hubo un error al actualizar la transacción.", 'error');
+            throw error;
+        }
+    }, [user, showToast]);
+
+    const deleteTransaction = useCallback(async (transactionId) => {
+        if (!user) {
+            showToast("Debe iniciar sesión para eliminar una transacción.", 'error');
+            throw new Error('Usuario no autenticado');
+        }
+        if (!transactionId) {
+            showToast("ID de transacción no válido.", 'error');
+            throw new Error('ID no válido');
+        }
+
+        try {
+            const transRef = doc(db, COLLECTIONS.TRANSACTIONS, transactionId);
+            await deleteDoc(transRef);
+            showToast("Transacción eliminada exitosamente.", 'success');
+        } catch (error) {
+            console.error("Error al eliminar transacción:", error);
+            showToast("Hubo un error al eliminar la transacción.", 'error');
+            throw error;
+        }
+    }, [user, showToast]);
 
     const addCard = useCallback(async (rawCard) => {
         if (!user) {
@@ -213,11 +284,13 @@ export const CardsProvider = ({ children }) => {
 
     const dispatchValue = useMemo(() => ({
         addTransaction,
+        updateTransaction,
+        deleteTransaction,
         addCard,
         updateCard,
         deleteCard,
         saveStatement
-    }), [addTransaction, addCard, updateCard, deleteCard, saveStatement]);
+    }), [addTransaction, updateTransaction, deleteTransaction, addCard, updateCard, deleteCard, saveStatement]);
 
     return (
         <CardsDispatchContext.Provider value={dispatchValue}>
