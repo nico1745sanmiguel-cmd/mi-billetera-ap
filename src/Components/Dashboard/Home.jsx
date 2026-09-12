@@ -93,7 +93,7 @@ const Home = memo(({ onLogout, notifications = EMPTY_ARRAY, onCardClick }) => {
     const { user, userData, householdMembers } = useAuth();
     const householdId = userData?.householdId;
     const { cards, transactions } = useCards();
-    const { superItems: supermarketItems, freshItems, plannerCategories } = useSupermarket();
+    const { superItems: supermarketItems, freshItems } = useSupermarket();
     const { services } = useServices();
     const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
     const [isSkinsOpen, setIsSkinsOpen] = useState(false);

@@ -16,7 +16,7 @@ const formatPercentage = (amount) => {
 };
 
 // ─── Panel de Venta Rápida ─────────────────────────────────────────────────────
-function QuickSellPanel({ asset, isGlass, currencyView, rate, textColor, secondaryTextColor, onClose }) {
+function QuickSellPanel({ asset, isGlass, rate, textColor, secondaryTextColor, onClose }) {
     const { addSavingsTransaction } = useSavings();
 
     const [monedaVenta, setMonedaVenta] = useState(() => {
@@ -275,7 +275,7 @@ function QuickSellPanel({ asset, isGlass, currencyView, rate, textColor, seconda
     );
 }
 
-export default function AssetDetailsModal({ isOpen, onClose, asset, currencyView, isGlass, rate, onSellClick }) {
+export default function AssetDetailsModal({ isOpen, onClose, asset, currencyView, isGlass, rate }) {
     if (!isOpen || !asset) return null;
 
     const textColor = isGlass ? 'text-white' : 'text-gray-800';

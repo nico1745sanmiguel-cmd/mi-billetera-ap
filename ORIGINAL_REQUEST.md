@@ -287,3 +287,49 @@ Working directory: z:\Mi billetera
 ### Integridad de Datos
 - [ ] Las transacciones se guardan saneadas en Firestore/Context sin campos corruptos.
 - [ ] Los estados vacíos están presentes y estilizados cuando no hay registros.
+
+## 2026-09-12T21:13:32Z
+
+# Teamwork Project Prompt — Draft
+
+> Status: Launched
+> Goal: Craft prompt → get user approval → delegate to teamwork_preview
+> Requested team: Equipo de 3 especialistas (QA flash, DEV pro, REVIEWER pro)
+
+Auditoría exhaustiva, limpieza y optimización para el pase a producción de la Progressive Web App (PWA) "Mi Billetera".
+
+Working directory: z:\Mi billetera
+Integrity mode: development
+
+## Roles Solicitados
+- 🕵️♂️ AGENTE QA (Auditor de Release - modelo Flash): Audita PWA (manifest, service worker, offline UX), ejecuta linter y detecta archivos basura o temporales. Solo lectura, no modifica archivos.
+- 🛠️ AGENTE DEV (Build Engineer - modelo Pro): Resuelve advertencias del linter, elimina código muerto y archivos temporales, optimiza Vite (code splitting, compresión) y asegura compatibilidad PWA.
+- 🔍 AGENTE REVIEWER (Director Técnico - modelo Pro): Ejecuta el build final, verifica cero errores y confirma si la app está lista para deploy.
+
+## Requirements
+
+### R1. Auditoría de Release y PWA (QA)
+Auditar `public/manifest.json` (nombre, descripción, iconos, theme_color, background_color, display), `public/sw.js` y verificar la experiencia sin conexión (banner o notificación de pérdida de red). Ejecutar el linter para documentar todas las advertencias/errores e inventariar los archivos residuales de desarrollo (scripts temporales, logs, reportes). Reportar hallazgos sin realizar modificaciones.
+
+### R2. Refactorización, Limpieza y Optimización de Build (DEV)
+Corregir los errores y advertencias detectados por el linter sin romper funcionalidad. Eliminar código muerto, logs de depuración (`console.log` innecesarios), comentarios obsoletos y los archivos residuales de test o reportes temporales generados durante el desarrollo. Configurar la optimización de empaquetado en Vite (`vite.config.js` / manualChunks, code splitting, compresión o lazy loading de rutas/dependencias pesadas como `recharts`, `pdfjs-dist`) asegurando que los meta tags y cabeceras PWA sean plenamente funcionales en Android e iOS.
+
+### R3. Certificación Técnica y Build de Producción (REVIEWER)
+Ejecutar el proceso de verificación final. Correr la compilación de producción (`npm run build`) comprobando que termine con código de salida exitoso (0), sin errores de TypeScript/JSX y sin advertencias críticas de empaquetado. Validar la integridad estructural de la PWA y emitir el dictamen final documentado: "App lista para deploy".
+
+## Acceptance Criteria
+
+### Limpieza de Código y Linter
+- [ ] `npm run lint` se ejecuta y finaliza con 0 errores.
+- [ ] Se eliminan del repositorio los archivos residuales de desarrollo en la raíz (ej: `inputs_full.txt`, `react-doctor-*.txt`, `report_test.json`, `fixA11y.mjs`, `parse_balanz.cjs`, `test-reparto-e2e.js`).
+- [ ] No quedan llamadas de `console.log` de depuración en los componentes productivos de `src/`.
+
+### Configuración PWA y Experiencia de Usuario (UX/UI)
+- [ ] `manifest.json` cuenta con todas las propiedades requeridas para instalación (`name`, `short_name`, `icons`, `start_url`, `display: standalone`, colores de tema).
+- [ ] Existe manejo de estado offline perceptible y elegante para el usuario cuando se pierde la conexión.
+- [ ] `index.html` incluye las etiquetas meta necesarias para viewport, `apple-touch-icon`, y soporte para navegadores móviles.
+
+### Build y Rendimiento (Vite)
+- [ ] `npm run build` compila con éxito en verde (`exit code 0`).
+- [ ] Se implementa división de código (code splitting/lazy loading) evitando un bundle monolítico gigante para dependencias pesadas (ej: `recharts`, `firebase`, `pdfjs-dist`).
+- [ ] El Director Técnico emite un reporte final de confirmación técnica para deploy.

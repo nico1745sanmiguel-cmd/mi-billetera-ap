@@ -28,7 +28,7 @@ export default function AssetPricesPanel({ isGlass }) {
             await saveManualPrice(especie, editValue);
             setEditing(null);
             setEditValue('');
-        } catch (e) {
+        } catch {
             alert('Error al guardar precio');
         }
         setLoading(false);

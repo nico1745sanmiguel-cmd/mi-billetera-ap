@@ -1,5 +1,4 @@
 import React, { useMemo, useState } from 'react';
-// eslint-disable-next-line react-doctor/prefer-dynamic-import
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
 import { Calculator, TrendingUp, BarChart, Info, ShieldAlert } from 'lucide-react';
 import { useSavings } from '../../../context/SavingsContext';

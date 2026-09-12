@@ -34,7 +34,7 @@ export default function SavingsDashboard() {
     const [activeTab, setActiveTab] = useState('portafolio');
 
     // ── Cálculo del total general consolidado (Activos + Cauciones + Liquidez) ──
-    const { total, totalUSD, pnlTotal, pnlPct } = useMemo(() => {
+    const { total, pnlTotal, pnlPct } = useMemo(() => {
         const rate = dolarBlue || 1000;
         let totalUSD = 0;
         let inversionUSD = 0;

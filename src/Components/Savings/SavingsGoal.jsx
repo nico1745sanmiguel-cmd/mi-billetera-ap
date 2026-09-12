@@ -5,13 +5,12 @@ import SavingsGoalForm from './SavingsGoalForm';
 import SavingsGoalView from './SavingsGoalView';
 import { useFinancial } from '../../context/FinancialContext';
 import { useUI } from '../../context/UIContext';
-import { formatInputNumber, parseInputNumber } from '../../utils';
 
 const arsFormatter = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 });
 
 export default function SavingsGoal() {
     const { isGlass, privacyMode } = useUI();
-    const { savingsTransactions, savingsGoal, goalLoading, saveSavingsGoal, deleteSavingsGoal, posiciones, cauciones, liquidezPorCartera } = useSavings();
+    const { savingsGoal, goalLoading, saveSavingsGoal, deleteSavingsGoal, posiciones, cauciones, liquidezPorCartera } = useSavings();
     const { dolarBlue } = useFinancial();
 
     const [editing, setEditing] = useState(false);

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Target, Edit3, Trophy, ImageOff, Sparkles, TrendingUp } from 'lucide-react';
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 
 // Componente simple de Confetti usando framer-motion
@@ -56,7 +57,7 @@ const ConfettiExplosion = ({ isComplete }) => {
 
 
 const SavingsGoalView = ({ 
-    savingsGoal, isComplete, hasImage, imageError, setImageError, 
+    savingsGoal, isComplete, hasImage, setImageError, 
     progress, privacyMode, formatCurrency, totalARS, goalAmount, remaining, 
     handleDelete, saving, openEdit, isGlass, cardBg, textColor 
 }) => {

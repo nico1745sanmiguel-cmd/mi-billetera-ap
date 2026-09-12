@@ -2,7 +2,6 @@ import React, { useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Save } from 'lucide-react';
 import { useSavings } from '../../context/SavingsContext';
-import { useFinancial } from '../../../context/FinancialContext';
 
 import TradeForm from './TradeForm';
 import CaucionForm from './CaucionForm';
@@ -44,7 +43,6 @@ const dateToMiddayISO = (dateStr) => {
 
 export default function OperationModal({ onClose, isGlass, initialData }) {
     const { addSavingsTransaction, updateSavingsTransaction, savingsTransactions, carterasPersonalizadas } = useSavings();
-    const { dolarBlue } = useFinancial();
     const [loading, setLoading] = useState(false);
 
     // Valores iniciales con fecha local

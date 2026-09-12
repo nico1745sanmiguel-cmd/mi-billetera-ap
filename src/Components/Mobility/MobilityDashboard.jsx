@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { m, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import { Plus, List, BarChart2, Upload, ArrowLeft, Zap, Settings } from 'lucide-react';
 import { useMobility } from '../../context/MobilityContext';
 import MobilityForm from './MobilityForm';

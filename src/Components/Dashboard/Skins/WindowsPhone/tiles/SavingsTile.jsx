@@ -6,7 +6,7 @@ import { useFinancial } from '../../../../../context/FinancialContext';
 import { formatMoney } from '../../../../../utils';
 
 const SavingsTile = ({ privacyMode, navigate, animDelay = 0 }) => {
-    const { posiciones, cauciones, liquidezPorCartera, carteras, savingsTransactions } = useSavings();
+    const { posiciones, cauciones, liquidezPorCartera, carteras } = useSavings();
     const { dolarBlue } = useFinancial();
 
     const totalSavedARS = useMemo(() => {

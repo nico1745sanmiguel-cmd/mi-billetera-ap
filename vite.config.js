@@ -12,9 +12,21 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['icon.png', 'icon.webp', 'icon-192.webp', 'logos/**/*'],
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,webp}']
+      },
       manifest: {
         short_name: "Mi Billetera",
-        name: "Control de Gastos",
+        name: "Mi Billetera - Control de Gastos",
+        description: "Mi Billetera - Aplicación personal para control de gastos, finanzas y presupuestos.",
+        lang: "es",
+        categories: ["finance"],
+        orientation: "portrait",
+        start_url: "/",
+        scope: "/",
+        display: "standalone",
+        theme_color: "#ffffff",
+        background_color: "#f3f4f6",
         icons: [
           {
             src: "/icon-192.webp",
@@ -34,11 +46,7 @@ export default defineConfig({
             type: "image/png",
             purpose: "any maskable"
           }
-        ],
-        start_url: "/",
-        display: "standalone",
-        theme_color: "#ffffff",
-        background_color: "#f3f4f6"
+        ]
       }
     })
   ],
@@ -48,8 +56,32 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom'],
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('/firebase/') || id.includes('\\firebase\\')) {
+              return 'vendor-firebase';
+            }
+            if (id.includes('/recharts/') || id.includes('\\recharts\\')) {
+              return 'vendor-charts';
+            }
+            if (id.includes('/framer-motion/') || id.includes('\\framer-motion\\')) {
+              return 'vendor-framer';
+            }
+            if (id.includes('/pdfjs-dist/') || id.includes('\\pdfjs-dist\\')) {
+              return 'vendor-pdf';
+            }
+            if (id.includes('/lucide-react/') || id.includes('\\lucide-react\\')) {
+              return 'vendor-icons';
+            }
+            if (
+              id.includes('/react/') || id.includes('\\react\\') ||
+              id.includes('/react-dom/') || id.includes('\\react-dom\\') ||
+              id.includes('/react-router/') || id.includes('\\react-router\\') ||
+              id.includes('/react-router-dom/') || id.includes('\\react-router-dom\\')
+            ) {
+              return 'vendor-react';
+            }
+          }
         },
       },
     },
