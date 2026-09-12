@@ -42,7 +42,7 @@ const UserMenu = ({
                     <div className="fixed inset-0 z-40" onClick={() => setIsMenuOpen(false)} aria-hidden="true" />
                     <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-[#1a1b4b] rounded-2xl shadow-xl shadow-black/10 dark:shadow-black/40 border border-gray-100 dark:border-white/10 overflow-hidden z-50 origin-top-right transition-all animate-fade-in" role="menu">
                         <div className="p-2 flex flex-col gap-1">
-                            {isModuleEnabled('household') && (
+                            {Boolean(isModuleEnabled?.('household')) && (
                                 <button 
                                     aria-label="Gestionar miembros del hogar" 
                                     type="button" 
@@ -96,7 +96,7 @@ const UserMenu = ({
                                 aria-label="Cerrar sesión de usuario" 
                                 type="button" 
                                 role="menuitem"
-                                onClick={() => { onLogout(); setIsMenuOpen(false); }} 
+                                onClick={() => { onLogout?.(); setIsMenuOpen(false); }} 
                                 className="w-full min-h-[44px] flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/20 dark:hover:text-red-300 rounded-xl transition-colors"
                             >
                                 <div className="bg-red-100/50 dark:bg-red-500/20 p-1.5 rounded-lg text-red-500 dark:text-red-300"><LogOut size={16} /></div>

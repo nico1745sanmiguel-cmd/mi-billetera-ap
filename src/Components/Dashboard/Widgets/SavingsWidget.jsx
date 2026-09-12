@@ -16,7 +16,7 @@ export default function SavingsWidget({ setView, privacyMode, size }) {
         let totalUSD = 0;
         const rate = dolarBlue || 1000;
 
-        posiciones.forEach(pos => {
+        (posiciones || []).forEach(pos => {
             totalUSD += pos.valorActualUSD || 0;
         });
 
@@ -90,7 +90,7 @@ export default function SavingsWidget({ setView, privacyMode, size }) {
                             aria-label={`Cambiar moneda a ${currencyView === 'ARS' ? 'USD' : 'ARS'}`} 
                             type="button"
                             onClick={(e) => { e.stopPropagation(); setCurrencyView(prev => prev === 'ARS' ? 'USD' : 'ARS'); }}
-                            className={`min-h-[36px] flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full transition-colors active:scale-95 ${hasGoalImage ? 'text-white/80 bg-white/15 hover:bg-white/25' : 'text-gray-500 dark:text-white/50 bg-gray-100 dark:bg-white/10 hover:text-green-600 dark:hover:text-green-400'}`}
+                            className={`min-h-[44px] min-w-[44px] flex items-center justify-center gap-1 text-[10px] font-bold px-3 py-2 rounded-full transition-colors active:scale-95 ${hasGoalImage ? 'text-white/80 bg-white/15 hover:bg-white/25' : 'text-gray-500 dark:text-white/50 bg-gray-100 dark:bg-white/10 hover:text-green-600 dark:hover:text-green-400'}`}
                         >
                             <ArrowRightLeft size={11} />
                             {currencyView === 'ARS' ? 'USD' : 'ARS'}
@@ -206,7 +206,7 @@ export default function SavingsWidget({ setView, privacyMode, size }) {
                             e.stopPropagation();
                             setCurrencyView(prev => prev === 'ARS' ? 'USD' : 'ARS');
                         }}
-                        className={`min-h-[38px] flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full transition-colors active:scale-95 ${
+                        className={`min-h-[44px] min-w-[44px] flex items-center justify-center gap-1.5 text-xs font-bold px-3 py-2 rounded-full transition-colors active:scale-95 ${
                             hasGoalImage
                                 ? 'text-white/80 bg-white/15 hover:bg-white/25'
                                 : 'text-gray-500 dark:text-white/50 bg-gray-100 dark:bg-white/10 hover:text-green-600 dark:hover:text-green-400'

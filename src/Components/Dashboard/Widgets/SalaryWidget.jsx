@@ -74,9 +74,9 @@ function SalaryWidgetInner({ setView, privacyMode, size }) {
                         <p className="text-[10px] uppercase font-bold text-gray-500 dark:text-white/50 tracking-wider">Plan de ingresos</p>
                     </div>
                 </div>
-                <button aria-label="Ver detalle de sueldos e ingresos" type="button" className="w-11 h-11 flex items-center justify-center text-gray-400 dark:text-white/40 group-hover:text-violet-600 dark:group-hover:text-violet-300 transition-colors">
+                <div aria-hidden="true" className="w-11 h-11 flex items-center justify-center text-gray-400 dark:text-white/40 group-hover:text-violet-600 dark:group-hover:text-violet-300 transition-colors">
                     <ChevronRight size={20} />
-                </button>
+                </div>
             </div>
 
             <div className="relative z-10">

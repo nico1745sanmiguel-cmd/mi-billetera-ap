@@ -8,12 +8,12 @@ import { buildCardsWithDebt } from '../../../utils/cardDebtUtils';
 import { calcularProporciones, getLatestSalary, obtenerTotalGastosCompartidos, calcularAportesExactos } from '../../../utils/salaryUtils';
 
 export default function SplitSummaryWidget({ setView, householdMembers, currentDate, privacyMode, user, size = 'full', targetMonthKey, targetMonthVal }) {
-    const { cards, transactions } = useCards();
-    const { superItems: supermarketItems, freshItems } = useSupermarket();
-    const { services } = useServices();
+    const { cards = [], transactions = [] } = useCards();
+    const { superItems: supermarketItems = [], freshItems = [] } = useSupermarket();
+    const { services = [] } = useServices();
 
     const cardsWithDebt = useMemo(() => {
-        return buildCardsWithDebt(cards, transactions, targetMonthKey, targetMonthVal);
+        return buildCardsWithDebt(cards || [], transactions || [], targetMonthKey, targetMonthVal);
     }, [cards, transactions, targetMonthKey, targetMonthVal]);
 
     const splitData = useMemo(() => {
@@ -28,13 +28,13 @@ export default function SplitSummaryWidget({ setView, householdMembers, currentD
             salaryHistory: m.salaryHistory || []
         })));
 
-        const sharedSuperItems = supermarketItems.filter(i => i.month === targetMonthKey && i.isShared !== false);
+        const sharedSuperItems = (supermarketItems || []).filter(i => i.month === targetMonthKey && i.isShared !== false);
         const hasStartedSharedSuper = sharedSuperItems.some(i => i.checked);
         const sharedSuperTotal = hasStartedSharedSuper 
             ? sharedSuperItems.filter(i => i.checked).reduce((acc, i) => acc + Number((i.price || 0) * (i.quantity || 1)), 0)
             : sharedSuperItems.reduce((acc, i) => acc + Number((i.price || 0) * (i.quantity || 1)), 0);
 
-        const sharedFreshTotal = freshItems.filter(i => i.month === targetMonthKey && i.isShared !== false).reduce((acc, i) => acc + (Number(i.total) || 0), 0);
+        const sharedFreshTotal = (freshItems || []).filter(i => i.month === targetMonthKey && i.isShared !== false).reduce((acc, i) => acc + (Number(i.total) || 0), 0);
         
         const grandTotal = obtenerTotalGastosCompartidos(services, cardsWithDebt, sharedSuperTotal, sharedFreshTotal);
 

@@ -24,7 +24,7 @@ export default function StatsChart({
     glassTextSecondary,
     isGlass
 }) {
-    if (chartData.length === 0) {
+    if (!chartData || chartData.length === 0) {
         return (
             <div className={`p-8 rounded-[32px] border text-center ${glassClass}`}>
                 <p className={`text-sm ${glassTextSecondary}`}>No hay datos para este filtro.</p>
@@ -78,7 +78,7 @@ export default function StatsChart({
                         <div>
                             <p className={`font-bold text-sm ${glassTextPrimary}`}>{activeChartItem.name}</p>
                             <p className={`text-[10px] font-bold ${glassTextSecondary}`}>
-                                {Math.round((activeChartItem.value / currentChartTotal) * 100)}% del segmento
+                                {currentChartTotal > 0 ? Math.round((activeChartItem.value / currentChartTotal) * 100) : 0}% del segmento
                             </p>
                         </div>
                     </div>

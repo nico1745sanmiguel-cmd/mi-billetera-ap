@@ -5,6 +5,7 @@ import { Plus, Check, ExternalLink } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { subscribeToNotes, addNote, deleteNote } from '../../../repositories/notesRepository';
 import { useNotes } from '../../../context/NotesContext';
+import { useUI } from '../../../context/UIContext';
 import { POST_IT_SKINS } from '../../Notes/constants';
 
 export default function FloatingNotes({ user }) {
@@ -15,6 +16,7 @@ export default function FloatingNotes({ user }) {
     const inputRef = useRef(null);
     const navigate = useNavigate();
     const { settings } = useNotes();
+    const { showToast } = useUI();
 
     const currentSkin = POST_IT_SKINS.find(s => s.id === settings?.postItSkin) || POST_IT_SKINS[0];
     const isGlass = currentSkin.id === 'glass';
@@ -46,20 +48,30 @@ export default function FloatingNotes({ user }) {
         e.preventDefault();
         if (!inputValue.trim()) return;
         
-        await addNote({
-            userId: user.uid,
-            text: inputValue.trim(),
-            checked: false,
-            isPinned: true
-        });
-        setInputValue('');
-        setIsAdding(false);
+        try {
+            await addNote({
+                userId: user.uid,
+                text: inputValue.trim(),
+                checked: false,
+                isPinned: true
+            });
+            setInputValue('');
+            setIsAdding(false);
+        } catch (error) {
+            console.error("Error al agregar nota:", error);
+            showToast?.("Error al guardar la nota", "error");
+        }
     };
 
     const handleCheck = async (id) => {
-        await deleteNote(id);
-        if (notes.length <= 1) {
-            setIsAdding(false);
+        try {
+            await deleteNote(id);
+            if (notes.length <= 1) {
+                setIsAdding(false);
+            }
+        } catch (error) {
+            console.error("Error al eliminar nota:", error);
+            showToast?.("Error al eliminar la nota", "error");
         }
     };
 
@@ -73,7 +85,7 @@ export default function FloatingNotes({ user }) {
     // Define colors dynamically based on skin
     const textColor = isGlass ? 'text-white' : 'text-gray-800';
     const mutedTextColor = isGlass ? 'text-white/70' : 'text-gray-600';
-    const borderColor = isGlass ? 'border-white/20' : `border-[${currentSkin.border}]`;
+    const borderColor = isGlass ? 'border-white/20' : 'border-black/10';
     const bgColor = isGlass ? 'rgba(255,255,255,0.1)' : currentSkin.color;
 
     return (

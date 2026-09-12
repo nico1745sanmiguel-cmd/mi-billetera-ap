@@ -6,7 +6,7 @@ import { formatMoney } from '../../../utils';
 import { DEFAULT_CATEGORIES, AVAILABLE_ICONS } from '../../Supermarket/constants';
 
 export default function PlannerWidget({ setView, size }) {
-    const { freshItems, plannerCategories } = useSupermarket();
+    const { freshItems = [], plannerCategories = [] } = useSupermarket();
     const { currentDate } = useUI();
 
     const currentMonthKey = useMemo(() => {
@@ -15,12 +15,12 @@ export default function PlannerWidget({ setView, size }) {
     }, [currentDate]);
 
     const allCategories = useMemo(() => {
-        return [...DEFAULT_CATEGORIES, ...plannerCategories];
+        return [...DEFAULT_CATEGORIES, ...(plannerCategories || [])];
     }, [plannerCategories]);
 
     const activeItems = useMemo(() => {
         const catIds = new Set(allCategories.map(c => c.id));
-        return freshItems.filter(t => catIds.has(t.category) && t.month === currentMonthKey);
+        return (freshItems || []).filter(t => catIds.has(t.category) && t.month === currentMonthKey);
     }, [freshItems, allCategories, currentMonthKey]);
 
     const pendingItems = useMemo(() => {
@@ -41,15 +41,19 @@ export default function PlannerWidget({ setView, size }) {
     }, {});
     const sortedActiveCatsHalf = allCategories
         .filter(c => categoryCountsHalf[c.id] > 0)
-        .sort((a, b) => categoryCountsHalf[b.id] - categoryCountsHalf[a.id])
+        .sort((a, b) => categoryCountsHalf[c.id] - categoryCountsHalf[a.id])
         .slice(0, 3);
     const displayCategoriesHalf = sortedActiveCatsHalf.length > 0 ? sortedActiveCatsHalf : allCategories.slice(0, 3);
 
     if (size === 'half') {
         return (
             <div
+                role="button"
+                tabIndex={0}
+                aria-label="Abrir planificador de compras"
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setView('fresh'); } }}
                 onClick={() => setView('fresh')}
-                className="h-full bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-900/30 dark:to-blue-900/30 border border-indigo-200 dark:border-indigo-500/20 p-3 rounded-[24px] cursor-pointer active:scale-95 transition-all flex flex-col justify-between group shadow-sm dark:backdrop-blur-md"
+                className="h-full bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-900/30 dark:to-blue-900/30 border border-indigo-200 dark:border-indigo-500/20 p-3 rounded-[24px] cursor-pointer active:scale-95 transition-all flex flex-col justify-between group shadow-sm dark:backdrop-blur-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
             >
                 {/* Header compacto */}
                 <div className="flex items-center gap-2">
@@ -114,7 +118,11 @@ export default function PlannerWidget({ setView, size }) {
 
     return (
         <div
-            className="h-full bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-900/30 dark:to-blue-900/30 border border-indigo-200 dark:border-indigo-500/20 p-4 rounded-[24px] cursor-pointer hover:shadow-md transition-all flex flex-col justify-between group shadow-sm dark:backdrop-blur-md"
+            role="button"
+            tabIndex={0}
+            aria-label="Abrir planificador de compras"
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setView('fresh'); } }}
+            className="h-full bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-900/30 dark:to-blue-900/30 border border-indigo-200 dark:border-indigo-500/20 p-4 rounded-[24px] cursor-pointer hover:shadow-md transition-all flex flex-col justify-between group shadow-sm dark:backdrop-blur-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
             onClick={() => setView('fresh')}
         >
             {/* Header: Titulo y Faltante */}

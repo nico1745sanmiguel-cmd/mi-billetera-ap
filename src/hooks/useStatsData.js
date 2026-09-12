@@ -28,11 +28,11 @@ const CAT_ICONS = {
 export const useStatsData = ({
     currentDate,
     expenseScope,
-    transactions,
-    cards,
-    services,
-    supermarketItems,
-    freshItems,
+    transactions = [],
+    cards = [],
+    services = [],
+    supermarketItems = [],
+    freshItems = [],
     filter
 }) => {
     const filterByScope = useCallback((item) => {
@@ -56,7 +56,7 @@ export const useStatsData = ({
 
     // A. Transacciones del Mes
     const monthlyTransactions = useMemo(() => {
-        return transactions.flatMap(t => {
+        return (transactions || []).flatMap(t => {
             if (!filterByScope(t)) return [];
             const tDate = new Date(t.date);
             const tLocal = new Date(tDate.valueOf() + tDate.getTimezoneOffset() * 60000);
@@ -80,7 +80,7 @@ export const useStatsData = ({
 
     // B. Tarjetas
     const cardsStatus = useMemo(() => {
-        return cards.flatMap(c => {
+        return (cards || []).flatMap(c => {
             if (!filterByScope(c)) return [];
             let debt = 0;
             let cardTransactions = [];
@@ -102,18 +102,18 @@ export const useStatsData = ({
 
     // C. Servicios
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    const scopedServices = useMemo(() => services.filter(filterByScope), [services, expenseScope]);
+    const scopedServices = useMemo(() => (services || []).filter(filterByScope), [services, expenseScope]);
     const servicesTotal = scopedServices.reduce((acc, s) => acc + Number(s.amount || 0), 0);
 
     // D. Supermercado
-    const scopedSuperItems = useMemo(() => expenseScope === 'personal' ? [] : supermarketItems, [supermarketItems, expenseScope]);
+    const scopedSuperItems = useMemo(() => expenseScope === 'personal' ? [] : (supermarketItems || []), [supermarketItems, expenseScope]);
     const monthlySuper = scopedSuperItems.filter(i => i.month === currentMonthKey);
     const superSpent = monthlySuper.filter(i => i.checked).reduce((acc, i) => acc + (i.price * i.quantity), 0);
     const superProjected = monthlySuper.reduce((acc, i) => acc + (i.price * i.quantity), 0);
     const superEffective = monthlySuper.some(i => i.checked) ? superSpent : superProjected;
 
     // E. Feria & Frescos
-    const scopedFreshItems = useMemo(() => expenseScope === 'personal' ? [] : freshItems, [freshItems, expenseScope]);
+    const scopedFreshItems = useMemo(() => expenseScope === 'personal' ? [] : (freshItems || []), [freshItems, expenseScope]);
     const monthlyFresh = scopedFreshItems.filter(i => i.month === currentMonthKey);
     const freshSpent = monthlyFresh.filter(i => i.checked).reduce((acc, i) => acc + (Number(i.total) || 0), 0);
     const freshProjected = monthlyFresh.reduce((acc, i) => acc + (Number(i.total) || 0), 0);

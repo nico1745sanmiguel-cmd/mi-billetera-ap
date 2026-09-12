@@ -333,3 +333,64 @@ Ejecutar el proceso de verificación final. Correr la compilación de producció
 - [ ] `npm run build` compila con éxito en verde (`exit code 0`).
 - [ ] Se implementa división de código (code splitting/lazy loading) evitando un bundle monolítico gigante para dependencias pesadas (ej: `recharts`, `firebase`, `pdfjs-dist`).
 - [ ] El Director Técnico emite un reporte final de confirmación técnica para deploy.
+
+## 2026-09-12T22:24:36Z
+
+Poner a punto integralmente el módulo de tarjetas y transacciones (gastos e ingresos) en "Mi Billetera", asegurando robustez en validaciones de entrada, manejo de estados vacíos y de carga, y prevención de regresiones.
+
+Working directory: z:\Mi billetera
+Integrity mode: development
+
+Requested team: Equipo de 3 especialistas:
+- 🕵️♂️ AGENTE QA: usar modelo flash
+- 🛠️ AGENTE DEV: usar modelo pro
+- 🔍 AGENTE REVIEWER: usar modelo inherit
+
+Estructura de trabajo obligatoria:
+1. 🕵️♂️ AGENTE QA — Tester de Negocio (flash):
+   - Revisa el flujo completo: crear, editar, borrar y filtrar transacciones por fecha y categoría.
+   - Intenta "romper" la app: montos negativos sin control, campos vacíos, fechas inválidas o filtros contradictorios.
+   - Revisa los estados de lista vacía ("Sin movimientos aún") y los estados de carga.
+   - Entrega el reporte de fallos al Dev. NO modifiques código.
+
+2. 🛠️ AGENTE DEV — React Developer (pro):
+   - Corrige las validaciones en formularios (`NewPurchase.jsx`, `StatsDetails.jsx`, `CardsContext.jsx`, `CardDetail.jsx`).
+   - Implementa mensajes de error claros y útiles para el usuario con diseño UX/UI premium.
+   - Ajusta skeletons/spinners de carga donde falten.
+   - Pasa el trabajo al Reviewer.
+
+3. 🔍 AGENTE REVIEWER — Control de Calidad (inherit):
+   - Prueba las correcciones del Dev contra los fallos del reporte QA.
+   - Verifica que no se hayan introducido nuevos errores de estado ni regresiones visuales.
+   - Emite la aprobación final.
+
+## Requirements
+
+### R1. Robustez en Formularios y Validaciones de Transacciones
+- No permitir montos <= 0, negativos, caracteres extraños o NaN.
+- Validación estricta en la creación (`NewPurchase.jsx`) y en la edición inline (`TransactionsManager` en `StatsDetails.jsx`).
+- No permitir descripciones vacías o que generen inconsistencias.
+- Fechas validadas: evitar fechas corruptas o que rompan los filtros por mes.
+
+### R2. Filtros y Estados Vacíos (Empty States)
+- Verificar el filtrado por Tipo (Todos, Efectivo, Tarjeta), por Categoría y por Período (Mes Actual vs Histórico).
+- En caso de no haber datos para el filtro aplicado, mostrar un Empty State claro, informativo y estéticamente alineado al diseño glassmorphic de la app ("Sin movimientos aún").
+
+### R3. Estados de Carga y Feedback de Usuario (UX/UI)
+- Mostrar skeletons o indicadores de carga fluidos durante las operaciones asíncronas (guardado, actualización, borrado, sincronización).
+- Toast notifications descriptivas de éxito y error orientadas al usuario final.
+
+## Acceptance Criteria
+
+### Formularios y Validaciones
+- [ ] Intentar guardar o editar una transacción con monto $0 o negativo muestra mensaje de error claro y bloquea el envío.
+- [ ] Formularios con fechas vacías o inválidas se resuelven con fallback seguro o aviso de error antes de enviar a Firebase.
+- [ ] Al seleccionar compra con crédito, se exige y valida una tarjeta válida y número de cuotas entre 1 y 60.
+
+### Filtros y Visualización
+- [ ] El cambio entre "Mes Actual" e "Histórico" recalcula y muestra correctamente los movimientos sin errores de zona horaria.
+- [ ] Si la lista filtrada queda en 0 items, se visualiza el componente de "Sin movimientos aún" con acción rápida para registrar gasto.
+
+### Carga y Control de Calidad
+- [ ] Las acciones asíncronas desactivan botones dobles para evitar registros duplicados.
+- [ ] Cero regresiones en la consola del navegador y build de Vite exitoso (`npm run build`).

@@ -3,7 +3,7 @@ import { Users, LogOut, AlertCircle, Moon, Sun, Monitor, RefreshCw, Bell, Puzzle
 import { useWidgetSizes } from '../../hooks/useWidgetSizes';
 import { useNavigate } from 'react-router-dom';
 import { db, auth } from '../../firebase';
-import { doc, updateDoc, arrayUnion, arrayRemove, addDoc, collection } from 'firebase/firestore';
+import { doc, updateDoc, arrayUnion, arrayRemove, addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { formatMoney } from '../../utils';
 import FinancialTarget from './FinancialTarget';
 import { useDragReorder } from '../../hooks/useDragReorder';
@@ -92,9 +92,9 @@ const Home = memo(({ onLogout, notifications = EMPTY_ARRAY, onCardClick }) => {
     const navigate = useNavigate();
     const { user, userData, householdMembers } = useAuth();
     const householdId = userData?.householdId;
-    const { cards, transactions } = useCards();
-    const { superItems: supermarketItems, freshItems } = useSupermarket();
-    const { services } = useServices();
+    const { cards = [], transactions = [] } = useCards();
+    const { superItems: supermarketItems = [], freshItems = [] } = useSupermarket();
+    const { services = [] } = useServices();
     const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
     const [isSkinsOpen, setIsSkinsOpen] = useState(false);
 
@@ -130,7 +130,6 @@ const Home = memo(({ onLogout, notifications = EMPTY_ARRAY, onCardClick }) => {
                 await updateDoc(ref, { paidPeriods: arrayUnion(targetMonthKey) });
                 if (householdId && auth.currentUser) {
                     try {
-                        const { serverTimestamp } = await import('firebase/firestore');
                         await addDoc(collection(db, 'households', householdId, 'notifications'), {
                             type: 'payment', itemName: item.name, amount: item.amount,
                             dueDate: item.day, itemType: item.type,
@@ -157,11 +156,11 @@ const Home = memo(({ onLogout, notifications = EMPTY_ARRAY, onCardClick }) => {
     }, [order, user?.uid]);
 
     const cardsWithDebt = useMemo(() => {
-        return buildCardsWithDebt(cards, transactions, targetMonthKey, targetMonthVal);
+        return buildCardsWithDebt(cards || [], transactions || [], targetMonthKey, targetMonthVal);
     }, [cards, transactions, targetMonthKey, targetMonthVal]);
 
     const superData = useMemo(() => {
-        const monthlyItems = supermarketItems.filter(item => {
+        const monthlyItems = (supermarketItems || []).filter(item => {
             if (item.month) return item.month === targetMonthKey;
             const realNow = new Date();
             const realKey = `${realNow.getFullYear()}-${String(realNow.getMonth() + 1).padStart(2, '0')}`;
@@ -184,8 +183,8 @@ const Home = memo(({ onLogout, notifications = EMPTY_ARRAY, onCardClick }) => {
     }, [supermarketItems, targetMonthKey]);
 
     const agenda = useMemo(() => {
-        const realServices = services.map(s => ({ id: s.id, name: s.name, amount: s.amount, day: s.day, isPaid: s.paidPeriods?.includes(targetMonthKey) || false, type: 'service' }));
-        const cardServices = cardsWithDebt.flatMap(c => c.currentDebt > 0 ? [{
+        const realServices = (services || []).map(s => ({ id: s.id, name: s.name, amount: s.amount, day: s.day, isPaid: s.paidPeriods?.includes(targetMonthKey) || false, type: 'service' }));
+        const cardServices = (cardsWithDebt || []).flatMap(c => c.currentDebt > 0 ? [{
             id: c.id,
             name: c.name,
             amount: c.currentDebt,
@@ -202,8 +201,8 @@ const Home = memo(({ onLogout, notifications = EMPTY_ARRAY, onCardClick }) => {
     }, [services, cardsWithDebt, targetMonthKey]);
 
     const superEnabled = isModuleEnabled('supermarket');
-    const totalNeed = services.reduce((acc, s) => acc + (Number(s.amount) || 0), 0) + cardsWithDebt.reduce((acc, c) => acc + (Number(c.currentDebt) || 0), 0) + (superEnabled ? (Number(superData.totalBudget) || 0) : 0);
-    const totalPaid = services.filter(s => s.paidPeriods?.includes(targetMonthKey)).reduce((acc, s) => acc + (Number(s.amount) || 0), 0) + cardsWithDebt.filter(c => c.paidPeriods?.includes(targetMonthKey)).reduce((acc, c) => acc + (Number(c.currentDebt) || 0), 0) + (superEnabled ? (Number(superData.realSpent) || 0) : 0);
+    const totalNeed = (services || []).reduce((acc, s) => acc + (Number(s.amount) || 0), 0) + (cardsWithDebt || []).reduce((acc, c) => acc + (Number(c.currentDebt) || 0), 0) + (superEnabled ? (Number(superData.totalBudget) || 0) : 0);
+    const totalPaid = (services || []).filter(s => s.paidPeriods?.includes(targetMonthKey)).reduce((acc, s) => acc + (Number(s.amount) || 0), 0) + (cardsWithDebt || []).filter(c => c.paidPeriods?.includes(targetMonthKey)).reduce((acc, c) => acc + (Number(c.currentDebt) || 0), 0) + (superEnabled ? (Number(superData.realSpent) || 0) : 0);
     const showMoney = (amount) => privacyMode ? '****' : formatMoney(amount);
 
     const criticalAlert = useMemo(() => {
@@ -232,16 +231,16 @@ const Home = memo(({ onLogout, notifications = EMPTY_ARRAY, onCardClick }) => {
             salaryHistory: m.salaryHistory || []
         })));
 
-        const sharedServicesTotal = services.filter(s => s.isShared !== false).reduce((acc, s) => acc + Number(s.amount || 0), 0);
-        const sharedCardsTotal = cardsWithDebt.filter(c => c.isShared !== false).reduce((acc, c) => acc + Number(c.currentDebt || 0), 0);
+        const sharedServicesTotal = (services || []).filter(s => s.isShared !== false).reduce((acc, s) => acc + Number(s.amount || 0), 0);
+        const sharedCardsTotal = (cardsWithDebt || []).filter(c => c.isShared !== false).reduce((acc, c) => acc + Number(c.currentDebt || 0), 0);
         
-        const sharedSuperItems = supermarketItems.filter(i => i.month === targetMonthKey && i.isShared !== false);
+        const sharedSuperItems = (supermarketItems || []).filter(i => i.month === targetMonthKey && i.isShared !== false);
         const hasStartedSharedSuper = sharedSuperItems.some(i => i.checked);
         const sharedSuperTotal = hasStartedSharedSuper 
             ? sharedSuperItems.filter(i => i.checked).reduce((acc, i) => acc + Number((i.price || 0) * (i.quantity || 1)), 0)
             : sharedSuperItems.reduce((acc, i) => acc + Number((i.price || 0) * (i.quantity || 1)), 0);
 
-        const sharedFreshTotal = freshItems.filter(i => i.month === targetMonthKey && i.isShared !== false).reduce((acc, i) => acc + (Number(i.total) || 0), 0);
+        const sharedFreshTotal = (freshItems || []).filter(i => i.month === targetMonthKey && i.isShared !== false).reduce((acc, i) => acc + (Number(i.total) || 0), 0);
         
         const grandTotal = sharedServicesTotal + sharedCardsTotal + sharedSuperTotal + sharedFreshTotal;
 
@@ -300,7 +299,7 @@ const Home = memo(({ onLogout, notifications = EMPTY_ARRAY, onCardClick }) => {
                 <div className="flex flex-col">
                     <span className="text-xs text-gray-400 dark:text-white/70 font-bold uppercase tracking-wider">Tu Panel</span>
                     <h1 className="text-xl font-bold text-gray-800 dark:text-white">
-                        Hola, {user?.displayName?.split(' ')[0] || 'Nico'} 👋
+                        Hola, {user?.displayName?.split(' ')[0] || 'Usuario'} 👋
                     </h1>
                 </div>
                 <UserMenu 
