@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { db } from '../firebase';
-import { collection, onSnapshot, query, where } from 'firebase/firestore';
+import { collection, onSnapshot, query, where, or } from 'firebase/firestore';
 import { useAuth } from './AuthContext';
 import { getCache, setCache } from '../utils/cache';
 import { COLLECTIONS, CACHE_KEYS, ENABLE_HOUSEHOLD } from '../config/constants';
@@ -32,8 +32,6 @@ export const SupermarketProvider = ({ children }) => {
         if (!user) return;
 
         const householdId = userData?.householdId;
-        const queryField = householdId ? "householdId" : "userId";
-        const queryValue = householdId ? householdId : user.uid;
 
         let loadedCount = 0;
         const checkLoaded = () => {
@@ -44,7 +42,9 @@ export const SupermarketProvider = ({ children }) => {
         };
 
         const syncData = (collectionName, setState, cacheKey) => {
-            const q = query(collection(db, collectionName), where(queryField, "==", queryValue));
+            const q = householdId
+                ? query(collection(db, collectionName), or(where("householdId", "==", householdId), where("userId", "==", user.uid)))
+                : query(collection(db, collectionName), where("userId", "==", user.uid));
             return onSnapshot(q, (snap) => {
                 const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
                 setState(data);

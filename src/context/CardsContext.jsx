@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import { db } from '../firebase';
-import { collection, onSnapshot, query, where, addDoc, doc, updateDoc, deleteDoc, arrayUnion, arrayRemove, deleteField } from 'firebase/firestore';
+import { collection, onSnapshot, query, where, or, addDoc, doc, updateDoc, deleteDoc, arrayUnion, arrayRemove, deleteField } from 'firebase/firestore';
 import { useAuth } from './AuthContext';
 import { useUIDispatch } from './UIContext';
 import { getCache, setCache } from '../utils/cache';
@@ -44,11 +44,11 @@ export const CardsProvider = ({ children }) => {
         }
 
         const householdId = userData?.householdId;
-        const queryField = householdId ? "householdId" : "userId";
-        const queryValue = householdId ? householdId : user.uid;
 
         const syncData = (collectionName, setState, cacheKey, onDone) => {
-            const q = query(collection(db, collectionName), where(queryField, "==", queryValue));
+            const q = householdId
+                ? query(collection(db, collectionName), or(where("householdId", "==", householdId), where("userId", "==", user.uid)))
+                : query(collection(db, collectionName), where("userId", "==", user.uid));
             return onSnapshot(q, (snap) => {
                 const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
                 setState(data);

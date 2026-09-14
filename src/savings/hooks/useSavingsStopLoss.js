@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { db } from '../../firebase';
-import { collection, onSnapshot, query, where, doc, setDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, onSnapshot, query, where, or, doc, setDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
 import { useAuth } from '../../context/AuthContext';
 import { getCache, setCache } from '../../utils/cache';
 import { COLLECTIONS, CACHE_KEYS } from '../../config/constants';
@@ -14,10 +14,10 @@ export const useSavingsStopLoss = () => {
     useEffect(() => {
         if (!user) return;
         const householdId = userData?.householdId;
-        const queryField = householdId ? "householdId" : "userId";
-        const queryValue = householdId ? householdId : user.uid;
 
-        const q = query(collection(db, COLLECTIONS.SAVINGS_STOP_LOSSES), where(queryField, "==", queryValue));
+        const q = householdId
+            ? query(collection(db, COLLECTIONS.SAVINGS_STOP_LOSSES), or(where("householdId", "==", householdId), where("userId", "==", user.uid)))
+            : query(collection(db, COLLECTIONS.SAVINGS_STOP_LOSSES), where("userId", "==", user.uid));
         const unsub = onSnapshot(q, (snap) => {
             const data = {};
             snap.docs.forEach(d => {

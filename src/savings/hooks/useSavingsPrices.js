@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { db } from '../../firebase';
-import { collection, onSnapshot, query, where, doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, onSnapshot, query, where, or, doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { useAuth } from '../../context/AuthContext';
 import { fetchAssetPrices } from '../../utils/priceService';
 
@@ -12,10 +12,10 @@ export const useSavingsPrices = (savingsTransactions = [], dolarBlue) => {
     useEffect(() => {
         if (!user) return;
         const householdId = userData?.householdId;
-        const queryField = householdId ? "householdId" : "userId";
-        const queryValue = householdId ? householdId : user.uid;
 
-        const q = query(collection(db, 'savings_asset_prices'), where(queryField, "==", queryValue));
+        const q = householdId
+            ? query(collection(db, 'savings_asset_prices'), or(where("householdId", "==", householdId), where("userId", "==", user.uid)))
+            : query(collection(db, 'savings_asset_prices'), where("userId", "==", user.uid));
         const unsub = onSnapshot(q, (snap) => {
             const manual = {};
             snap.docs.forEach(d => {
