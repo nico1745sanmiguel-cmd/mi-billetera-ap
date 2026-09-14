@@ -54,6 +54,44 @@ export default defineConfig({
     exclude: ['pdfjs-dist'],
   },
   build: {
-    chunkSizeWarningLimit: 1600,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return;
+
+          // 1. Firebase (gigante aislado: auth, firestore, etc.)
+          if (id.includes('/firebase/') || id.includes('\\firebase\\') || id.includes('/@firebase/') || id.includes('\\@firebase\\')) {
+            return 'vendor-firebase';
+          }
+
+          // 2. Visor de PDF (pesado e independiente)
+          if (id.includes('pdfjs-dist')) {
+            return 'vendor-pdf';
+          }
+
+          // 3. Animaciones
+          if (id.includes('framer-motion')) {
+            return 'vendor-framer';
+          }
+
+          // 4. Iconografía
+          if (id.includes('lucide-react')) {
+            return 'vendor-icons';
+          }
+
+          // 5. Gráficos: recharts Y TODO su árbol de cálculo matemático (d3, victory-vendor, etc.)
+          if (
+            id.includes('recharts') ||
+            id.includes('victory-vendor') ||
+            id.includes('d3-') ||
+            id.includes('decimal.js') ||
+            id.includes('fast-equals')
+          ) {
+            return 'vendor-charts';
+          }
+        },
+      },
+    },
+    chunkSizeWarningLimit: 1200,
   },
 })
