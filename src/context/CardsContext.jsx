@@ -34,10 +34,12 @@ export const CardsProvider = ({ children }) => {
     const [cards, setCards] = useState(() => getCache(CACHE_KEYS.CARDS, []));
     const [transactions, setTransactions] = useState(() => getCache(CACHE_KEYS.TRANSACTIONS, []));
     const [loadingCards, setLoadingCards] = useState(() => !getCache(CACHE_KEYS.CARDS, null));
+    const [loadingTransactions, setLoadingTransactions] = useState(() => !getCache(CACHE_KEYS.TRANSACTIONS, null));
 
     useEffect(() => {
         if (!user) {
             setLoadingCards(false);
+            setLoadingTransactions(false);
             return;
         }
 
@@ -59,7 +61,7 @@ export const CardsProvider = ({ children }) => {
         };
 
         const unsubCards = syncData(COLLECTIONS.CARDS, setCards, CACHE_KEYS.CARDS, () => setLoadingCards(false));
-        const unsubTrans = syncData(COLLECTIONS.TRANSACTIONS, setTransactions, CACHE_KEYS.TRANSACTIONS);
+        const unsubTrans = syncData(COLLECTIONS.TRANSACTIONS, setTransactions, CACHE_KEYS.TRANSACTIONS, () => setLoadingTransactions(false));
 
         return () => {
             unsubCards();
@@ -89,6 +91,12 @@ export const CardsProvider = ({ children }) => {
         if (Number(safeData.amount) <= 0) {
             showToast("El monto debe ser mayor a $ 0.", 'error');
             throw new Error('Monto inválido');
+        }
+
+        if (safeData.type === 'credit') {
+            const safeInstallments = Math.max(1, Math.min(60, parseInt(safeData.installments, 10) || 1));
+            safeData.installments = safeInstallments;
+            safeData.monthlyInstallment = Math.round((Number(safeData.amount) / safeInstallments) * 100) / 100;
         }
 
         const payload = { 
@@ -125,11 +133,19 @@ export const CardsProvider = ({ children }) => {
             throw new Error('Monto inválido');
         }
 
-        if (safeData.type === 'credit' && safeData.installments) {
-            const safeInstallments = Math.max(1, Math.min(60, parseInt(safeData.installments, 10) || 1));
-            safeData.installments = safeInstallments;
-            if (safeData.amount) {
-                safeData.monthlyInstallment = Math.round((Number(safeData.amount) / safeInstallments) * 100) / 100;
+        const currentTx = transactions.find(t => t.id === transactionId);
+        const effectiveType = safeData.type || currentTx?.type;
+        const effectiveInstallments = safeData.installments !== undefined ? safeData.installments : currentTx?.installments;
+        const effectiveAmount = safeData.amount !== undefined ? safeData.amount : currentTx?.amount;
+
+        if (effectiveType === 'credit') {
+            safeData.type = 'credit';
+            if (effectiveInstallments) {
+                const safeInstallments = Math.max(1, Math.min(60, parseInt(effectiveInstallments, 10) || 1));
+                safeData.installments = safeInstallments;
+                if (effectiveAmount) {
+                    safeData.monthlyInstallment = Math.round((Number(effectiveAmount) / safeInstallments) * 100) / 100;
+                }
             }
         }
 
@@ -147,7 +163,7 @@ export const CardsProvider = ({ children }) => {
             showToast("Hubo un error al actualizar la transacción.", 'error');
             throw error;
         }
-    }, [user, showToast]);
+    }, [user, transactions, showToast]);
 
     const deleteTransaction = useCallback(async (transactionId) => {
         if (!user) {
@@ -278,9 +294,10 @@ export const CardsProvider = ({ children }) => {
     const stateValue = useMemo(() => ({
         cards: visibleCards,
         transactions: visibleTransactions,
-        loading: loadingCards,
+        loading: loadingCards || loadingTransactions,
         loadingCards,
-    }), [visibleCards, visibleTransactions, loadingCards]);
+        loadingTransactions,
+    }), [visibleCards, visibleTransactions, loadingCards, loadingTransactions]);
 
     const dispatchValue = useMemo(() => ({
         addTransaction,

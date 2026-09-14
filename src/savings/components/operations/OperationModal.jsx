@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Save } from 'lucide-react';
 import { useSavings } from '../../context/SavingsContext';
+import { useUI } from '../../../context/UIContext';
 
 import TradeForm from './TradeForm';
 import CaucionForm from './CaucionForm';
@@ -43,6 +44,7 @@ const dateToMiddayISO = (dateStr) => {
 
 export default function OperationModal({ onClose, isGlass, initialData }) {
     const { addSavingsTransaction, updateSavingsTransaction, savingsTransactions, carterasPersonalizadas } = useSavings();
+    const { showToast } = useUI();
     const [loading, setLoading] = useState(false);
 
     // Valores iniciales con fecha local
@@ -117,16 +119,35 @@ export default function OperationModal({ onClose, isGlass, initialData }) {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!formData.cartera || !formData.fecha) return;
+        if (!formData.cartera) {
+            showToast("Seleccioná una cartera para la operación", "error");
+            return;
+        }
+        if (!formData.fecha) {
+            showToast("Ingresá una fecha válida para la operación", "error");
+            return;
+        }
         
         if (isCaucion) {
-            if (!formData.montoARS || !formData.tna || !formData.plazo) return;
+            if (!formData.montoARS || !formData.tna || !formData.plazo) {
+                showToast("Completá el monto, la TNA y el plazo de la caución", "error");
+                return;
+            }
         } else {
-            if (!formData.especie) return;
+            if (!formData.especie) {
+                showToast("Ingresá el ticker o especie del activo", "error");
+                return;
+            }
             // cobros solo requieren monto total; el resto requieren cantidad
-            if (!isCobro && !formData.cantidad) return;
+            if (!isCobro && !formData.cantidad) {
+                showToast("Ingresá la cantidad de títulos", "error");
+                return;
+            }
             // Si no es fiat ni cobro ni ajuste, necesita precio
-            if (!isMovimientoFiat && !isCobro && !formData.precioUnitario && formData.tipo !== 'ajuste') return;
+            if (!isMovimientoFiat && !isCobro && !formData.precioUnitario && formData.tipo !== 'ajuste') {
+                showToast("Ingresá el precio unitario de la operación", "error");
+                return;
+            }
         }
 
         const parseNumber = (val) => {
@@ -171,21 +192,21 @@ export default function OperationModal({ onClose, isGlass, initialData }) {
             const tna = parseNumber(formData.tna);
             const plazo = parseInt(formData.plazo) || 0;
             if (monto <= 0 || tna <= 0 || plazo <= 0) {
-                alert("El monto, la TNA y el plazo deben ser mayores a cero.");
+                showToast("El monto, la TNA y el plazo deben ser mayores a cero.", "error");
                 return;
             }
         } else if (isCobro) {
             if (montoTotalParsed <= 0) {
-                alert("El monto cobrado debe ser mayor a cero.");
+                showToast("El monto cobrado debe ser mayor a cero.", "error");
                 return;
             }
         } else {
             if (cantidadParsed <= 0) {
-                alert("La cantidad debe ser mayor a cero.");
+                showToast("La cantidad debe ser mayor a cero.", "error");
                 return;
             }
             if (!isMovimientoFiat && formData.tipo !== 'ajuste' && precioParsed <= 0) {
-                alert("El precio unitario debe ser mayor a cero.");
+                showToast("El precio unitario debe ser mayor a cero.", "error");
                 return;
             }
         }
@@ -254,13 +275,15 @@ export default function OperationModal({ onClose, isGlass, initialData }) {
 
             if (initialData?.id) {
                 await updateSavingsTransaction(initialData.id, payload);
+                showToast("Operación actualizada correctamente", "success");
             } else {
                 await addSavingsTransaction(payload);
+                showToast("Operación registrada con éxito", "success");
             }
             onClose();
         } catch (error) {
             console.error(error);
-            alert("Error al guardar la operación");
+            showToast("Error al guardar la operación", "error");
         }
         setLoading(false);
     };

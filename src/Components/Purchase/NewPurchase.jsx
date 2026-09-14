@@ -22,21 +22,46 @@ const getBrandLogo = (cardName) => {
 const arsFormatter = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 });
 const formatMoney = (val) => arsFormatter.format(val);
 
+const getLocalDateString = (d = new Date()) => {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
+
 export default function NewPurchase({ onSave }) {
     const navigate = useNavigate();
     const { cards = [], transactions = [], addTransaction, loadingCards } = useCards();
     const { user } = useAuth();
     const householdId = user?.householdId;
+    const { showToast, currentDate, isGlass } = useUI();
     const [amount, setAmount] = useState('');
     const [description, setDescription] = useState('');
-    const [date, setDate] = useState(() => new Date().toISOString().split('T')[0]);
+    const [date, setDate] = useState(() => {
+        if (currentDate) {
+            const realToday = new Date();
+            const isSameMonth = currentDate.getMonth() === realToday.getMonth() && currentDate.getFullYear() === realToday.getFullYear();
+            if (!isSameMonth) {
+                const year = currentDate.getFullYear();
+                const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+                return `${year}-${month}-01`;
+            }
+        }
+        return getLocalDateString();
+    });
     const [type, setType] = useState('cash'); // 'cash' | 'credit'
     const [selectedCardId, setSelectedCardId] = useState('');
     const [installments, setInstallments] = useState(1);
     const [category, setCategory] = useState('varios');
     const [isShared, setIsShared] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
-    const { showToast, currentDate, isGlass } = useUI();
+
+    const setDateToday = () => setDate(getLocalDateString(new Date()));
+    const setDateYesterday = () => {
+        const d = new Date();
+        d.setDate(d.getDate() - 1);
+        setDate(getLocalDateString(d));
+    };
 
     // --- PROJECTIONS HOOK ---
     const projections = useFinancialProjections(
@@ -46,22 +71,19 @@ export default function NewPurchase({ onSave }) {
         (type === 'credit' && amount) ? { amount, installments, cardId: selectedCardId } : null
     );
 
-    // --- MÁQUINA DEL TIEMPO ⏳ ---
-    const [prevCurrentDate, setPrevCurrentDate] = useState(null);
-
-    if (currentDate && currentDate !== prevCurrentDate) {
-        setPrevCurrentDate(currentDate);
-        if (!date) {
-            const realToday = new Date();
-            const isSameMonth = currentDate.getMonth() === realToday.getMonth() && currentDate.getFullYear() === realToday.getFullYear();
-            if (isSameMonth) setDate(realToday.toISOString().split('T')[0]);
-            else {
-                const year = currentDate.getFullYear();
-                const month = String(currentDate.getMonth() + 1).padStart(2, '0');
-                setDate(`${year}-${month}-01`);
-            }
+    // --- MÁQUINA DEL TIEMPO ⏳ (Sincronización limpia en useEffect) ---
+    useEffect(() => {
+        if (!currentDate) return;
+        const realToday = new Date();
+        const isSameMonth = currentDate.getMonth() === realToday.getMonth() && currentDate.getFullYear() === realToday.getFullYear();
+        if (isSameMonth) {
+            setDate(getLocalDateString(realToday));
+        } else {
+            const year = currentDate.getFullYear();
+            const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+            setDate(`${year}-${month}-01`);
         }
-    }
+    }, [currentDate]);
 
     // Auto-selección limpia de tarjeta mediante useEffect (sin setState en cuerpo de render)
     useEffect(() => {
@@ -94,7 +116,7 @@ export default function NewPurchase({ onSave }) {
         const transactionData = {
             amount: numAmount,
             description: (description || '').trim() || 'Gasto General',
-            date: date || new Date().toISOString().split('T')[0],
+            date: date || getLocalDateString(),
             category,
             type,
             createdAt: new Date().toISOString(),
@@ -120,8 +142,8 @@ export default function NewPurchase({ onSave }) {
         }
     };
 
-
-
+    const isCreditMissingCard = type === 'credit' && (!selectedCardId || cards.length === 0);
+    const isSubmitDisabled = isSaving || !amount || Number(amount) <= 0 || isCreditMissingCard;
 
     return (
         <div className="animate-fade-in max-w-lg mx-auto pb-32">
@@ -226,20 +248,67 @@ export default function NewPurchase({ onSave }) {
                             )}
                         </div>
 
-                        {/* Slider Cuotas */}
+                        {/* Slider y Selector de Cuotas (1 a 60) */}
                         <div className="mb-8">
-                            <div className="flex justify-between items-end mb-2">
-                                <label htmlFor="input-field" className={`text-xs font-bold uppercase ${isGlass ? 'text-white/40' : 'text-gray-400'}`}>Cuotas</label>
-                                <span className={`text-2xl font-bold ${isGlass ? 'text-blue-300' : 'text-blue-600'}`}>{installments}x</span>
+                            <div className="flex justify-between items-center mb-2">
+                                <label htmlFor="purchase-installments-input" className={`text-xs font-bold uppercase ${isGlass ? 'text-white/40' : 'text-gray-400'}`}>Cuotas (1 a 60)</label>
+                                <div className="flex items-center gap-1">
+                                    <input
+                                        id="purchase-installments-input"
+                                        aria-label="Número de cuotas"
+                                        type="number"
+                                        min="1"
+                                        max="60"
+                                        disabled={isSaving}
+                                        value={installments}
+                                        onChange={(e) => {
+                                            const val = parseInt(e.target.value, 10);
+                                            if (!isNaN(val)) {
+                                                setInstallments(Math.max(1, Math.min(60, val)));
+                                            } else {
+                                                setInstallments(1);
+                                            }
+                                        }}
+                                        className={`w-14 text-right text-2xl font-bold bg-transparent outline-none border-b border-dashed ${
+                                            isGlass ? 'text-blue-300 border-blue-400/40 focus:border-blue-400' : 'text-blue-600 border-blue-300 focus:border-blue-600'
+                                        }`}
+                                    />
+                                    <span className={`text-2xl font-bold ${isGlass ? 'text-blue-300' : 'text-blue-600'}`}>x</span>
+                                </div>
                             </div>
-                            <input autoComplete="off" id="input-field"
+
+                            {/* Chips de planes de cuotas frecuentes */}
+                            <div className="flex flex-wrap gap-1.5 mb-3" role="group" aria-label="Planes frecuentes de cuotas">
+                                {[1, 3, 6, 12, 18, 24, 36, 60].map(n => (
+                                    <button
+                                        key={n}
+                                        type="button"
+                                        disabled={isSaving}
+                                        aria-pressed={installments === n}
+                                        aria-label={`${n} cuotas`}
+                                        onClick={() => setInstallments(n)}
+                                        className={`px-2.5 py-1 rounded-xl text-xs font-bold border transition-all ${
+                                            installments === n
+                                                ? (isGlass ? 'bg-blue-500 text-white border-blue-400 shadow-sm' : 'bg-blue-600 text-white border-blue-600 shadow-sm')
+                                                : (isGlass ? 'bg-white/5 text-white/70 border-white/10 hover:bg-white/10' : 'bg-gray-100 text-gray-600 border-gray-200 hover:bg-gray-200')
+                                        } ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                    >
+                                        {n}x
+                                    </button>
+                                ))}
+                            </div>
+
+                            <input
+                                autoComplete="off"
+                                id="purchase-installments"
+                                aria-label="Cantidad de cuotas"
                                 type="range"
                                 min="1"
-                                max="12"
+                                max="60"
                                 step="1"
                                 disabled={isSaving}
                                 value={installments}
-                                onChange={(e) => setInstallments(Math.max(1, Math.min(12, Number(e.target.value) || 1)))}
+                                onChange={(e) => setInstallments(Math.max(1, Math.min(60, Number(e.target.value) || 1)))}
                                 className={`w-full h-2 rounded-lg appearance-none cursor-pointer ${isGlass ? 'bg-white/10' : 'bg-gray-200'} accent-blue-500 ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}
                             />
                             {Number(amount) > 0 && installments > 0 && (
@@ -274,12 +343,13 @@ export default function NewPurchase({ onSave }) {
                     </div>
                 )}
 
-                {/* 4. DETAILS (Category & Desc) */}
+                {/* 4. DETAILS (Category, Date & Desc) */}
                 <div className={`p-5 rounded-[30px] border ${isGlass ? 'bg-white/5 border-white/10' : 'bg-white border-gray-100'}`}>
-                    <label htmlFor="input-field" className={`block text-xs font-bold uppercase mb-3 ml-1 ${isGlass ? 'text-white/40' : 'text-gray-400'}`}>Categoría</label>
-                    <div className="flex flex-wrap gap-2">
+                    <label className={`block text-xs font-bold uppercase mb-3 ml-1 ${isGlass ? 'text-white/40' : 'text-gray-400'}`}>Categoría</label>
+                    <div className="flex flex-wrap gap-2" role="group" aria-label="Seleccionar categoría">
                         {['supermarket', 'food', 'transport', 'services', 'home', 'health', 'shopping', 'education', 'varios'].map(cat => (
-                            <button aria-label="Acción"
+                            <button
+                                aria-label={`Categoría ${cat}`}
                                 key={cat}
                                 type="button"
                                 disabled={isSaving}
@@ -293,8 +363,59 @@ export default function NewPurchase({ onSave }) {
                         ))}
                     </div>
 
+                    {/* Fecha del Gasto */}
+                    <div className="mt-5">
+                        <div className="flex justify-between items-center mb-2">
+                            <label htmlFor="purchase-date" className={`text-xs font-bold uppercase ml-1 ${isGlass ? 'text-white/40' : 'text-gray-400'}`}>
+                                Fecha del Gasto
+                            </label>
+                            <div className="flex gap-1.5">
+                                <button
+                                    type="button"
+                                    disabled={isSaving}
+                                    onClick={setDateToday}
+                                    className={`px-2.5 py-0.5 rounded-lg text-[11px] font-bold transition-all border ${
+                                        date === getLocalDateString(new Date())
+                                            ? (isGlass ? 'bg-white/20 text-white border-white/30' : 'bg-gray-200 text-gray-800 border-gray-300')
+                                            : (isGlass ? 'bg-white/5 text-white/50 border-white/10 hover:bg-white/10' : 'bg-gray-100 text-gray-500 border-gray-200 hover:bg-gray-200')
+                                    }`}
+                                >
+                                    Hoy
+                                </button>
+                                <button
+                                    type="button"
+                                    disabled={isSaving}
+                                    onClick={setDateYesterday}
+                                    className={`px-2.5 py-0.5 rounded-lg text-[11px] font-bold transition-all border ${
+                                        isGlass ? 'bg-white/5 text-white/50 border-white/10 hover:bg-white/10' : 'bg-gray-100 text-gray-500 border-gray-200 hover:bg-gray-200'
+                                    }`}
+                                >
+                                    Ayer
+                                </button>
+                            </div>
+                        </div>
+                        <div className={`flex items-center gap-3 px-3.5 py-2.5 rounded-2xl border transition-all ${isGlass ? 'bg-white/5 border-white/10 text-white focus-within:border-blue-400/50 focus-within:bg-white/10' : 'bg-gray-50 border-gray-200 text-gray-800 focus-within:border-blue-500 focus-within:bg-white'}`}>
+                            <CalendarDays size={18} className={isGlass ? 'text-white/40' : 'text-gray-400'} />
+                            <input
+                                id="purchase-date"
+                                aria-label="Fecha del gasto"
+                                type="date"
+                                disabled={isSaving}
+                                value={date}
+                                onChange={(e) => setDate(e.target.value)}
+                                className="w-full bg-transparent font-bold outline-none text-sm cursor-pointer"
+                            />
+                        </div>
+                    </div>
+
                     <div className="mt-4">
-                        <input autoComplete="off" id="input-field"
+                        <label htmlFor="purchase-description" className={`block text-xs font-bold uppercase mb-1.5 ml-1 ${isGlass ? 'text-white/40' : 'text-gray-400'}`}>
+                            Descripción
+                        </label>
+                        <input
+                            autoComplete="off"
+                            id="purchase-description"
+                            aria-label="Descripción del gasto"
                             type="text"
                             disabled={isSaving}
                             value={description}
@@ -319,11 +440,12 @@ export default function NewPurchase({ onSave }) {
                 )}
 
                 {/* 5. SAVE BUTTON */}
-                <button aria-label="Acción"
+                <button
+                    aria-label="Confirmar gasto"
                     type="submit"
-                    disabled={isSaving || !amount || Number(amount) <= 0}
+                    disabled={isSubmitDisabled}
                     className={`w-full py-4 rounded-[30px] font-bold shadow-lg transition-all text-lg flex justify-center items-center gap-2 ${
-                        isSaving || !amount || Number(amount) <= 0
+                        isSubmitDisabled
                             ? (isGlass ? 'bg-white/20 text-white/50 cursor-not-allowed' : 'bg-gray-300 text-gray-500 cursor-not-allowed')
                             : (isGlass ? 'bg-white text-indigo-900 border border-white/50 hover:bg-indigo-50 active:scale-95' : 'bg-gray-900 text-white shadow-gray-400 active:scale-95')
                     }`}
@@ -333,6 +455,8 @@ export default function NewPurchase({ onSave }) {
                             <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
                             Guardando...
                         </>
+                    ) : isCreditMissingCard ? (
+                        cards.length === 0 ? "Agregá una tarjeta para continuar" : "Seleccioná una tarjeta"
                     ) : (
                         "Confirmar Gasto"
                     )}

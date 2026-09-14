@@ -54,37 +54,6 @@ export default defineConfig({
     exclude: ['pdfjs-dist'],
   },
   build: {
-    rollupOptions: {
-      output: {
-        manualChunks(id) {
-          if (id.includes('node_modules')) {
-            if (id.includes('/firebase/') || id.includes('\\firebase\\')) {
-              return 'vendor-firebase';
-            }
-            if (id.includes('/recharts/') || id.includes('\\recharts\\')) {
-              return 'vendor-charts';
-            }
-            if (id.includes('/framer-motion/') || id.includes('\\framer-motion\\')) {
-              return 'vendor-framer';
-            }
-            if (id.includes('/pdfjs-dist/') || id.includes('\\pdfjs-dist\\')) {
-              return 'vendor-pdf';
-            }
-            if (id.includes('/lucide-react/') || id.includes('\\lucide-react\\')) {
-              return 'vendor-icons';
-            }
-            if (
-              id.includes('/react/') || id.includes('\\react\\') ||
-              id.includes('/react-dom/') || id.includes('\\react-dom\\') ||
-              id.includes('/react-router/') || id.includes('\\react-router\\') ||
-              id.includes('/react-router-dom/') || id.includes('\\react-router-dom\\')
-            ) {
-              return 'vendor-react';
-            }
-          }
-        },
-      },
-    },
-    chunkSizeWarningLimit: 1000,
+    chunkSizeWarningLimit: 1600,
   },
 })

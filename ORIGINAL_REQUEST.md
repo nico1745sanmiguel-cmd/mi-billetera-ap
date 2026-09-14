@@ -394,3 +394,50 @@ Estructura de trabajo obligatoria:
 ### Carga y Control de Calidad
 - [ ] Las acciones asíncronas desactivan botones dobles para evitar registros duplicados.
 - [ ] Cero regresiones en la consola del navegador y build de Vite exitoso (`npm run build`).
+
+## 2026-09-12T22:26:05Z
+
+# Teamwork Project Prompt
+
+Requested team: Equipo de 3 especialistas: 🕵️♂️ AGENTE QA (flash) como Tester de Negocio, 🛠️ AGENTE DEV (pro) como React Developer, 🔍 AGENTE REVIEWER (inherit) para Control de Calidad y aprobación final.
+
+Poner a punto integralmente el registro y gestión de transacciones tanto en el módulo de Gastos y Movimientos Diarios como en el de Inversiones y Ahorros (Savings) de "Mi Billetera", garantizando validaciones a prueba de errores, estados de carga accesibles, mensajes contextuales y empty states de diseño premium.
+
+Working directory: z:\Mi billetera
+Integrity mode: development
+
+## Requirements
+
+### R1. Auditoría exhaustiva de flujos y casos extremos (Agente QA - flash)
+Auditar de punta a punta los flujos de creación, edición, borrado y filtrado:
+- Intentar ingresar valores numéricos inválidos: números negativos, ceros, textos vacíos o entradas con caracteres extraños.
+- Validar fechas: registrar fechas futuras sin sentido, formatos vacíos o desfases de huso horario al guardar.
+- Probar combinaciones de filtros contradictorias (por fecha, categoría o cartera) y verificar la persistencia de los filtros.
+- Comprobar los estados vacíos ("Sin movimientos aún" y filtros sin resultados) y los estados de espera/carga.
+- Entregar un informe estructurado de hallazgos y no modificar archivos de código.
+
+### R2. Fortalecimiento de validaciones, UX y feedback visual (Agente DEV - pro)
+- Erradicar cualquier uso de alertas nativas (`alert()`) y reemplazarlas por notificaciones contextuales y Toasts integrados con el sistema de diseño.
+- Implementar validaciones sólidas en todos los formularios de transacciones (gastos y operaciones de ahorro/inversión): impedir envíos con montos <= 0 o campos obligatorios en blanco.
+- Implementar indicadores de carga claros (spinners / skeletons) y deshabilitar botones durante las llamadas asíncronas para prevenir envíos duplicados.
+- Asegurar que los mensajes de error expliquen de forma clara y directa al usuario qué debe subsanar.
+
+### R3. Verificación de calidad, consistencia y no-regresión (Agente REVIEWER - inherit)
+- Validar cada punto del reporte de QA frente al código modificado por el Dev.
+- Asegurar que no se hayan introducido regresiones visuales (coherencia en modo Glassmorphic, dark y light) ni pérdida de reactividad al actualizar o eliminar datos.
+- Ejecutar verificación técnica de compilación sin errores (`npm run build`).
+
+## Acceptance Criteria
+
+### Robustez y Validación de Entrada
+- [ ] No es posible guardar ninguna transacción u operación con monto menor o igual a cero, o campos requeridos vacíos.
+- [ ] Cero uso de `window.alert()`; todos los errores y confirmaciones se realizan con Toasts accesibles o diálogos en el DOM.
+- [ ] Las fechas se guardan y muestran en la zona horaria local sin desplazamientos de un día.
+
+### Experiencia de Usuario y Estados de Interfaz
+- [ ] El estado vacío de la lista ("Sin movimientos aún") y los estados sin resultados de búsqueda muestran feedback claro y un botón de acción rápida para agregar movimiento.
+- [ ] Los formularios muestran feedback de carga (spinner / skeleton) y deshabilitan el botón de confirmación mientras la operación se procesa.
+- [ ] Los filtros por fecha, categoría y cartera filtran de manera instantánea y reactiva sin romper el layout.
+
+### Estabilidad Técnica
+- [ ] La compilación del proyecto (`npm run build`) concluye exitosamente sin errores de sintaxis ni de dependencias rotas.

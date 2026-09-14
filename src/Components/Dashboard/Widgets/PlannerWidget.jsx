@@ -41,7 +41,7 @@ export default function PlannerWidget({ setView, size }) {
     }, {});
     const sortedActiveCatsHalf = allCategories
         .filter(c => categoryCountsHalf[c.id] > 0)
-        .sort((a, b) => categoryCountsHalf[c.id] - categoryCountsHalf[a.id])
+        .sort((a, b) => (categoryCountsHalf[b.id] || 0) - (categoryCountsHalf[a.id] || 0))
         .slice(0, 3);
     const displayCategoriesHalf = sortedActiveCatsHalf.length > 0 ? sortedActiveCatsHalf : allCategories.slice(0, 3);
 

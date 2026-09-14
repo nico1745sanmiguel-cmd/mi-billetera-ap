@@ -58,7 +58,10 @@ export const useStatsData = ({
     const monthlyTransactions = useMemo(() => {
         return (transactions || []).flatMap(t => {
             if (!filterByScope(t)) return [];
-            const tDate = new Date(t.date);
+            const rawDate = t.date || t.createdAt;
+            if (!rawDate) return [];
+            const tDate = new Date(rawDate);
+            if (isNaN(tDate.getTime())) return [];
             const tLocal = new Date(tDate.valueOf() + tDate.getTimezoneOffset() * 60000);
             if (t.type === 'cash') {
                 if (!(tLocal.getMonth() === currentDate.getMonth() && tLocal.getFullYear() === currentDate.getFullYear())) return [];

@@ -11,14 +11,17 @@ import {
     Banknote, 
     X, 
     Calendar, 
-    DollarSign 
+    DollarSign,
+    RotateCcw 
 } from 'lucide-react';
 import ConfirmDialog from '../UI/ConfirmDialog';
 import Input from '../UI/Input';
 import Button from '../UI/Button';
+import Skeleton from '../UI/Skeleton';
 import { useCards } from '../../context/CardsContext';
 import { useUI } from '../../context/UIContext';
 import { formatInputNumber, parseInputNumber } from '../../utils';
+import { formatMonthKey } from '../../utils/cardDebtUtils';
 
 function TransactionsManager({
     showMoney,
@@ -28,12 +31,14 @@ function TransactionsManager({
     CAT_LABELS = {}
 }) {
     const navigate = useNavigate();
-    const { transactions = [], cards = [], updateTransaction, deleteTransaction } = useCards();
+    const { transactions = [], cards = [], updateTransaction, deleteTransaction, loadingTransactions } = useCards();
     const { currentDate, showToast } = useUI();
 
     const [typeFilter, setTypeFilter] = useState('all'); // 'all' | 'cash' | 'credit'
     const [categoryFilter, setCategoryFilter] = useState('all');
     const [monthFilter, setMonthFilter] = useState('current'); // 'current' | 'all'
+
+    const hasActiveFilters = typeFilter !== 'all' || categoryFilter !== 'all' || monthFilter !== 'all';
 
     // Estado para edición
     const [editingTransaction, setEditingTransaction] = useState(null);
@@ -79,12 +84,11 @@ function TransactionsManager({
             // Filtro Mes
             if (monthFilter === 'current' && currentDate) {
                 const rawDate = t.date || t.createdAt;
-                if (rawDate) {
-                    const d = new Date(rawDate);
-                    const dLocal = new Date(d.valueOf() + d.getTimezoneOffset() * 60000);
-                    if (dLocal.getFullYear() !== currentDate.getFullYear() || dLocal.getMonth() !== currentDate.getMonth()) {
-                        return false;
-                    }
+                if (!rawDate) return false;
+                const txMonthKey = formatMonthKey(rawDate);
+                const currentMonthKey = formatMonthKey(currentDate);
+                if (!txMonthKey || txMonthKey !== currentMonthKey) {
+                    return false;
                 }
             }
 
@@ -101,8 +105,9 @@ function TransactionsManager({
         setEditForm({
             amount: t.amount !== undefined ? String(t.amount) : '',
             description: t.description || '',
-            date: t.date || new Date().toISOString().split('T')[0],
-            category: t.category || 'varios'
+            date: t.date || (t.createdAt ? t.createdAt.slice(0, 10) : ''),
+            category: t.category || 'varios',
+            installments: t.installments ? String(t.installments) : '1'
         });
     };
 
@@ -116,19 +121,31 @@ function TransactionsManager({
             return;
         }
 
+        if (!editForm.date || !editForm.date.trim()) {
+            showToast("Ingresá una fecha válida para el movimiento", "error");
+            return;
+        }
+
         setIsSavingEdit(true);
         try {
-            await updateTransaction(editingTransaction.id, {
+            const payload = {
                 amount: numAmount,
                 description: editForm.description.trim() || 'Gasto General',
                 date: editForm.date,
-                category: editForm.category
-            });
+                category: editForm.category,
+                type: editingTransaction.type,
+                cardId: editingTransaction.cardId
+            };
+            if (editingTransaction.type === 'credit') {
+                const safeInstallments = Math.max(1, Math.min(60, parseInt(editForm.installments, 10) || editingTransaction.installments || 1));
+                payload.installments = safeInstallments;
+            }
+
+            await updateTransaction(editingTransaction.id, payload);
             setEditingTransaction(null);
-            showToast?.("Movimiento actualizado", "success");
+            // El toast de éxito ya lo emite CardsContext
         } catch (error) {
             console.error("Error al actualizar movimiento:", error);
-            showToast?.("Error al actualizar el movimiento", "error");
         } finally {
             setIsSavingEdit(false);
         }
@@ -141,10 +158,9 @@ function TransactionsManager({
         try {
             await deleteTransaction(deletingTransaction.id);
             setDeletingTransaction(null);
-            showToast?.("Movimiento eliminado", "success");
+            // El toast de éxito ya lo emite CardsContext
         } catch (error) {
             console.error("Error al eliminar movimiento:", error);
-            showToast?.("Error al eliminar el movimiento", "error");
         } finally {
             setIsDeleting(false);
         }
@@ -230,7 +246,27 @@ function TransactionsManager({
             </div>
 
             {/* Listado de Transacciones */}
-            {filteredTransactions.length === 0 ? (
+            {loadingTransactions ? (
+                <div className="space-y-3 py-2">
+                    {[1, 2, 3].map((i) => (
+                        <div
+                            key={i}
+                            className={`p-3.5 rounded-2xl border flex items-center justify-between gap-3 ${
+                                isGlass ? 'bg-white/5 border-white/5' : 'bg-gray-50 border-gray-100'
+                            }`}
+                        >
+                            <div className="flex items-center gap-3 min-w-0">
+                                <Skeleton type="circle" width="36px" height="36px" />
+                                <div className="space-y-1.5">
+                                    <Skeleton type="text" width="120px" className="!h-4" />
+                                    <Skeleton type="text" width="70px" className="!h-3 opacity-60" />
+                                </div>
+                            </div>
+                            <Skeleton type="text" width="60px" className="!h-5" />
+                        </div>
+                    ))}
+                </div>
+            ) : filteredTransactions.length === 0 ? (
                 /* Estado Vacío Glassmorphic Premium */
                 <div className={`p-8 rounded-3xl border border-dashed text-center my-2 ${isGlass ? 'border-white/15 bg-white/5' : 'border-gray-200 bg-gray-50'}`}>
                     <div className="w-14 h-14 mx-auto mb-3 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shadow-[0_0_20px_rgba(99,102,241,0.15)]">
@@ -238,19 +274,40 @@ function TransactionsManager({
                     </div>
                     <h4 className={`text-sm font-bold mb-1 ${glassTextPrimary}`}>Sin movimientos aún</h4>
                     <p className={`text-xs max-w-xs mx-auto mb-4 ${glassTextSecondary}`}>
-                        No se encontraron gastos registrados para este período o filtro seleccionado.
+                        {hasActiveFilters && transactions.length > 0
+                            ? "No se encontraron gastos para los filtros seleccionados."
+                            : "No se encontraron gastos registrados para este período o filtro seleccionado."}
                     </p>
-                    <button
-                        type="button"
-                        onClick={() => navigate('/purchase')}
-                        className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-md active:scale-95 ${
-                            isGlass 
-                                ? 'bg-white text-indigo-950 hover:bg-white/90 shadow-white/10' 
-                                : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-200'
-                        }`}
-                    >
-                        <Plus size={15} /> Registrar Gasto
-                    </button>
+                    <div className="flex flex-wrap items-center justify-center gap-2">
+                        {hasActiveFilters && transactions.length > 0 && (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setTypeFilter('all');
+                                    setCategoryFilter('all');
+                                    setMonthFilter('all');
+                                }}
+                                className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-md active:scale-95 ${
+                                    isGlass
+                                        ? 'bg-white/10 text-white hover:bg-white/20 border border-white/10 shadow-sm'
+                                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                                }`}
+                            >
+                                <RotateCcw size={14} /> Limpiar filtros
+                            </button>
+                        )}
+                        <button
+                            type="button"
+                            onClick={() => navigate('/purchase')}
+                            className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-md active:scale-95 ${
+                                isGlass 
+                                    ? 'bg-white text-indigo-950 hover:bg-white/90 shadow-white/10' 
+                                    : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-200'
+                            }`}
+                        >
+                            <Plus size={15} /> Registrar Gasto
+                        </button>
+                    </div>
                 </div>
             ) : (
                 <div className="space-y-2.5">
@@ -396,6 +453,35 @@ function TransactionsManager({
                                 onChange={(e) => setEditForm(prev => ({ ...prev, date: e.target.value }))}
                             />
 
+                            {editingTransaction.type === 'credit' && (
+                                <div>
+                                    <label htmlFor="edit-tx-installments" className="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-white/60 mb-1.5">
+                                        Cuotas (1 a 60)
+                                    </label>
+                                    <div className="flex items-center gap-2 px-3 py-2 rounded-xl border bg-black/10 border-white/10 min-h-[44px]">
+                                        <input
+                                            id="edit-tx-installments"
+                                            aria-label="Cantidad de cuotas"
+                                            type="number"
+                                            min="1"
+                                            max="60"
+                                            value={editForm.installments || '1'}
+                                            onChange={(e) => {
+                                                const val = Math.max(1, Math.min(60, parseInt(e.target.value, 10) || 1));
+                                                setEditForm(prev => ({ ...prev, installments: String(val) }));
+                                            }}
+                                            className="bg-transparent font-bold text-base w-full outline-none"
+                                        />
+                                        <span className="text-xs font-bold opacity-60">cuotas</span>
+                                    </div>
+                                    {Number(editForm.amount) > 0 && Number(editForm.installments) > 0 && (
+                                        <p className="text-xs mt-1 text-gray-500 dark:text-white/50">
+                                            Cuota mensual estimada: <span className="font-bold text-indigo-400">{showMoney(Math.round((Number(editForm.amount) / Number(editForm.installments)) * 100) / 100)}</span>
+                                        </p>
+                                    )}
+                                </div>
+                            )}
+
                             <div>
                                 <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-white/60 mb-2">Categoría</label>
                                 <div className="flex flex-wrap gap-1.5" role="group" aria-label="Seleccionar categoría">
@@ -452,8 +538,9 @@ function TransactionsManager({
                 confirmText={isDeleting ? "Eliminando..." : "Eliminar"}
                 cancelText="Cancelar"
                 isDanger={true}
+                isLoading={isDeleting}
                 onConfirm={handleConfirmDelete}
-                onCancel={() => setDeletingTransaction(null)}
+                onCancel={() => !isDeleting && setDeletingTransaction(null)}
             />
         </div>
     );
