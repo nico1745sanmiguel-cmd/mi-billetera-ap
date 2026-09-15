@@ -90,16 +90,19 @@ export default function Stats() {
 
             {/* 0. TOGGLE DE ALCANCE (SCOPE) */}
             <div className="flex justify-center -mb-2">
-                <div className={`flex items-center p-1 rounded-full ${isGlass ? 'bg-white/10 border border-white/10 backdrop-blur-md' : 'bg-gray-100'}`}>
+                <div className={`flex items-center p-1 rounded-full ${isGlass ? 'bg-white/10 border border-white/10 backdrop-blur-md' : 'bg-gray-100'}`} role="group" aria-label="Selector de alcance de gastos">
                     {[
                         { id: 'all', label: 'Todos' },
                         { id: 'family', label: 'Familiar' },
                         { id: 'personal', label: 'Personal' }
                     ].map(s => (
-                        <button aria-label="Acción" type="button"
+                        <button 
+                            aria-label={`Filtrar por alcance ${s.label}`} 
+                            aria-pressed={expenseScope === s.id}
+                            type="button"
                             key={s.id}
                             onClick={() => setExpenseScope(s.id)}
-                            className={`px-5 py-1.5 rounded-full text-xs font-bold transition-all ${
+                            className={`min-h-[44px] px-5 py-2 rounded-full text-xs font-bold transition-all flex items-center justify-center ${
                                 expenseScope === s.id 
                                 ? (isGlass ? 'bg-white text-indigo-900 shadow-sm' : 'bg-white text-indigo-600 shadow-sm')
                                 : (isGlass ? 'text-white/60 hover:text-white hover:bg-white/5' : 'text-gray-500 hover:text-gray-800 hover:bg-black/5')
@@ -138,17 +141,20 @@ export default function Stats() {
             </div>
 
             {/* 2. FILTROS (SEGMENTED CONTROL) */}
-            <div className={`flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide px-1`}>
+            <div className={`flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide px-1`} role="group" aria-label="Filtros de segmentos de gasto">
                 {[
                     { id: 'all', label: 'Todos' },
                     { id: 'super_fresh', label: 'Super & Feria' },
                     { id: 'cards_services', label: 'Tarjetas & Fijos' },
                     { id: 'manual', label: 'Gastos Sueltos' }
                 ].map(f => (
-                    <button aria-label="Acción" type="button" 
+                    <button 
+                        aria-label={`Filtrar por ${f.label}`} 
+                        aria-pressed={filter === f.id}
+                        type="button" 
                         key={f.id}
                         onClick={() => { setFilter(f.id); setActiveIndex(0); }}
-                        className={`whitespace-nowrap px-4 py-2 rounded-full text-xs font-bold transition-all active:scale-95 border ${
+                        className={`whitespace-nowrap px-4 py-2.5 min-h-[44px] flex items-center justify-center rounded-full text-xs font-bold transition-all active:scale-95 border ${
                             filter === f.id 
                             ? (isGlass ? 'bg-white text-indigo-900 border-white' : 'bg-indigo-600 text-white border-indigo-600 shadow-md')
                             : (isGlass ? 'bg-white/5 text-white/60 border-white/10 hover:bg-white/10' : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50')

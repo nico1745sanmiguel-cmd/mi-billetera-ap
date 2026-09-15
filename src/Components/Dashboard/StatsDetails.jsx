@@ -11,12 +11,17 @@ import {
     Banknote, 
     X, 
     Calendar, 
-    DollarSign 
+    DollarSign,
+    RotateCcw 
 } from 'lucide-react';
 import ConfirmDialog from '../UI/ConfirmDialog';
+import Input from '../UI/Input';
+import Button from '../UI/Button';
+import Skeleton from '../UI/Skeleton';
 import { useCards } from '../../context/CardsContext';
 import { useUI } from '../../context/UIContext';
 import { formatInputNumber, parseInputNumber } from '../../utils';
+import { formatMonthKey } from '../../utils/cardDebtUtils';
 
 function TransactionsManager({
     showMoney,
@@ -26,12 +31,14 @@ function TransactionsManager({
     CAT_LABELS = {}
 }) {
     const navigate = useNavigate();
-    const { transactions = [], cards = [], updateTransaction, deleteTransaction } = useCards();
+    const { transactions = [], cards = [], updateTransaction, deleteTransaction, loadingTransactions } = useCards();
     const { currentDate, showToast } = useUI();
 
     const [typeFilter, setTypeFilter] = useState('all'); // 'all' | 'cash' | 'credit'
     const [categoryFilter, setCategoryFilter] = useState('all');
     const [monthFilter, setMonthFilter] = useState('current'); // 'current' | 'all'
+
+    const hasActiveFilters = typeFilter !== 'all' || categoryFilter !== 'all' || monthFilter !== 'all';
 
     // Estado para edición
     const [editingTransaction, setEditingTransaction] = useState(null);
@@ -86,12 +93,11 @@ function TransactionsManager({
             // Filtro Mes
             if (monthFilter === 'current' && currentDate) {
                 const rawDate = t.date || t.createdAt;
-                if (rawDate) {
-                    const d = new Date(rawDate);
-                    const dLocal = new Date(d.valueOf() + d.getTimezoneOffset() * 60000);
-                    if (dLocal.getFullYear() !== currentDate.getFullYear() || dLocal.getMonth() !== currentDate.getMonth()) {
-                        return false;
-                    }
+                if (!rawDate) return false;
+                const txMonthKey = formatMonthKey(rawDate);
+                const currentMonthKey = formatMonthKey(currentDate);
+                if (!txMonthKey || txMonthKey !== currentMonthKey) {
+                    return false;
                 }
             }
 
@@ -119,8 +125,9 @@ function TransactionsManager({
         setEditForm({
             amount: t.amount !== undefined ? String(t.amount) : '',
             description: t.description || '',
-            date: t.date || new Date().toISOString().split('T')[0],
-            category: t.category || 'varios'
+            date: t.date || (t.createdAt ? t.createdAt.slice(0, 10) : ''),
+            category: t.category || 'varios',
+            installments: t.installments ? String(t.installments) : '1'
         });
     };
 
@@ -134,15 +141,29 @@ function TransactionsManager({
             return;
         }
 
+        if (!editForm.date || !editForm.date.trim()) {
+            showToast("Ingresá una fecha válida para el movimiento", "error");
+            return;
+        }
+
         setIsSavingEdit(true);
         try {
-            await updateTransaction(editingTransaction.id, {
+            const payload = {
                 amount: numAmount,
                 description: editForm.description.trim() || 'Gasto General',
                 date: editForm.date,
-                category: editForm.category
-            });
+                category: editForm.category,
+                type: editingTransaction.type,
+                cardId: editingTransaction.cardId
+            };
+            if (editingTransaction.type === 'credit') {
+                const safeInstallments = Math.max(1, Math.min(60, parseInt(editForm.installments, 10) || editingTransaction.installments || 1));
+                payload.installments = safeInstallments;
+            }
+
+            await updateTransaction(editingTransaction.id, payload);
             setEditingTransaction(null);
+            // El toast de éxito ya lo emite CardsContext
         } catch (error) {
             console.error("Error al actualizar movimiento:", error);
         } finally {
@@ -157,6 +178,7 @@ function TransactionsManager({
         try {
             await deleteTransaction(deletingTransaction.id);
             setDeletingTransaction(null);
+            // El toast de éxito ya lo emite CardsContext
         } catch (error) {
             console.error("Error al eliminar movimiento:", error);
         } finally {
@@ -180,8 +202,9 @@ function TransactionsManager({
                     {/* Selector de Mes */}
                     <button
                         type="button"
+                        aria-label={monthFilter === 'current' ? 'Ver histórico completo' : 'Ver solo mes actual'}
                         onClick={() => setMonthFilter(prev => prev === 'current' ? 'all' : 'current')}
-                        className={`text-[11px] font-bold px-3 py-1 rounded-xl border transition-all ${
+                        className={`text-xs font-bold px-3.5 py-2 min-h-[44px] flex items-center justify-center rounded-xl border transition-all ${
                             monthFilter === 'current'
                                 ? (isGlass ? 'bg-indigo-500/20 text-indigo-300 border-indigo-400/30' : 'bg-indigo-50 text-indigo-600 border-indigo-200')
                                 : (isGlass ? 'bg-white/5 text-white/60 border-white/10' : 'bg-gray-100 text-gray-500 border-gray-200')
@@ -194,7 +217,7 @@ function TransactionsManager({
                 {/* Filtros Tipo y Categoría */}
                 <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center justify-between">
                     {/* Selector Efectivo / Tarjeta */}
-                    <div className={`flex p-0.5 rounded-xl border ${isGlass ? 'bg-white/5 border-white/10' : 'bg-gray-100 border-gray-200'}`}>
+                    <div className={`flex p-0.5 rounded-xl border ${isGlass ? 'bg-white/5 border-white/10' : 'bg-gray-100 border-gray-200'}`} role="group" aria-label="Filtrar por tipo de pago">
                         {[
                             { id: 'all', label: 'Todos' },
                             { id: 'cash', label: 'Efectivo', icon: Banknote },
@@ -205,14 +228,16 @@ function TransactionsManager({
                                 <button
                                     key={f.id}
                                     type="button"
+                                    aria-label={`Filtrar por ${f.label}`}
+                                    aria-pressed={typeFilter === f.id}
                                     onClick={() => setTypeFilter(f.id)}
-                                    className={`px-3 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+                                    className={`px-3 py-2 min-h-[44px] rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
                                         typeFilter === f.id
                                             ? (isGlass ? 'bg-white text-indigo-950 shadow-sm' : 'bg-white text-indigo-600 shadow-sm')
                                             : (isGlass ? 'text-white/50 hover:text-white' : 'text-gray-500 hover:text-gray-800')
                                     }`}
                                 >
-                                    {IconComponent && <IconComponent size={12} />}
+                                    {IconComponent && <IconComponent size={14} />}
                                     {f.label}
                                 </button>
                             );
@@ -221,9 +246,10 @@ function TransactionsManager({
 
                     {/* Filtro Categoría */}
                     <select
+                        aria-label="Filtrar por categoría"
                         value={categoryFilter}
                         onChange={(e) => setCategoryFilter(e.target.value)}
-                        className={`text-xs font-bold rounded-xl px-2.5 py-1.5 border outline-none cursor-pointer ${
+                        className={`text-xs font-bold rounded-xl px-3 py-2 min-h-[44px] border outline-none cursor-pointer ${
                             isGlass
                                 ? 'bg-slate-900/80 text-white border-white/10'
                                 : 'bg-white text-gray-700 border-gray-200'
@@ -240,7 +266,27 @@ function TransactionsManager({
             </div>
 
             {/* Listado de Transacciones */}
-            {filteredTransactions.length === 0 ? (
+            {loadingTransactions ? (
+                <div className="space-y-3 py-2">
+                    {[1, 2, 3].map((i) => (
+                        <div
+                            key={i}
+                            className={`p-3.5 rounded-2xl border flex items-center justify-between gap-3 ${
+                                isGlass ? 'bg-white/5 border-white/5' : 'bg-gray-50 border-gray-100'
+                            }`}
+                        >
+                            <div className="flex items-center gap-3 min-w-0">
+                                <Skeleton type="circle" width="36px" height="36px" />
+                                <div className="space-y-1.5">
+                                    <Skeleton type="text" width="120px" className="!h-4" />
+                                    <Skeleton type="text" width="70px" className="!h-3 opacity-60" />
+                                </div>
+                            </div>
+                            <Skeleton type="text" width="60px" className="!h-5" />
+                        </div>
+                    ))}
+                </div>
+            ) : filteredTransactions.length === 0 ? (
                 /* Estado Vacío Glassmorphic Premium */
                 <div className={`p-8 rounded-3xl border border-dashed text-center my-2 ${isGlass ? 'border-white/15 bg-white/5' : 'border-gray-200 bg-gray-50'}`}>
                     <div className="w-14 h-14 mx-auto mb-3 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shadow-[0_0_20px_rgba(99,102,241,0.15)]">
@@ -248,19 +294,40 @@ function TransactionsManager({
                     </div>
                     <h4 className={`text-sm font-bold mb-1 ${glassTextPrimary}`}>Sin movimientos aún</h4>
                     <p className={`text-xs max-w-xs mx-auto mb-4 ${glassTextSecondary}`}>
-                        No se encontraron gastos registrados para este período o filtro seleccionado.
+                        {hasActiveFilters && transactions.length > 0
+                            ? "No se encontraron gastos para los filtros seleccionados."
+                            : "No se encontraron gastos registrados para este período o filtro seleccionado."}
                     </p>
-                    <button
-                        type="button"
-                        onClick={() => navigate('/purchase')}
-                        className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-md active:scale-95 ${
-                            isGlass 
-                                ? 'bg-white text-indigo-950 hover:bg-white/90 shadow-white/10' 
-                                : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-200'
-                        }`}
-                    >
-                        <Plus size={15} /> Registrar Gasto
-                    </button>
+                    <div className="flex flex-wrap items-center justify-center gap-2">
+                        {hasActiveFilters && transactions.length > 0 && (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setTypeFilter('all');
+                                    setCategoryFilter('all');
+                                    setMonthFilter('all');
+                                }}
+                                className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-md active:scale-95 ${
+                                    isGlass
+                                        ? 'bg-white/10 text-white hover:bg-white/20 border border-white/10 shadow-sm'
+                                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                                }`}
+                            >
+                                <RotateCcw size={14} /> Limpiar filtros
+                            </button>
+                        )}
+                        <button
+                            type="button"
+                            onClick={() => navigate('/purchase')}
+                            className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-md active:scale-95 ${
+                                isGlass 
+                                    ? 'bg-white text-indigo-950 hover:bg-white/90 shadow-white/10' 
+                                    : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-200'
+                            }`}
+                        >
+                            <Plus size={15} /> Registrar Gasto
+                        </button>
+                    </div>
                 </div>
             ) : (
                 <div className="space-y-2.5">
@@ -313,7 +380,7 @@ function TransactionsManager({
                                         </p>
                                         {isCredit && t.installments > 1 && (
                                             <p className={`text-[9px] font-mono opacity-60 ${glassTextSecondary}`}>
-                                                {showMoney(t.monthlyInstallment || Math.round(t.amount / t.installments))}/mes
+                                                {showMoney(t.monthlyInstallment || Math.round(t.amount / (t.installments || 1)))}/mes
                                             </p>
                                         )}
                                     </div>
@@ -323,22 +390,22 @@ function TransactionsManager({
                                         <button
                                             type="button"
                                             onClick={() => handleStartEdit(t)}
-                                            aria-label="Editar"
+                                            aria-label={`Editar movimiento ${t.description || ''}`}
                                             title="Editar movimiento"
-                                            className={`p-1.5 rounded-lg transition-colors ${
+                                            className={`min-w-[44px] min-h-[44px] flex items-center justify-center p-2.5 rounded-xl transition-colors ${
                                                 isGlass ? 'text-white/60 hover:text-white hover:bg-white/10' : 'text-gray-400 hover:text-gray-700 hover:bg-gray-200'
                                             }`}
                                         >
-                                            <Pencil size={14} />
+                                            <Pencil size={15} />
                                         </button>
                                         <button
                                             type="button"
                                             onClick={() => setDeletingTransaction(t)}
-                                            aria-label="Eliminar"
+                                            aria-label={`Eliminar movimiento ${t.description || ''}`}
                                             title="Eliminar movimiento"
-                                            className="p-1.5 rounded-lg text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition-colors"
+                                            className="min-w-[44px] min-h-[44px] flex items-center justify-center p-2.5 rounded-xl text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition-colors"
                                         >
-                                            <Trash2 size={14} />
+                                            <Trash2 size={15} />
                                         </button>
                                     </div>
                                 </div>
@@ -374,8 +441,9 @@ function TransactionsManager({
                             </h3>
                             <button
                                 type="button"
+                                aria-label="Cerrar modal de edición"
                                 onClick={() => setEditingTransaction(null)}
-                                className={`p-1.5 rounded-full hover:bg-white/10 transition-colors ${isGlass ? 'text-white/60' : 'text-gray-400'}`}
+                                className={`min-w-[44px] min-h-[44px] flex items-center justify-center p-2 rounded-full hover:bg-white/10 transition-colors ${isGlass ? 'text-white/60' : 'text-gray-400'}`}
                             >
                                 <X size={18} />
                             </button>
@@ -383,15 +451,19 @@ function TransactionsManager({
 
                         <form onSubmit={handleSaveEdit} className="space-y-4">
                             <div>
-                                <label className="block text-[11px] font-bold uppercase mb-1 opacity-70">Monto</label>
-                                <div className="flex items-center gap-2 px-3 py-2 rounded-xl border bg-black/10 border-white/10">
+                                <label htmlFor="edit-tx-amount" className="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-white/60 mb-1.5">
+                                    Monto
+                                </label>
+                                <div className="flex items-center gap-2 px-3 py-2 rounded-xl border bg-black/10 border-white/10 min-h-[44px]">
                                     <span className="font-bold opacity-50">$</span>
                                     <input
+                                        id="edit-tx-amount"
+                                        aria-label="Monto de la transacción"
                                         type="tel"
                                         value={editForm.amount === '' ? '' : formatInputNumber(editForm.amount)}
                                         onChange={(e) => {
-                                            const raw = e.target.value;
-                                            setEditForm(prev => ({ ...prev, amount: raw === '' ? '' : String(parseInputNumber(raw)) }));
+                                             const raw = e.target.value;
+                                             setEditForm(prev => ({ ...prev, amount: raw === '' ? '' : String(parseInputNumber(raw)) }));
                                         }}
                                         className="bg-transparent font-bold text-lg w-full outline-none"
                                         placeholder="0"
@@ -400,42 +472,65 @@ function TransactionsManager({
                                 </div>
                             </div>
 
-                            <div>
-                                <label className="block text-[11px] font-bold uppercase mb-1 opacity-70">Descripción</label>
-                                <input
-                                    type="text"
-                                    value={editForm.description}
-                                    onChange={(e) => setEditForm(prev => ({ ...prev, description: e.target.value }))}
-                                    className={`w-full p-2.5 rounded-xl border text-sm font-semibold outline-none transition-colors ${
-                                        isGlass ? 'bg-white/5 border-white/10 text-white focus:border-indigo-400' : 'bg-gray-50 border-gray-200 text-gray-800 focus:border-indigo-500'
-                                    }`}
-                                    placeholder="Ej: Almuerzo, Nafta, Super"
-                                />
-                            </div>
+                            <Input
+                                id="edit-tx-desc"
+                                label="Descripción"
+                                type="text"
+                                value={editForm.description}
+                                onChange={(e) => setEditForm(prev => ({ ...prev, description: e.target.value }))}
+                                placeholder="Ej: Almuerzo, Nafta, Super"
+                            />
+
+                            <Input
+                                id="edit-tx-date"
+                                label="Fecha"
+                                type="date"
+                                value={editForm.date}
+                                onChange={(e) => setEditForm(prev => ({ ...prev, date: e.target.value }))}
+                            />
+
+                            {editingTransaction.type === 'credit' && (
+                                <div>
+                                    <label htmlFor="edit-tx-installments" className="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-white/60 mb-1.5">
+                                        Cuotas (1 a 60)
+                                    </label>
+                                    <div className="flex items-center gap-2 px-3 py-2 rounded-xl border bg-black/10 border-white/10 min-h-[44px]">
+                                        <input
+                                            id="edit-tx-installments"
+                                            aria-label="Cantidad de cuotas"
+                                            type="number"
+                                            min="1"
+                                            max="60"
+                                            value={editForm.installments || '1'}
+                                            onChange={(e) => {
+                                                const val = Math.max(1, Math.min(60, parseInt(e.target.value, 10) || 1));
+                                                setEditForm(prev => ({ ...prev, installments: String(val) }));
+                                            }}
+                                            className="bg-transparent font-bold text-base w-full outline-none"
+                                        />
+                                        <span className="text-xs font-bold opacity-60">cuotas</span>
+                                    </div>
+                                    {Number(editForm.amount) > 0 && Number(editForm.installments) > 0 && (
+                                        <p className="text-xs mt-1 text-gray-500 dark:text-white/50">
+                                            Cuota mensual estimada: <span className="font-bold text-indigo-400">{showMoney(Math.round((Number(editForm.amount) / Number(editForm.installments)) * 100) / 100)}</span>
+                                        </p>
+                                    )}
+                                </div>
+                            )}
 
                             <div>
-                                <label className="block text-[11px] font-bold uppercase mb-1 opacity-70">Fecha</label>
-                                <input
-                                    type="date"
-                                    value={editForm.date}
-                                    onChange={(e) => setEditForm(prev => ({ ...prev, date: e.target.value }))}
-                                    className={`w-full p-2.5 rounded-xl border text-sm font-semibold outline-none ${
-                                        isGlass ? 'bg-white/5 border-white/10 text-white' : 'bg-gray-50 border-gray-200 text-gray-800'
-                                    }`}
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-[11px] font-bold uppercase mb-2 opacity-70">Categoría</label>
-                                <div className="flex flex-wrap gap-1.5">
+                                <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-white/60 mb-2">Categoría</label>
+                                <div className="flex flex-wrap gap-1.5" role="group" aria-label="Seleccionar categoría">
                                     {['supermarket', 'food', 'transport', 'services', 'home', 'health', 'shopping', 'education', 'varios'].map(cat => (
                                         <button
                                             key={cat}
                                             type="button"
+                                            aria-pressed={editForm.category === cat}
+                                            aria-label={`Categoría ${categoriesMap[cat] || cat}`}
                                             onClick={() => setEditForm(prev => ({ ...prev, category: cat }))}
-                                            className={`px-2.5 py-1 rounded-lg text-xs font-bold capitalize transition-all border ${
+                                            className={`px-3 py-2 min-h-[44px] flex items-center justify-center rounded-xl text-xs font-bold capitalize transition-all border ${
                                                 editForm.category === cat
-                                                    ? (isGlass ? 'bg-white text-black border-white' : 'bg-indigo-600 text-white border-indigo-600')
+                                                    ? (isGlass ? 'bg-white text-black border-white shadow-sm' : 'bg-indigo-600 text-white border-indigo-600 shadow-sm')
                                                     : (isGlass ? 'bg-white/5 text-white/60 border-transparent hover:bg-white/10' : 'bg-gray-100 text-gray-600 border-transparent hover:bg-gray-200')
                                             }`}
                                         >
@@ -446,23 +541,25 @@ function TransactionsManager({
                             </div>
 
                             <div className="flex gap-2 pt-3">
-                                <button
-                                    type="button"
-                                    disabled={isSavingEdit}
+                                <Button
+                                    variant="secondary"
+                                    size="md"
+                                    className="flex-1"
                                     onClick={() => setEditingTransaction(null)}
-                                    className={`flex-1 py-2.5 rounded-xl text-xs font-bold border transition-colors ${
-                                        isGlass ? 'border-white/15 hover:bg-white/5 text-white/80' : 'border-gray-200 hover:bg-gray-100 text-gray-600'
-                                    }`}
+                                    disabled={isSavingEdit}
                                 >
                                     Cancelar
-                                </button>
-                                <button
+                                </Button>
+                                <Button
                                     type="submit"
+                                    variant="primary"
+                                    size="md"
+                                    isLoading={isSavingEdit}
                                     disabled={isSavingEdit || !editForm.amount || Number(editForm.amount) <= 0}
-                                    className="flex-1 py-2.5 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white transition-all shadow-md active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                    className="flex-1"
                                 >
-                                    {isSavingEdit ? 'Guardando...' : 'Guardar Cambios'}
-                                </button>
+                                    Guardar Cambios
+                                </Button>
                             </div>
                         </form>
                     </div>
@@ -477,8 +574,9 @@ function TransactionsManager({
                 confirmText={isDeleting ? "Eliminando..." : "Eliminar"}
                 cancelText="Cancelar"
                 isDanger={true}
+                isLoading={isDeleting}
                 onConfirm={handleConfirmDelete}
-                onCancel={() => setDeletingTransaction(null)}
+                onCancel={() => !isDeleting && setDeletingTransaction(null)}
             />
         </div>
     );
@@ -591,7 +689,7 @@ export default function StatsDetails({
                                     <span className="font-mono font-bold">{showMoney(cat.value)}</span>
                                 </div>
                                 <div className="w-full h-1.5 bg-black/10 rounded-full overflow-hidden">
-                                    <div className="h-full rounded-full" style={{ width: `${(cat.value / currentChartTotal) * 100}%`, backgroundColor: cat.color }}></div>
+                                    <div className="h-full rounded-full" style={{ width: `${currentChartTotal > 0 ? (cat.value / currentChartTotal) * 100 : 0}%`, backgroundColor: cat.color }}></div>
                                 </div>
                             </div>
                         ))}

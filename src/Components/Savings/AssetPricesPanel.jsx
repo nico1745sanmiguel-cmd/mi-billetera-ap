@@ -2,10 +2,12 @@ import React, { useState, useMemo } from 'react';
 import { Save, RefreshCw } from 'lucide-react';
 import { useSavings } from '../../context/SavingsContext';
 import { useFinancial } from '../../context/FinancialContext';
+import { useUI } from '../../context/UIContext';
 
 export default function AssetPricesPanel({ isGlass }) {
     const { assetPrices, saveManualPrice, savingsTransactions } = useSavings();
     const { dolarBlue } = useFinancial();
+    const { showToast } = useUI();
     const [editing, setEditing] = useState(null);
     const [editValue, setEditValue] = useState('');
     const [loading, setLoading] = useState(false);
@@ -22,16 +24,22 @@ export default function AssetPricesPanel({ isGlass }) {
     }, [savingsTransactions]);
 
     const handleSave = async (especie) => {
-        if (!editValue || isNaN(parseFloat(editValue))) return;
+        const parsed = parseFloat(editValue);
+        if (!editValue || isNaN(parsed) || parsed <= 0) {
+            showToast('Ingresá un precio válido mayor a cero', 'error');
+            return;
+        }
         setLoading(true);
         try {
-            await saveManualPrice(especie, editValue);
+            await saveManualPrice(especie, parsed);
             setEditing(null);
             setEditValue('');
-        } catch (e) {
-            alert('Error al guardar precio');
+            showToast(`Precio de ${especie} actualizado exitosamente`, 'success');
+        } catch {
+            showToast('Error al guardar precio', 'error');
+        } finally {
+            setLoading(false);
         }
-        setLoading(false);
     };
 
     const textColor = isGlass ? 'text-white' : 'text-gray-800';

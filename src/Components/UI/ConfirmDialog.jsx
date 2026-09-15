@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { AlertTriangle } from 'lucide-react';
 
@@ -11,26 +11,27 @@ export default function ConfirmDialog({
     onClose,
     confirmText = 'Confirmar',
     cancelText = 'Cancelar',
-    isDanger = false
+    isDanger = false,
+    isLoading = false
 }) {
     const cancelBtnRef = useRef(null);
 
-    const handleClose = () => {
+    const handleClose = useCallback(() => {
+        if (isLoading) return;
         if (onCancel) {
             onCancel();
         } else if (onClose) {
             onClose();
         }
-    };
+    }, [isLoading, onCancel, onClose]);
 
     // Cierre con Escape y autofoco en Cancelar (seguridad contra borrado accidental)
     useEffect(() => {
-        if (!isOpen) return;
+        if (!isOpen || isLoading) return;
 
         const handleKeyDown = (e) => {
             if (e.key === 'Escape') {
-                if (onCancel) onCancel();
-                else if (onClose) onClose();
+                handleClose();
             }
         };
 
@@ -44,9 +45,26 @@ export default function ConfirmDialog({
             window.removeEventListener('keydown', handleKeyDown);
             clearTimeout(timer);
         };
-    }, [isOpen, onCancel, onClose]);
+    }, [isOpen, isLoading, handleClose]);
 
     if (!isOpen) return null;
+
+    const handleConfirmClick = async () => {
+        if (isLoading) return;
+        if (onConfirm) {
+            const result = onConfirm();
+            if (result && typeof result.then === 'function') {
+                try {
+                    await result;
+                } catch {
+                    return;
+                }
+            }
+        }
+        if (!isLoading) {
+            handleClose();
+        }
+    };
 
     return createPortal(
         <div 
@@ -83,23 +101,28 @@ export default function ConfirmDialog({
                     <button
                         ref={cancelBtnRef}
                         type="button"
+                        disabled={isLoading}
                         onClick={handleClose}
                         aria-label={cancelText}
-                        className="flex-1 min-h-[44px] py-3 px-4 rounded-xl font-bold text-sm text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/15 active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                        className={`flex-1 min-h-[44px] py-3 px-4 rounded-xl font-bold text-sm text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/15 active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
                         {cancelText}
                     </button>
                     <button
                         type="button"
-                        onClick={() => { onConfirm?.(); handleClose(); }}
+                        disabled={isLoading}
+                        onClick={handleConfirmClick}
                         aria-label={confirmText}
-                        className={`flex-1 min-h-[44px] py-3 px-4 rounded-xl font-bold text-sm text-white active:scale-95 transition-all shadow-md focus-visible:outline-none focus-visible:ring-2 ${
+                        className={`flex-1 min-h-[44px] py-3 px-4 rounded-xl font-bold text-sm text-white active:scale-95 transition-all shadow-md focus-visible:outline-none focus-visible:ring-2 flex items-center justify-center gap-2 ${
+                            isLoading ? 'opacity-80 cursor-wait' : ''
+                        } ${
                             isDanger 
                                 ? 'bg-red-500 hover:bg-red-600 shadow-red-500/25 focus-visible:ring-red-400' 
                                 : 'bg-blue-600 hover:bg-blue-700 shadow-blue-500/25 focus-visible:ring-blue-400'
                         }`}
                     >
-                        {confirmText}
+                        {isLoading && <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>}
+                        <span>{confirmText}</span>
                     </button>
                 </div>
             </div>

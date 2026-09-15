@@ -27,7 +27,6 @@ export const AuthProvider = ({ children }) => {
      * Re-fetches userData and householdMembers from Firebase.
      * Use this instead of window.location.reload() when household state changes.
      */
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     const refreshUserData = useCallback(async () => {
         if (!user) return;
         try {

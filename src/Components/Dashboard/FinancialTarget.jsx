@@ -77,11 +77,11 @@ export default function FinancialTarget({
     const showMoney = (v) => privacyMode ? '••••' : formatMoney(v);
 
     // --- Build data per category ---
-    const servicesPaid = services.filter(s => s.paidPeriods?.includes(targetMonthKey)).reduce((a, s) => a + s.amount, 0);
-    const servicesTotal = services.reduce((a, s) => a + s.amount, 0);
+    const servicesPaid = (services || []).filter(s => s.paidPeriods?.includes(targetMonthKey)).reduce((a, s) => a + (Number(s.amount) || 0), 0);
+    const servicesTotal = (services || []).reduce((a, s) => a + (Number(s.amount) || 0), 0);
 
-    const cardsPaid = cardsWithDebt.filter(c => c.paidPeriods?.includes(targetMonthKey)).reduce((a, c) => a + c.currentDebt, 0);
-    const cardsTotal = cardsWithDebt.reduce((a, c) => a + c.currentDebt, 0);
+    const cardsPaid = (cardsWithDebt || []).filter(c => c.paidPeriods?.includes(targetMonthKey)).reduce((a, c) => a + (Number(c.currentDebt) || 0), 0);
+    const cardsTotal = (cardsWithDebt || []).reduce((a, c) => a + (Number(c.currentDebt) || 0), 0);
 
     const superPaid = superData?.realSpent ?? 0;
     const superTotal = superData?.totalBudget ?? 0;
@@ -255,7 +255,7 @@ export default function FinancialTarget({
                                     type="button"
                                     key={cat.key}
                                     onClick={() => setCategoryFilter(cat.key)}
-                                    className={`min-h-[38px] flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all duration-150 active:scale-95 ${
+                                    className={`min-h-[44px] flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-bold transition-all duration-150 active:scale-95 ${
                                         active ? c.pill : `bg-gray-50 dark:bg-white/5 ${c.pillOff}`
                                     }`}
                                 >

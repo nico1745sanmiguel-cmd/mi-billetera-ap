@@ -12,9 +12,21 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['icon.png', 'icon.webp', 'icon-192.webp', 'logos/**/*'],
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,webp}']
+      },
       manifest: {
         short_name: "Mi Billetera",
-        name: "Control de Gastos",
+        name: "Mi Billetera - Control de Gastos",
+        description: "Mi Billetera - Aplicación personal para control de gastos, finanzas y presupuestos.",
+        lang: "es",
+        categories: ["finance"],
+        orientation: "portrait",
+        start_url: "/",
+        scope: "/",
+        display: "standalone",
+        theme_color: "#ffffff",
+        background_color: "#f3f4f6",
         icons: [
           {
             src: "/icon-192.webp",

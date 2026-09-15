@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { db } from '../../firebase';
-import { collection, onSnapshot, query, where, addDoc, serverTimestamp, doc, setDoc, deleteDoc } from 'firebase/firestore';
+import { collection, onSnapshot, query, where, or, addDoc, serverTimestamp, doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { useAuth } from '../../context/AuthContext';
 import { getCache, setCache } from '../../utils/cache';
 import { COLLECTIONS, CACHE_KEYS } from '../../config/constants';
@@ -21,7 +21,9 @@ export const useSavingsData = () => {
         const queryField = householdId ? "householdId" : "userId";
         const queryValue = householdId ? householdId : uid;
 
-        const q = query(collection(db, COLLECTIONS.SAVINGS_TRANSACTIONS), where(queryField, "==", queryValue));
+        const q = householdId
+            ? query(collection(db, COLLECTIONS.SAVINGS_TRANSACTIONS), or(where("householdId", "==", householdId), where("userId", "==", user.uid)))
+            : query(collection(db, COLLECTIONS.SAVINGS_TRANSACTIONS), where("userId", "==", user.uid));
         const unsubSavings = onSnapshot(q, (snap) => {
             const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
             setSavingsTransactions(data);
@@ -37,7 +39,9 @@ export const useSavingsData = () => {
         const queryField = householdId ? "householdId" : "userId";
         const queryValue = householdId ? householdId : uid;
 
-        const q = query(collection(db, 'savings_asset_prices'), where(queryField, "==", queryValue));
+        const q = householdId
+            ? query(collection(db, 'savings_asset_prices'), or(where("householdId", "==", householdId), where("userId", "==", user.uid)))
+            : query(collection(db, 'savings_asset_prices'), where("userId", "==", user.uid));
         const unsub = onSnapshot(q, (snap) => {
             const carteras = [];
             const manual = {};

@@ -159,6 +159,50 @@ export default function HouseholdManager({ onBack }) {
         }
     };
 
+    const handleRestoreOldHousehold = async () => {
+        if (!window.confirm("¿Seguro que querés restaurar tu hogar anterior? Esto buscará tu hogar original y te volverá a vincular.")) return;
+        setLoading(true);
+        try {
+            const q = query(collection(db, 'households'), where('members', 'array-contains', user.uid));
+            const snaps = await getDocs(q);
+            const myHouseholds = snaps.docs.map(d => ({ id: d.id, ...d.data() }));
+            
+            const oldHouseholds = myHouseholds.filter(h => h.id !== householdId);
+            
+            if (oldHouseholds.length === 0) {
+                alert("No se encontró ningún hogar anterior en la base de datos.");
+                setLoading(false);
+                return;
+            }
+            
+            const targetId = oldHouseholds[0].id;
+            
+            if (household && household.members && household.members.length === 1) {
+                // await deleteDoc(doc(db, 'households', householdId)); // Optional, better to leave it to avoid errors
+            }
+
+            await updateDoc(doc(db, 'users', user.uid), { householdId: targetId });
+            
+            const batch = writeBatch(db);
+            const collectionsToUpdate = ['cards', 'transactions', 'supermarket_items', 'services'];
+            const collectionsSnaps = await Promise.all(collectionsToUpdate.map(collName => 
+                getDocs(query(collection(db, collName), where("ownerId", "==", user.uid)))
+            ));
+            collectionsSnaps.forEach(snap => snap.forEach(docSnap => batch.update(docSnap.ref, { householdId: targetId })));
+            await batch.commit();
+
+            await refreshUserData();
+            const snap = await getDoc(doc(db, 'households', targetId));
+            if (snap.exists()) setHousehold(snap.data());
+            
+            alert("¡Hogar anterior restaurado con éxito! Tus datos volvieron a la normalidad.");
+        } catch (e) {
+            console.error(e);
+            alert("Hubo un error al intentar restaurar el hogar.");
+        }
+        setLoading(false);
+    };
+
     if (loading) return <LoadingState message="Cargando tu hogar..." fullScreen={true} />;
 
     return (
@@ -253,6 +297,9 @@ export default function HouseholdManager({ onBack }) {
                                     {leaveError}
                                 </div>
                             )}
+                            <button aria-label="Acción" type="button" onClick={handleRestoreOldHousehold} className="w-full py-4 text-indigo-500 font-bold text-sm tracking-widest hover:bg-indigo-50 rounded-2xl transition-colors border border-transparent hover:border-indigo-100 mb-2">
+                                Restaurar Hogar Anterior
+                            </button>
                             <button aria-label="Acción" type="button" onClick={handleLeaveRequest} className="w-full py-4 text-red-500 font-bold text-sm tracking-widest hover:bg-red-50 rounded-2xl transition-colors border border-transparent hover:border-red-100">
                                 Salir del Grupo de Hogar
                             </button>

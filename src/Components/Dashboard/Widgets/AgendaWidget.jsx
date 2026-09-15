@@ -77,17 +77,17 @@ function UndoToast({ toast, onUndo, onDismiss }) {
 }
 
 export default function AgendaWidget({ currentDate, privacyMode, setView, onTogglePaid, size, targetMonthKey, targetMonthVal }) {
-    const { services } = useServices();
-    const { cards, transactions } = useCards();
-    const { freshItems, plannerCategories } = useSupermarket();
+    const { services = [] } = useServices();
+    const { cards = [], transactions = [] } = useCards();
+    const { freshItems = [], plannerCategories = [] } = useSupermarket();
 
     const cardsWithDebt = useMemo(() => {
-        return buildCardsWithDebt(cards, transactions, targetMonthKey, targetMonthVal);
+        return buildCardsWithDebt(cards || [], transactions || [], targetMonthKey, targetMonthVal);
     }, [cards, transactions, targetMonthKey, targetMonthVal]);
 
     const agenda = useMemo(() => {
-        const realServices = services.map(s => ({ id: s.id, name: s.name, amount: s.amount, day: s.day, isPaid: s.paidPeriods?.includes(targetMonthKey) || false, type: 'service' }));
-        const cardServices = cardsWithDebt.flatMap(c => c.currentDebt > 0 ? [{
+        const realServices = (services || []).map(s => ({ id: s.id, name: s.name, amount: s.amount, day: s.day, isPaid: s.paidPeriods?.includes(targetMonthKey) || false, type: 'service' }));
+        const cardServices = (cardsWithDebt || []).flatMap(c => c.currentDebt > 0 ? [{
             id: c.id,
             name: c.name,
             amount: c.currentDebt,
@@ -137,7 +137,7 @@ export default function AgendaWidget({ currentDate, privacyMode, setView, onTogg
     // Mapa id categoría → colorName
     const catColorMap = useMemo(() => {
         const defaults = [{ id: 'verduleria', colorName: 'green' }, { id: 'carniceria', colorName: 'red' }];
-        const all = [...defaults, ...plannerCategories];
+        const all = [...defaults, ...(plannerCategories || [])];
         const map = {};
         all.forEach(c => { map[c.id] = c.colorName; });
         return map;
@@ -160,7 +160,7 @@ export default function AgendaWidget({ currentDate, privacyMode, setView, onTogg
 
     const plannerItemsByDay = useMemo(() => {
         const map = {};
-        freshItems.forEach(fi => {
+        (freshItems || []).forEach(fi => {
             if (!fi.date) return;
             const fiDate = new Date(fi.date + 'T12:00:00');
             if (isNaN(fiDate.getTime())) return;
@@ -174,8 +174,8 @@ export default function AgendaWidget({ currentDate, privacyMode, setView, onTogg
 
     const paymentItemsByDay = useMemo(() => {
         const map = {};
-        agenda.forEach(item => {
-            const matchingDay = weekDays.find(d => d.getDate() === item.day);
+        (agenda || []).forEach(item => {
+            const matchingDay = weekDays.find(d => d.getDate() === item.day && (currentDate ? d.getMonth() === currentDate.getMonth() : true));
             if (matchingDay) {
                 const key = matchingDay.toISOString().split('T')[0];
                 if (!map[key]) map[key] = [];
@@ -183,7 +183,7 @@ export default function AgendaWidget({ currentDate, privacyMode, setView, onTogg
             }
         });
         return map;
-    }, [agenda, weekDays]);
+    }, [agenda, weekDays, currentDate]);
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -276,9 +276,9 @@ export default function AgendaWidget({ currentDate, privacyMode, setView, onTogg
                                 type="button"
                                 onClick={() => switchMode('list')}
                                 title="Vista Lista"
-                                className={`w-9 h-9 flex items-center justify-center rounded-lg transition-all ${viewMode === 'list' ? 'bg-white dark:bg-white/20 shadow text-indigo-600 dark:text-white' : 'text-gray-400 dark:text-white/30 hover:text-gray-600 dark:hover:text-white/60'}`}
+                                className={`min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg transition-all ${viewMode === 'list' ? 'bg-white dark:bg-white/20 shadow text-indigo-600 dark:text-white' : 'text-gray-400 dark:text-white/30 hover:text-gray-600 dark:hover:text-white/60'}`}
                             >
-                                <LayoutList size={16} />
+                                <LayoutList size={18} />
                             </button>
                             <button 
                                 aria-label="Vista de semana"
@@ -286,9 +286,9 @@ export default function AgendaWidget({ currentDate, privacyMode, setView, onTogg
                                 type="button"
                                 onClick={() => switchMode('week')}
                                 title="Vista Semana"
-                                className={`w-9 h-9 flex items-center justify-center rounded-lg transition-all ${viewMode === 'week' ? 'bg-white dark:bg-white/20 shadow text-indigo-600 dark:text-white' : 'text-gray-400 dark:text-white/30 hover:text-gray-600 dark:hover:text-white/60'}`}
+                                className={`min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg transition-all ${viewMode === 'week' ? 'bg-white dark:bg-white/20 shadow text-indigo-600 dark:text-white' : 'text-gray-400 dark:text-white/30 hover:text-gray-600 dark:hover:text-white/60'}`}
                             >
-                                <CalendarRange size={16} />
+                                <CalendarRange size={18} />
                             </button>
                         </div>
                         <button 

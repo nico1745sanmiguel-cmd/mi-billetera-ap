@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { collection, query, where, onSnapshot, addDoc, doc, deleteDoc } from 'firebase/firestore';
+import { collection, query, where, or, onSnapshot, addDoc, doc, deleteDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 
 const deleteAlias = async (id) => {
@@ -10,13 +10,13 @@ const deleteAlias = async (id) => {
     }
 }
 
-export const useAliases = (userId, householdId = null) => {
+export const useAliases = (userId, householdId) => {
     const [aliases, setAliases] = useState([]);
     const [loading, setLoading] = useState(true);
-
     const [prevUserId, setPrevUserId] = useState(null);
+
+    // Resetear aliases localmente al cerrar sesión ANTES de que se desmonte el listener
     if (userId !== prevUserId) {
-        // react-doctor-disable-next-line react-doctor/no-impure-state-updater
         setPrevUserId(userId);
         if (!userId) {
             setAliases([]);
@@ -29,9 +29,9 @@ export const useAliases = (userId, householdId = null) => {
         }
 
         // Definir dónde buscar: si hay householdId, buscamos por ese ID, sino por userId
-        const queryField = householdId ? "householdId" : "userId";
-        const queryValue = householdId ? householdId : userId;
-        const q = query(collection(db, 'merchant_aliases'), where(queryField, "==", queryValue));
+        const q = householdId
+            ? query(collection(db, 'merchant_aliases'), or(where("householdId", "==", householdId), where("userId", "==", userId)))
+            : query(collection(db, 'merchant_aliases'), where("userId", "==", userId));
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const loadedAliases = snapshot.docs.map(doc => ({

@@ -7,10 +7,10 @@ import { useUIDispatch } from '../../../context/UIContext';
 import { useSupermarket } from '../../../context/SupermarketContext';
 
 export default function SuperActionsWidget({ privacyMode, setView, size = '1x1', targetMonthKey }) {
-    const { superItems: supermarketItems } = useSupermarket();
+    const { superItems: supermarketItems = [] } = useSupermarket();
 
     const superData = useMemo(() => {
-        const monthlyItems = supermarketItems.filter(item => {
+        const monthlyItems = (supermarketItems || []).filter(item => {
             if (item.month) return item.month === targetMonthKey;
             const realNow = new Date();
             const realKey = `${realNow.getFullYear()}-${String(realNow.getMonth() + 1).padStart(2, '0')}`;
@@ -82,8 +82,12 @@ export default function SuperActionsWidget({ privacyMode, setView, size = '1x1',
     if (size === '1x1' || size === 'compact') {
         return (
             <div
+                role="button"
+                tabIndex={0}
+                aria-label="Abrir módulo supermercado"
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setView('super'); } }}
                 onClick={() => setView('super')}
-                className="bg-white dark:bg-[#0f0c29]/50 p-4 rounded-[24px] border border-gray-100 dark:border-white/10 shadow-sm cursor-pointer hover:border-purple-200 dark:hover:border-purple-500/50 transition-colors group flex flex-col justify-between h-full dark:backdrop-blur-md mx-1 relative overflow-hidden"
+                className="bg-white dark:bg-[#0f0c29]/50 p-4 rounded-[24px] border border-gray-100 dark:border-white/10 shadow-sm cursor-pointer hover:border-purple-200 dark:hover:border-purple-500/50 transition-colors group flex flex-col justify-between h-full dark:backdrop-blur-md mx-1 relative overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
             >
                 {superData.percent > 90 && (
                      <div className="absolute top-0 left-0 w-full h-1 bg-red-500 opacity-80" />
@@ -98,48 +102,49 @@ export default function SuperActionsWidget({ privacyMode, setView, size = '1x1',
                             <circle cx="24" cy="24" r={radius} className="stroke-gray-100 dark:stroke-white/5" strokeWidth="3" fill="transparent" />
                             <circle
                                 cx="24" cy="24" r={radius}
-                                className={`${percent > 90 ? 'stroke-red-500' : percent > 75 ? 'stroke-orange-500' : 'stroke-purple-500'}`}
-                                strokeWidth="3" fill="transparent" strokeDasharray={circumference} strokeDashoffset={strokeDashoffset} strokeLinecap="round"
-                                style={{ transition: 'stroke-dashoffset 0.5s ease-in-out' }}
+                                className={`transition-all duration-500 ${percent > 90 ? 'stroke-red-500' : percent > 75 ? 'stroke-orange-500' : 'stroke-green-500'}`}
+                                strokeWidth="3"
+                                strokeDasharray={circumference}
+                                strokeDashoffset={strokeDashoffset}
+                                strokeLinecap="round"
+                                fill="transparent"
                             />
                         </svg>
-                        <div className="text-purple-600 dark:text-purple-300 relative z-10 bg-white/50 dark:bg-[#0f0c29]/50 rounded-full p-1.5 backdrop-blur-sm">
+                        <div className="bg-purple-50 dark:bg-purple-500/20 text-purple-600 dark:text-purple-300 p-2 rounded-xl transition-transform group-hover:scale-110">
                             <ShoppingCart size={18} />
                         </div>
                     </div>
 
-                    {!isAdding && (
-                        <button 
-                            aria-label="Abrir campo para agregar producto" 
-                            type="button"
-                            onClick={(e) => { e.stopPropagation(); setIsAdding(true); }}
-                            className="w-11 h-11 flex items-center justify-center bg-gray-50 text-gray-400 hover:text-purple-600 dark:bg-white/5 dark:text-white/40 dark:hover:text-purple-300 rounded-full transition-colors active:scale-95"
-                        >
-                            <Plus size={18} />
-                        </button>
-                    )}
+                    <button 
+                        aria-label="Agregar producto rápido" 
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); setIsAdding(!isAdding); }}
+                        className="min-h-[44px] min-w-[44px] flex items-center justify-center text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 p-2 rounded-full hover:bg-gray-50 dark:hover:bg-white/5 transition-colors active:scale-95"
+                    >
+                        <Plus size={16} />
+                    </button>
                 </div>
 
                 {isAdding ? (
-                    <div className="relative z-10 mt-2 flex items-center" onClick={(e) => e.stopPropagation()}>
-                        <input autoComplete="off" id="super-compact-input"
-                            aria-label="Nombre del producto para el supermercado"
+                    <div className="relative z-20 mt-2 flex items-center" onClick={(e) => e.stopPropagation()}>
+                        <input autoComplete="off" id="super-quick-input-compact"
+                            aria-label="Agregar producto rápido al supermercado"
                             type="text"
-                            placeholder="Producto..."
+                            placeholder="Agregar..."
                             value={inputValue}
                             onChange={(e) => setInputValue(e.target.value)}
                             onKeyDown={handleKeyDown}
                             autoFocus
                             onBlur={() => setTimeout(() => setIsAdding(false), 200)}
-                            className="w-full min-h-[44px] bg-gray-50 dark:bg-black/20 text-xs px-3 py-2 rounded-lg border border-gray-200 dark:border-white/10 text-gray-700 dark:text-white focus:outline-none focus:border-purple-400 pr-10"
+                            className="w-full min-h-[44px] bg-gray-50 dark:bg-black/20 text-xs px-3 py-2 rounded-lg border border-gray-200 dark:border-white/10 text-gray-700 dark:text-white focus:outline-none focus:border-purple-400 pr-11"
                         />
                         <button 
                             aria-label="Guardar producto en changuito" 
                             type="button"
                             onClick={handleQuickAdd} 
-                            className="absolute right-1 w-10 h-10 flex items-center justify-center text-purple-500 hover:text-purple-600 active:scale-95"
+                            className="absolute right-0.5 min-w-[44px] min-h-[44px] flex items-center justify-center text-purple-500 hover:text-purple-600 active:scale-95"
                         >
-                            <Check size={16} />
+                            <Check size={18} />
                         </button>
                     </div>
                 ) : (
@@ -156,8 +161,12 @@ export default function SuperActionsWidget({ privacyMode, setView, size = '1x1',
 
     return (
         <div
+            role="button"
+            tabIndex={0}
+            aria-label="Abrir módulo supermercado"
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setView('super'); } }}
             onClick={() => setView('super')}
-            className="bg-white dark:bg-[#0f0c29]/50 p-4 rounded-[24px] border border-gray-100 dark:border-white/10 shadow-sm cursor-pointer hover:border-purple-200 dark:hover:border-purple-500/50 transition-colors group flex flex-col justify-between h-full dark:backdrop-blur-md mx-1 relative overflow-hidden"
+            className="bg-white dark:bg-[#0f0c29]/50 p-4 rounded-[24px] border border-gray-100 dark:border-white/10 shadow-sm cursor-pointer hover:border-purple-200 dark:hover:border-purple-500/50 transition-colors group flex flex-col justify-between h-full dark:backdrop-blur-md mx-1 relative overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
         >
             <div className="flex justify-between items-start mb-2">
                 <div className="flex items-center gap-3">
@@ -194,7 +203,7 @@ export default function SuperActionsWidget({ privacyMode, setView, size = '1x1',
                         type="button" 
                         onClick={handleQuickAdd}
                         disabled={!inputValue.trim()}
-                        className="absolute right-1.5 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center text-white bg-purple-500 hover:bg-purple-600 rounded-lg disabled:opacity-50 disabled:bg-gray-300 transition-colors active:scale-95"
+                        className="absolute right-1 top-1/2 -translate-y-1/2 min-w-[44px] min-h-[44px] flex items-center justify-center text-white bg-purple-500 hover:bg-purple-600 rounded-xl disabled:opacity-50 disabled:bg-gray-300 transition-colors active:scale-95"
                     >
                         <Plus size={18} />
                     </button>

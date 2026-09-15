@@ -195,10 +195,28 @@ export default function CardDetail({ card, isNewCard, currentDate, onBack }) {
         e.preventDefault();
         if (!card?.id || isSaving || isDeleting) return;
 
+        if (statement.totalDue === '' || statement.totalDue === null || statement.totalDue === undefined) {
+            showToast('Ingresá el total a pagar del resumen.', 'error');
+            return;
+        }
+
+        const numTotalDue = Number(statement.totalDue);
+        if (isNaN(numTotalDue) || numTotalDue < 0) {
+            showToast('El total a pagar no puede ser negativo.', 'error');
+            return;
+        }
+
+        if (statement.nextCloseDate && statement.nextDueDate) {
+            if (statement.nextDueDate < statement.nextCloseDate) {
+                showToast('La fecha de próximo vencimiento debe ser posterior o igual al próximo cierre.', 'error');
+                return;
+            }
+        }
+
         setIsSaving(true);
         try {
             await saveStatement(card.id, monthKey, {
-                totalDue: statement.totalDue,
+                totalDue: numTotalDue,
                 dueDate: statement.dueDate,
                 nextCloseDate: statement.nextCloseDate,
                 nextDueDate: statement.nextDueDate,

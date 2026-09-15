@@ -1,6 +1,8 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useSavings } from '../../../context/SavingsContext';
-import { Search, Filter, Edit2, Trash2, ArrowUpRight, ArrowDownRight, RefreshCcw, Wallet, Tag, ArrowRight } from 'lucide-react';
+import { useUI } from '../../../context/UIContext';
+import ConfirmDialog from '../../UI/ConfirmDialog';
+import { Search, Filter, Edit2, Trash2, ArrowUpRight, ArrowDownRight, RefreshCcw, Wallet, Tag, ArrowRight, RotateCcw } from 'lucide-react';
 import OperationModal from '../OperationModal';
 
 const arsFormatter = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 });
@@ -24,7 +26,7 @@ const formatTxDate = (fechaStr, createdAt) => {
         const match = typeof fechaStr === 'string' && fechaStr.match(/^(\d{4})-(\d{2})-(\d{2})/);
         if (match) {
             const [, y, m, d] = match;
-            const dt = new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
+            const dt = new Date(parseInt(y, 10), parseInt(m, 10) - 1, parseInt(d, 10));
             return dt.toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' });
         }
         const d = new Date(fechaStr);
@@ -32,28 +34,66 @@ const formatTxDate = (fechaStr, createdAt) => {
             return d.toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' });
         }
     }
-    const d = createdAt?.toDate?.() || new Date();
+    let d = new Date();
+    if (createdAt?.toDate) d = createdAt.toDate();
+    else if (createdAt?.seconds) d = new Date(createdAt.seconds * 1000);
+    else if (typeof createdAt === 'string') d = new Date(createdAt);
     return d.toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' });
+};
+
+const getTxTime = (tx) => {
+    if (tx.fecha) {
+        const match = typeof tx.fecha === 'string' && tx.fecha.match(/^(\d{4})-(\d{2})-(\d{2})/);
+        if (match) {
+            const [, y, m, d] = match;
+            return new Date(parseInt(y, 10), parseInt(m, 10) - 1, parseInt(d, 10)).getTime();
+        }
+        const parsed = new Date(tx.fecha).getTime();
+        if (!isNaN(parsed)) return parsed;
+    }
+    if (tx.createdAt?.toDate) return tx.createdAt.toDate().getTime();
+    if (tx.createdAt?.seconds) return tx.createdAt.seconds * 1000;
+    if (typeof tx.createdAt === 'string') {
+        const parsed = new Date(tx.createdAt).getTime();
+        if (!isNaN(parsed)) return parsed;
+    }
+    return 0;
 };
 
 export default function OperationsTab({ isGlass, privacyMode }) {
     const { savingsTransactions, deleteSavingsTransaction } = useSavings();
+    const { showToast } = useUI();
     const [filterEspecie, setFilterEspecie] = useState('');
     const [filterCartera, setFilterCartera] = useState('');
     const [editingTx, setEditingTx] = useState(null);
+    const [deletingTx, setDeletingTx] = useState(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const formatAmount = (amount, formatter) => privacyMode ? '****' : formatter.format(amount);
 
-    const handleDelete = async (id) => {
-        if (window.confirm('¿Seguro que querés eliminar esta operación?')) {
-            await deleteSavingsTransaction(id);
+    const handleDeleteClick = (tx) => {
+        setDeletingTx(tx);
+    };
+
+    const handleConfirmDelete = async () => {
+        if (!deletingTx || isDeleting) return;
+        setIsDeleting(true);
+        try {
+            await deleteSavingsTransaction(deletingTx.id);
+            showToast('Operación eliminada', 'success');
+            setDeletingTx(null);
+        } catch (error) {
+            console.error(error);
+            showToast('Error al eliminar la operación', 'error');
+        } finally {
+            setIsDeleting(false);
         }
     };
 
     const sortedHistory = useMemo(() => {
         return (savingsTransactions || []).toSorted((a, b) => {
-            const dateA = new Date(a.fecha || a.createdAt?.toDate?.() || 0);
-            const dateB = new Date(b.fecha || b.createdAt?.toDate?.() || 0);
+            const dateA = getTxTime(a);
+            const dateB = getTxTime(b);
             return dateB - dateA;
         });
     }, [savingsTransactions]);
@@ -168,8 +208,28 @@ export default function OperationsTab({ isGlass, privacyMode }) {
             </div>
 
             {filtered.length === 0 ? (
-                <div className="text-center py-12 px-4 border-2 border-dashed rounded-3xl opacity-60">
-                    <p className={isGlass ? 'text-white' : 'text-gray-500'}>No se encontraron operaciones con los filtros actuales.</p>
+                <div className="text-center py-12 px-4 border-2 border-dashed rounded-3xl opacity-90 my-2 flex flex-col items-center justify-center">
+                    <p className={`mb-3 ${isGlass ? 'text-white/80' : 'text-gray-600'}`}>
+                        {(filterEspecie || filterCartera) 
+                            ? 'No se encontraron operaciones con los filtros actuales.'
+                            : 'Todavía no tenés operaciones registradas.'}
+                    </p>
+                    {(filterEspecie || filterCartera) && (
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setFilterEspecie('');
+                                setFilterCartera('');
+                            }}
+                            className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-md active:scale-95 ${
+                                isGlass 
+                                    ? 'bg-white/10 text-white hover:bg-white/20 border border-white/10' 
+                                    : 'bg-gray-800 text-white hover:bg-gray-900'
+                            }`}
+                        >
+                            <RotateCcw size={14} /> Limpiar filtros
+                        </button>
+                    )}
                 </div>
             ) : (
                 <div className="space-y-4">
@@ -241,7 +301,7 @@ export default function OperationsTab({ isGlass, privacyMode }) {
                                             <Edit2 size={14} />
                                         </button>
                                         <button 
-                                            onClick={() => handleDelete(tx.id)} 
+                                            onClick={() => handleDeleteClick(tx)} 
                                             className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
                                                 isGlass ? 'bg-red-500/20 hover:bg-red-500/40 text-red-300' : 'bg-red-50 hover:bg-red-100 text-red-500'
                                             }`}
@@ -278,6 +338,20 @@ export default function OperationsTab({ isGlass, privacyMode }) {
                     initialData={editingTx} 
                     onClose={() => setEditingTx(null)} 
                     isGlass={isGlass} 
+                />
+            )}
+
+            {deletingTx && (
+                <ConfirmDialog
+                    isOpen={Boolean(deletingTx)}
+                    title="¿Eliminar Operación?"
+                    message={`¿Estás seguro de que querés eliminar esta operación de ${deletingTx.especie}?`}
+                    confirmText="Eliminar"
+                    cancelText="Cancelar"
+                    isDanger={true}
+                    isLoading={isDeleting}
+                    onConfirm={handleConfirmDelete}
+                    onCancel={() => setDeletingTx(null)}
                 />
             )}
         </div>

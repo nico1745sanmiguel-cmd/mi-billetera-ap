@@ -21,7 +21,6 @@ import SuperListSuggestions from './SuperListSuggestions';
 import ConfirmDialog from '../UI/ConfirmDialog';
 
 // FORMATOS
-const formatInputCurrency = (val) => val ? '$ ' + Number(val).toLocaleString('es-AR') : '';
 const parseCurrencyInput = (val) => val.replace(/\D/g, '');
 
 const handleToggle = async (item) => {
@@ -117,7 +116,7 @@ export default function SuperList() {
 
     // PREDICCIÓN DE COMPRAS INTELIGENTE 🧠
     const prediction = useMemo(() => {
-        return calculatePurchasePredictions(items, currentMonthKey);
+        return analyzePurchaseFrequency(items, currentMonthKey);
     }, [items, currentMonthKey]);
 
     // Auto-agregar ítems de frecuencia regular en un mes vacío (solo si no es un mes histórico pasado)

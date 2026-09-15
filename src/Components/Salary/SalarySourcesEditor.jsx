@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { createPortal } from 'react-dom';
 import { X, Plus, Briefcase, Trash2, Pencil } from 'lucide-react';
 import { formatMoney, formatInputNumber, parseInputNumber } from '../../utils';
 import { useSalaryState, useSalaryDispatch } from '../../context/SalaryContext';

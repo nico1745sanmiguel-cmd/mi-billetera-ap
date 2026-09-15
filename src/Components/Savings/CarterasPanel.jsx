@@ -37,7 +37,7 @@ export default function CarterasPanel({ isGlass }) {
             await addCartera(nuevaCartera);
             setNuevaCartera('');
             showToast('Cartera/Broker agregada correctamente', 'success');
-        } catch (error) {
+        } catch {
             showToast('Error al agregar cartera', 'error');
         } finally {
             setIsSubmitting(false);
@@ -49,7 +49,7 @@ export default function CarterasPanel({ isGlass }) {
         try {
             await deleteCartera(id);
             showToast('Cartera eliminada', 'success');
-        } catch (error) {
+        } catch {
             showToast('Error al eliminar cartera', 'error');
         } finally {
             setDeletingId(null);
@@ -64,7 +64,7 @@ export default function CarterasPanel({ isGlass }) {
             showToast(`Se migraron los activos a ${migratingTo}`, 'success');
             setMigratingTo(null);
             setOldCarteraSelected('');
-        } catch (error) {
+        } catch {
             showToast('Error al migrar activos', 'error');
         } finally {
             setIsSubmitting(false);

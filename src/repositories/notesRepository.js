@@ -13,7 +13,7 @@ export const addNote = (payload) =>
 export const deleteNote = (id) =>
     deleteDoc(doc(db, COL, id));
 
-const toggleNoteChecked = (id, checked) =>
+export const toggleNoteChecked = (id, checked) =>
     updateDoc(doc(db, COL, id), { checked });
 
 export const updateNote = (id, payload) =>

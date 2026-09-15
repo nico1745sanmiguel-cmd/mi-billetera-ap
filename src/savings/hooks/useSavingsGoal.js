@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { db } from '../../firebase';
-import { collection, onSnapshot, query, where, addDoc, serverTimestamp, doc, setDoc, deleteDoc, limit } from 'firebase/firestore';
+import { collection, onSnapshot, query, where, or, addDoc, serverTimestamp, doc, setDoc, deleteDoc, limit } from 'firebase/firestore';
 import { useAuth } from '../../context/AuthContext';
 import { getCache, setCache } from '../../utils/cache';
 import { COLLECTIONS } from '../../config/constants';
@@ -24,11 +24,17 @@ export const useSavingsGoal = () => {
         const queryField = householdId ? "householdId" : "userId";
         const queryValue = householdId ? householdId : uid;
 
-        const q = query(
-            collection(db, COLLECTIONS.SAVINGS_GOALS),
-            where(queryField, "==", queryValue),
-            limit(1)
-        );
+        const q = householdId
+            ? query(
+                collection(db, COLLECTIONS.SAVINGS_GOALS),
+                or(where("householdId", "==", householdId), where("userId", "==", user.uid)),
+                limit(1)
+            )
+            : query(
+                collection(db, COLLECTIONS.SAVINGS_GOALS),
+                where("userId", "==", user.uid),
+                limit(1)
+            );
 
         const unsub = onSnapshot(q, (snap) => {
             if (snap.empty) {

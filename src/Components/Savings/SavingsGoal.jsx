@@ -3,21 +3,22 @@ import { Loader2 } from 'lucide-react';
 import { useSavings } from '../../context/SavingsContext';
 import SavingsGoalForm from './SavingsGoalForm';
 import SavingsGoalView from './SavingsGoalView';
+import ConfirmDialog from '../UI/ConfirmDialog';
 import { useFinancial } from '../../context/FinancialContext';
 import { useUI } from '../../context/UIContext';
-import { formatInputNumber, parseInputNumber } from '../../utils';
 
 const arsFormatter = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 });
 
 export default function SavingsGoal() {
-    const { isGlass, privacyMode } = useUI();
-    const { savingsTransactions, savingsGoal, goalLoading, saveSavingsGoal, deleteSavingsGoal, posiciones, cauciones, liquidezPorCartera } = useSavings();
+    const { isGlass, privacyMode, showToast } = useUI();
+    const { savingsGoal, goalLoading, saveSavingsGoal, deleteSavingsGoal, posiciones, cauciones, liquidezPorCartera } = useSavings();
     const { dolarBlue } = useFinancial();
 
     const [editing, setEditing] = useState(false);
     const [form, setForm] = useState({ name: '', amount: '', imageUrl: '' });
     const [imageError, setImageError] = useState(false);
     const [saving, setSaving] = useState(false);
+    const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
 
     // Calcula el total general consolidado en ARS (posiciones + cauciones + liquidez)
     const totalARS = useMemo(() => {
@@ -56,10 +57,13 @@ export default function SavingsGoal() {
     };
 
     const handleSave = async () => {
-        if (!form.name) return;
+        if (!form.name || !form.name.trim()) {
+            showToast('Ingresá un nombre para el objetivo', 'error');
+            return;
+        }
         const parsedAmt = parseFloat(String(form.amount).replace(/\./g, '').replace(',', '.'));
         if (isNaN(parsedAmt) || parsedAmt <= 0) {
-            alert('Por favor ingresá un monto objetivo mayor a cero.');
+            showToast('Por favor ingresá un monto objetivo mayor a cero.', 'error');
             return;
         }
         setSaving(true);
@@ -70,23 +74,29 @@ export default function SavingsGoal() {
                 imageUrl: form.imageUrl.trim(),
             });
             setEditing(false);
+            showToast('Objetivo guardado exitosamente', 'success');
         } catch (e) {
             console.error(e);
-            alert('No se pudo guardar el objetivo. Intentá de nuevo.');
+            showToast('No se pudo guardar el objetivo. Intentá de nuevo.', 'error');
         } finally {
             setSaving(false);
         }
     };
 
-    const handleDelete = async () => {
-        if (!confirm('¿Eliminar el objetivo?')) return;
+    const handleDeleteClick = () => {
+        setIsConfirmDeleteOpen(true);
+    };
+
+    const handleConfirmDelete = async () => {
         setSaving(true);
         try {
             await deleteSavingsGoal();
             setEditing(false);
+            setIsConfirmDeleteOpen(false);
+            showToast('Objetivo eliminado correctamente', 'success');
         } catch (e) {
             console.error(e);
-            alert('Error al eliminar el objetivo.');
+            showToast('Error al eliminar el objetivo.', 'error');
         } finally {
             setSaving(false);
         }
@@ -137,24 +147,38 @@ export default function SavingsGoal() {
     const hasImage = savingsGoal.imageUrl && !imageError;
 
     return (
-        <SavingsGoalView
-            savingsGoal={savingsGoal}
-            isComplete={isComplete}
-            hasImage={hasImage}
-            imageError={imageError}
-            setImageError={setImageError}
-            progress={progress}
-            privacyMode={privacyMode}
-            formatCurrency={formatCurrency}
-            totalARS={totalARS}
-            goalAmount={goalAmount}
-            remaining={remaining}
-            handleDelete={handleDelete}
-            saving={saving}
-            openEdit={openEdit}
-            isGlass={isGlass}
-            cardBg={cardBg}
-            textColor={textColor}
-        />
+        <>
+            <SavingsGoalView
+                savingsGoal={savingsGoal}
+                isComplete={isComplete}
+                hasImage={hasImage}
+                imageError={imageError}
+                setImageError={setImageError}
+                progress={progress}
+                privacyMode={privacyMode}
+                formatCurrency={formatCurrency}
+                totalARS={totalARS}
+                goalAmount={goalAmount}
+                remaining={remaining}
+                handleDelete={handleDeleteClick}
+                saving={saving}
+                openEdit={openEdit}
+                isGlass={isGlass}
+                cardBg={cardBg}
+                textColor={textColor}
+            />
+
+            <ConfirmDialog
+                isOpen={isConfirmDeleteOpen}
+                title="¿Eliminar Objetivo?"
+                message="¿Estás seguro de que querés eliminar tu objetivo financiero? Podrás registrar uno nuevo en cualquier momento."
+                confirmText="Eliminar Objetivo"
+                cancelText="Cancelar"
+                isDanger={true}
+                isLoading={saving}
+                onConfirm={handleConfirmDelete}
+                onCancel={() => setIsConfirmDeleteOpen(false)}
+            />
+        </>
     );
 }

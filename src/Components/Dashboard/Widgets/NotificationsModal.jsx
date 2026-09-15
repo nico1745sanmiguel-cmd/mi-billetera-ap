@@ -182,9 +182,9 @@ export default function NotificationsModal({ notifications, user, privacyMode, s
                                                 {!isRead && (
                                                     <button aria-label={`Marcar como leída la notificación de ${isStopLoss ? n.especie : n.itemName}`} type="button" 
                                                         onClick={() => handleMarkAsRead(n.id)}
-                                                        className={`flex items-center gap-1 font-bold px-2 py-1 rounded-lg transition-colors active:scale-95 ${isStopLoss ? 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-500/20 hover:bg-red-100' : 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/20 hover:bg-indigo-100'}`}
+                                                        className={`min-h-[44px] flex items-center justify-center gap-1.5 font-bold px-3.5 py-2 rounded-xl transition-colors active:scale-95 ${isStopLoss ? 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-500/20 hover:bg-red-100' : 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/20 hover:bg-indigo-100'}`}
                                                     >
-                                                        <CheckCheck size={12} /> Marcar leído
+                                                        <CheckCheck size={14} /> Marcar leído
                                                     </button>
                                                 )}
                                             </div>

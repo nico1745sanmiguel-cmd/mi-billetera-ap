@@ -54,11 +54,9 @@ const confirmLogout = (authInstance) => {
     try {
         const params = new URLSearchParams(window.location.search);
         const deeplink = params.get('deeplink');
-        console.log('[Deeplink IIFE] href:', window.location.href, '| deeplink param:', deeplink);
         if (deeplink) {
             sessionStorage.setItem('pendingDeeplink', deeplink);
             window.history.replaceState({}, document.title, window.location.pathname);
-            console.log('[Deeplink IIFE] Stored in sessionStorage:', deeplink);
         }
     } catch (err) {
         console.warn('[Deeplink IIFE] Error:', err);
@@ -120,13 +118,10 @@ export default function App() {
     // Navegar al deeplink pendiente en cuanto el usuario esté autenticado.
     // Sin setTimeout: el navigate ocurre directo, sin race conditions.
     useEffect(() => {
-        console.log('[Deeplink Effect] loadingUser:', loadingUser, '| user:', !!user);
         if (!loadingUser && user) {
             const route = sessionStorage.getItem('pendingDeeplink');
-            console.log('[Deeplink Effect] pendingDeeplink from sessionStorage:', route);
             if (route) {
                 sessionStorage.removeItem('pendingDeeplink');
-                console.log('[Deeplink Effect] Navigating to:', route);
                 navigate(route, { replace: true });
             }
         }

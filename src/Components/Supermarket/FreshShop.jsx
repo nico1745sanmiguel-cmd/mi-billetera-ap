@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { auth } from '../../firebase';
 import { Plus, LayoutList, Settings } from 'lucide-react';
 import { formatMoney } from '../../utils';
-import { deleteFreshItem, copyItemsToMonth } from '../../repositories/freshRepository';
+import { copyItemsToMonth } from '../../repositories/freshRepository';
 import { addPlannerCategory } from '../../repositories/plannerCategoriesRepository';
 import { useSupermarket } from '../../context/SupermarketContext';
 import { useAuth } from '../../context/AuthContext';
@@ -18,7 +18,7 @@ export default function FreshShop() {
     const navigate = useNavigate();
     const { isGlass, currentDate } = useUI();
     const { showToast } = useUIDispatch();
-    const { userData } = useAuth();
+    const { userData, user } = useAuth();
     const householdId = userData?.householdId;
     const { freshItems: items, plannerCategories, loading } = useSupermarket();
     const [showNewCatForm, setShowNewCatForm] = useState(false);
@@ -48,7 +48,7 @@ export default function FreshShop() {
     // Si cambia de usuario, reiniciamos el registro de herencia
     useEffect(() => {
         inheritanceRunRef.current.clear();
-    }, [auth.currentUser?.uid]);
+    }, [user?.uid]);
 
     useEffect(() => {
         // Esperamos a tener los datos cargados de Firestore, mes válido y usuario autenticado

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Settings, Save, LayoutList, EyeOff, FolderOpen, ArrowDownUp, AlertTriangle } from 'lucide-react';
 import { CACHE_KEYS } from '../../config/constants';
-import { getCache, setCache } from '../../utils/cache';
+import { setCache } from '../../utils/cache';
 import { formatInputNumber, parseInputNumber } from '../../utils';
 
 import { getPlannerSettings } from '../../utils/plannerUtils';

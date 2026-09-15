@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { createPortal } from 'react-dom';
 import { X, Briefcase, Tag, Palette } from 'lucide-react';
 import { formatInputNumber, parseInputNumber } from '../../utils';
 

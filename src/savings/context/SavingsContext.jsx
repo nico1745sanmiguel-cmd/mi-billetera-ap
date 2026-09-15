@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useMemo, useCallback } from 'react';
 import { db } from '../../firebase';
-import { doc, deleteDoc, collection, getDocs, query, where } from 'firebase/firestore';
+import { doc, deleteDoc, collection, getDocs, query, where, or } from 'firebase/firestore';
 import { COLLECTIONS, CACHE_KEYS } from '../../config/constants';
 import { setCache } from '../../utils/cache';
 import { useAuth } from '../../context/AuthContext';
@@ -71,8 +71,6 @@ export const SavingsProvider = ({ children }) => {
     const clearAllSavings = useCallback(async () => {
         if (!user) return;
         const householdId = userData?.householdId;
-        const queryField = householdId ? "householdId" : "userId";
-        const queryValue = householdId ? householdId : user.uid;
 
         try {
             const targetCollections = [
@@ -88,7 +86,9 @@ export const SavingsProvider = ({ children }) => {
             for (const collName of targetCollections) {
                 // Borrar documentos respetando la regla de seguridad (householdId si pertenece a hogar, o userId)
                 try {
-                    const q = query(collection(db, collName), where(queryField, "==", queryValue));
+                    const q = householdId
+                        ? query(collection(db, collName), or(where("householdId", "==", householdId), where("userId", "==", user.uid)))
+                        : query(collection(db, collName), where("userId", "==", user.uid));
                     const snap = await getDocs(q);
                     snap.forEach(d => {
                         deletePromises.push(deleteDoc(d.ref).catch(err => console.warn(`Error deleting doc ${d.id}:`, err)));
