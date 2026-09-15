@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
     CheckCircle2, 
@@ -60,10 +60,19 @@ function TransactionsManager({
         ...CAT_LABELS
     }), [CAT_LABELS]);
 
+    const cardsMap = useMemo(() => {
+        const map = new Map();
+        if (Array.isArray(cards)) {
+            for (const c of cards) {
+                if (c && c.id) map.set(c.id, c.name);
+            }
+        }
+        return map;
+    }, [cards]);
+
     const getCardName = (cardId) => {
         if (!cardId) return 'Tarjeta';
-        const c = cards.find(item => item.id === cardId);
-        return c ? c.name : 'Tarjeta';
+        return cardsMap.get(cardId) || 'Tarjeta';
     };
 
     const filteredTransactions = useMemo(() => {
@@ -93,6 +102,17 @@ function TransactionsManager({
             return dateB - dateA;
         });
     }, [transactions, typeFilter, categoryFilter, monthFilter, currentDate]);
+
+    const INITIAL_BATCH_SIZE = 25;
+    const [visibleCount, setVisibleCount] = useState(INITIAL_BATCH_SIZE);
+
+    useEffect(() => {
+        setVisibleCount(INITIAL_BATCH_SIZE);
+    }, [typeFilter, categoryFilter, monthFilter]);
+
+    const visibleTransactions = useMemo(() => {
+        return filteredTransactions.slice(0, visibleCount);
+    }, [filteredTransactions, visibleCount]);
 
     const handleStartEdit = (t) => {
         setEditingTransaction(t);
@@ -244,7 +264,7 @@ function TransactionsManager({
                 </div>
             ) : (
                 <div className="space-y-2.5">
-                    {filteredTransactions.map((t) => {
+                    {visibleTransactions.map((t) => {
                         const isCredit = t.type === 'credit';
                         const catLabel = categoriesMap[t.category] || t.category || 'Varios';
                         const cardName = isCredit ? getCardName(t.cardId) : null;
@@ -325,6 +345,22 @@ function TransactionsManager({
                             </div>
                         );
                     })}
+
+                    {filteredTransactions.length > visibleCount && (
+                        <div className="pt-2 flex justify-center">
+                            <button
+                                type="button"
+                                onClick={() => setVisibleCount(prev => prev + 25)}
+                                className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all active:scale-95 flex items-center gap-2 ${
+                                    isGlass 
+                                        ? 'bg-white/10 hover:bg-white/15 text-white border border-white/10 shadow-sm' 
+                                        : 'bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200 shadow-sm'
+                                }`}
+                            >
+                                <span>Mostrar más movimientos ({filteredTransactions.length - visibleCount} restantes)</span>
+                            </button>
+                        </div>
+                    )}
                 </div>
             )}
 
@@ -448,6 +484,8 @@ function TransactionsManager({
     );
 }
 
+const MemoizedTransactionsManager = memo(TransactionsManager);
+
 export default function StatsDetails({
     filter,
     chartData,
@@ -490,7 +528,7 @@ export default function StatsDetails({
 
                     {/* Transacciones en vista Todos */}
                     <div className={`p-4 rounded-2xl border shadow-sm ${glassClass}`}>
-                        <TransactionsManager
+                        <MemoizedTransactionsManager
                             showMoney={showMoney}
                             glassTextPrimary={glassTextPrimary}
                             glassTextSecondary={glassTextSecondary}

@@ -1,22 +1,19 @@
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, setDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { COLLECTIONS } from '../config/constants';
+import { fetchUserProfile } from './householdService';
 
 /**
  * Carga las preferencias del usuario (módulos, orden, tamaños) desde Firestore.
+ * Utiliza fetchUserProfile para deduplicar la lectura si coincide con el arranque o migración.
  * @param {string} uid ID del usuario actual.
  * @returns {Promise<Object|null>} El objeto preferences o null si no existe.
  */
 export const loadPreferences = async (uid) => {
     if (!uid) return null;
     try {
-        const userRef = doc(db, COLLECTIONS.USERS, uid);
-        const userSnap = await getDoc(userRef);
-        if (userSnap.exists()) {
-            const data = userSnap.data();
-            return data.preferences || null;
-        }
-        return null;
+        const userProfile = await fetchUserProfile(uid);
+        return userProfile?.preferences || null;
     } catch (error) {
         console.error('Error loading preferences from Firestore:', error);
         return null;

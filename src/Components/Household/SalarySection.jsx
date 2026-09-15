@@ -5,6 +5,7 @@ import { getLatestSalary, calcularProporciones } from '../../utils/salaryUtils';
 import { formatMoney, formatInputNumber, parseInputNumber } from '../../utils';
 import { Pencil } from 'lucide-react';
 import LoadingState from '../UI/LoadingState';
+import { fetchUserProfile } from '../../services/householdService';
 
 export default function SalarySection({ memberIds, currentUserUid, isGlass }) {
     const [membersData, setMembersData] = useState([]);
@@ -13,15 +14,15 @@ export default function SalarySection({ memberIds, currentUserUid, isGlass }) {
     const [inputValue, setInputValue] = useState('');
     const [saving, setSaving] = useState(false);
 
-    const fetchMembers = async () => {
+    const fetchMembers = async (forceRefresh = false) => {
         if (!memberIds || memberIds.length === 0) return;
         try {
-            const promises = memberIds.map(uid => getDoc(doc(db, 'users', uid)));
-            const snapshots = await Promise.all(promises);
-            const data = snapshots.map(snap => {
-                if (snap.exists()) return { id: snap.id, ...snap.data() };
-                return { id: snap.id, displayName: 'Desconocido', photoURL: null, salaryHistory: [] };
+            const promises = memberIds.map(async (uid) => {
+                const profile = await fetchUserProfile(uid, forceRefresh);
+                if (profile) return { id: uid, ...profile };
+                return { id: uid, displayName: 'Desconocido', photoURL: null, salaryHistory: [] };
             });
+            const data = await Promise.all(promises);
             setMembersData(data);
         } catch (err) {
             console.error('Error fetching salary data:', err);
@@ -54,7 +55,7 @@ export default function SalarySection({ memberIds, currentUserUid, isGlass }) {
             const updated = [newEntry, ...existing];
             await updateDoc(userRef, { salaryHistory: updated });
             setEditingUid(null);
-            await fetchMembers();
+            await fetchMembers(true);
         } catch (err) {
             console.error('Error saving salary:', err);
         } finally {

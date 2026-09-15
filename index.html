@@ -13,14 +13,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     
     <title>Mi Billetera</title>
-    <!-- Google Fonts: Outfit -->
+    <!-- DNS Prefetch y Preconnect para acelerar la resolución de red -->
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com">
+    <link rel="dns-prefetch" href="https://firestore.googleapis.com">
+    <link rel="dns-prefetch" href="https://firebase.googleapis.com">
+    <link rel="dns-prefetch" href="https://identitytoolkit.googleapis.com">
+    <link rel="dns-prefetch" href="https://dolarapi.com">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <!-- Preconnect a Firebase para reducir latencia inicial en mobile -->
     <link rel="preconnect" href="https://firestore.googleapis.com">
     <link rel="preconnect" href="https://firebase.googleapis.com">
     <link rel="preconnect" href="https://identitytoolkit.googleapis.com">
+
+    <!-- Google Fonts: Outfit (Carga asíncrona no bloqueante con display=swap) -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700&display=swap" media="print" onload="this.media='all'">
+    <noscript>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700&display=swap">
+    </noscript>
   </head>
   <body>
     <div id="root"></div>

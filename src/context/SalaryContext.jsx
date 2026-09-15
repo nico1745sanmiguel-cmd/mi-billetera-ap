@@ -23,7 +23,11 @@ export const useSalaryDispatch = () => {
 };
 
 // Retro-compat
-export const useSalary = () => ({ ...useSalaryState(), ...useSalaryDispatch() });
+export const useSalary = () => {
+    const state = useSalaryState();
+    const dispatch = useSalaryDispatch();
+    return useMemo(() => ({ ...state, ...dispatch }), [state, dispatch]);
+};
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
 const currentMonthKey = () => {
@@ -79,7 +83,7 @@ export const SalaryProvider = ({ children }) => {
             unsubUser();
             unsubConfig();
         };
-    }, [user, monthKey]);
+    }, [user?.uid, monthKey]);
 
     // ─── Sueldo base (el más reciente del historial ya existente) ────────
     const baseSalary = useMemo(() => getLatestSalary(salaryHistory), [salaryHistory]);
@@ -98,6 +102,11 @@ export const SalaryProvider = ({ children }) => {
 
     const totalFree = totalIncome - totalBudgeted;
 
+    const configRef = React.useRef(config);
+    useEffect(() => {
+        configRef.current = config;
+    }, [config]);
+
     // ─── Acciones ────────────────────────────────────────────────────────
     const saveConfig = useCallback(async (newConfig) => {
         if (!user) return;
@@ -112,49 +121,45 @@ export const SalaryProvider = ({ children }) => {
 
     // Guardar fuentes de ingreso
     const saveSources = useCallback(async (sources) => {
-        const updated = { ...config, sources };
-        setConfig(updated); // optimistic
+        setConfig(prev => ({ ...prev, sources })); // optimistic
         await saveConfig({ sources });
         showToast('Fuentes de ingreso actualizadas', 'success');
-    }, [config, saveConfig, showToast]);
+    }, [saveConfig, showToast]);
 
     // Guardar sobres
     const saveEnvelopes = useCallback(async (envelopes) => {
-        const updated = { ...config, envelopes };
-        setConfig(updated);
+        setConfig(prev => ({ ...prev, envelopes }));
         await saveConfig({ envelopes });
-    }, [config, saveConfig]);
+    }, [saveConfig]);
 
     // Aprobar / rechazar gastos familiares
     const approveHouseholdAmount = useCallback(async (amount) => {
-        const updated = { ...config, householdApproved: true, householdAmount: amount };
-        setConfig(updated);
+        setConfig(prev => ({ ...prev, householdApproved: true, householdAmount: amount }));
         await saveConfig({ householdApproved: true, householdAmount: amount });
         showToast('Gastos familiares asignados al plan', 'success');
-    }, [config, saveConfig, showToast]);
+    }, [saveConfig, showToast]);
 
     const removeHouseholdApproval = useCallback(async () => {
-        const updated = { ...config, householdApproved: false, householdAmount: 0 };
-        setConfig(updated);
+        setConfig(prev => ({ ...prev, householdApproved: false, householdAmount: 0 }));
         await saveConfig({ householdApproved: false, householdAmount: 0 });
-    }, [config, saveConfig]);
+    }, [saveConfig]);
 
     // Agregar o editar un sobre
     const upsertEnvelope = useCallback(async (envelope) => {
-        const current = config?.envelopes || [];
+        const current = configRef.current?.envelopes || [];
         const exists = current.find(e => e.id === envelope.id);
         const updated = exists
             ? current.map(e => e.id === envelope.id ? envelope : e)
             : [...current, envelope];
         await saveEnvelopes(updated);
-    }, [config, saveEnvelopes]);
+    }, [saveEnvelopes]);
 
     // Eliminar sobre
     const deleteEnvelope = useCallback(async (id) => {
-        const updated = (config?.envelopes || []).filter(e => e.id !== id);
+        const updated = (configRef.current?.envelopes || []).filter(e => e.id !== id);
         await saveEnvelopes(updated);
         showToast('Sobre eliminado', 'info');
-    }, [config, saveEnvelopes, showToast]);
+    }, [saveEnvelopes, showToast]);
 
     const stateValue = useMemo(() => ({
         config,

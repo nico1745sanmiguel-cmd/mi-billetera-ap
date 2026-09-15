@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { getCache, setCache } from '../utils/cache';
 import { CACHE_KEYS } from '../config/constants';
 import { useAuth } from './AuthContext';
@@ -22,7 +22,9 @@ export const useMobilityDispatch = () => {
 
 // Retro-compatibilidad
 export const useMobility = () => {
-    return { ...useMobilityState(), ...useMobilityDispatch() };
+    const state = useMobilityState();
+    const dispatch = useMobilityDispatch();
+    return useMemo(() => ({ ...state, ...dispatch }), [state, dispatch]);
 };
 
 const DEFAULT_SETTINGS = {
@@ -41,6 +43,12 @@ const DEFAULT_SETTINGS = {
 export const MobilityProvider = ({ children }) => {
     const { user } = useAuth();
     const { showToast } = useUIDispatch();
+    const showToastRef = useRef(showToast);
+    useEffect(() => {
+        showToastRef.current = showToast;
+    }, [showToast]);
+
+    const uid = user?.uid;
 
     // ─── JORNADAS ─────────────────────────────────────────────────────────────
     const [sessions, setSessions] = useState(() => getCache(CACHE_KEYS.MOBILITY_SESSIONS) || []);
@@ -77,14 +85,14 @@ export const MobilityProvider = ({ children }) => {
 
     // ── Sync jornadas ─────────────────────────────────────────────────────────
     useEffect(() => {
-        if (!user) {
+        if (!uid) {
             setSessions([]);
             setLoadingSessions(false);
             return;
         }
 
         const unsub = mobilityRepository.subscribeToSessions(
-            user.uid,
+            uid,
             (data) => {
                 setSessions(data);
                 setCache(CACHE_KEYS.MOBILITY_SESSIONS, data);
@@ -92,24 +100,24 @@ export const MobilityProvider = ({ children }) => {
             },
             (error) => {
                 console.error('Mobility sessions error:', error);
-                showToast('Error de conexión al sincronizar Jornadas de Movilidad.', 'error');
+                showToastRef.current('Error de conexión al sincronizar Jornadas de Movilidad.', 'error');
                 setLoadingSessions(false);
             }
         );
 
         return () => unsub();
-    }, [user, showToast]);
+    }, [uid]);
 
     // ── Sync gastos ───────────────────────────────────────────────────────────
     useEffect(() => {
-        if (!user) {
+        if (!uid) {
             setExpenses([]);
             setLoadingExpenses(false);
             return;
         }
 
         const unsub = mobilityRepository.subscribeToExpenses(
-            user.uid,
+            uid,
             (data) => {
                 setExpenses(data);
                 setCache(CACHE_KEYS.MOBILITY_EXPENSES, data);
@@ -117,13 +125,13 @@ export const MobilityProvider = ({ children }) => {
             },
             (error) => {
                 console.error('Mobility expenses error:', error);
-                showToast('Error de conexión al sincronizar Gastos de Movilidad.', 'error');
+                showToastRef.current('Error de conexión al sincronizar Gastos de Movilidad.', 'error');
                 setLoadingExpenses(false);
             }
         );
 
         return () => unsub();
-    }, [user, showToast]);
+    }, [uid]);
 
     // ─── CRUD JORNADAS ────────────────────────────────────────────────────────
     const addSession = useCallback(async (formData) => {

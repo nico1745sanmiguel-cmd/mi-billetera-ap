@@ -11,13 +11,18 @@ export const useSavingsGoal = () => {
     const [savingsGoal, setSavingsGoalState] = useState(() => getCache('savings_goal_data', null));
     const [goalLoading, setGoalLoading] = useState(true);
 
+    const uid = user?.uid;
+    const householdId = userData?.householdId;
+
     // Listener del objetivo (Firestore, compartido por household)
     useEffect(() => {
-        if (!user) return;
+        if (!uid) {
+            setGoalLoading(false);
+            return;
+        }
 
-        const householdId = userData?.householdId;
         const queryField = householdId ? "householdId" : "userId";
-        const queryValue = householdId ? householdId : user.uid;
+        const queryValue = householdId ? householdId : uid;
 
         const q = query(
             collection(db, COLLECTIONS.SAVINGS_GOALS),
@@ -42,7 +47,7 @@ export const useSavingsGoal = () => {
         });
 
         return () => unsub();
-    }, [user, userData]);
+    }, [uid, householdId]);
 
     const saveSavingsGoal = useCallback(async (goalData) => {
         if (!user) return;

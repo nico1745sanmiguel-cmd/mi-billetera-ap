@@ -25,7 +25,9 @@ export const useNotesDispatch = () => {
 };
 
 export const useNotes = () => {
-    return { ...useNotesState(), ...useNotesDispatch() };
+    const state = useNotesState();
+    const dispatch = useNotesDispatch();
+    return useMemo(() => ({ ...state, ...dispatch }), [state, dispatch]);
 };
 
 export const NotesProvider = ({ children }) => {

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { ChevronRight, CheckCircle, Clock } from 'lucide-react';
 import { formatMoney } from '../../utils';
 import { CARD_LOGO_MAP } from '../../config/constants';
@@ -10,7 +10,7 @@ const getCardLogo = (name) => {
 };
 
 // ── Mini tarjeta visual para el carrusel ─────────────────────────────────────
-export default function CardVisual({ card, monthKey, privacyMode, onClick, isSelected }) {
+function CardVisual({ card, monthKey, privacyMode, onClick, isSelected }) {
     if (!card) return null;
 
     const showMoney = (amount) => (privacyMode ? '****' : formatMoney(amount));
@@ -135,3 +135,5 @@ export default function CardVisual({ card, monthKey, privacyMode, onClick, isSel
         </div>
     );
 }
+
+export default memo(CardVisual);

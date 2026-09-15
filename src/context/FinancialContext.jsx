@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useRef } from 'react';
 import { db } from '../firebase';
 import { collection, onSnapshot, query } from 'firebase/firestore';
 import { useAuth } from './AuthContext';
@@ -20,6 +20,10 @@ export const useFinancial = () => {
 export const FinancialProvider = ({ children }) => {
     const { user, userData, loadingUser } = useAuth();
     const { showToast } = useUIDispatch();
+    const showToastRef = useRef(showToast);
+    useEffect(() => {
+        showToastRef.current = showToast;
+    }, [showToast]);
 
     const [notifications, setNotifications] = useState([]);
     const [dolarBlue, setDolarBlue] = useState(null);
@@ -36,26 +40,20 @@ export const FinancialProvider = ({ children }) => {
     // Limpiar caches de versiones anteriores (solo corre una vez al montar)
     useEffect(() => { cleanOldCaches(); }, []);
 
-    // 2. Firebase Sync
-    useEffect(() => {
-        if (!user) return;
-        // El código de sincronización general fue movido a sus respectivos contextos 
-        // (CardsContext, SupermarketContext, etc.)
-    }, [user, userData]);
-
+    const uid = user?.uid;
     const currentHouseholdId = userData?.householdId;
-    const [prevAuth, setPrevAuth] = useState({ user, householdId: currentHouseholdId });
+    const [prevAuth, setPrevAuth] = useState({ uid, householdId: currentHouseholdId });
 
-    if (user !== prevAuth.user || currentHouseholdId !== prevAuth.householdId) {
-        setPrevAuth({ user, householdId: currentHouseholdId });
-        if (!user || !currentHouseholdId) {
+    if (uid !== prevAuth.uid || currentHouseholdId !== prevAuth.householdId) {
+        setPrevAuth({ uid, householdId: currentHouseholdId });
+        if (!uid || !currentHouseholdId) {
             setNotifications([]);
         }
     }
 
-    // 3. Listener de Notificaciones (separado para que se re-monte cuando householdId llega)
+    // Listener de Notificaciones (separado para que se re-monte cuando householdId llega)
     useEffect(() => {
-        if (!user || !currentHouseholdId) return;
+        if (!uid || !currentHouseholdId) return;
         
         const qNotif = query(collection(db, 'households', currentHouseholdId, 'notifications'));
         const unsubNotifications = onSnapshot(qNotif, (snap) => {
@@ -65,12 +63,12 @@ export const FinancialProvider = ({ children }) => {
             setNotifications(data);
         }, (error) => {
             console.error('Offline/Error notifications:', error);
-            showToast('Error de conexión al sincronizar notificaciones.', 'error');
+            showToastRef.current('Error de conexión al sincronizar notificaciones.', 'error');
         });
 
         return () => unsubNotifications();
          
-    }, [user, currentHouseholdId, showToast]);
+    }, [uid, currentHouseholdId]);
 
     const value = useMemo(() => ({
         user,

@@ -131,7 +131,7 @@ export default function NotesDashboard({ onBack }) {
             setNotes(sorted);
         });
         return () => unsubscribe();
-    }, [user]);
+    }, [user?.uid]);
 
     const handleSaveNote = async (data) => {
         try {
@@ -244,7 +244,7 @@ export default function NotesDashboard({ onBack }) {
                 {/* GRID DE NOTAS PENDIENTES */}
                 {uncompletedNotes.length > 0 && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                        <AnimatePresence>
+                        <AnimatePresence mode="popLayout">
                             {uncompletedNotes.map(note => (
                                 <m.div 
                                     key={note.id}
@@ -296,7 +296,7 @@ export default function NotesDashboard({ onBack }) {
                     <div className="mt-8">
                         <h3 className="text-sm font-bold uppercase tracking-wider opacity-50 mb-4 px-2">Completadas</h3>
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 opacity-70">
-                            <AnimatePresence>
+                            <AnimatePresence mode="popLayout">
                                 {completedNotes.map(note => (
                                     <m.div 
                                         key={note.id}
@@ -328,6 +328,7 @@ export default function NotesDashboard({ onBack }) {
             <AnimatePresence>
                 {isEditing && (
                     <EditNoteModal
+                        key="edit-note-modal"
                         note={currentNote}
                         categories={settings.categories}
                         isGlass={isGlass}

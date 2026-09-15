@@ -287,3 +287,56 @@ Working directory: z:\Mi billetera
 ### Integridad de Datos
 - [ ] Las transacciones se guardan saneadas en Firestore/Context sin campos corruptos.
 - [ ] Los estados vacíos están presentes y estilizados cuando no hay registros.
+
+## 2026-09-15T11:46:28Z
+
+Auditoría integral y optimización de rendimiento en la aplicación web "Mi Billetera" (React 18, Vite, Firebase, Tailwind, Framer Motion), ejecutada por un equipo de agentes especializados para maximizar la velocidad de carga inicial, eliminar re-renders innecesarios, reducir lecturas de base de datos y garantizar transiciones fluidas a 60 FPS sin alterar la funcionalidad existente.
+
+Requested team: Equipo de 5 agentes especializados: Bundle Analyzer, React Profiler, Firebase Optimizer, Animation Auditor, PWA & Network Auditor.
+
+Working directory: z:\Mi billetera
+Integrity mode: development
+
+## Requirements
+
+### R1. División de Código y Optimización del Bundle Inicial
+- Reducir drásticamente el tamaño del chunk JavaScript inicial (`index.html` / bundle principal) separando rutas y componentes pesados mediante carga diferida (`React.lazy` / `Suspense`).
+- Configurar la segmentación manual de chunks (`manualChunks`) en Vite para aislar librerías de gran escala (`recharts`, `framer-motion`, `pdfjs-dist`).
+- Garantizar importaciones modulares y granulares del SDK de Firebase para evitar la inclusión de módulos innecesarios en producción.
+- Restricción estricta: No añadir dependencias externas nuevas a `package.json`; optimizar usando exclusivamente los paquetes ya instalados.
+
+### R2. Diagnóstico y Optimización del Ciclo de Renderizado React
+- Auditar y desacoplar componentes sobrecargados (especialmente `App.jsx`), dividiendo estados locales y lógica de negocio.
+- Auditar los Context Providers en `src/context/` para aislar valores que cambian frecuentemente de aquellos estáticos, previniendo re-renders en cascada en componentes consumidores.
+- Aplicar técnicas de memorización (`useMemo`, `useCallback`, `React.memo`) donde se identifiquen recreaciones de funciones y cálculos costosos redundantes.
+
+### R3. Optimización de Consultas y Conectividad Firebase Firestore
+- Auditar todos los puntos de acceso a Firestore en `src/services/`, `src/repositories/` y `src/hooks/`.
+- Garantizar que todos los listeners en tiempo real (`onSnapshot`) tengan un mecanismo de desuscripción limpio en el desmontaje de componentes para evitar memory leaks.
+- Habilitar y verificar la persistencia de datos offline (IndexedDB cache) para reducir llamadas de red repetidas.
+- Eliminar lecturas redundantes o duplicadas en las cargas iniciales y navegación.
+
+### R4. Fluidez de Interfaz, Animaciones y Listados
+- Sustituir animaciones y transiciones que provoquen reflujo de diseño (layout thrashing) por propiedades aceleradas por hardware (`transform`, `opacity`).
+- Reducir el impacto computacional de `AnimatePresence` en montajes y desmontajes recurrentes.
+- Optimizar la renderización de listas extensas (transacciones, balances) para evitar sobrecarga del DOM sin degradar la experiencia visual.
+
+### R5. Rendimiento de Red, PWA y Políticas de Caché
+- Configurar estrategias de almacenamiento en caché en tiempo de ejecución (runtime caching de Workbox) mediante `vite-plugin-pwa`.
+- Eliminar recursos que bloqueen el primer renderizado en `index.html`.
+- Configurar cabeceras de caché estático y compresión en `vercel.json`.
+
+## Acceptance Criteria
+
+### Integridad de Compilación
+- [ ] El comando `npm run build` se ejecuta exitosamente sin errores de TypeScript, sintaxis o empaquetado tras cada intervención.
+- [ ] No se modifican ni agregan dependencias en `package.json`.
+
+### Verificación de Rendimiento
+- [ ] El chunk principal generado en `dist/` reduce su peso relativo respecto a la versión previa, evidenciado en el output de Vite.
+- [ ] Todos los listeners `onSnapshot` devuelven una función de cleanup que se ejecuta al desmontar.
+- [ ] No existen accesos repetidos innecesarios a las mismas colecciones de Firestore durante una misma sesión o ciclo de render.
+
+### Documentación de Cambios
+- [ ] Cada agente documenta en un informe final estructurado: archivo afectado, línea de código exacta, diagnóstico del problema previo y solución implementada.
+

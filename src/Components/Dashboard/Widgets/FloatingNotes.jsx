@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, memo } from 'react';
 // eslint-disable-next-line no-unused-vars
 import { m, AnimatePresence } from 'framer-motion';
 import { Plus, Check, ExternalLink } from 'lucide-react';
@@ -7,7 +7,7 @@ import { subscribeToNotes, addNote, deleteNote } from '../../../repositories/not
 import { useNotes } from '../../../context/NotesContext';
 import { POST_IT_SKINS } from '../../Notes/constants';
 
-export default function FloatingNotes({ user }) {
+function FloatingNotes({ user }) {
     const [notes, setNotes] = useState([]);
     const [inputValue, setInputValue] = useState('');
     const [isAdding, setIsAdding] = useState(false);
@@ -29,7 +29,7 @@ export default function FloatingNotes({ user }) {
             setNotes(sorted);
         });
         return () => unsubscribe();
-    }, [user]);
+    }, [user?.uid]);
 
     useEffect(() => {
         const handleOpenNotes = () => {
@@ -80,6 +80,7 @@ export default function FloatingNotes({ user }) {
         <AnimatePresence>
             {isVisible && (
                 <m.div
+                key="floating-notes-card"
                 drag
                 dragMomentum={false}
                 initial={{ opacity: 0, scale: 0.8, rotate: 0 }}
@@ -109,7 +110,7 @@ export default function FloatingNotes({ user }) {
                     </div>
 
                     <div className="flex-1 overflow-y-auto max-h-60 mb-2 no-scrollbar space-y-2">
-                        <AnimatePresence>
+                        <AnimatePresence mode="popLayout">
                             {notes.map(note => (
                                 <m.div 
                                     key={note.id}
@@ -163,3 +164,5 @@ export default function FloatingNotes({ user }) {
         </AnimatePresence>
     );
 }
+
+export default memo(FloatingNotes);

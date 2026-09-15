@@ -1,11 +1,11 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
-import { db, auth } from '../firebase';
+import { auth } from '../firebase';
 import { onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
 import { checkAndMigrateToHousehold } from '../utils/householdMigration';
 import { getCache, setCache } from '../utils/cache';
 import { LOADING_DELAY_MS, CACHE_KEYS } from '../config/constants';
 import { loadPreferences } from '../services/preferencesService';
+import { fetchHouseholdWithMembers } from '../services/householdService';
 
 const AuthContext = createContext();
 
@@ -36,14 +36,9 @@ export const AuthProvider = ({ children }) => {
             setCache('userData', { householdId: currentHouseholdId });
 
             if (currentHouseholdId) {
-                const hhSnap = await getDoc(doc(db, 'households', currentHouseholdId));
-                if (hhSnap.exists()) {
-                    const memberIds = hhSnap.data().members || [];
-                    const memberSnaps = await Promise.all(memberIds.map(uid => getDoc(doc(db, 'users', uid))));
-                    const members = memberSnaps.map(s => s.exists() ? { uid: s.id, ...s.data() } : { uid: s.id });
-                    setHouseholdMembers(members);
-                    setCache('householdMembers', members);
-                }
+                const { members } = await fetchHouseholdWithMembers(currentHouseholdId, true);
+                setHouseholdMembers(members);
+                setCache('householdMembers', members);
             } else {
                 setHouseholdMembers([]);
                 setCache('householdMembers', []);
@@ -90,14 +85,10 @@ export const AuthProvider = ({ children }) => {
                     }
                 }).catch(e => console.error('Error loading preferences:', e));
 
-                // Traer miembros en background (sin bloquear con await)
+                // Traer miembros en background (sin bloquear con await, deduplicado con caché)
                 if (currentHouseholdId) {
-                    getDoc(doc(db, 'households', currentHouseholdId)).then(async (hhSnap) => {
-                        if (hhSnap.exists()) {
-                            const memberIds = hhSnap.data().members || [];
-                            const memberPromises = memberIds.map(uid => getDoc(doc(db, 'users', uid)));
-                            const memberSnaps = await Promise.all(memberPromises);
-                            const members = memberSnaps.map(s => s.exists() ? { uid: s.id, ...s.data() } : { uid: s.id });
+                    fetchHouseholdWithMembers(currentHouseholdId).then(({ members }) => {
+                        if (members && members.length > 0) {
                             setHouseholdMembers(members);
                             setCache('householdMembers', members);
                         }

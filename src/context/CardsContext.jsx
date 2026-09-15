@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { db } from '../firebase';
 import { collection, onSnapshot, query, where, addDoc, doc, updateDoc, deleteDoc, arrayUnion, arrayRemove, deleteField } from 'firebase/firestore';
 import { useAuth } from './AuthContext';
@@ -24,26 +24,34 @@ export const useCardsDispatch = () => {
 
 // Retro-compatibilidad
 export const useCards = () => {
-    return { ...useCardsState(), ...useCardsDispatch() };
+    const state = useCardsState();
+    const dispatch = useCardsDispatch();
+    return useMemo(() => ({ ...state, ...dispatch }), [state, dispatch]);
 };
 
 export const CardsProvider = ({ children }) => {
     const { user, userData } = useAuth();
     const { showToast } = useUIDispatch();
+    const showToastRef = useRef(showToast);
+    useEffect(() => {
+        showToastRef.current = showToast;
+    }, [showToast]);
     
     const [cards, setCards] = useState(() => getCache(CACHE_KEYS.CARDS, []));
     const [transactions, setTransactions] = useState(() => getCache(CACHE_KEYS.TRANSACTIONS, []));
     const [loadingCards, setLoadingCards] = useState(() => !getCache(CACHE_KEYS.CARDS, null));
 
+    const uid = user?.uid;
+    const householdId = userData?.householdId;
+
     useEffect(() => {
-        if (!user) {
+        if (!uid) {
             setLoadingCards(false);
             return;
         }
 
-        const householdId = userData?.householdId;
         const queryField = householdId ? "householdId" : "userId";
-        const queryValue = householdId ? householdId : user.uid;
+        const queryValue = householdId ? householdId : uid;
 
         const syncData = (collectionName, setState, cacheKey, onDone) => {
             const q = query(collection(db, collectionName), where(queryField, "==", queryValue));
@@ -54,7 +62,7 @@ export const CardsProvider = ({ children }) => {
                 if (onDone) onDone();
             }, (_error) => {
                 if (onDone) onDone();
-                showToast(`Error de conexión al sincronizar ${collectionName}. Verifique su internet.`, 'error');
+                showToastRef.current(`Error de conexión al sincronizar ${collectionName}. Verifique su internet.`, 'error');
             });
         };
 
@@ -65,17 +73,17 @@ export const CardsProvider = ({ children }) => {
             unsubCards();
             unsubTrans();
         };
-    }, [user, userData, showToast]);
+    }, [uid, householdId]);
 
     const visibleCards = useMemo(() => {
-        if (!ENABLE_HOUSEHOLD || !userData?.householdId) return cards;
-        return cards.filter(item => !item.ownerId || item.isShared === true || item.ownerId === user?.uid);
-    }, [cards, userData, user]);
+        if (!ENABLE_HOUSEHOLD || !householdId) return cards;
+        return cards.filter(item => !item.ownerId || item.isShared === true || item.ownerId === uid);
+    }, [cards, householdId, uid]);
 
     const visibleTransactions = useMemo(() => {
-        if (!ENABLE_HOUSEHOLD || !userData?.householdId) return transactions;
-        return transactions.filter(item => !item.ownerId || item.isShared === true || item.ownerId === user?.uid);
-    }, [transactions, userData, user]);
+        if (!ENABLE_HOUSEHOLD || !householdId) return transactions;
+        return transactions.filter(item => !item.ownerId || item.isShared === true || item.ownerId === uid);
+    }, [transactions, householdId, uid]);
 
     const addTransaction = useCallback(async (t) => {
         if (!user) {

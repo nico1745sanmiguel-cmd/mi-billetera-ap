@@ -328,8 +328,8 @@ export default function AnalyticsTab({ isGlass, privacyMode }) {
                                 <div className={`h-2.5 w-full rounded-full overflow-hidden ${isGlass ? 'bg-white/10' : 'bg-gray-100'}`}>
                                     {/* Progress Bar Fill */}
                                     <div 
-                                        className={`h-full rounded-full transition-all duration-1000 ${barColor}`} 
-                                        style={{ width: `${widthPct}%` }}
+                                        className={`h-full w-full rounded-full origin-left transition-transform duration-1000 will-change-transform ${barColor}`} 
+                                        style={{ transform: `scaleX(${Math.min(Math.max(widthPct, 0), 100) / 100})` }}
                                     />
                                 </div>
                             </div>

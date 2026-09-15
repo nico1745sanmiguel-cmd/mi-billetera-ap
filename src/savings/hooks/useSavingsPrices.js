@@ -4,16 +4,26 @@ import { collection, onSnapshot, query, where, doc, setDoc, serverTimestamp } fr
 import { useAuth } from '../../context/AuthContext';
 import { fetchAssetPrices } from '../../utils/priceService';
 
-export const useSavingsPrices = (savingsTransactions = [], dolarBlue) => {
+export const useSavingsPrices = (savingsTransactions = [], dolarBlue, manualPrices = null) => {
     const { user, userData } = useAuth();
     const [assetPrices, setAssetPrices] = useState({});
 
-    // Listener de precios manuales (overrides)
+    // Si manualPrices viene provisto por useSavingsData (listener unificado), lo adoptamos sin abrir otro listener
     useEffect(() => {
-        if (!user) return;
-        const householdId = userData?.householdId;
+        if (manualPrices && typeof manualPrices === 'object' && Object.keys(manualPrices).length > 0) {
+            setAssetPrices(prev => ({ ...prev, ...manualPrices }));
+        }
+    }, [manualPrices]);
+
+    const uid = user?.uid;
+    const householdId = userData?.householdId;
+
+    // Listener de resguardo: solo se activa si NO se pasaron manualPrices (uso standalone del hook)
+    useEffect(() => {
+        if (manualPrices !== null) return; // Ya provisto externamente, evitar listener duplicado
+        if (!uid) return;
         const queryField = householdId ? "householdId" : "userId";
-        const queryValue = householdId ? householdId : user.uid;
+        const queryValue = householdId ? householdId : uid;
 
         const q = query(collection(db, 'savings_asset_prices'), where(queryField, "==", queryValue));
         const unsub = onSnapshot(q, (snap) => {
@@ -27,7 +37,7 @@ export const useSavingsPrices = (savingsTransactions = [], dolarBlue) => {
             setAssetPrices(prev => ({...prev, ...manual}));
         });
         return () => unsub();
-    }, [user, userData]);
+    }, [uid, householdId, manualPrices]);
 
     // Calcular especies únicas para las que necesitamos buscar precios
     const especiesWithCarteras = useMemo(() => {

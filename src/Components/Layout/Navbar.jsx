@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, memo } from 'react';
 import { BarChart3, Plus, CreditCard, Eye, EyeOff, TrendingUp, Car, Puzzle } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { isModuleEnabled } from '../../utils/modulesUtils';
 
-export default function Navbar({ privacyMode, setPrivacyMode, isGlass = false }) {
+function Navbar({ privacyMode, setPrivacyMode, isGlass = false }) {
   // Re-render cuando el usuario activa/desactiva módulos (localStorage puede cambiar)
   const [, forceUpdate] = useState(0);
   useEffect(() => {
@@ -97,3 +97,5 @@ export default function Navbar({ privacyMode, setPrivacyMode, isGlass = false })
     </nav>
   );
 }
+
+export default memo(Navbar);

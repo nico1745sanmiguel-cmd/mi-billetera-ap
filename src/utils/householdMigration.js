@@ -1,5 +1,6 @@
 import { db } from '../firebase';
 import { collection, query, where, getDocs, addDoc, doc, getDoc, setDoc, writeBatch } from 'firebase/firestore';
+import { fetchUserProfile } from '../services/householdService';
 
 /**
  * Checks if the user belongs to a household.
@@ -9,12 +10,11 @@ export const checkAndMigrateToHousehold = async (user) => {
     if (!user) return;
 
     try {
-        // 1. Check if user already has a household profile
-        const userRef = doc(db, 'users', user.uid);
-        const userSnap = await getDoc(userRef);
+        // 1. Check if user already has a household profile (deduplicated)
+        const userProfile = await fetchUserProfile(user.uid);
 
-        if (userSnap.exists() && userSnap.data().householdId) {
-            const existingId = userSnap.data().householdId;
+        if (userProfile && userProfile.householdId) {
+            const existingId = userProfile.householdId;
             // Verify if it really exists
             const hhRef = doc(db, 'households', existingId);
             const hhSnap = await getDoc(hhRef);
@@ -45,6 +45,7 @@ export const checkAndMigrateToHousehold = async (user) => {
         const householdId = householdRef.id;
 
         // 3. Create/Update User Profile
+        const userRef = doc(db, 'users', user.uid);
         await setDoc(userRef, {
             email: user.email,
             displayName: user.displayName || '',

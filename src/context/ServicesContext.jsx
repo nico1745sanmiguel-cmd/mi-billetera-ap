@@ -20,12 +20,14 @@ export const ServicesProvider = ({ children }) => {
     
     const [services, setServices] = useState(() => getCache(CACHE_KEYS.SERVICES, []));
 
-    useEffect(() => {
-        if (!user) return;
+    const uid = user?.uid;
+    const householdId = userData?.householdId;
 
-        const householdId = userData?.householdId;
+    useEffect(() => {
+        if (!uid) return;
+
         const queryField = householdId ? "householdId" : "userId";
-        const queryValue = householdId ? householdId : user.uid;
+        const queryValue = householdId ? householdId : uid;
 
         const q = query(collection(db, COLLECTIONS.SERVICES), where(queryField, "==", queryValue));
         const unsubServices = onSnapshot(q, (snap) => {
@@ -35,12 +37,12 @@ export const ServicesProvider = ({ children }) => {
         }, (error) => console.error(`Offline/Error for ${COLLECTIONS.SERVICES}:`, error));
 
         return () => unsubServices();
-    }, [user, userData]);
+    }, [uid, householdId]);
 
     const visibleServices = useMemo(() => {
-        if (!ENABLE_HOUSEHOLD || !userData?.householdId) return services;
-        return services.filter(item => !item.ownerId || item.isShared === true || item.ownerId === user?.uid);
-    }, [services, userData, user]);
+        if (!ENABLE_HOUSEHOLD || !householdId) return services;
+        return services.filter(item => !item.ownerId || item.isShared === true || item.ownerId === uid);
+    }, [services, householdId, uid]);
 
     const value = useMemo(() => ({
         services: visibleServices
