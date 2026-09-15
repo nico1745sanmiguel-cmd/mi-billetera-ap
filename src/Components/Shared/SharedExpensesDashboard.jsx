@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useCallback, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db, auth } from '../../firebase';
-import { collection, query, where, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, where, or, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
 import { fetchHouseholdWithMembers } from '../../services/householdService';
 import { Scale, Users, ChevronLeft, CreditCard, ShoppingCart, Lightbulb, User, LayoutList, Plus, X, CheckCircle, Clock, TrendingUp, Wallet, ArrowLeftRight, AlertTriangle, Copy, Share2, Check } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
