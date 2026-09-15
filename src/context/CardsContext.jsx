@@ -45,6 +45,9 @@ export const CardsProvider = ({ children }) => {
     const uid = user?.uid;
     const householdId = userData?.householdId;
 
+    const uid = user?.uid;
+    const householdId = userData?.householdId;
+
     useEffect(() => {
         if (!uid) {
             setLoadingCards(false);

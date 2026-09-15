@@ -12,9 +12,6 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['icon.png', 'icon.webp', 'icon-192.webp', 'logos/**/*'],
-      workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,webp}']
-      },
       manifest: {
         short_name: "Mi Billetera",
         name: "Mi Billetera - Control de Gastos",
@@ -46,11 +43,7 @@ export default defineConfig({
             type: "image/png",
             purpose: "any maskable"
           }
-        ],
-        start_url: "/",
-        display: "standalone",
-        theme_color: "#ffffff",
-        background_color: "#f3f4f6"
+        ]
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,webmanifest}'],
@@ -122,13 +115,6 @@ export default defineConfig({
             }
             if (normalizedId.includes('/node_modules/framer-motion/')) {
               return 'framer-motion';
-            }
-            if (
-              normalizedId.includes('/node_modules/recharts/') ||
-              normalizedId.includes('/node_modules/d3-') ||
-              normalizedId.includes('/node_modules/victory-vendor/')
-            ) {
-              return 'recharts';
             }
             if (normalizedId.includes('/node_modules/pdfjs-dist/')) {
               return 'pdfjs-dist';
