@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useCallback, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db, auth } from '../../firebase';
-import { collection, query, where, or, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, where, or, and, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
 import { fetchHouseholdWithMembers } from '../../services/householdService';
 import { Scale, Users, ChevronLeft, CreditCard, ShoppingCart, Lightbulb, User, LayoutList, Plus, X, CheckCircle, Clock, TrendingUp, Wallet, ArrowLeftRight, AlertTriangle, Copy, Share2, Check } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -32,9 +32,11 @@ function ContributionModal({ person, totalTarget, monthKey, householdId, isGlass
         const q = householdId
             ? query(
                 collection(db, COLLECTIONS.CONTRIBUTIONS),
-                or(where('householdId', '==', householdId), where('uid', '==', auth.currentUser?.uid)),
-                where('uid', '==', person.uid),
-                where('monthKey', '==', monthKey)
+                and(
+                    or(where('householdId', '==', householdId), where('uid', '==', auth.currentUser?.uid)),
+                    where('uid', '==', person.uid),
+                    where('monthKey', '==', monthKey)
+                )
             )
             : query(
                 collection(db, COLLECTIONS.CONTRIBUTIONS),
@@ -328,8 +330,10 @@ export default function SharedExpensesDashboard({ onBack }) {
         const q = householdId
             ? query(
                 collection(db, COLLECTIONS.CONTRIBUTIONS),
-                or(where('householdId', '==', householdId), where('uid', '==', currentUid)),
-                where('monthKey', '==', currentMonthKey)
+                and(
+                    or(where('householdId', '==', householdId), where('uid', '==', currentUid)),
+                    where('monthKey', '==', currentMonthKey)
+                )
             )
             : query(
                 collection(db, COLLECTIONS.CONTRIBUTIONS),
