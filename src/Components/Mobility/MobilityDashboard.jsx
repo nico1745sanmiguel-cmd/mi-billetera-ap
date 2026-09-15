@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { AnimatePresence } from 'framer-motion';
+// eslint-disable-next-line no-unused-vars
+import { AnimatePresence, m } from 'framer-motion';
 import { Plus, List, BarChart2, Upload, ArrowLeft, Zap, Settings } from 'lucide-react';
 import { useMobility } from '../../context/MobilityContext';
 import MobilityForm from './MobilityForm';
