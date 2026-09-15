@@ -111,13 +111,6 @@ export default defineConfig({
             if (normalizedId.includes('/node_modules/framer-motion/')) {
               return 'framer-motion';
             }
-            if (
-              normalizedId.includes('/node_modules/recharts/') ||
-              normalizedId.includes('/node_modules/d3-') ||
-              normalizedId.includes('/node_modules/victory-vendor/')
-            ) {
-              return 'recharts';
-            }
             if (normalizedId.includes('/node_modules/pdfjs-dist/')) {
               return 'pdfjs-dist';
             }
