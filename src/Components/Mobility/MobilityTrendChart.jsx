@@ -34,14 +34,14 @@ const MobilityTrendChart = ({ trend6 = [], maxTrend = 0, monthKey, isGlass, priv
                                 <div className="w-1/2 max-w-[14px] flex flex-col justify-end h-full">
                                     {totalVal > 0 ? (
                                         <div
-                                            className={`w-full rounded-t-sm transition-all duration-700 ${
+                                            className={`w-full h-full rounded-t-sm origin-bottom transition-transform duration-700 will-change-transform ${
                                                 isCurrentMonth
                                                     ? 'bg-gradient-to-t from-emerald-600 to-emerald-400 shadow-sm shadow-emerald-500/20'
                                                     : isGlass
                                                         ? 'bg-emerald-400/50 group-hover:bg-emerald-400/75'
                                                         : 'bg-emerald-500/70 group-hover:bg-emerald-600/90'
                                             }`}
-                                            style={{ height: `${totalBarHeight}%` }}
+                                            style={{ transform: `scaleY(${Math.min(Math.max(totalBarHeight, 0), 100) / 100})` }}
                                             title={privacyMode ? 'Ingresos: ••••' : `Ingresos: ${fmt(totalVal)}`}
                                         />
                                     ) : (
@@ -53,14 +53,14 @@ const MobilityTrendChart = ({ trend6 = [], maxTrend = 0, monthKey, isGlass, priv
                                 <div className="w-1/2 max-w-[14px] flex flex-col justify-end h-full">
                                     {gastosVal > 0 ? (
                                         <div
-                                            className={`w-full rounded-t-sm transition-all duration-700 ${
+                                            className={`w-full h-full rounded-t-sm origin-bottom transition-transform duration-700 will-change-transform ${
                                                 isCurrentMonth
                                                     ? 'bg-gradient-to-t from-rose-600 to-amber-500 shadow-sm shadow-rose-500/20'
                                                     : isGlass
                                                         ? 'bg-rose-400/50 group-hover:bg-rose-400/75'
                                                         : 'bg-rose-400/70 group-hover:bg-rose-500/90'
                                             }`}
-                                            style={{ height: `${gastosBarHeight}%` }}
+                                            style={{ transform: `scaleY(${Math.min(Math.max(gastosBarHeight, 0), 100) / 100})` }}
                                             title={privacyMode ? 'Gastos: ••••' : `Gastos: ${fmt(gastosVal)}${isDeficit ? ' (Déficit)' : ''}`}
                                         />
                                     ) : (

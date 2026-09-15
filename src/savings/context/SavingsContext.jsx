@@ -33,8 +33,8 @@ export const SavingsProvider = ({ children }) => {
     // 2. Goal
     const goalData = useSavingsGoal();
 
-    // 3. Precios y Stop Losses
-    const pricesData = useSavingsPrices(savingsTransactions, dolarBlue);
+    // 3. Precios y Stop Losses (useSavingsPrices reutiliza manualAssetPrices del listener de savingsData)
+    const pricesData = useSavingsPrices(savingsTransactions, dolarBlue, savingsData.manualAssetPrices);
     const stopLossData = useSavingsStopLoss();
 
     // 4. Cálculos pesados

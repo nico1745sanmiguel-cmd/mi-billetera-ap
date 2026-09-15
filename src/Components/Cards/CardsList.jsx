@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo, memo } from 'react';
 import { ArrowLeft, Plus, CreditCard as CreditCardIcon, CheckCircle2, Clock } from 'lucide-react';
 import { formatMoney } from '../../utils';
 import Skeleton from '../UI/Skeleton';
@@ -94,29 +94,37 @@ function MonthlyCardsSummary({ cards, monthKey, privacyMode, isGlass, onSelectCa
     const text = isGlass ? 'text-white' : 'text-gray-800';
     const sub  = isGlass ? 'text-white/50' : 'text-gray-500';
 
-    const safeCards = Array.isArray(cards) ? cards.filter(c => c && typeof c === 'object') : [];
-
     // Sumamos el totalDue de cada tarjeta para el mes activo asegurando conversión numérica estricta
-    const cardsWithData = safeCards.map(card => {
-        const stmt = card.monthlyStatements?.[monthKey] || null;
-        const numDue = Number(stmt?.totalDue);
-        const safeTotalDue = (!isNaN(numDue) && isFinite(numDue) && numDue >= 0) ? numDue : 0;
-        return {
-            card,
-            stmt,
-            safeTotalDue,
-            isPaid: Boolean(card.paidPeriods?.includes(monthKey)),
-        };
-    });
+    const cardsWithData = useMemo(() => {
+        const safeCards = Array.isArray(cards) ? cards.filter(c => c && typeof c === 'object') : [];
+        return safeCards.map(card => {
+            const stmt = card.monthlyStatements?.[monthKey] || null;
+            const numDue = Number(stmt?.totalDue);
+            const safeTotalDue = (!isNaN(numDue) && isFinite(numDue) && numDue >= 0) ? numDue : 0;
+            return {
+                card,
+                stmt,
+                safeTotalDue,
+                isPaid: Boolean(card.paidPeriods?.includes(monthKey)),
+            };
+        });
+    }, [cards, monthKey]);
 
-    const grandTotal = cardsWithData.reduce((acc, { safeTotalDue }) => acc + safeTotalDue, 0);
-    const pendingTotal = cardsWithData
-        .filter(({ isPaid }) => !isPaid)
-        .reduce((acc, { safeTotalDue }) => acc + safeTotalDue, 0);
+    const { grandTotal, pendingTotal } = useMemo(() => {
+        let grand = 0;
+        let pending = 0;
+        for (const item of cardsWithData) {
+            grand += item.safeTotalDue;
+            if (!item.isPaid) {
+                pending += item.safeTotalDue;
+            }
+        }
+        return { grandTotal: grand, pendingTotal: pending };
+    }, [cardsWithData]);
 
     const showMoney = (amount) => (privacyMode ? '****' : formatMoney(amount));
 
-    if (cards.length === 0) return null;
+    if (!cards || cards.length === 0) return null;
 
     return (
         <div className={`rounded-2xl overflow-hidden ${isGlass ? 'bg-white/5 border border-white/10' : 'bg-white border border-gray-100 shadow-sm'}`}>
@@ -199,6 +207,8 @@ function MonthlyCardsSummary({ cards, monthKey, privacyMode, isGlass, onSelectCa
     );
 }
 
+const MemoizedMonthlyCardsSummary = memo(MonthlyCardsSummary);
+
 // ── Vista lista (carrusel + nueva tarjeta) ────────────────────────────────────
 export default function CardsList({ cards = [], loading = false, monthKey, privacyMode, isGlass, onSelectCard, onNewCard, onBack }) {
     const text = isGlass ? 'text-white' : 'text-gray-800';
@@ -236,7 +246,7 @@ export default function CardsList({ cards = [], loading = false, monthKey, priva
             </div>
 
             {/* Panel resumen del mes */}
-            <MonthlyCardsSummary cards={cards} monthKey={monthKey} privacyMode={privacyMode} isGlass={isGlass} onSelectCard={onSelectCard} />
+            <MemoizedMonthlyCardsSummary cards={cards} monthKey={monthKey} privacyMode={privacyMode} isGlass={isGlass} onSelectCard={onSelectCard} />
 
             {/* Carrusel */}
             {cards.length > 0 ? (

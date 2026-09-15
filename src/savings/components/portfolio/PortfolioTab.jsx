@@ -2,11 +2,10 @@ import React, { useMemo, useState } from 'react';
 import { useSavings } from '../../context/SavingsContext';
 import { useFinancial } from '../../../context/FinancialContext';
 
-import AssetDetailsModal from '../../../Components/Savings/AssetDetailsModal';
-import OperationModal from '../../../Components/Savings/OperationModal';
-import StopLossModal from '../../../Components/Savings/StopLossModal';
-
-import ResumenPortfolio from './ResumenPortfolio';
+const AssetDetailsModal = React.lazy(() => import('../../../Components/Savings/AssetDetailsModal'));
+const OperationModal = React.lazy(() => import('../../../Components/Savings/OperationModal'));
+const StopLossModal = React.lazy(() => import('../../../Components/Savings/StopLossModal'));
+const ResumenPortfolio = React.lazy(() => import('./ResumenPortfolio'));
 import TenenciasLista from './TenenciasLista';
 import CaucionesActivas from './CaucionesActivas';
 
@@ -273,16 +272,18 @@ export default function PortfolioTab({ isGlass, privacyMode, currencyView = 'USD
     return (
         <div className="space-y-6 animate-fade-in">
             {/* Distribución de Carteras */}
-            <ResumenPortfolio 
-                isGlass={isGlass}
-                privacyMode={privacyMode}
-                currencyView={currencyView}
-                formatAmount={formatAmount}
-                chartView={chartView}
-                setChartView={setChartView}
-                posicionesByCartera={posicionesByCartera}
-                chartData={chartData}
-            />
+            <React.Suspense fallback={<div className="h-48 flex items-center justify-center animate-pulse"><div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div></div>}>
+                <ResumenPortfolio 
+                    isGlass={isGlass}
+                    privacyMode={privacyMode}
+                    currencyView={currencyView}
+                    formatAmount={formatAmount}
+                    chartView={chartView}
+                    setChartView={setChartView}
+                    posicionesByCartera={posicionesByCartera}
+                    chartData={chartData}
+                />
+            </React.Suspense>
 
             {/* Posiciones Abiertas Agrupadas por Cartera */}
             <TenenciasLista 
@@ -311,58 +312,70 @@ export default function PortfolioTab({ isGlass, privacyMode, currencyView = 'USD
             />
 
             {/* Modales (estaban en el PortfolioTab) */}
-            <AssetDetailsModal 
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                asset={selectedAsset}
-                currencyView={currencyView}
-                isGlass={isGlass}
-                rate={rate}
-                onSellClick={() => {
-                    setIsModalOpen(false);
-                    setSellModalData({
-                        tipo: 'venta',
-                        cartera: selectedAsset.cartera,
-                        especie: selectedAsset.especie,
-                        cantidad: selectedAsset.cantidad.toString(),
-                        precioUnitario: selectedAsset.precioActualUSD.toString(),
-                        monedaPrecio: 'USD',
-                    });
-                }}
-            />
+            {isModalOpen && (
+                <React.Suspense fallback={null}>
+                    <AssetDetailsModal 
+                        isOpen={isModalOpen}
+                        onClose={() => setIsModalOpen(false)}
+                        asset={selectedAsset}
+                        currencyView={currencyView}
+                        isGlass={isGlass}
+                        rate={rate}
+                        onSellClick={() => {
+                            setIsModalOpen(false);
+                            setSellModalData({
+                                tipo: 'venta',
+                                cartera: selectedAsset.cartera,
+                                especie: selectedAsset.especie,
+                                cantidad: selectedAsset.cantidad.toString(),
+                                precioUnitario: selectedAsset.precioActualUSD.toString(),
+                                monedaPrecio: 'USD',
+                            });
+                        }}
+                    />
+                </React.Suspense>
+            )}
             
-            <StopLossModal 
-                isOpen={isStopModalOpen}
-                onClose={() => setIsStopModalOpen(false)}
-                asset={selectedStopAsset}
-                isGlass={isGlass}
-                currencyView={currencyView}
-                rate={rate}
-            />
+            {isStopModalOpen && (
+                <React.Suspense fallback={null}>
+                    <StopLossModal 
+                        isOpen={isStopModalOpen}
+                        onClose={() => setIsStopModalOpen(false)}
+                        asset={selectedStopAsset}
+                        isGlass={isGlass}
+                        currencyView={currencyView}
+                        rate={rate}
+                    />
+                </React.Suspense>
+            )}
             
             {sellModalData && (
-                <OperationModal
-                    onClose={() => setSellModalData(null)}
-                    isGlass={isGlass}
-                    initialData={sellModalData}
-                />
+                <React.Suspense fallback={null}>
+                    <OperationModal
+                        onClose={() => setSellModalData(null)}
+                        isGlass={isGlass}
+                        initialData={sellModalData}
+                    />
+                </React.Suspense>
             )}
             
             {vencimientoModal && (
-                <OperationModal
-                    onClose={() => setVencimientoModal(null)}
-                    isGlass={isGlass}
-                    initialData={{
-                        tipo: 'deposito',
-                        cartera: vencimientoModal.cartera,
-                        especie: 'ARS',
-                        cantidad: vencimientoModal.montoTotalEsperadoARS,
-                        precioUnitario: 1,
-                        monedaPrecio: 'ARS',
-                        caucionId: vencimientoModal.id,
-                        nota: `Vencimiento caución ${vencimientoModal.plazo}d @ ${vencimientoModal.tna}% TNA`,
-                    }}
-                />
+                <React.Suspense fallback={null}>
+                    <OperationModal
+                        onClose={() => setVencimientoModal(null)}
+                        isGlass={isGlass}
+                        initialData={{
+                            tipo: 'deposito',
+                            cartera: vencimientoModal.cartera,
+                            especie: 'ARS',
+                            cantidad: vencimientoModal.montoTotalEsperadoARS,
+                            precioUnitario: 1,
+                            monedaPrecio: 'ARS',
+                            caucionId: vencimientoModal.id,
+                            nota: `Vencimiento caución ${vencimientoModal.plazo}d @ ${vencimientoModal.tna}% TNA`,
+                        }}
+                    />
+                </React.Suspense>
             )}
         </div>
     );

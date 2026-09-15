@@ -10,13 +10,16 @@ export const useSavingsData = () => {
     
     const [savingsTransactions, setSavingsTransactions] = useState(() => getCache(CACHE_KEYS.SAVINGS_TRANSACTIONS, []));
     const [carterasPersonalizadas, setCarterasPersonalizadas] = useState(() => getCache(CACHE_KEYS.SAVINGS_CARTERAS, []));
+    const [manualAssetPrices, setManualAssetPrices] = useState({});
 
-    // Listener de transacciones
+    const uid = user?.uid;
+    const householdId = userData?.householdId;
+
+    // Listener de transacciones (depende solo de IDs primitivos para no re-suscribir en re-renders)
     useEffect(() => {
-        if (!user) return;
-        const householdId = userData?.householdId;
+        if (!uid) return;
         const queryField = householdId ? "householdId" : "userId";
-        const queryValue = householdId ? householdId : user.uid;
+        const queryValue = householdId ? householdId : uid;
 
         const q = query(collection(db, COLLECTIONS.SAVINGS_TRANSACTIONS), where(queryField, "==", queryValue));
         const unsubSavings = onSnapshot(q, (snap) => {
@@ -26,26 +29,34 @@ export const useSavingsData = () => {
         }, (error) => console.error(`Offline/Error for ${COLLECTIONS.SAVINGS_TRANSACTIONS}:`, error));
 
         return () => unsubSavings();
-    }, [user, userData]);
+    }, [uid, householdId]);
 
-    // Listener de Carteras Personalizadas
+    // Listener unificado de 'savings_asset_prices' (carteras y overrides de precios manuales juntos)
     useEffect(() => {
-        if (!user) return;
-        const householdId = userData?.householdId;
+        if (!uid) return;
         const queryField = householdId ? "householdId" : "userId";
-        const queryValue = householdId ? householdId : user.uid;
+        const queryValue = householdId ? householdId : uid;
 
         const q = query(collection(db, 'savings_asset_prices'), where(queryField, "==", queryValue));
         const unsub = onSnapshot(q, (snap) => {
-            const data = snap.docs
-                .filter(d => d.data().tipo === 'cartera')
-                .map(d => ({ id: d.id, ...d.data() }));
-            setCarterasPersonalizadas(data);
-            setCache(CACHE_KEYS.SAVINGS_CARTERAS, data);
-        }, (error) => console.error("Error fetching savings carteras:", error));
+            const carteras = [];
+            const manual = {};
+            snap.docs.forEach(d => {
+                const data = d.data();
+                if (data.tipo === 'cartera') {
+                    carteras.push({ id: d.id, ...data });
+                }
+                if (data.especie && data.precioUSD) {
+                    manual[data.especie] = data.precioUSD;
+                }
+            });
+            setCarterasPersonalizadas(carteras);
+            setCache(CACHE_KEYS.SAVINGS_CARTERAS, carteras);
+            setManualAssetPrices(manual);
+        }, (error) => console.error("Error fetching savings carteras / asset prices:", error));
 
         return () => unsub();
-    }, [user, userData]);
+    }, [uid, householdId]);
 
     const addSavingsTransaction = useCallback(async (t) => {
         if (!user) return;
@@ -134,6 +145,7 @@ export const useSavingsData = () => {
     return {
         savingsTransactions,
         carterasPersonalizadas,
+        manualAssetPrices,
         addSavingsTransaction,
         updateSavingsTransaction,
         deleteSavingsTransaction,

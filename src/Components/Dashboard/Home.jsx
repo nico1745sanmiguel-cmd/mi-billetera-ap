@@ -3,7 +3,7 @@ import { Users, LogOut, AlertCircle, Moon, Sun, Monitor, RefreshCw, Bell, Puzzle
 import { useWidgetSizes } from '../../hooks/useWidgetSizes';
 import { useNavigate } from 'react-router-dom';
 import { db, auth } from '../../firebase';
-import { doc, updateDoc, arrayUnion, arrayRemove, addDoc, collection } from 'firebase/firestore';
+import { doc, updateDoc, arrayUnion, arrayRemove, addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { formatMoney } from '../../utils';
 import FinancialTarget from './FinancialTarget';
 import { useDragReorder } from '../../hooks/useDragReorder';
@@ -33,11 +33,11 @@ const NotificationsModal = React.lazy(() => import('./Widgets/NotificationsModal
 const MobilityWidget = React.lazy(() => import('./Widgets/MobilityWidget'));
 const SalaryWidget = React.lazy(() => import('./Widgets/SalaryWidget'));
 const PlannerWidget = React.lazy(() => import('./Widgets/PlannerWidget'));
+const SkinsModal = React.lazy(() => import('./Skins/SkinsModal'));
+const WPTileGrid = React.lazy(() => import('./Skins/WindowsPhone/WPTileGrid'));
 import { isModuleEnabled } from '../../utils/modulesUtils';
 import { WidgetGrid } from './WidgetSystem';
 
-import SkinsModal from './Skins/SkinsModal';
-import WPTileGrid from './Skins/WindowsPhone/WPTileGrid';
 import UserMenu from './UserMenu';
 import ThemeSelector from './ThemeSelector';
 import CriticalAlert from './CriticalAlert';
@@ -93,7 +93,7 @@ const Home = memo(({ onLogout, notifications = EMPTY_ARRAY, onCardClick }) => {
     const { user, userData, householdMembers } = useAuth();
     const householdId = userData?.householdId;
     const { cards, transactions } = useCards();
-    const { superItems: supermarketItems, freshItems, plannerCategories } = useSupermarket();
+    const { superItems: supermarketItems, freshItems } = useSupermarket();
     const { services } = useServices();
     const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
     const [isSkinsOpen, setIsSkinsOpen] = useState(false);
@@ -130,7 +130,6 @@ const Home = memo(({ onLogout, notifications = EMPTY_ARRAY, onCardClick }) => {
                 await updateDoc(ref, { paidPeriods: arrayUnion(targetMonthKey) });
                 if (householdId && auth.currentUser) {
                     try {
-                        const { serverTimestamp } = await import('firebase/firestore');
                         await addDoc(collection(db, 'households', householdId, 'notifications'), {
                             type: 'payment', itemName: item.name, amount: item.amount,
                             dueDate: item.day, itemType: item.type,
@@ -316,19 +315,21 @@ const Home = memo(({ onLogout, notifications = EMPTY_ARRAY, onCardClick }) => {
             <CriticalAlert criticalAlert={criticalAlert} showMoney={showMoney} />
 
             {skin === 'windowsphone' ? (
-                <WPTileGrid 
-                    navigate={navigate}
-                    privacyMode={privacyMode}
-                    showMoney={showMoney}
-                    totalNeed={totalNeed}
-                    totalPaid={totalPaid}
-                    cardsWithDebt={cardsWithDebt}
-                    agenda={agenda}
-                    services={services}
-                    superData={superData}
-                    currentDate={currentDate}
-                    splitData={splitData}
-                />
+                <React.Suspense fallback={<SkeletonDashboard isGlass={isGlass} />}>
+                    <WPTileGrid 
+                        navigate={navigate}
+                        privacyMode={privacyMode}
+                        showMoney={showMoney}
+                        totalNeed={totalNeed}
+                        totalPaid={totalPaid}
+                        cardsWithDebt={cardsWithDebt}
+                        agenda={agenda}
+                        services={services}
+                        superData={superData}
+                        currentDate={currentDate}
+                        splitData={splitData}
+                    />
+                </React.Suspense>
             ) : (
                 <React.Suspense fallback={<SkeletonDashboard isGlass={isGlass} />}>
                     <WidgetGrid
@@ -367,12 +368,16 @@ const Home = memo(({ onLogout, notifications = EMPTY_ARRAY, onCardClick }) => {
                 />
             )}
 
-            <SkinsModal 
-                isOpen={isSkinsOpen}
-                onClose={() => setIsSkinsOpen(false)}
-                currentSkin={skin}
-                onSelectSkin={setSkin}
-            />
+            {isSkinsOpen && (
+                <React.Suspense fallback={null}>
+                    <SkinsModal 
+                        isOpen={isSkinsOpen}
+                        onClose={() => setIsSkinsOpen(false)}
+                        currentSkin={skin}
+                        onSelectSkin={setSkin}
+                    />
+                </React.Suspense>
+            )}
         </div>
     );
 });

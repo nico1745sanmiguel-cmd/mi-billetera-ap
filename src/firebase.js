@@ -1,6 +1,13 @@
 // src/firebase.js
 import { initializeApp } from "firebase/app";
-import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from "firebase/firestore";
+import {
+  initializeFirestore,
+  getFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager,
+  persistentSingleTabManager,
+  memoryLocalCache
+} from "firebase/firestore";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { getFunctions } from "firebase/functions";
 import { getMessaging } from "firebase/messaging";
@@ -16,15 +23,37 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 
-// Firestore con persistencia offline usando IndexedDB.
-// La app carga datos del caché local inmediatamente al abrir,
-// sin esperar la red. Los datos se sincronizan en background.
-// persistentMultipleTabManager permite que varios tabs compartan el caché.
-const db = initializeFirestore(app, {
-  localCache: persistentLocalCache({
-    tabManager: persistentMultipleTabManager()
-  })
-});
+// Firestore con persistencia offline usando IndexedDB y fallback multi-tab resiliente.
+// 1. Intento primario: persistentMultipleTabManager (multi-pestaña compartida).
+// 2. Intento secundario: persistentSingleTabManager (si multi-pestaña falla o arroja failed-precondition).
+// 3. Fallback en memoria: memoryLocalCache (si IndexedDB está bloqueado o en modo privado restringido).
+// 4. Resguardo final: getFirestore(app) si la instancia ya fue inicializada.
+let db;
+try {
+  db = initializeFirestore(app, {
+    localCache: persistentLocalCache({
+      tabManager: persistentMultipleTabManager()
+    })
+  });
+} catch (multiTabErr) {
+  console.warn("Firestore multi-tab persistence not available, attempting single-tab persistence:", multiTabErr);
+  try {
+    db = initializeFirestore(app, {
+      localCache: persistentLocalCache({
+        tabManager: persistentSingleTabManager()
+      })
+    });
+  } catch (singleTabErr) {
+    console.warn("Firestore IndexedDB persistence unavailable, falling back to memory cache:", singleTabErr);
+    try {
+      db = initializeFirestore(app, {
+        localCache: memoryLocalCache()
+      });
+    } catch {
+      db = getFirestore(app);
+    }
+  }
+}
 
 // 2. Inicializamos Auth y el Proveedor de Google
 const auth = getAuth(app);

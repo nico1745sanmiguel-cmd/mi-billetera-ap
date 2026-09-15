@@ -10,12 +10,14 @@ export const useSavingsStopLoss = () => {
     const { user, userData } = useAuth();
     const [stopLosses, setStopLosses] = useState(() => getCache(CACHE_KEYS.SAVINGS_STOP_LOSSES, {}));
 
+    const uid = user?.uid;
+    const householdId = userData?.householdId;
+
     // Listener de Stop Losses
     useEffect(() => {
-        if (!user) return;
-        const householdId = userData?.householdId;
+        if (!uid) return;
         const queryField = householdId ? "householdId" : "userId";
-        const queryValue = householdId ? householdId : user.uid;
+        const queryValue = householdId ? householdId : uid;
 
         const q = query(collection(db, COLLECTIONS.SAVINGS_STOP_LOSSES), where(queryField, "==", queryValue));
         const unsub = onSnapshot(q, (snap) => {
@@ -42,7 +44,7 @@ export const useSavingsStopLoss = () => {
         }, (error) => console.error("Error fetching stop losses:", error));
 
         return () => unsub();
-    }, [user, userData]);
+    }, [uid, householdId]);
 
     const saveStopLoss = useCallback(async (especie, precioCompra, beta, maxPrecioRegistrado, alarmaActiva = true) => {
         if (!user) return;

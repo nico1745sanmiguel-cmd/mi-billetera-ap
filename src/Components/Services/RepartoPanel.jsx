@@ -1,8 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { db } from '../../firebase';
-import { doc, getDoc } from 'firebase/firestore';
 import { Split, ChevronDown, ChevronUp } from 'lucide-react';
 import { calcularProporciones, calcularAportesExactos } from '../../utils/salaryUtils';
+import { fetchHouseholdWithMembers } from '../../services/householdService';
 
 /**
  * Panel de Reparto del Mes
@@ -24,19 +23,17 @@ export default function RepartoPanel({ allItems, householdId, currentUid, isGlas
             setLoadingProps(true);
             setPropsError("");
             try {
-                const hhSnap = await getDoc(doc(db, 'households', householdId));
-                if (!hhSnap.exists()) return;
-                const memberIds = hhSnap.data().members || [];
-                const snaps = await Promise.all(memberIds.map(uid => getDoc(doc(db, 'users', uid))));
-                const members = snaps.map(s => s.exists() ? { uid: s.id, ...s.data() } : { uid: s.id, displayName: '?', salaryHistory: [] });
-                const rawProporciones = calcularProporciones(members);
-                // Guard: sanitizar proporciones inválidas
-                const safeProporciones = rawProporciones.map(p => ({
-                    ...p,
-                    proportion: Number.isFinite(p.proportion) ? p.proportion : 0,
-                    percentage: Number.isFinite(p.percentage) ? p.percentage : 0,
-                }));
-                setProporciones(safeProporciones);
+                const { members } = await fetchHouseholdWithMembers(householdId);
+                if (members && members.length > 0) {
+                    const rawProporciones = calcularProporciones(members);
+                    // Guard: sanitizar proporciones inválidas
+                    const safeProporciones = rawProporciones.map(p => ({
+                        ...p,
+                        proportion: Number.isFinite(p.proportion) ? p.proportion : 0,
+                        percentage: Number.isFinite(p.percentage) ? p.percentage : 0,
+                    }));
+                    setProporciones(safeProporciones);
+                }
             } catch (e) {
                 console.error('Error cargando proporciones del reparto:', e);
                 setPropsError("No se pudieron cargar las proporciones. Intentá de nuevo.");
@@ -49,6 +46,25 @@ export default function RepartoPanel({ allItems, householdId, currentUid, isGlas
     if (!householdId || sharedItems.length === 0) return null;
 
     const allHaveProportions = proporciones.length > 0;
+
+    const itemsWithAportes = useMemo(() => {
+        if (!allHaveProportions) return sharedItems.map(item => ({ item, aportes: [] }));
+        return sharedItems.map(item => ({
+            item,
+            aportes: calcularAportesExactos(item.amount || 0, proporciones)
+        }));
+    }, [sharedItems, allHaveProportions, proporciones]);
+
+    const totalAportes = useMemo(() => {
+        if (!allHaveProportions) return [];
+        return calcularAportesExactos(grandTotal, proporciones);
+    }, [allHaveProportions, grandTotal, proporciones]);
+
+    const [showAllShared, setShowAllShared] = useState(false);
+    const displayedItems = useMemo(() => {
+        if (showAllShared || itemsWithAportes.length <= 15) return itemsWithAportes;
+        return itemsWithAportes.slice(0, 15);
+    }, [itemsWithAportes, showAllShared]);
 
     return (
         <div className={`rounded-3xl border overflow-hidden transition-all ${isGlass ? 'bg-white/5 border-white/10' : 'bg-white border-gray-100 shadow-sm'}`}>
@@ -106,79 +122,86 @@ export default function RepartoPanel({ allItems, householdId, currentUid, isGlas
                     )}
 
                     {/* Fila por concepto */}
-                    {sharedItems.map((item) => {
-                        // Usar calcularAportesExactos para cada item individual
-                        const aportesPorItem = allHaveProportions
-                            ? calcularAportesExactos(item.amount || 0, proporciones)
-                            : [];
-                        return (
-                            <div key={item.id} className={`rounded-2xl p-3 border ${isGlass ? 'bg-white/5 border-white/10' : 'bg-gray-50 border-gray-100'}`}>
-                                <div className="flex items-center gap-2 overflow-x-auto">
-                                    {/* Día */}
-                                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0 ${
-                                        item.isPaid
-                                            ? (isGlass ? 'bg-green-500/20 text-green-300' : 'bg-green-100 text-green-700')
-                                            : (isGlass ? 'bg-white/10 text-white/60' : 'bg-white text-gray-500 border border-gray-200')
-                                    }`}>
-                                        {item.day}
-                                    </div>
-                                    {/* Nombre */}
-                                    <div className="flex-1 min-w-0">
-                                        <p className={`text-sm font-bold truncate ${
-                                            item.isPaid
-                                                ? (isGlass ? 'text-green-300 line-through' : 'text-green-700 line-through')
-                                                : (isGlass ? 'text-white' : 'text-gray-800')
-                                        }`}>
-                                            {item.name}
-                                        </p>
-                                        <p className={`text-[10px] font-mono ${isGlass ? 'text-gray-400' : 'text-gray-500'}`}>
-                                            {showMoney(item.amount || 0)}
-                                        </p>
-                                    </div>
-                                    {/* Columnas proporcionales */}
-                                    {aportesPorItem.map((ap, idx) => {
-                                        const aporte = Number.isFinite(ap?.aporte) ? ap.aporte : 0;
-                                        const esYo = proporciones[idx]?.uid === currentUid;
-                                        return (
-                                            <div key={proporciones[idx]?.uid || idx} className={`text-center px-1 py-1.5 rounded-xl text-xs flex-shrink-0 ${
-                                                esYo
-                                                    ? (isGlass ? 'bg-indigo-500/15 text-indigo-200' : 'bg-indigo-50 text-indigo-700')
-                                                    : (isGlass ? 'bg-white/5 text-gray-300' : 'bg-white text-gray-600 border border-gray-100')
-                                            }`} style={{ minWidth: '4rem', width: '6rem' }}>
-                                                <p className="text-xs font-mono font-bold truncate">{showMoney(aporte)}</p>
-                                            </div>
-                                        );
-                                    })}
+                    {displayedItems.map(({ item, aportes: aportesPorItem }) => (
+                        <div key={item.id} className={`rounded-2xl p-3 border ${isGlass ? 'bg-white/5 border-white/10' : 'bg-gray-50 border-gray-100'}`}>
+                            <div className="flex items-center gap-2 overflow-x-auto">
+                                {/* Día */}
+                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0 ${
+                                    item.isPaid
+                                        ? (isGlass ? 'bg-green-500/20 text-green-300' : 'bg-green-100 text-green-700')
+                                        : (isGlass ? 'bg-white/10 text-white/60' : 'bg-white text-gray-500 border border-gray-200')
+                                }`}>
+                                    {item.day}
                                 </div>
-                            </div>
-                        );
-                    })}
-
-                    {/* Totales */}
-                    {allHaveProportions && !loadingProps && (() => {
-                        const totalAportes = calcularAportesExactos(grandTotal, proporciones);
-                        return (
-                            <div className={`flex items-center gap-2 p-3 rounded-2xl border-t-2 overflow-x-auto ${isGlass ? 'bg-indigo-900/20 border-indigo-500/30' : 'bg-indigo-50 border-indigo-200'}`}>
+                                {/* Nombre */}
                                 <div className="flex-1 min-w-0">
-                                    <p className={`text-xs font-bold uppercase ${isGlass ? 'text-gray-400' : 'text-gray-500'}`}>Total compartido</p>
-                                    <p className={`text-sm font-mono font-bold ${isGlass ? 'text-white' : 'text-gray-900'}`}>{showMoney(grandTotal)}</p>
+                                    <p className={`text-sm font-bold truncate ${
+                                        item.isPaid
+                                            ? (isGlass ? 'text-green-300 line-through' : 'text-green-700 line-through')
+                                            : (isGlass ? 'text-white' : 'text-gray-800')
+                                    }`}>
+                                        {item.name}
+                                    </p>
+                                    <p className={`text-[10px] font-mono ${isGlass ? 'text-gray-400' : 'text-gray-500'}`}>
+                                        {showMoney(item.amount || 0)}
+                                    </p>
                                 </div>
-                                {totalAportes.map((ap, idx) => {
-                                    const myTotal = Number.isFinite(ap?.aporte) ? ap.aporte : 0;
+                                {/* Columnas proporcionales */}
+                                {aportesPorItem.map((ap, idx) => {
+                                    const aporte = Number.isFinite(ap?.aporte) ? ap.aporte : 0;
                                     const esYo = proporciones[idx]?.uid === currentUid;
                                     return (
-                                        <div key={proporciones[idx]?.uid || idx} className={`text-center px-2 py-2 rounded-xl font-bold text-xs flex-shrink-0 ${
+                                        <div key={proporciones[idx]?.uid || idx} className={`text-center px-1 py-1.5 rounded-xl text-xs flex-shrink-0 ${
                                             esYo
-                                                ? (isGlass ? 'bg-indigo-600/40 text-indigo-200' : 'bg-indigo-600 text-white')
-                                                : (isGlass ? 'bg-white/10 text-gray-300' : 'bg-white text-gray-700 border border-gray-200')
+                                                ? (isGlass ? 'bg-indigo-500/15 text-indigo-200' : 'bg-indigo-50 text-indigo-700')
+                                                : (isGlass ? 'bg-white/5 text-gray-300' : 'bg-white text-gray-600 border border-gray-100')
                                         }`} style={{ minWidth: '4rem', width: '6rem' }}>
-                                            <p className="text-xs font-mono truncate">{showMoney(myTotal)}</p>
+                                            <p className="text-xs font-mono font-bold truncate">{showMoney(aporte)}</p>
                                         </div>
                                     );
                                 })}
                             </div>
-                        );
-                    })()}
+                        </div>
+                    ))}
+
+                    {!showAllShared && itemsWithAportes.length > 15 && (
+                        <div className="pt-1 flex justify-center">
+                            <button
+                                type="button"
+                                onClick={() => setShowAllShared(true)}
+                                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 ${
+                                    isGlass 
+                                        ? 'bg-white/10 hover:bg-white/15 text-white border border-white/10' 
+                                        : 'bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200'
+                                }`}
+                            >
+                                <span>Ver todos los conceptos ({itemsWithAportes.length - 15} más)</span>
+                            </button>
+                        </div>
+                    )}
+
+                    {/* Totales */}
+                    {allHaveProportions && !loadingProps && (
+                        <div className={`flex items-center gap-2 p-3 rounded-2xl border-t-2 overflow-x-auto ${isGlass ? 'bg-indigo-900/20 border-indigo-500/30' : 'bg-indigo-50 border-indigo-200'}`}>
+                            <div className="flex-1 min-w-0">
+                                <p className={`text-xs font-bold uppercase ${isGlass ? 'text-gray-400' : 'text-gray-500'}`}>Total compartido</p>
+                                <p className={`text-sm font-mono font-bold ${isGlass ? 'text-white' : 'text-gray-900'}`}>{showMoney(grandTotal)}</p>
+                            </div>
+                            {totalAportes.map((ap, idx) => {
+                                const myTotal = Number.isFinite(ap?.aporte) ? ap.aporte : 0;
+                                const esYo = proporciones[idx]?.uid === currentUid;
+                                return (
+                                    <div key={proporciones[idx]?.uid || idx} className={`text-center px-2 py-2 rounded-xl font-bold text-xs flex-shrink-0 ${
+                                        esYo
+                                            ? (isGlass ? 'bg-indigo-600/40 text-indigo-200' : 'bg-indigo-600 text-white')
+                                            : (isGlass ? 'bg-white/10 text-gray-300' : 'bg-white text-gray-700 border border-gray-200')
+                                    }`} style={{ minWidth: '4rem', width: '6rem' }}>
+                                        <p className="text-xs font-mono truncate">{showMoney(myTotal)}</p>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
 
                     {!allHaveProportions && !loadingProps && (
                         <p className={`text-xs text-center py-2 ${isGlass ? 'text-gray-500' : 'text-gray-400'}`}>

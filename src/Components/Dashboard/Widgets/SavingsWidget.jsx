@@ -72,7 +72,24 @@ export default function SavingsWidget({ setView, privacyMode, size }) {
                             <img src={savingsGoal.imageUrl} alt="" aria-hidden="true" className="absolute inset-0 w-full h-full object-cover" style={{ clipPath: `inset(${(100 - progress).toFixed(2)}% 0 0 0)`, transition: 'clip-path 0.8s cubic-bezier(0.22, 1, 0.36, 1)', filter: 'brightness(0.6)' }} />
                         )}
                         {progress > 1 && progress < 99 && (
-                            <div className="absolute left-0 right-0 pointer-events-none z-10" style={{ top: `${(100 - progress).toFixed(2)}%`, height: '1.5px', background: 'rgba(255,255,255,0.7)', boxShadow: '0 0 6px 2px rgba(255,255,255,0.4)', transition: 'top 0.8s cubic-bezier(0.22, 1, 0.36, 1)' }} />
+                            <div className="absolute inset-0 pointer-events-none overflow-hidden z-10">
+                                <div
+                                    className="w-full h-full relative will-change-transform"
+                                    style={{
+                                        transform: `translateY(${(100 - progress).toFixed(2)}%)`,
+                                        transition: 'transform 0.8s cubic-bezier(0.22, 1, 0.36, 1)'
+                                    }}
+                                >
+                                    <div
+                                        className="absolute top-0 left-0 right-0"
+                                        style={{
+                                            height: '1.5px',
+                                            background: 'rgba(255,255,255,0.7)',
+                                            boxShadow: '0 0 6px 2px rgba(255,255,255,0.4)',
+                                        }}
+                                    />
+                                </div>
+                            </div>
                         )}
                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/20 z-10" />
                     </>
@@ -118,7 +135,10 @@ export default function SavingsWidget({ setView, privacyMode, size }) {
                                     </span>
                                 </div>
                                 <div className={`h-1.5 rounded-full overflow-hidden ${hasGoalImage ? 'bg-white/20' : 'bg-gray-100 dark:bg-white/10'}`}>
-                                    <div className="h-full rounded-full bg-gradient-to-r from-amber-400 to-amber-500 transition-all duration-1000" style={{ width: `${progress}%` }} />
+                                    <div
+                                        className="h-full w-full rounded-full origin-left bg-gradient-to-r from-amber-400 to-amber-500 transition-transform duration-1000 will-change-transform"
+                                        style={{ transform: `scaleX(${Math.min(Math.max(progress, 0), 100) / 100})` }}
+                                    />
                                 </div>
                             </div>
                         )}
@@ -167,16 +187,24 @@ export default function SavingsWidget({ setView, privacyMode, size }) {
                     )}
                     {/* Línea de agua */}
                     {progress > 1 && progress < 99 && (
-                        <div
-                            className="absolute left-0 right-0 pointer-events-none z-10"
-                            style={{
-                                top: `${(100 - progress).toFixed(2)}%`,
-                                height: '1.5px',
-                                background: 'rgba(255,255,255,0.7)',
-                                boxShadow: '0 0 6px 2px rgba(255,255,255,0.4)',
-                                transition: 'top 0.8s cubic-bezier(0.22, 1, 0.36, 1)',
-                            }}
-                        />
+                        <div className="absolute inset-0 pointer-events-none overflow-hidden z-10">
+                            <div
+                                className="w-full h-full relative will-change-transform"
+                                style={{
+                                    transform: `translateY(${(100 - progress).toFixed(2)}%)`,
+                                    transition: 'transform 0.8s cubic-bezier(0.22, 1, 0.36, 1)',
+                                }}
+                            >
+                                <div
+                                    className="absolute top-0 left-0 right-0"
+                                    style={{
+                                        height: '1.5px',
+                                        background: 'rgba(255,255,255,0.7)',
+                                        boxShadow: '0 0 6px 2px rgba(255,255,255,0.4)',
+                                    }}
+                                />
+                            </div>
+                        </div>
                     )}
                     {/* Gradiente oscuro para legibilidad del texto */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/20 z-10" />
@@ -251,8 +279,8 @@ export default function SavingsWidget({ setView, privacyMode, size }) {
                             </div>
                             <div className={`h-1.5 rounded-full overflow-hidden ${hasGoalImage ? 'bg-white/20' : 'bg-gray-100 dark:bg-white/10'}`}>
                                 <div
-                                    className="h-full rounded-full bg-gradient-to-r from-amber-400 to-amber-500 transition-all duration-1000"
-                                    style={{ width: `${progress}%` }}
+                                    className="h-full w-full rounded-full origin-left bg-gradient-to-r from-amber-400 to-amber-500 transition-transform duration-1000 will-change-transform"
+                                    style={{ transform: `scaleX(${Math.min(Math.max(progress, 0), 100) / 100})` }}
                                 />
                             </div>
                         </div>

@@ -1,25 +1,24 @@
-import React, { useState, useEffect, Suspense, lazy } from 'react';
+import React, { useState, useEffect, Suspense, lazy, useCallback } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 // eslint-disable-next-line no-unused-vars
 import { AnimatePresence, m, LazyMotion, domMax, MotionConfig } from 'framer-motion';
 import Navbar from './Components/Layout/Navbar';
-import Home from './Components/Dashboard/Home';
-import Login from './Components/Login';
-import InstallPrompt from './Components/UI/InstallPrompt';
-import SkeletonDashboard from './Components/UI/SkeletonDashboard';
-import Toast from './Components/UI/Toast';
-import ConfirmDialog from './Components/UI/ConfirmDialog';
-import DraggableFAB from './Components/Dashboard/Widgets/DraggableFAB';
-import FloatingNotes from './Components/Dashboard/Widgets/FloatingNotes';
+import MobileHeader from './Components/Layout/MobileHeader';
+import GlobalToast from './Components/UI/GlobalToast';
 import { auth } from './firebase';
 import { signOut } from 'firebase/auth';
 import { useFinancial } from './context/FinancialContext';
 import { useUI } from './context/UIContext';
-import { Home as HomeIcon, ChevronLeft, ChevronRight, Eye, EyeOff } from 'lucide-react';
 import { SLOW_CONNECTION_TIMEOUT_MS } from './config/constants';
 import { isModuleEnabled } from './utils/modulesUtils';
 
 // --- LAZY IMPORTS ---
+const Home = lazy(() => import('./Components/Dashboard/Home'));
+const Login = lazy(() => import('./Components/Login'));
+const InstallPrompt = lazy(() => import('./Components/UI/InstallPrompt'));
+const ConfirmDialog = lazy(() => import('./Components/UI/ConfirmDialog'));
+const DraggableFAB = lazy(() => import('./Components/Dashboard/Widgets/DraggableFAB'));
+const FloatingNotes = lazy(() => import('./Components/Dashboard/Widgets/FloatingNotes'));
 const Stats = lazy(() => import('./Components/Dashboard/Stats'));
 const NewPurchase = lazy(() => import('./Components/Purchase/NewPurchase'));
 const SuperList = lazy(() => import('./Components/Supermarket/SuperList'));
@@ -42,13 +41,6 @@ const LazyLoader = () => (
         <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
     </div>
 );
-
-// Formateador de fecha para el header móvil
-const getFormattedDate = (date) => {
-    const options = { month: 'long', year: 'numeric' };
-    let text = date.toLocaleDateString('es-AR', options).replace(' de ', ' ');
-    return text.charAt(0).toUpperCase() + text.slice(1);
-};
 
 const confirmLogout = (authInstance) => {
     signOut(authInstance);
@@ -83,46 +75,31 @@ export default function App() {
         privacyMode,
         setPrivacyMode,
         isGlass,
-        currentDate,
-        changeMonth,
-        toast,
-        hideToast,
         motionPreference,
     } = useUI();
 
     const navigate = useNavigate();
     const location = useLocation();
 
-    // ─── ESTADO LOCAL (solo afecta a App.jsx, no necesita contexto) ─────
+    // ─── ESTADO LOCAL (solo afecta a App.jsx) ─────
     const [modulesTick, setModulesTick] = useState(0);
-    const [selectedCard, setSelectedCard] = useState(null);
     const [isLogoutOpen, setIsLogoutOpen] = useState(false);
-    const [isHeaderVisible, setIsHeaderVisible] = useState(true);
 
-    useEffect(() => {
-        let lastScrollY = window.scrollY;
-        
-        const handleScroll = () => {
-            const currentScrollY = window.scrollY;
-            if (currentScrollY > 50) {
-                if (currentScrollY > lastScrollY) {
-                    setIsHeaderVisible(false);
-                } else {
-                    setIsHeaderVisible(true);
-                }
-            } else {
-                setIsHeaderVisible(true);
-            }
-            lastScrollY = currentScrollY;
-        };
-
-        window.addEventListener('scroll', handleScroll, { passive: true });
-        return () => window.removeEventListener('scroll', handleScroll);
+    const handleLogout = useCallback(() => {
+        setIsLogoutOpen(true);
     }, []);
 
-    const handleLogout = () => {
-        setIsLogoutOpen(true);
-    };
+    const handleLogoutClose = useCallback(() => {
+        setIsLogoutOpen(false);
+    }, []);
+
+    const handleLogoutConfirm = useCallback(() => {
+        confirmLogout(auth);
+    }, []);
+
+    const handleCardClick = useCallback((card) => {
+        navigate('/cards', { state: { initialCard: card } });
+    }, [navigate]);
 
     useEffect(() => {
         const handler = () => setModulesTick(t => t + 1);
@@ -157,7 +134,11 @@ export default function App() {
 
 
     if (!loadingUser && !user) {
-        return <Login />;
+        return (
+            <Suspense fallback={<div className={`min-h-screen flex items-center justify-center ${isGlass ? 'bg-[#0f0c29]' : 'bg-gray-50'}`}><LazyLoader /></div>}>
+                <Login />
+            </Suspense>
+        );
     }
 
     // Permitimos renderizar la UI principal incluso durante loadingUser 
@@ -172,8 +153,10 @@ export default function App() {
             <div className="relative z-10 min-h-screen flex flex-col">
                 
                 <div data-modules-tick={modulesTick} className={`relative z-10 min-h-screen transition-colors duration-700 ease-in-out flex flex-col ${isGlass ? 'text-white' : 'text-gray-800'}`}>
-                    {toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
-                    <InstallPrompt />
+                    <GlobalToast />
+                    <Suspense fallback={null}>
+                        <InstallPrompt />
+                    </Suspense>
 
                     {/* NAVBAR DESKTOP */}
                     <div className="hidden md:block relative">
@@ -181,32 +164,7 @@ export default function App() {
                     </div>
 
                     {/* HEADER MÓVIL */}
-                    <div className={`md:hidden px-4 py-2.5 shadow-sm sticky top-0 z-40 flex items-center justify-between gap-2 transition-all duration-300 ${isGlass ? 'bg-[#0f0c29]/90 backdrop-blur-md text-white border-b border-white/5' : 'bg-white dark:bg-slate-900/90 text-gray-800 dark:text-white border-b border-gray-100 dark:border-slate-800'} ${isHeaderVisible ? 'translate-y-0' : '-translate-y-full'}`}>
-                        <button aria-label="Ir al inicio" type="button"
-                            onClick={() => navigate('/dashboard')}
-                            className={`min-h-[44px] min-w-[44px] p-2 rounded-xl flex items-center justify-center transition-all active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${location.pathname === '/dashboard' || location.pathname === '/' ? (isGlass ? 'bg-white/20 text-white' : 'bg-blue-50 text-blue-600') : (isGlass ? 'bg-transparent text-white/60' : 'bg-gray-100 text-gray-500')}`}
-                        >
-                            <HomeIcon size={24} />
-                        </button>
-
-                        {/* SELECTOR DE MES */}
-                        <div className={`flex-1 flex items-center justify-between rounded-2xl p-0.5 min-h-[44px] max-w-[200px] transition-colors ${isGlass ? 'bg-white/10 border border-white/10 text-white' : 'bg-gray-50 dark:bg-slate-800 text-gray-800 dark:text-white'}`}>
-                            <button aria-label="Mes anterior" type="button" onClick={() => changeMonth(-1)} className={`min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl active:scale-95 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${isGlass ? 'text-white/80 hover:bg-white/10' : 'text-gray-500 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-700'}`}>
-                                <ChevronLeft size={18} strokeWidth={2.5} />
-                            </button>
-                            <span className="font-bold text-sm capitalize select-none px-1">{getFormattedDate(currentDate)}</span>
-                            <button aria-label="Mes siguiente" type="button" onClick={() => changeMonth(1)} className={`min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl active:scale-95 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${isGlass ? 'text-white/80 hover:bg-white/10' : 'text-gray-500 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-700'}`}>
-                                <ChevronRight size={18} strokeWidth={2.5} />
-                            </button>
-                        </div>
-
-                        <div className="flex gap-1">
-                            {/* BOTÓN PRIVACIDAD */}
-                            <button aria-label={privacyMode ? "Mostrar datos sensibles" : "Ocultar datos sensibles"} type="button" onClick={() => setPrivacyMode(!privacyMode)} className={`min-h-[44px] min-w-[44px] p-2 rounded-xl flex items-center justify-center transition-all active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${privacyMode ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400' : 'bg-gray-100 text-gray-500 dark:bg-slate-800 dark:text-gray-400'}`}>
-                                {privacyMode ? <EyeOff size={22} /> : <Eye size={22} />}
-                            </button>
-                        </div>
-                    </div>
+                    <MobileHeader />
 
                     <main className="max-w-5xl mx-auto p-4 mt-2 pb-10 w-full flex-grow relative overflow-hidden">
                         <Suspense fallback={<LazyLoader />}>
@@ -219,8 +177,7 @@ export default function App() {
                                             <Home
                                                 onLogout={handleLogout}
                                                 notifications={notifications}
-                                                // react-doctor-disable-next-line react-doctor/no-impure-state-updater
-                                                onCardClick={(card) => { setSelectedCard(card); navigate('/cards'); }}
+                                                onCardClick={handleCardClick}
                                             />
                                         </m.div>
                                     } />
@@ -279,7 +236,7 @@ export default function App() {
 
                                     <Route path="/cards" element={
                                         isModuleEnabled('cards') ? 
-                                        <m.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} transition={{ duration: 0.2 }}><CardsDashboard initialCard={selectedCard} /></m.div> : <Navigate to="/dashboard" replace />
+                                        <m.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} transition={{ duration: 0.2 }}><CardsDashboard /></m.div> : <Navigate to="/dashboard" replace />
                                     } />
 
                                     <Route path="/mobility" element={
@@ -288,7 +245,7 @@ export default function App() {
                                     } />
 
                                     <Route path="/salary" element={
-                                        isModuleEnabled('salary') ?
+                                        isModuleEnabled('salary') ? 
                                         <m.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.2 }}><SalaryDashboard onBack={() => navigate('/dashboard')} /></m.div> : <Navigate to="/dashboard" replace />
                                     } />
 
@@ -316,21 +273,23 @@ export default function App() {
                         </Suspense>
                     </main>
                     {(location.pathname === '/dashboard' || location.pathname === '/') && (
-                        <>
+                        <Suspense fallback={null}>
                             <DraggableFAB />
                             {isModuleEnabled('notes') && <FloatingNotes user={user} />}
-                        </>
+                        </Suspense>
                     )}
                     
                     {isLogoutOpen && (
-                        <ConfirmDialog
-                            title="Cerrar Sesión"
-                            message="¿Estás seguro que querés salir?"
-                            confirmText="Salir"
-                            cancelText="Cancelar"
-                            onConfirm={() => confirmLogout(auth)}
-                            onCancel={() => setIsLogoutOpen(false)}
-                        />
+                        <Suspense fallback={null}>
+                            <ConfirmDialog
+                                title="Cerrar Sesión"
+                                message="¿Estás seguro que querés salir?"
+                                confirmText="Salir"
+                                cancelText="Cancelar"
+                                onConfirm={handleLogoutConfirm}
+                                onCancel={handleLogoutClose}
+                            />
+                        </Suspense>
                     )}
                 </div>
             </div>

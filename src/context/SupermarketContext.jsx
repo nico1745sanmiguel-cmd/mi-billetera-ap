@@ -28,12 +28,17 @@ export const SupermarketProvider = ({ children }) => {
         return !cachedSuper && !cachedFresh;
     });
 
-    useEffect(() => {
-        if (!user) return;
+    const uid = user?.uid;
+    const householdId = userData?.householdId;
 
-        const householdId = userData?.householdId;
+    useEffect(() => {
+        if (!uid) {
+            setLoading(false);
+            return;
+        }
+
         const queryField = householdId ? "householdId" : "userId";
-        const queryValue = householdId ? householdId : user.uid;
+        const queryValue = householdId ? householdId : uid;
 
         let loadedCount = 0;
         const checkLoaded = () => {
@@ -65,17 +70,17 @@ export const SupermarketProvider = ({ children }) => {
             unsubFresh();
             unsubPlannerCat();
         };
-    }, [user, userData]);
+    }, [uid, householdId]);
 
     const visibleSuperItems = useMemo(() => {
-        if (!ENABLE_HOUSEHOLD || !userData?.householdId) return superItems;
-        return superItems.filter(item => !item.ownerId || item.isShared === true || item.ownerId === user?.uid);
-    }, [superItems, userData, user]);
+        if (!ENABLE_HOUSEHOLD || !householdId) return superItems;
+        return superItems.filter(item => !item.ownerId || item.isShared === true || item.ownerId === uid);
+    }, [superItems, householdId, uid]);
 
     const visibleFreshItems = useMemo(() => {
-        if (!ENABLE_HOUSEHOLD || !userData?.householdId) return freshItems;
-        return freshItems.filter(item => !item.ownerId || item.isShared !== false || item.ownerId === user?.uid);
-    }, [freshItems, userData, user]);
+        if (!ENABLE_HOUSEHOLD || !householdId) return freshItems;
+        return freshItems.filter(item => !item.ownerId || item.isShared !== false || item.ownerId === uid);
+    }, [freshItems, householdId, uid]);
     
     const value = useMemo(() => ({
         superItems: visibleSuperItems,

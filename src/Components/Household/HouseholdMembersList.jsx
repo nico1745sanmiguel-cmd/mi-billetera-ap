@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { db } from '../../firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { fetchUserProfile } from '../../services/householdService';
 import LoadingState from '../UI/LoadingState';
 
 export default function HouseholdMembersList({ memberIds, currentUserUid, isGlass }) {
@@ -11,12 +10,12 @@ export default function HouseholdMembersList({ memberIds, currentUserUid, isGlas
         const fetchMembers = async () => {
             if (!memberIds || memberIds.length === 0) return;
             try {
-                const promises = memberIds.map(uid => getDoc(doc(db, 'users', uid)));
-                const snapshots = await Promise.all(promises);
-                const data = snapshots.map(snap => {
-                    if (snap.exists()) return { id: snap.id, ...snap.data() };
-                    return { id: snap.id, displayName: 'Usuario Desconocido', photoURL: null };
+                const promises = memberIds.map(async (uid) => {
+                    const profile = await fetchUserProfile(uid);
+                    if (profile) return { id: uid, ...profile };
+                    return { id: uid, displayName: 'Usuario Desconocido', photoURL: null };
                 });
+                const data = await Promise.all(promises);
                 setMembersData(data);
             } catch (err) {
                 console.error("Error fetching members:", err);

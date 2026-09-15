@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { auth, googleProvider } from '../firebase';
-import { signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
+import { signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithCredential, GoogleAuthProvider } from 'firebase/auth';
 import { CreditCard, AlertTriangle } from 'lucide-react';
 import GlassCard from './UI/GlassCard';
 
@@ -37,7 +37,6 @@ export default function Login() {
   React.useEffect(() => {
     window.onNativeGoogleLogin = async (idToken) => {
       try {
-        const { GoogleAuthProvider, signInWithCredential } = await import('firebase/auth');
         const credential = GoogleAuthProvider.credential(idToken);
         await signInWithCredential(auth, credential);
       } catch (err) {

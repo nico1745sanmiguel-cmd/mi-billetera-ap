@@ -1,8 +1,8 @@
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { createPortal } from 'react-dom';
+import React, { useState, useMemo, useEffect, useCallback, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db, auth } from '../../firebase';
-import { doc, getDoc, collection, query, where, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
+import { fetchHouseholdWithMembers } from '../../services/householdService';
 import { Scale, Users, ChevronLeft, CreditCard, ShoppingCart, Lightbulb, User, LayoutList, Plus, X, CheckCircle, Clock, TrendingUp, Wallet, ArrowLeftRight, AlertTriangle, Copy, Share2, Check } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useCards } from '../../context/CardsContext';
@@ -228,6 +228,8 @@ function ContributionModal({ person, totalTarget, monthKey, householdId, isGlass
     );
 }
 
+const MemoizedContributionModal = memo(ContributionModal);
+
 // ── COMPONENTE PRINCIPAL ──────────────────────────────────────────────────────
 export default function SharedExpensesDashboard({ onBack }) {
     const { currentDate, privacyMode, isGlass } = useUI();
@@ -300,13 +302,10 @@ export default function SharedExpensesDashboard({ onBack }) {
             setLoadingProps(true);
             setPropsError('');
             try {
-                const hhSnap = await getDoc(doc(db, 'households', householdId));
-                if (!hhSnap.exists()) return;
-                const data = hhSnap.data();
-                const memberIds = data.members || [];
-                const snaps = await Promise.all(memberIds.map(uid => getDoc(doc(db, 'users', uid))));
-                const members = snaps.map(s => s.exists() ? { uid: s.id, ...s.data() } : { uid: s.id, displayName: '?', salaryHistory: [] });
-                setProporciones(calcularProporciones(members, splitMode));
+                const { members } = await fetchHouseholdWithMembers(householdId);
+                if (members && members.length > 0) {
+                    setProporciones(calcularProporciones(members, splitMode));
+                }
             } catch (e) {
                 console.error(e);
                 setPropsError('No se pudieron cargar los datos del grupo familiar.');
@@ -353,7 +352,7 @@ export default function SharedExpensesDashboard({ onBack }) {
         return calcularLiquidacionNeta(proporciones, sharedItems, allContributions, { splitMode });
     }, [allHaveProportions, proporciones, sharedItems, allContributions, splitMode]);
 
-    const handleCopySettlement = () => {
+    const handleCopySettlement = useCallback(() => {
         if (!liquidacion || !liquidacion.transferencias || liquidacion.transferencias.length === 0) return;
         const monthLabel = currentDate.toLocaleString('es-AR', { month: 'long', year: 'numeric' });
         const modeLabel = splitMode === 'proportional' ? 'Proporcional por sueldos' : 'Equitativo (partes iguales)';
@@ -367,7 +366,7 @@ export default function SharedExpensesDashboard({ onBack }) {
         navigator.clipboard.writeText(text);
         setCopiedSettlement(true);
         setTimeout(() => setCopiedSettlement(false), 2500);
-    };
+    }, [liquidacion, currentDate, splitMode, grandTotal]);
 
     return (
         <div className="space-y-6 animate-fade-in pb-20">
@@ -669,7 +668,7 @@ export default function SharedExpensesDashboard({ onBack }) {
 
             {/* MODAL DE APORTES */}
             {selectedPerson && (
-                <ContributionModal
+                <MemoizedContributionModal
                     person={selectedPerson}
                     totalTarget={selectedPerson.totalTarget}
                     monthKey={currentMonthKey}

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useSavings } from '../../../context/SavingsContext';
 import { Search, Filter, Edit2, Trash2, ArrowUpRight, ArrowDownRight, RefreshCcw, Wallet, Tag, ArrowRight } from 'lucide-react';
 import OperationModal from '../OperationModal';
@@ -65,6 +65,17 @@ export default function OperationsTab({ isGlass, privacyMode }) {
             return true;
         });
     }, [sortedHistory, filterEspecie, filterCartera]);
+
+    const INITIAL_BATCH_SIZE = 20;
+    const [visibleCount, setVisibleCount] = useState(INITIAL_BATCH_SIZE);
+
+    useEffect(() => {
+        setVisibleCount(INITIAL_BATCH_SIZE);
+    }, [filterEspecie, filterCartera]);
+
+    const visibleOperations = useMemo(() => {
+        return filtered.slice(0, visibleCount);
+    }, [filtered, visibleCount]);
 
     const textColor = isGlass ? 'text-white' : 'text-gray-800';
     const cardBg = isGlass ? 'bg-white/10 backdrop-blur-md border border-white/20' : 'bg-white shadow-sm border border-gray-100';
@@ -162,7 +173,7 @@ export default function OperationsTab({ isGlass, privacyMode }) {
                 </div>
             ) : (
                 <div className="space-y-4">
-                    {filtered.map(tx => {
+                    {visibleOperations.map(tx => {
                         const formatter = tx.monedaPrecio === 'ARS' ? arsFormatter : usdFormatter;
                         const total = (parseFloat(tx.cantidad) || 0) * (parseFloat(tx.precioUnitario) || 0);
                         
@@ -243,6 +254,22 @@ export default function OperationsTab({ isGlass, privacyMode }) {
                             </div>
                         );
                     })}
+
+                    {filtered.length > visibleCount && (
+                        <div className="pt-2 flex justify-center">
+                            <button
+                                type="button"
+                                onClick={() => setVisibleCount(prev => prev + 20)}
+                                className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all active:scale-95 flex items-center gap-2 ${
+                                    isGlass 
+                                        ? 'bg-white/10 hover:bg-white/15 text-white border border-white/10 shadow-sm' 
+                                        : 'bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200 shadow-sm'
+                                }`}
+                            >
+                                <span>Mostrar más operaciones ({filtered.length - visibleCount} restantes)</span>
+                            </button>
+                        </div>
+                    )}
                 </div>
             )}
             

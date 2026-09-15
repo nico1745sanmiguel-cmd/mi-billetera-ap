@@ -39,6 +39,54 @@ export default defineConfig({
         display: "standalone",
         theme_color: "#ffffff",
         background_color: "#f3f4f6"
+      },
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,webmanifest}'],
+        runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/fonts\.(?:googleapis|gstatic)\.com\/.*/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'google-fonts-cache',
+              expiration: {
+                maxEntries: 30,
+                maxAgeSeconds: 60 * 60 * 24 * 365
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
+          },
+          {
+            urlPattern: /\.(?:png|jpg|jpeg|svg|webp|gif|ico)$/i,
+            handler: 'StaleWhileRevalidate',
+            options: {
+              cacheName: 'static-images-cache',
+              expiration: {
+                maxEntries: 60,
+                maxAgeSeconds: 60 * 60 * 24 * 30
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
+          },
+          {
+            urlPattern: /^https:\/\/(?:dolarapi\.com|api\.coingecko\.com|data912\.com)\/.*/i,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'market-api-cache',
+              networkTimeoutSeconds: 5,
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 60 * 60 * 24
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
+          }
+        ]
       }
     })
   ],
@@ -48,11 +96,43 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom'],
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            const normalizedId = id.replace(/\\/g, '/');
+            if (normalizedId.includes('/node_modules/firebase/firestore') || normalizedId.includes('/node_modules/@firebase/firestore')) {
+              return 'firebase-firestore';
+            }
+            if (normalizedId.includes('/node_modules/firebase/auth') || normalizedId.includes('/node_modules/@firebase/auth')) {
+              return 'firebase-auth';
+            }
+            if (normalizedId.includes('/node_modules/firebase/') || normalizedId.includes('/node_modules/@firebase/')) {
+              return 'firebase-core';
+            }
+            if (normalizedId.includes('/node_modules/framer-motion/')) {
+              return 'framer-motion';
+            }
+            if (
+              normalizedId.includes('/node_modules/recharts/') ||
+              normalizedId.includes('/node_modules/d3-') ||
+              normalizedId.includes('/node_modules/victory-vendor/')
+            ) {
+              return 'recharts';
+            }
+            if (normalizedId.includes('/node_modules/pdfjs-dist/')) {
+              return 'pdfjs-dist';
+            }
+            if (
+              normalizedId.includes('/node_modules/react/') ||
+              normalizedId.includes('/node_modules/react-dom/') ||
+              normalizedId.includes('/node_modules/react-router/') ||
+              normalizedId.includes('/node_modules/react-router-dom/')
+            ) {
+              return 'vendor';
+            }
+          }
         },
       },
     },
-    chunkSizeWarningLimit: 1000,
+    chunkSizeWarningLimit: 600,
   },
 })

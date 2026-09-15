@@ -1,11 +1,11 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, memo } from 'react';
 // eslint-disable-next-line no-unused-vars
 import { m, AnimatePresence } from 'framer-motion';
 import { Plus, Receipt, StickyNote } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { isModuleEnabled } from '../../../utils/modulesUtils';
 
-export default function DraggableFAB() {
+function DraggableFAB() {
     const navigate = useNavigate();
     const isDragging = useRef(false);
     const [menuOpen, setMenuOpen] = useState(false);
@@ -51,6 +51,7 @@ export default function DraggableFAB() {
             <AnimatePresence>
                 {menuOpen && (
                     <m.div 
+                        key="draggable-fab-menu"
                         initial={{ opacity: 0, y: 10, scale: 0.8 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 10, scale: 0.8 }}
@@ -89,3 +90,5 @@ export default function DraggableFAB() {
         </m.div>
     );
 }
+
+export default memo(DraggableFAB);

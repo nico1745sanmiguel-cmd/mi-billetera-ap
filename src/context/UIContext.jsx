@@ -37,7 +37,9 @@ export const useUIDispatch = () => {
 
 // Hook retro-compatible para componentes que aún no fueron migrados
 export const useUI = () => {
-    return { ...useUIState(), ...useUIDispatch() };
+    const state = useUIState();
+    const dispatch = useUIDispatch();
+    return useMemo(() => ({ ...state, ...dispatch }), [state, dispatch]);
 };
 
 // Detecta si el sistema operativo prefiere modo oscuro
@@ -186,7 +188,7 @@ export const UIProvider = ({ children }) => {
         changeMonth,
         showToast,
         hideToast,
-    }), [setPrivacyMode, setExpenseScope, setIsGlass, setTheme, setSkin, setMotionPreference, changeMonth, showToast, hideToast]);
+    }), [setPrivacyMode, setExpenseScope, setIsGlass, setTheme, setSkin, setMotionPreference, setCurrentDate, changeMonth, showToast, hideToast]);
 
     return (
         <UIDispatchContext.Provider value={dispatchValue}>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useUI } from '../../context/UIContext';
 import { useAuth } from '../../context/AuthContext';
 import { useCards } from '../../context/CardsContext';
@@ -7,7 +7,9 @@ import { formatMonthKey } from '../../utils/cardDebtUtils';
 import CardsList from './CardsList';
 import CardDetail from './CardDetail';
 
-export default function CardsDashboard({ initialCard }) {
+export default function CardsDashboard({ initialCard: propInitialCard }) {
+    const location = useLocation();
+    const initialCard = propInitialCard || location.state?.initialCard || null;
     const { isGlass, privacyMode, currentDate } = useUI();
     const navigate = useNavigate();
     const { userData } = useAuth();

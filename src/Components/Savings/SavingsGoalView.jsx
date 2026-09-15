@@ -120,17 +120,23 @@ const SavingsGoalView = ({
                     )}
                     
                     {progress > 1 && progress < 99 && (
-                        <motion.div
-                            initial={{ top: '100%' }}
-                            animate={{ top: `${(100 - progress).toFixed(2)}%` }}
-                            transition={{ duration: 1.5, ease: "easeInOut" }}
-                            className="absolute left-0 right-0 pointer-events-none"
-                            style={{
-                                height: '3px',
-                                background: 'rgba(255,255,255,0.9)',
-                                boxShadow: '0 0 12px 3px rgba(255,255,255,0.6)',
-                            }}
-                        />
+                        <div className="absolute inset-0 pointer-events-none overflow-hidden z-10">
+                            <motion.div
+                                initial={{ y: '100%' }}
+                                animate={{ y: `${(100 - progress).toFixed(2)}%` }}
+                                transition={{ duration: 1.5, ease: "easeInOut" }}
+                                className="w-full h-full relative"
+                            >
+                                <div
+                                    className="absolute top-0 left-0 right-0"
+                                    style={{
+                                        height: '3px',
+                                        background: 'rgba(255,255,255,0.9)',
+                                        boxShadow: '0 0 12px 3px rgba(255,255,255,0.6)',
+                                    }}
+                                />
+                            </motion.div>
+                        </div>
                     )}
 
                     <div className="absolute inset-x-4 bottom-4 flex justify-between items-end pointer-events-none z-10">
@@ -169,10 +175,11 @@ const SavingsGoalView = ({
                             </div>
                             <div className={`h-6 rounded-full overflow-hidden shadow-inner ${isGlass ? 'bg-black/40' : 'bg-gray-200'}`}>
                                 <motion.div
-                                    initial={{ width: 0 }}
-                                    animate={{ width: `${progress}%` }}
+                                    initial={{ scaleX: 0 }}
+                                    animate={{ scaleX: Math.min(Math.max(progress, 0), 100) / 100 }}
                                     transition={{ duration: 1.5, ease: "easeOut" }}
-                                    className={`h-full rounded-full ${
+                                    style={{ transformOrigin: 'left' }}
+                                    className={`w-full h-full rounded-full ${
                                         isComplete ? 'bg-gradient-to-r from-yellow-400 to-amber-400' : 'bg-gradient-to-r from-amber-400 to-amber-600'
                                     }`}
                                 />
