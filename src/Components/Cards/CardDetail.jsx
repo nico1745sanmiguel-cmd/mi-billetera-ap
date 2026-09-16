@@ -438,16 +438,20 @@ export default function CardDetail({ card, isNewCard, currentDate, onBack }) {
 
                         <div>
                             <label className={`${labelClass} mb-2`} id="cardColorLabel">Color de Tarjeta</label>
-                            <div className="flex flex-wrap gap-2.5 p-2 items-center" aria-labelledby="cardColorLabel">
+                            <div className="flex flex-wrap gap-1.5 p-2 items-center" aria-labelledby="cardColorLabel">
                                 {PRESET_COLORS.map(color => (
                                     <button
                                         key={color}
                                         type="button"
                                         aria-label={`Seleccionar color ${color}`}
                                         onClick={() => setForm({ ...form, color })}
-                                        className={`w-9 h-9 sm:w-8 sm:h-8 rounded-full shadow-sm transition-transform hover:scale-110 active:scale-95 ${form.color === color ? 'ring-2 ring-offset-2 ring-blue-500 scale-110' : ''}`}
-                                        style={{ backgroundColor: color }}
-                                    />
+                                        className="min-h-[44px] min-w-[44px] flex items-center justify-center p-1 rounded-full"
+                                    >
+                                        <div
+                                            className={`w-8 h-8 rounded-full shadow-sm transition-transform hover:scale-110 active:scale-95 ${form.color === color ? 'ring-2 ring-offset-2 ring-blue-500 scale-110' : ''}`}
+                                            style={{ backgroundColor: color }}
+                                        />
+                                    </button>
                                 ))}
                             </div>
                         </div>
@@ -564,7 +568,7 @@ export default function CardDetail({ card, isNewCard, currentDate, onBack }) {
                             <div className={`p-4 rounded-2xl space-y-4 border ${isGlass ? 'bg-white/5 border-white/10' : 'bg-white border-gray-100 shadow-sm'}`}>
                                 <div className="flex items-center justify-between">
                                     <div>
-                                        <p className={`text-[10px] font-bold uppercase tracking-widest ${isGlass ? 'text-white/50' : 'text-gray-400'}`}>Estado de pago</p>
+                                        <p className={`text-[10px] font-bold uppercase tracking-widest ${isGlass ? 'text-white/60' : 'text-gray-500'}`}>Estado de pago</p>
                                         <p className={`text-sm font-bold ${statement.isPaid ? 'text-emerald-500' : isGlass ? 'text-white' : 'text-gray-800'}`}>
                                             {statement.isPaid ? 'Resumen Pagado' : 'Pendiente de Pago'}
                                         </p>
@@ -582,7 +586,7 @@ export default function CardDetail({ card, isNewCard, currentDate, onBack }) {
                                     </button>
                                 </div>
 
-                                <p className={`text-[10px] font-bold uppercase ${isGlass ? 'text-white/30' : 'text-gray-400'} ml-1`}>Datos del período</p>
+                                <p className={`text-[10px] font-bold uppercase ${isGlass ? 'text-white/60' : 'text-gray-500'} ml-1`}>Datos del período</p>
 
                                 <div>
                                     <label className={labelClass} htmlFor="statementTotalDue">Total a Pagar ($)</label>
@@ -714,6 +718,7 @@ export default function CardDetail({ card, isNewCard, currentDate, onBack }) {
                 message={`¿Eliminar la tarjeta ${card?.name || ''}? Se borrará todo el historial de resúmenes de esta tarjeta.`}
                 confirmText={isDeleting ? 'Eliminando...' : 'Eliminar'}
                 isDanger={true}
+                isLoading={isDeleting}
                 onConfirm={handleDelete}
                 onCancel={() => { if (!isDeleting) setIsDeleteOpen(false); }}
             />

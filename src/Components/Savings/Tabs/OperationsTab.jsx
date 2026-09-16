@@ -4,6 +4,7 @@ import { useUI } from '../../../context/UIContext';
 import ConfirmDialog from '../../UI/ConfirmDialog';
 import { Search, Filter, Edit2, Trash2, ArrowUpRight, ArrowDownRight, RefreshCcw, Wallet, Tag, ArrowRight, RotateCcw } from 'lucide-react';
 import OperationModal from '../OperationModal';
+import { renderHiddenAmount } from '../../../utils';
 
 const arsFormatter = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 });
 const usdFormatter = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
@@ -69,7 +70,7 @@ export default function OperationsTab({ isGlass, privacyMode }) {
     const [deletingTx, setDeletingTx] = useState(null);
     const [isDeleting, setIsDeleting] = useState(false);
 
-    const formatAmount = (amount, formatter) => privacyMode ? '****' : formatter.format(amount);
+    const formatAmount = (amount, formatter) => privacyMode ? renderHiddenAmount('****') : formatter.format(amount);
 
     const handleDeleteClick = (tx) => {
         setDeletingTx(tx);
@@ -146,7 +147,7 @@ export default function OperationsTab({ isGlass, privacyMode }) {
                             <div className="flex gap-2 overflow-x-auto hide-scrollbar pb-1">
                                 <button 
                                     onClick={() => setFilterCartera('')}
-                                    className={`shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                                    className={`shrink-0 min-h-[44px] px-3.5 py-2 inline-flex items-center rounded-xl text-xs font-bold transition-all ${
                                         !filterCartera 
                                             ? (isGlass ? 'bg-white text-black' : 'bg-gray-800 text-white')
                                             : (isGlass ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-600')
@@ -158,7 +159,7 @@ export default function OperationsTab({ isGlass, privacyMode }) {
                                     <button 
                                         key={c}
                                         onClick={() => setFilterCartera(c)}
-                                        className={`shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                                        className={`shrink-0 min-h-[44px] px-3.5 py-2 inline-flex items-center rounded-xl text-xs font-bold transition-all ${
                                             filterCartera === c
                                                 ? (isGlass ? 'bg-white text-black' : 'bg-gray-800 text-white')
                                                 : (isGlass ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-600')
@@ -180,7 +181,7 @@ export default function OperationsTab({ isGlass, privacyMode }) {
                             <div className="flex gap-2 overflow-x-auto hide-scrollbar pb-1">
                                 <button 
                                     onClick={() => setFilterEspecie('')}
-                                    className={`shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                                    className={`shrink-0 min-h-[44px] px-3.5 py-2 inline-flex items-center rounded-xl text-xs font-bold transition-all ${
                                         !filterEspecie 
                                             ? (isGlass ? 'bg-white text-black' : 'bg-gray-800 text-white')
                                             : (isGlass ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-600')
@@ -192,7 +193,7 @@ export default function OperationsTab({ isGlass, privacyMode }) {
                                     <button 
                                         key={e}
                                         onClick={() => setFilterEspecie(e)}
-                                        className={`shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                                        className={`shrink-0 min-h-[44px] px-3.5 py-2 inline-flex items-center rounded-xl text-xs font-bold transition-all ${
                                             filterEspecie === e
                                                 ? (isGlass ? 'bg-white text-black' : 'bg-gray-800 text-white')
                                                 : (isGlass ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-600')
@@ -293,20 +294,22 @@ export default function OperationsTab({ isGlass, privacyMode }) {
                                     {/* Botones de acción: siempre visibles en mobile, on-hover en desktop */}
                                     <div className={`flex sm:flex-col gap-2 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity`}>
                                         <button 
+                                            aria-label="Editar operación"
                                             onClick={() => setEditingTx(tx)} 
-                                            className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
+                                            className={`min-h-[44px] min-w-[44px] p-2.5 rounded-full flex items-center justify-center transition-all ${
                                                 isGlass ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
                                             }`}
                                         >
-                                            <Edit2 size={14} />
+                                            <Edit2 size={16} />
                                         </button>
                                         <button 
+                                            aria-label="Eliminar operación"
                                             onClick={() => handleDeleteClick(tx)} 
-                                            className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
+                                            className={`min-h-[44px] min-w-[44px] p-2.5 rounded-full flex items-center justify-center transition-all ${
                                                 isGlass ? 'bg-red-500/20 hover:bg-red-500/40 text-red-300' : 'bg-red-50 hover:bg-red-100 text-red-500'
                                             }`}
                                         >
-                                            <Trash2 size={14} />
+                                            <Trash2 size={16} />
                                         </button>
                                     </div>
                                     

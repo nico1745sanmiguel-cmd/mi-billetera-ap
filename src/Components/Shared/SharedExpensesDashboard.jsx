@@ -9,7 +9,7 @@ import { useCards } from '../../context/CardsContext';
 import { useSupermarket } from '../../context/SupermarketContext';
 import { useServices } from '../../context/ServicesContext';
 import { useUI } from '../../context/UIContext';
-import { formatMoney } from '../../utils';
+import { formatMoney, renderHiddenAmount } from '../../utils';
 import { calcularProporciones, calcularAportesExactos, calcularLiquidacionNeta } from '../../utils/salaryUtils';
 import { buildCardsWithDebt, formatMonthKey } from '../../utils/cardDebtUtils';
 import { COLLECTIONS } from '../../config/constants';
@@ -22,7 +22,7 @@ function ContributionModal({ person, totalTarget, monthKey, householdId, isGlass
     const [note, setNote] = useState('');
     const [saving, setSaving] = useState(false);
 
-    const showMoney = (v) => privacyMode ? '****' : formatMoney(v);
+    const showMoney = (v) => privacyMode ? renderHiddenAmount('****') : formatMoney(v);
     const isMe = person.uid === auth.currentUser?.uid;
     const colors = isMe ? 'from-indigo-600 to-blue-600' : 'from-emerald-600 to-teal-600';
     const accentColor = isMe ? 'indigo' : 'emerald';
@@ -123,7 +123,7 @@ function ContributionModal({ person, totalTarget, monthKey, householdId, isGlass
                             <p className="text-2xl font-bold font-mono">{showMoney(totalPagado)}</p>
                             <p className="text-xs opacity-70 mt-0.5">de {showMoney(totalTarget)}</p>
                         </div>
-                        <button aria-label="Acción" type="button" onClick={onClose} className="w-9 h-9 bg-white/20 rounded-full flex items-center justify-center">
+                        <button aria-label="Cerrar desglose" type="button" onClick={onClose} className="min-h-[44px] min-w-[44px] bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-colors">
                             <X size={18} />
                         </button>
                     </div>
@@ -257,7 +257,7 @@ export default function SharedExpensesDashboard({ onBack }) {
     const [copiedSettlement, setCopiedSettlement] = useState(false);
 
     const currentUid = auth.currentUser?.uid;
-    const showMoney = (amount) => privacyMode ? '****' : formatMoney(amount);
+    const showMoney = (amount) => privacyMode ? renderHiddenAmount('****') : formatMoney(amount);
 
     const currentMonthKey = useMemo(() => formatMonthKey(currentDate), [currentDate]);
     const targetMonthVal = useMemo(() => currentDate.getFullYear() * 12 + currentDate.getMonth(), [currentDate]);
@@ -388,7 +388,7 @@ export default function SharedExpensesDashboard({ onBack }) {
         <div className="space-y-6 animate-fade-in pb-20">
             {/* HEADER */}
             <div className="flex items-center gap-4 px-2">
-                <button aria-label="Acción" type="button" onClick={onBack} className={`p-2 rounded-xl transition-colors ${isGlass ? 'bg-white/10 hover:bg-white/20' : 'bg-white shadow-sm hover:bg-gray-50'}`}>
+                <button aria-label="Volver" type="button" onClick={onBack} className={`min-h-[44px] min-w-[44px] flex items-center justify-center p-2 rounded-xl transition-colors ${isGlass ? 'bg-white/10 hover:bg-white/20' : 'bg-white shadow-sm hover:bg-gray-50'}`}>
                     <ChevronLeft size={24} />
                 </button>
                 <div>
@@ -410,10 +410,10 @@ export default function SharedExpensesDashboard({ onBack }) {
                         <button
                             type="button"
                             onClick={() => setSplitMode('proportional')}
-                            className={`px-3 py-1.5 text-xs font-bold transition-all ${
+                            className={`min-h-[44px] px-3.5 py-2 text-xs font-bold transition-all ${
                                 splitMode === 'proportional'
                                     ? 'bg-indigo-600 text-white'
-                                    : isGlass ? 'bg-white/5 text-gray-400 hover:bg-white/10' : 'bg-white text-gray-500 hover:bg-gray-100'
+                                    : isGlass ? 'bg-white/5 text-white/70 hover:bg-white/10' : 'bg-white text-gray-600 hover:bg-gray-100'
                             }`}
                         >
                             Proporcional
@@ -421,10 +421,10 @@ export default function SharedExpensesDashboard({ onBack }) {
                         <button
                             type="button"
                             onClick={() => setSplitMode('equal')}
-                            className={`px-3 py-1.5 text-xs font-bold transition-all ${
+                            className={`min-h-[44px] px-3.5 py-2 text-xs font-bold transition-all ${
                                 splitMode === 'equal'
                                     ? 'bg-indigo-600 text-white'
-                                    : isGlass ? 'bg-white/5 text-gray-400 hover:bg-white/10' : 'bg-white text-gray-500 hover:bg-gray-100'
+                                    : isGlass ? 'bg-white/5 text-white/70 hover:bg-white/10' : 'bg-white text-gray-600 hover:bg-gray-100'
                             }`}
                         >
                             Equitativo
@@ -476,7 +476,7 @@ export default function SharedExpensesDashboard({ onBack }) {
                             <button
                                 type="button"
                                 onClick={handleCopySettlement}
-                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95 ${
+                                className={`flex items-center gap-1.5 min-h-[44px] px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 ${
                                     copiedSettlement
                                         ? 'bg-emerald-600 text-white'
                                         : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm'

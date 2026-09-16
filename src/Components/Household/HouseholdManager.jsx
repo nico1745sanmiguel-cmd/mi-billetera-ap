@@ -22,12 +22,15 @@ import HouseholdJoinOrCreate from './HouseholdJoinOrCreate';
  * @returns {JSX.Element}
  */
 export default function HouseholdManager({ onBack }) {
-    const { isGlass } = useUI();
+    const { isGlass, showToast } = useUI();
     const { user, userData, refreshUserData } = useAuth();
     const householdId = userData?.householdId;
     const [household, setHousehold] = useState(null);
     const [loading, setLoading] = useState(true);
     const [isLeaveOpen, setIsLeaveOpen] = useState(false);
+    const [isLeaving, setIsLeaving] = useState(false);
+    const [isRestoreOpen, setIsRestoreOpen] = useState(false);
+    const [isRestoring, setIsRestoring] = useState(false);
     const [copyFeedback, setCopyFeedback] = useState("");
     const [createStatus, setCreateStatus] = useState("idle");
     const [joinCode, setJoinCode] = useState("");
@@ -141,7 +144,7 @@ export default function HouseholdManager({ onBack }) {
     };
 
     const confirmLeave = async () => {
-        setLoading(true);
+        setIsLeaving(true);
         setLeaveError("");
         try {
             await updateDoc(doc(db, 'users', user.uid), { householdId: null });
@@ -151,17 +154,23 @@ export default function HouseholdManager({ onBack }) {
             }
             await refreshUserData();
             setHousehold(null);
-            setLoading(false);
+            setIsLeaveOpen(false);
+            showToast("Saliste del grupo de hogar", "info");
         } catch (error) {
             console.error(error);
             setLeaveError("Hubo un error al salir del grupo. Intentá de nuevo.");
-            setLoading(false);
+            showToast("Hubo un error al salir del grupo. Intentá de nuevo.", "error");
+        } finally {
+            setIsLeaving(false);
         }
     };
 
-    const handleRestoreOldHousehold = async () => {
-        if (!window.confirm("¿Seguro que querés restaurar tu hogar anterior? Esto buscará tu hogar original y te volverá a vincular.")) return;
-        setLoading(true);
+    const handleRestoreOldHousehold = () => {
+        setIsRestoreOpen(true);
+    };
+
+    const confirmRestoreOldHousehold = async () => {
+        setIsRestoring(true);
         try {
             const q = query(collection(db, 'households'), where('members', 'array-contains', user.uid));
             const snaps = await getDocs(q);
@@ -170,8 +179,8 @@ export default function HouseholdManager({ onBack }) {
             const oldHouseholds = myHouseholds.filter(h => h.id !== householdId);
             
             if (oldHouseholds.length === 0) {
-                alert("No se encontró ningún hogar anterior en la base de datos.");
-                setLoading(false);
+                showToast("No se encontró ningún hogar anterior en la base de datos.", "info");
+                setIsRestoreOpen(false);
                 return;
             }
             
@@ -195,12 +204,14 @@ export default function HouseholdManager({ onBack }) {
             const snap = await getDoc(doc(db, 'households', targetId));
             if (snap.exists()) setHousehold(snap.data());
             
-            alert("¡Hogar anterior restaurado con éxito! Tus datos volvieron a la normalidad.");
+            showToast("¡Hogar anterior restaurado con éxito! Tus datos volvieron a la normalidad.", "success");
+            setIsRestoreOpen(false);
         } catch (e) {
             console.error(e);
-            alert("Hubo un error al intentar restaurar el hogar.");
+            showToast("Hubo un error al intentar restaurar el hogar.", "error");
+        } finally {
+            setIsRestoring(false);
         }
-        setLoading(false);
     };
 
     if (loading) return <LoadingState message="Cargando tu hogar..." fullScreen={true} />;
@@ -208,7 +219,7 @@ export default function HouseholdManager({ onBack }) {
     return (
         <div className={`min-h-screen p-4 font-sans pb-20 ${isGlass ? 'bg-[#0f0c29] text-white' : 'bg-[#f3f4f6] text-gray-800'}`}>
             <div className="flex items-center gap-4 mb-8">
-                <button aria-label="Acción" type="button" onClick={onBack} className={`p-2 rounded-xl transition-colors ${isGlass ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-white shadow-sm text-gray-600 hover:bg-gray-100'}`}>
+                <button aria-label="Volver" type="button" onClick={onBack} className={`min-h-[44px] min-w-[44px] flex items-center justify-center p-2.5 rounded-xl transition-colors ${isGlass ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-white shadow-sm text-gray-600 hover:bg-gray-100'}`}>
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
                 </button>
                 <div className="flex items-center gap-3">
@@ -268,24 +279,30 @@ export default function HouseholdManager({ onBack }) {
                                 </h3>
                                 {savingPrefs && <span className="text-xs text-green-500 font-bold animate-pulse">Guardando...</span>}
                             </div>
-                            <p className={`text-xs mb-6 ${isGlass ? 'text-gray-400' : 'text-gray-500'}`}>Elegí qué información querés que vean los otros miembros del hogar.</p>
+                            <p className={`text-xs mb-6 ${isGlass ? 'text-white/60' : 'text-gray-500'}`}>Elegí qué información querés que vean los otros miembros del hogar.</p>
                             <div className="space-y-4">
                                 <div className={`flex items-center justify-between p-3 rounded-2xl transition-colors ${isGlass ? 'bg-white/5 hover:bg-white/10' : 'bg-gray-50 hover:bg-gray-100 text-gray-700'}`}>
                                     <span className="text-sm font-bold flex items-center gap-2"><CreditCard size={18} className="text-indigo-400" /> Mis Tarjetas y Gastos</span>
-                                    <button aria-label="Acción" type="button" onClick={() => handleToggleShare('shareCards')} className={`w-12 h-6 rounded-full p-1 transition-colors ${sharePreferences.shareCards ? 'bg-green-500' : 'bg-gray-400'}`}>
-                                        <div className={`w-4 h-4 bg-white rounded-full shadow-md transform transition-transform ${sharePreferences.shareCards ? 'translate-x-6' : 'translate-x-0'}`} />
+                                    <button aria-label="Compartir tarjetas y gastos" type="button" onClick={() => handleToggleShare('shareCards')} className="min-h-[44px] min-w-[48px] flex items-center justify-center">
+                                        <div className={`w-12 h-6 rounded-full p-1 transition-colors ${sharePreferences.shareCards ? 'bg-green-500' : 'bg-gray-400'}`}>
+                                            <div className={`w-4 h-4 bg-white rounded-full shadow-md transform transition-transform ${sharePreferences.shareCards ? 'translate-x-6' : 'translate-x-0'}`} />
+                                        </div>
                                     </button>
                                 </div>
                                 <div className={`flex items-center justify-between p-3 rounded-2xl transition-colors ${isGlass ? 'bg-white/5 hover:bg-white/10' : 'bg-gray-50 hover:bg-gray-100 text-gray-700'}`}>
                                     <span className="text-sm font-bold flex items-center gap-2"><ShoppingCart size={18} className="text-purple-400" /> Lista de Supermercado</span>
-                                    <button aria-label="Acción" type="button" onClick={() => handleToggleShare('shareSupermarket')} className={`w-12 h-6 rounded-full p-1 transition-colors ${sharePreferences.shareSupermarket ? 'bg-green-500' : 'bg-gray-400'}`}>
-                                        <div className={`w-4 h-4 bg-white rounded-full shadow-md transform transition-transform ${sharePreferences.shareSupermarket ? 'translate-x-6' : 'translate-x-0'}`} />
+                                    <button aria-label="Compartir lista de supermercado" type="button" onClick={() => handleToggleShare('shareSupermarket')} className="min-h-[44px] min-w-[48px] flex items-center justify-center">
+                                        <div className={`w-12 h-6 rounded-full p-1 transition-colors ${sharePreferences.shareSupermarket ? 'bg-green-500' : 'bg-gray-400'}`}>
+                                            <div className={`w-4 h-4 bg-white rounded-full shadow-md transform transition-transform ${sharePreferences.shareSupermarket ? 'translate-x-6' : 'translate-x-0'}`} />
+                                        </div>
                                     </button>
                                 </div>
                                 <div className={`flex items-center justify-between p-3 rounded-2xl transition-colors ${isGlass ? 'bg-white/5 hover:bg-white/10' : 'bg-gray-50 hover:bg-gray-100 text-gray-700'}`}>
                                     <span className="text-sm font-bold flex items-center gap-2"><Lightbulb size={18} className="text-yellow-400" /> Servicios y Fijos</span>
-                                    <button aria-label="Acción" type="button" onClick={() => handleToggleShare('shareServices')} className={`w-12 h-6 rounded-full p-1 transition-colors ${sharePreferences.shareServices ? 'bg-green-500' : 'bg-gray-400'}`}>
-                                        <div className={`w-4 h-4 bg-white rounded-full shadow-md transform transition-transform ${sharePreferences.shareServices ? 'translate-x-6' : 'translate-x-0'}`} />
+                                    <button aria-label="Compartir servicios y fijos" type="button" onClick={() => handleToggleShare('shareServices')} className="min-h-[44px] min-w-[48px] flex items-center justify-center">
+                                        <div className={`w-12 h-6 rounded-full p-1 transition-colors ${sharePreferences.shareServices ? 'bg-green-500' : 'bg-gray-400'}`}>
+                                            <div className={`w-4 h-4 bg-white rounded-full shadow-md transform transition-transform ${sharePreferences.shareServices ? 'translate-x-6' : 'translate-x-0'}`} />
+                                        </div>
                                     </button>
                                 </div>
                             </div>
@@ -314,10 +331,24 @@ export default function HouseholdManager({ onBack }) {
                 isOpen={isLeaveOpen}
                 title="¿Salir del grupo?"
                 message="¿Seguro que querés salir de este grupo? Volverás a ver solo tus datos individuales."
-                confirmText="Salir del grupo"
+                confirmText={isLeaving ? "Saliendo..." : "Salir del grupo"}
+                cancelText="Cancelar"
                 isDanger={true}
+                isLoading={isLeaving || loading}
                 onConfirm={confirmLeave}
-                onCancel={() => setIsLeaveOpen(false)}
+                onCancel={() => !isLeaving && setIsLeaveOpen(false)}
+            />
+
+            <ConfirmDialog
+                isOpen={isRestoreOpen}
+                title="¿Restaurar hogar anterior?"
+                message="¿Seguro que querés restaurar tu hogar anterior? Esto buscará tu hogar original y te volverá a vincular."
+                confirmText={isRestoring ? "Restaurando..." : "Restaurar"}
+                cancelText="Cancelar"
+                isDanger={false}
+                isLoading={isRestoring}
+                onConfirm={confirmRestoreOldHousehold}
+                onCancel={() => !isRestoring && setIsRestoreOpen(false)}
             />
         </div>
     );

@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { ShoppingCart, Plus, Check } from 'lucide-react';
-import { formatMoney } from '../../../utils';
+import { formatMoney, renderHiddenAmount } from '../../../utils';
 import { addSuperItem } from '../../../repositories/supermarketRepository';
 import { useAuth } from '../../../context/AuthContext';
 import { useUIDispatch } from '../../../context/UIContext';
@@ -31,7 +31,7 @@ export default function SuperActionsWidget({ privacyMode, setView, size = '1x1',
     }, [supermarketItems, targetMonthKey]);
 
     const { showToast } = useUIDispatch();
-    const showMoney = (amount) => privacyMode ? '****' : formatMoney(amount);
+    const showMoney = (amount) => privacyMode ? renderHiddenAmount('****') : formatMoney(amount);
     const { user, userData } = useAuth();
     
     const [inputValue, setInputValue] = useState('');

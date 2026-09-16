@@ -38,7 +38,7 @@ function CategoryItem({ name, sub, amount, paid, pct, colorClass, badgeClass, pr
                 </div>
                 {sub && (
                     <div className="flex items-center justify-between mb-1">
-                        <span className="text-[10px] text-gray-400 dark:text-white/40">{sub}</span>
+                        <span className="text-[10px] text-gray-600 dark:text-white/60">{sub}</span>
                         <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${badgeClass}`}>
                             {show(paid)} pag.
                         </span>
@@ -150,14 +150,14 @@ export default function FinancialTarget({
                         className={`min-h-[44px] px-4 py-2 rounded-full text-xs font-bold transition-all duration-200 active:scale-95 ${
                             tab === t.id
                                 ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-200 dark:shadow-indigo-900/50'
-                                : 'text-gray-400 dark:text-white/40 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-white/10'
+                                : 'text-gray-500 dark:text-white/60 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-white/10'
                         }`}
                     >
                         {t.label}
                     </button>
                 ))}
                 <div className="flex-1" />
-                <span className="text-[10px] font-bold text-gray-300 dark:text-white/30 uppercase tracking-wider">Meta Mensual</span>
+                <span className="text-[10px] font-bold text-gray-400 dark:text-white/40 uppercase tracking-wider">Meta Mensual</span>
             </div>
 
             {/* ── VISTA RESUMEN ── */}
@@ -186,12 +186,12 @@ export default function FinancialTarget({
                             </div>
                             <div className="flex gap-4 text-xs">
                                 <div>
-                                    <span className="block text-gray-400 dark:text-white/40 text-[9px] uppercase">Total a Pagar</span>
+                                    <span className="block text-gray-500 dark:text-white/60 text-[9px] uppercase">Total a Pagar</span>
                                     <span className="font-bold text-gray-600 dark:text-white/70">{showMoney(totalNeed)}</span>
                                 </div>
                                 <div className="w-px h-6 bg-gray-100 dark:bg-white/10" />
                                 <div>
-                                    <span className="block text-gray-400 dark:text-white/40 text-[9px] uppercase">Ya Pagado</span>
+                                    <span className="block text-gray-500 dark:text-white/60 text-[9px] uppercase">Ya Pagado</span>
                                     <span className="font-bold text-green-600 dark:text-emerald-400">{showMoney(totalPaid)}</span>
                                 </div>
                             </div>
@@ -281,12 +281,12 @@ export default function FinancialTarget({
                             <div className="flex items-center gap-3 mb-3 p-2.5 bg-gray-50 dark:bg-white/5 rounded-2xl">
                                 <div className="flex-1">
                                     <div className="flex justify-between mb-1">
-                                        <span className="text-[10px] text-gray-400 dark:text-white/40 font-semibold uppercase">Pagado</span>
-                                        <span className="text-[10px] text-gray-400 dark:text-white/40 font-semibold uppercase">Total</span>
+                                        <span className="text-[10px] text-gray-500 dark:text-white/60 font-semibold uppercase">Pagado</span>
+                                        <span className="text-[10px] text-gray-500 dark:text-white/60 font-semibold uppercase">Total</span>
                                     </div>
                                     <div className="flex justify-between items-baseline mb-1.5">
                                         <span className="text-base font-bold text-gray-800 dark:text-white">{showMoney(catPaid)}</span>
-                                        <span className="text-xs font-bold text-gray-400 dark:text-white/40">{showMoney(catTotal)}</span>
+                                        <span className="text-xs font-bold text-gray-500 dark:text-white/60">{showMoney(catTotal)}</span>
                                     </div>
                                     <MiniBar pct={catPct} colorClass={c.bar} />
                                 </div>
@@ -300,7 +300,7 @@ export default function FinancialTarget({
                     {/* Filas de ítems */}
                     <div className="space-y-3">
                         {visibleRows.length === 0 && (
-                            <p className="text-xs text-gray-400 dark:text-white/40 text-center py-4">Sin ítems en esta categoría</p>
+                            <p className="text-xs text-gray-500 dark:text-white/60 text-center py-4">Sin ítems en esta categoría</p>
                         )}
                         {visibleRows.map(row => (
                             <CategoryItem

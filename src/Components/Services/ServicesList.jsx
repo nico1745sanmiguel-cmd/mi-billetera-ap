@@ -1,12 +1,34 @@
 import React from 'react';
 import { CalendarDays, User, Pencil } from 'lucide-react';
+import Skeleton from '../UI/Skeleton';
 
-export default function ServicesList({ allItems, isGlass, householdId, showMoney, getStatusLabel, openModal, togglePaid, currentDate }) {
+export default function ServicesList({ allItems, isGlass, householdId, showMoney, getStatusLabel, openModal, togglePaid, currentDate, loading = false }) {
+    if (loading) {
+        return (
+            <div className="space-y-3 animate-pulse" role="status" aria-label="Cargando servicios">
+                {[1, 2, 3].map(i => (
+                    <div key={i} className={`p-4 rounded-3xl border ${isGlass ? 'bg-white/5 border-white/10' : 'bg-white border-gray-100 shadow-sm'}`}>
+                        <div className="flex justify-between items-center">
+                            <div className="flex items-center gap-4">
+                                <Skeleton type="rectangular" className="w-12 h-12 !rounded-2xl shrink-0" />
+                                <div className="space-y-2">
+                                    <Skeleton type="text" className="w-32 h-4" />
+                                    <Skeleton type="text" className="w-20 h-3" />
+                                </div>
+                            </div>
+                            <Skeleton type="text" className="w-16 h-5" />
+                        </div>
+                    </div>
+                ))}
+            </div>
+        );
+    }
+
     if (allItems.length === 0) {
         return (
             <div className={`flex flex-col items-center justify-center p-10 text-center border-2 border-dashed rounded-[30px] ${isGlass ? 'border-white/10 bg-white/5' : 'border-gray-200 bg-gray-50'}`}>
                 <CalendarDays size={40} className="mb-2 opacity-50 mx-auto" />
-                <p className={`text-sm font-medium ${isGlass ? 'text-white/40' : 'text-gray-400'}`}>Nada pendiente para {currentDate.toLocaleString('es-AR', { month: 'long' })}.</p>
+                <p className={`text-sm font-medium ${isGlass ? 'text-white/60' : 'text-gray-500'}`}>Nada pendiente para {currentDate.toLocaleString('es-AR', { month: 'long' })}.</p>
             </div>
         );
     }
@@ -44,7 +66,7 @@ export default function ServicesList({ allItems, isGlass, householdId, showMoney
                                         {item.type === 'card' && item.isManual && <span className="text-[9px] px-1.5 py-0.5 rounded font-bold border bg-yellow-100 text-yellow-700 border-yellow-200 flex items-center gap-1">Ajustado <Pencil size={10} /></span>}
 
                                         {!item.isPaid && (
-                                            <button aria-label="Acción" type="button" onClick={(e) => { e.stopPropagation(); openModal(item); }} className={`p-1 rounded-full transition-colors opacity-0 group-hover:opacity-100 ${isGlass ? 'text-white/30 hover:text-blue-300 hover:bg-white/10' : 'text-gray-300 hover:text-blue-500 hover:bg-blue-50'}`}>
+                                            <button aria-label="Editar servicio" type="button" onClick={(e) => { e.stopPropagation(); openModal(item); }} className={`min-h-[44px] min-w-[44px] p-2.5 inline-flex items-center justify-center rounded-full transition-colors opacity-0 group-hover:opacity-100 ${isGlass ? 'text-white/60 hover:text-blue-300 hover:bg-white/10' : 'text-gray-500 hover:text-blue-500 hover:bg-blue-50'}`}>
                                                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                                             </button>
                                         )}
@@ -60,8 +82,10 @@ export default function ServicesList({ allItems, isGlass, householdId, showMoney
 
                             <div className="text-right flex items-center gap-4">
                                 <p className={`font-mono font-bold transition-colors ${item.isPaid ? 'text-green-500' : (isGlass ? 'text-white' : 'text-gray-900')}`}>{showMoney(item.amount)}</p>
-                                <button aria-label="Acción" type="button" onClick={() => togglePaid(item)} className={`w-8 h-8 rounded-full border-2 flex items-center justify-center cursor-pointer transition-all duration-300 active:scale-90 ${item.isPaid ? 'bg-green-500 border-green-500 shadow-[0_0_10px_rgba(34,197,94,0.4)] rotate-0' : (isGlass ? 'border-white/20 bg-transparent hover:border-blue-400 rotate-180' : 'border-gray-200 hover:border-blue-400 rotate-180 bg-white')}`}>
-                                    {item.isPaid && <svg className="w-5 h-5 text-white animate-fade-in" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
+                                <button aria-label={item.isPaid ? "Marcar como pendiente" : "Marcar como pagado"} type="button" onClick={() => togglePaid(item)} className="min-h-[44px] min-w-[44px] flex items-center justify-center cursor-pointer active:scale-90 transition-transform">
+                                    <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${item.isPaid ? 'bg-green-500 border-green-500 shadow-[0_0_10px_rgba(34,197,94,0.4)] rotate-0' : (isGlass ? 'border-white/20 bg-transparent hover:border-blue-400 rotate-180' : 'border-gray-200 hover:border-blue-400 rotate-180 bg-white')}`}>
+                                        {item.isPaid && <svg className="w-5 h-5 text-white animate-fade-in" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
+                                    </div>
                                 </button>
                             </div>
                         </div>

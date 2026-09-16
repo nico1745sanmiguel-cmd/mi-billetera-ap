@@ -264,7 +264,8 @@ export default function MobilityImport({ isGlass, onSuccess }) {
                                 : 'border-gray-200 bg-gray-50 hover:bg-gray-100'
                     }`}
                 >
-                    <input autoComplete="off" id="input-field"
+                    <input autoComplete="off" id="mobility-csv-file-input"
+                        aria-label="Archivo CSV de movilidad"
                         ref={fileRef}
                         type="file"
                         accept=".csv,.CSV,text/csv"

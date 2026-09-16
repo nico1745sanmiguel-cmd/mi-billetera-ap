@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Target, Edit3, Trophy, ImageOff, Sparkles, TrendingUp } from 'lucide-react';
+import PrivateMask from '../UI/PrivateMask';
 // eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -144,7 +145,7 @@ const SavingsGoalView = ({
                         <div className="bg-black/70 backdrop-blur-md text-white px-4 py-2 rounded-2xl flex items-center gap-2 border border-white/10 shadow-lg">
                             <TrendingUp size={16} className="text-amber-400" />
                             <span className="font-black text-lg">
-                                {privacyMode ? '**%' : `${progress.toFixed(0)}%`}
+                                {privacyMode ? <PrivateMask placeholder="**%" text="Porcentaje oculto por privacidad" /> : `${progress.toFixed(0)}%`}
                             </span>
                             <span className="text-xs font-bold uppercase tracking-wider text-white/70">Ahorrado</span>
                         </div>
@@ -164,15 +165,15 @@ const SavingsGoalView = ({
             ) : (
                 <div className="mx-6 mt-2 mb-6">
                     <div className={`rounded-3xl p-8 ${isGlass ? 'bg-white/5 border border-white/10' : 'bg-gray-50 border border-dashed border-gray-200'} flex flex-col items-center justify-center gap-4 text-center`}>
-                        <ImageOff size={32} className={isGlass ? 'text-white/20' : 'text-gray-300'} />
-                        <p className={`text-sm font-semibold max-w-[200px] ${isGlass ? 'text-white/40' : 'text-gray-400'}`}>
+                        <ImageOff size={32} className={isGlass ? 'text-white/40' : 'text-gray-400'} />
+                        <p className={`text-sm font-semibold max-w-[200px] ${isGlass ? 'text-white/60' : 'text-gray-500'}`}>
                             Podés agregarle una imagen desde el botón de editar
                         </p>
                         
                         <div className="w-full mt-4 max-w-sm">
                             <div className="flex justify-between mb-2 text-xs font-bold">
-                                <span className={isGlass ? 'text-white/50' : 'text-gray-400'}>Progreso</span>
-                                <span className="font-black text-amber-500">{privacyMode ? '**' : progress.toFixed(0)}%</span>
+                                <span className={isGlass ? 'text-white/60' : 'text-gray-500'}>Progreso</span>
+                                <span className="font-black text-amber-600 dark:text-amber-400">{privacyMode ? <PrivateMask placeholder="**" text="Porcentaje oculto por privacidad" /> : progress.toFixed(0)}%</span>
                             </div>
                             <div className={`h-6 rounded-full overflow-hidden shadow-inner ${isGlass ? 'bg-black/40' : 'bg-gray-200'}`}>
                                 <motion.div
@@ -230,8 +231,8 @@ const SavingsGoalView = ({
                 disabled={saving}
                 className={`w-full py-4 text-xs font-bold uppercase tracking-wider transition-colors border-t relative z-20 ${
                     isGlass
-                        ? 'border-white/10 text-red-400/50 hover:text-red-400 hover:bg-red-500/10'
-                        : 'border-gray-100 text-gray-400 hover:text-red-500 hover:bg-red-50'
+                        ? 'border-white/10 text-red-400/80 hover:text-red-400 hover:bg-red-500/10'
+                        : 'border-gray-100 text-gray-500 hover:text-red-500 hover:bg-red-50'
                 }`}
             >
                 {saving ? 'Eliminando...' : 'Eliminar objetivo'}

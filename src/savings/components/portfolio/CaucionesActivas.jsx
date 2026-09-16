@@ -1,5 +1,6 @@
 import React from 'react';
 import { Clock, CheckCircle, AlertTriangle, ChevronRight } from 'lucide-react';
+import { renderHiddenAmount } from '../../../utils';
 
 export default function CaucionesActivas({
     caucionesActivas,
@@ -52,7 +53,7 @@ export default function CaucionesActivas({
                                     <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
                                         <div className={isGlass ? 'text-white/60' : 'text-gray-500'}>
                                             Capital: <span className={`font-bold ${textColor}`}>
-                                                {privacyMode ? '****' : (c.montoARS || 0).toLocaleString('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 })}
+                                                {privacyMode ? renderHiddenAmount('****') : (c.montoARS || 0).toLocaleString('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 })}
                                             </span>
                                         </div>
                                         <div className={isGlass ? 'text-white/60' : 'text-gray-500'}>
@@ -60,7 +61,7 @@ export default function CaucionesActivas({
                                         </div>
                                         <div className={isGlass ? 'text-white/60' : 'text-gray-500'}>
                                             Interés hoy: <span className="font-bold text-green-500">
-                                                {privacyMode ? '****' : `+ ${(c.interesAcumuladoARS || 0).toLocaleString('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 })}`}
+                                                {privacyMode ? renderHiddenAmount('****') : `+ ${(c.interesAcumuladoARS || 0).toLocaleString('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 })}`}
                                             </span>
                                         </div>
                                         <div className={isGlass ? 'text-white/60' : 'text-gray-500'}>
@@ -73,7 +74,7 @@ export default function CaucionesActivas({
                                 <div className="text-right shrink-0">
                                     <div className={`text-xs uppercase font-semibold tracking-wide mb-1 ${isGlass ? 'text-white/50' : 'text-gray-400'}`}>Valor actual</div>
                                     <div className={`font-black text-base ${textColor}`}>
-                                        {privacyMode ? '****' : (c.valorActualARS || 0).toLocaleString('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 })}
+                                        {privacyMode ? renderHiddenAmount('****') : (c.valorActualARS || 0).toLocaleString('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 })}
                                     </div>
                                 </div>
                             </div>

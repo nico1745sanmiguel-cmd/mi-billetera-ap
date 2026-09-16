@@ -1,6 +1,6 @@
 import React, { memo } from 'react';
 import { ChevronRight, CheckCircle, Clock } from 'lucide-react';
-import { formatMoney } from '../../utils';
+import { formatMoney, renderHiddenAmount } from '../../utils';
 import { CARD_LOGO_MAP } from '../../config/constants';
 
 const getCardLogo = (name) => {
@@ -13,7 +13,7 @@ const getCardLogo = (name) => {
 function CardVisual({ card, monthKey, privacyMode, onClick, isSelected }) {
     if (!card) return null;
 
-    const showMoney = (amount) => (privacyMode ? '****' : formatMoney(amount));
+    const showMoney = (amount) => (privacyMode ? renderHiddenAmount('****') : formatMoney(amount));
     const logo = getCardLogo(card.name);
     const stmt = card.monthlyStatements?.[monthKey];
     const isPaid = Boolean(card.paidPeriods?.includes(monthKey));

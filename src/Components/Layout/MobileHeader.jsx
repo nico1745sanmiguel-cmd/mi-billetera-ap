@@ -44,7 +44,7 @@ function MobileHeader() {
     const isHomeActive = location.pathname === '/dashboard' || location.pathname === '/';
 
     return (
-        <div className={`md:hidden px-4 py-2.5 shadow-sm sticky top-0 z-40 flex items-center justify-between gap-2 transition-all duration-300 ${
+        <div className={`md:hidden px-4 pt-[calc(0.625rem+env(safe-area-inset-top,0px))] pb-2.5 shadow-sm sticky top-0 z-40 flex items-center justify-between gap-2 transition-all duration-300 ${
             isGlass
                 ? 'bg-[#0f0c29]/90 backdrop-blur-md text-white border-b border-white/5'
                 : 'bg-white dark:bg-slate-900/90 text-gray-800 dark:text-white border-b border-gray-100 dark:border-slate-800'

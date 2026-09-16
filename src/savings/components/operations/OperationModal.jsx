@@ -71,6 +71,8 @@ export default function OperationModal({ onClose, isGlass, initialData }) {
     const [customCartera, setCustomCartera] = useState(false);
     const [customEspecie, setCustomEspecie] = useState(false);
 
+    const [errors, setErrors] = useState({});
+
     // Autocompletado nativo extrayendo datos previos + configuradas + defaults
     const carterasOpciones = useMemo(() => {
         const set = new Set(['Efectivo', 'Balanz', 'Nexo', 'Binance']);
@@ -117,99 +119,89 @@ export default function OperationModal({ onClose, isGlass, initialData }) {
         return { interesEsperadoARS, montoTotalEsperadoARS, fechaVencimiento };
     }, [isCaucion, formData.montoARS, formData.tna, formData.plazo, formData.fechaInicio]);
 
+    const parseNumber = (val) => {
+        if (val === undefined || val === null) return 0;
+        if (typeof val === 'number') return isNaN(val) ? 0 : val;
+        let str = val.toString().trim();
+        str = str.replace(/[^0-9.,-]/g, '');
+        if (!str) return 0;
+        
+        const lastComma = str.lastIndexOf(',');
+        const lastDot = str.lastIndexOf('.');
+        
+        if (lastComma > -1 && lastDot > -1) {
+            if (lastComma > lastDot) {
+                str = str.replace(/\./g, '').replace(',', '.');
+            } else {
+                str = str.replace(/,/g, '');
+            }
+        } else if (lastComma > -1) {
+            if (str.split(',').length > 2) {
+                str = str.replace(/,/g, '');
+            } else {
+                str = str.replace(',', '.');
+            }
+        } else if (lastDot > -1) {
+            const parts = str.split('.');
+            if (parts.length > 2) {
+                str = str.replace(/\./g, '');
+            }
+        }
+        const num = parseFloat(str);
+        return isNaN(num) ? 0 : num;
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!formData.cartera) {
-            showToast("Seleccioná una cartera para la operación", "error");
-            return;
+        const newErrors = {};
+
+        if (!formData.cartera?.trim()) {
+            newErrors.cartera = "Seleccioná una cartera para la operación";
         }
-        if (!formData.fecha) {
-            showToast("Ingresá una fecha válida para la operación", "error");
-            return;
+        if (!isCaucion && !formData.fecha) {
+            newErrors.fecha = "Ingresá una fecha válida para la operación";
+        } else if (isCaucion && !formData.fechaInicio) {
+            newErrors.fechaInicio = "Ingresá la fecha de inicio para la caución";
         }
         
-        if (isCaucion) {
-            if (!formData.montoARS || !formData.tna || !formData.plazo) {
-                showToast("Completá el monto, la TNA y el plazo de la caución", "error");
-                return;
-            }
-        } else {
-            if (!formData.especie) {
-                showToast("Ingresá el ticker o especie del activo", "error");
-                return;
-            }
-            // cobros solo requieren monto total; el resto requieren cantidad
-            if (!isCobro && !formData.cantidad) {
-                showToast("Ingresá la cantidad de títulos", "error");
-                return;
-            }
-            // Si no es fiat ni cobro ni ajuste, necesita precio
-            if (!isMovimientoFiat && !isCobro && !formData.precioUnitario && formData.tipo !== 'ajuste') {
-                showToast("Ingresá el precio unitario de la operación", "error");
-                return;
-            }
-        }
-
-        const parseNumber = (val) => {
-            if (val === undefined || val === null) return 0;
-            if (typeof val === 'number') return isNaN(val) ? 0 : val;
-            let str = val.toString().trim();
-            // Remover símbolos de moneda y caracteres no numéricos excepto separadores
-            str = str.replace(/[^0-9.,-]/g, '');
-            if (!str) return 0;
-            
-            const lastComma = str.lastIndexOf(',');
-            const lastDot = str.lastIndexOf('.');
-            
-            if (lastComma > -1 && lastDot > -1) {
-                if (lastComma > lastDot) {
-                    str = str.replace(/\./g, '').replace(',', '.');
-                } else {
-                    str = str.replace(/,/g, '');
-                }
-            } else if (lastComma > -1) {
-                if (str.split(',').length > 2) {
-                    str = str.replace(/,/g, '');
-                } else {
-                    str = str.replace(',', '.');
-                }
-            } else if (lastDot > -1) {
-                const parts = str.split('.');
-                if (parts.length > 2) {
-                    str = str.replace(/\./g, '');
-                }
-            }
-            const num = parseFloat(str);
-            return isNaN(num) ? 0 : num;
-        };
-
-        const cantidadParsed = parseNumber(formData.cantidad);
-        const precioParsed = parseNumber(formData.precioUnitario);
-        const montoTotalParsed = parseNumber(formData.montoTotal);
-
         if (isCaucion) {
             const monto = parseNumber(formData.montoARS);
             const tna = parseNumber(formData.tna);
             const plazo = parseInt(formData.plazo) || 0;
-            if (monto <= 0 || tna <= 0 || plazo <= 0) {
-                showToast("El monto, la TNA y el plazo deben ser mayores a cero.", "error");
-                return;
-            }
+            if (!formData.montoARS || monto <= 0) newErrors.montoARS = "Completá el monto de la caución";
+            if (!formData.tna || tna <= 0) newErrors.tna = "Completá la TNA de la caución";
+            if (!formData.plazo || plazo <= 0) newErrors.plazo = "Completá el plazo de la caución";
         } else if (isCobro) {
-            if (montoTotalParsed <= 0) {
-                showToast("El monto cobrado debe ser mayor a cero.", "error");
-                return;
+            if (!formData.especie?.trim()) {
+                newErrors.especie = "Ingresá el ticker o especie del activo";
+            }
+            const montoTotalParsed = parseNumber(formData.montoTotal);
+            if (!formData.montoTotal || montoTotalParsed <= 0) {
+                newErrors.montoTotal = "El monto cobrado debe ser mayor a cero";
             }
         } else {
-            if (cantidadParsed <= 0) {
-                showToast("La cantidad debe ser mayor a cero.", "error");
-                return;
+            if (!formData.especie?.trim()) {
+                newErrors.especie = "Ingresá el ticker o especie del activo";
             }
-            if (!isMovimientoFiat && formData.tipo !== 'ajuste' && precioParsed <= 0) {
-                showToast("El precio unitario debe ser mayor a cero.", "error");
-                return;
+            const cantidadParsed = parseNumber(formData.cantidad);
+            if (!formData.cantidad || cantidadParsed <= 0) {
+                newErrors.cantidad = "Ingresá la cantidad de títulos mayor a cero";
+            }
+            if (!isMovimientoFiat && formData.tipo !== 'ajuste') {
+                const precioParsed = parseNumber(formData.precioUnitario);
+                if (!formData.precioUnitario || precioParsed <= 0) {
+                    newErrors.precioUnitario = "Ingresá el precio unitario mayor a cero";
+                }
             }
         }
+
+        if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors);
+            showToast(Object.values(newErrors)[0], "warning");
+            return;
+        }
+
+        setErrors({});
 
         setLoading(true);
         try {
@@ -317,7 +309,7 @@ export default function OperationModal({ onClose, isGlass, initialData }) {
                     <div className="grid grid-cols-2 gap-2">
                         {['compra', 'venta', 'deposito', 'retiro'].map(t => (
                             <button aria-label={`Seleccionar tipo de operación: ${t}`} type="button" key={t}
-                                onClick={() => setFormData({...formData, tipo: t})}
+                                onClick={() => { setErrors({}); setFormData({...formData, tipo: t}); }}
                                 className={`p-2 text-sm font-bold rounded-xl border capitalize transition-all ${
                                     formData.tipo === t
                                     ? 'bg-green-500 border-green-500 text-white shadow-md'
@@ -334,7 +326,7 @@ export default function OperationModal({ onClose, isGlass, initialData }) {
                     <div className="grid grid-cols-3 gap-2">
                         {[{ id: 'cobro_cupon', label: '🏦 Cupón' }, { id: 'amortizacion', label: '📉 Amort.' }, { id: 'caucion', label: '⏱ Caución' }].map(({ id, label }) => (
                             <button aria-label={`Seleccionar tipo de operación: ${label}`} type="button" key={id}
-                                onClick={() => setFormData({...formData, tipo: id})}
+                                onClick={() => { setErrors({}); setFormData({...formData, tipo: id}); }}
                                 className={`p-2 text-sm font-bold rounded-xl border transition-all ${
                                     formData.tipo === id
                                     ? id === 'caucion'
@@ -368,6 +360,7 @@ export default function OperationModal({ onClose, isGlass, initialData }) {
                             carterasOpciones={carterasOpciones}
                             customCartera={customCartera} setCustomCartera={setCustomCartera}
                             caucionCalc={caucionCalc}
+                            errors={errors} setErrors={setErrors}
                         />
                     ) : isCobro ? (
                         <CouponForm
@@ -377,6 +370,7 @@ export default function OperationModal({ onClose, isGlass, initialData }) {
                             especiesOpciones={especiesOpciones} customEspecie={customEspecie} setCustomEspecie={setCustomEspecie}
                             fechaMode={fechaMode} setFechaMode={setFechaMode}
                             diasTenencia={diasTenencia} setDiasTenencia={setDiasTenencia}
+                            errors={errors} setErrors={setErrors}
                         />
                     ) : (
                         <TradeForm
@@ -387,6 +381,7 @@ export default function OperationModal({ onClose, isGlass, initialData }) {
                             fechaMode={fechaMode} setFechaMode={setFechaMode}
                             diasTenencia={diasTenencia} setDiasTenencia={setDiasTenencia}
                             isMovimientoFiat={isMovimientoFiat}
+                            errors={errors} setErrors={setErrors}
                         />
                     )}
 

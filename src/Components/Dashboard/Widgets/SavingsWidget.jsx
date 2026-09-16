@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { TrendingUp, ArrowRightLeft, Target } from 'lucide-react';
 import { useFinancial } from '../../../context/FinancialContext';
 import { useSavings } from '../../../context/SavingsContext';
+import { renderHiddenAmount } from '../../../utils';
 
 const arsFormatter = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 });
 const usdFormatter = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
@@ -39,7 +40,7 @@ export default function SavingsWidget({ setView, privacyMode, size }) {
     }, [posiciones, cauciones, liquidezPorCartera, dolarBlue, currencyView]);
 
     const formatCurrency = (amount, currency) => {
-        if (privacyMode) return '****';
+        if (privacyMode) return renderHiddenAmount('****');
         return currency === 'USD' ? usdFormatter.format(amount) : arsFormatter.format(amount);
     };
 

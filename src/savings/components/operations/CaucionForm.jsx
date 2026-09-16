@@ -9,8 +9,13 @@ export default function CaucionForm({
     carterasOpciones,
     customCartera,
     setCustomCartera,
-    caucionCalc
+    caucionCalc,
+    errors = {},
+    setErrors
 }) {
+    const getFieldClass = (field) => errors?.[field] ? `${inputClasses} border-red-500 ring-2 ring-red-500/20` : inputClasses;
+    const clearError = (field) => { if (errors?.[field] && setErrors) setErrors(prev => ({ ...prev, [field]: null })); };
+
     return (
         <div className="space-y-4">
             {/* Cartera */}
@@ -25,15 +30,19 @@ export default function CaucionForm({
                             type="text"
                             placeholder="Escribí el nombre..."
                             value={formData.cartera}
-                            onChange={(e) => setFormData({ ...formData, cartera: e.target.value })}
+                            onChange={(e) => {
+                                clearError('cartera');
+                                setFormData({ ...formData, cartera: e.target.value });
+                            }}
                             required
-                            className={inputClasses}
+                            className={getFieldClass('cartera')}
                             autoFocus
                         />
                         <button
                             type="button"
-                            onClick={() => { setCustomCartera(false); setFormData({ ...formData, cartera: '' }); }}
-                            className={`px-3 rounded-xl transition-colors ${isGlass ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`}
+                            aria-label="Cancelar cartera personalizada"
+                            onClick={() => { clearError('cartera'); setCustomCartera(false); setFormData({ ...formData, cartera: '' }); }}
+                            className={`min-h-[44px] min-w-[44px] px-3 flex items-center justify-center rounded-xl transition-colors ${isGlass ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`}
                         >
                             <X size={16} />
                         </button>
@@ -43,6 +52,7 @@ export default function CaucionForm({
                         id="cartera-caucion"
                         value={carterasOpciones.includes(formData.cartera) ? formData.cartera : (formData.cartera ? 'OTRA_OPCION' : '')}
                         onChange={(e) => {
+                            clearError('cartera');
                             if (e.target.value === 'OTRA_OPCION') {
                                 setCustomCartera(true);
                                 setFormData({ ...formData, cartera: '' });
@@ -51,7 +61,7 @@ export default function CaucionForm({
                             }
                         }}
                         required
-                        className={inputClasses}
+                        className={getFieldClass('cartera')}
                     >
                         <option value="" disabled>Seleccioná...</option>
                         {carterasOpciones.map(c => <option key={c} value={c}>{c}</option>)}
@@ -61,6 +71,7 @@ export default function CaucionForm({
                         <option value="OTRA_OPCION">+ Escribir otra...</option>
                     </select>
                 )}
+                {errors?.cartera && <p className="text-red-400 text-xs mt-1 font-medium">{errors.cartera}</p>}
             </div>
             {/* Monto + TNA */}
             <div className="grid grid-cols-2 gap-4">
@@ -74,10 +85,14 @@ export default function CaucionForm({
                         inputMode="decimal"
                         placeholder="Ej: 500000"
                         value={formData.montoARS}
-                        onChange={(e) => setFormData({ ...formData, montoARS: e.target.value })}
+                        onChange={(e) => {
+                            clearError('montoARS');
+                            setFormData({ ...formData, montoARS: e.target.value });
+                        }}
                         required
-                        className={inputClasses}
+                        className={getFieldClass('montoARS')}
                     />
+                    {errors?.montoARS && <p className="text-red-400 text-xs mt-1 font-medium">{errors.montoARS}</p>}
                 </div>
                 <div>
                     <label htmlFor="tna-caucion" className={`block text-xs font-bold mb-2 ${isGlass ? 'text-white/70' : 'text-gray-500'}`}>
@@ -89,10 +104,14 @@ export default function CaucionForm({
                         inputMode="decimal"
                         placeholder="Ej: 40"
                         value={formData.tna}
-                        onChange={(e) => setFormData({ ...formData, tna: e.target.value })}
+                        onChange={(e) => {
+                            clearError('tna');
+                            setFormData({ ...formData, tna: e.target.value });
+                        }}
                         required
-                        className={inputClasses}
+                        className={getFieldClass('tna')}
                     />
+                    {errors?.tna && <p className="text-red-400 text-xs mt-1 font-medium">{errors.tna}</p>}
                 </div>
             </div>
             {/* Plazo + Fecha de inicio */}
@@ -107,10 +126,14 @@ export default function CaucionForm({
                         min="1"
                         placeholder="Ej: 7"
                         value={formData.plazo}
-                        onChange={(e) => setFormData({ ...formData, plazo: e.target.value })}
+                        onChange={(e) => {
+                            clearError('plazo');
+                            setFormData({ ...formData, plazo: e.target.value });
+                        }}
                         required
-                        className={inputClasses}
+                        className={getFieldClass('plazo')}
                     />
+                    {errors?.plazo && <p className="text-red-400 text-xs mt-1 font-medium">{errors.plazo}</p>}
                 </div>
                 <div>
                     <label htmlFor="fecha-inicio-caucion" className={`block text-xs font-bold mb-2 ${isGlass ? 'text-white/70' : 'text-gray-500'}`}>
@@ -120,10 +143,15 @@ export default function CaucionForm({
                         id="fecha-inicio-caucion"
                         type="date"
                         value={formData.fechaInicio}
-                        onChange={(e) => setFormData({ ...formData, fechaInicio: e.target.value })}
+                        onChange={(e) => {
+                            clearError('fechaInicio');
+                            clearError('fecha');
+                            setFormData({ ...formData, fechaInicio: e.target.value, fecha: e.target.value });
+                        }}
                         required
-                        className={inputClasses}
+                        className={errors?.fechaInicio || errors?.fecha ? `${inputClasses} border-red-500 ring-2 ring-red-500/20` : inputClasses}
                     />
+                    {(errors?.fechaInicio || errors?.fecha) && <p className="text-red-400 text-xs mt-1 font-medium">{errors.fechaInicio || errors.fecha}</p>}
                 </div>
             </div>
             {/* Resumen calculado */}

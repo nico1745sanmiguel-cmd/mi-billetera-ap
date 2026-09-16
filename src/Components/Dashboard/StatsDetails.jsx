@@ -166,6 +166,7 @@ function TransactionsManager({
             // El toast de éxito ya lo emite CardsContext
         } catch (error) {
             console.error("Error al actualizar movimiento:", error);
+            showToast?.("Error al actualizar el movimiento", "error");
         } finally {
             setIsSavingEdit(false);
         }
@@ -181,6 +182,7 @@ function TransactionsManager({
             // El toast de éxito ya lo emite CardsContext
         } catch (error) {
             console.error("Error al eliminar movimiento:", error);
+            showToast?.("Error al eliminar el movimiento", "error");
         } finally {
             setIsDeleting(false);
         }

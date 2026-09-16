@@ -1,6 +1,6 @@
 import React from 'react';
 import { CreditCard, ExternalLink, Plus } from 'lucide-react';
-import { formatMoney } from '../../../utils';
+import { formatMoney, renderHiddenAmount } from '../../../utils';
 import { CARD_LOGO_MAP } from '../../../config/constants';
 
 const getCardLogo = (name) => {
@@ -10,7 +10,7 @@ const getCardLogo = (name) => {
 };
 
 export default function CardsWidget({ cards = [], targetMonthKey, privacyMode, onCardClick, size = 'full' }) {
-    const showMoney = (amount) => privacyMode ? '****' : formatMoney(amount);
+    const showMoney = (amount) => privacyMode ? renderHiddenAmount('****') : formatMoney(amount);
     const isHalf = size === 'half';
 
 

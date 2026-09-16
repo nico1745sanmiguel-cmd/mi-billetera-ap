@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { Briefcase, Plus, Trash2, ArrowRightLeft, X } from 'lucide-react';
+import ConfirmDialog from '../UI/ConfirmDialog';
 import { useSavings } from '../../context/SavingsContext';
 import { useUI } from '../../context/UIContext';
 
@@ -9,7 +10,8 @@ export default function CarterasPanel({ isGlass }) {
     const { showToast } = useUI();
     const [nuevaCartera, setNuevaCartera] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [deletingId, setDeletingId] = useState(null);
+    const [deletingCartera, setDeletingCartera] = useState(null);
+    const [isDeleting, setIsDeleting] = useState(false);
     const [migratingTo, setMigratingTo] = useState(null); // name of the new cartera to migrate into
     const [oldCarteraSelected, setOldCarteraSelected] = useState('');
 
@@ -44,15 +46,17 @@ export default function CarterasPanel({ isGlass }) {
         }
     };
 
-    const handleDelete = async (id) => {
-        setDeletingId(id);
+    const handleConfirmDelete = async () => {
+        if (!deletingCartera || isDeleting) return;
+        setIsDeleting(true);
         try {
-            await deleteCartera(id);
+            await deleteCartera(deletingCartera.id);
             showToast('Cartera eliminada', 'success');
+            setDeletingCartera(null);
         } catch {
             showToast('Error al eliminar cartera', 'error');
         } finally {
-            setDeletingId(null);
+            setIsDeleting(false);
         }
     };
 
@@ -162,22 +166,30 @@ export default function CarterasPanel({ isGlass }) {
                                 </button>
                                 <button 
                                     type="button"
-                                    onClick={() => handleDelete(cartera.id)}
-                                    disabled={deletingId === cartera.id}
+                                    onClick={() => setDeletingCartera(cartera)}
+                                    disabled={isDeleting && deletingCartera?.id === cartera.id}
                                     title="Eliminar cartera"
                                     className={`p-2 rounded-lg transition-colors ${isGlass ? 'hover:bg-red-500/20 text-white/50 hover:text-red-400' : 'hover:bg-red-100 text-gray-400 hover:text-red-600'}`}
                                 >
-                                    {deletingId === cartera.id ? (
-                                        <div className="w-4 h-4 border-2 border-red-500/30 border-t-red-500 rounded-full animate-spin" />
-                                    ) : (
-                                        <Trash2 size={16} />
-                                    )}
+                                    <Trash2 size={16} />
                                 </button>
                             </div>
                         </div>
                     ))
                 )}
             </div>
+
+            <ConfirmDialog
+                isOpen={Boolean(deletingCartera)}
+                title="¿Eliminar cartera?"
+                message={`¿Estás seguro de que deseas eliminar la cartera "${deletingCartera?.nombre}"? Esta acción afectará las opciones disponibles al cargar operaciones.`}
+                confirmText={isDeleting ? "Eliminando..." : "Eliminar"}
+                cancelText="Cancelar"
+                isDanger={true}
+                isLoading={isDeleting}
+                onConfirm={handleConfirmDelete}
+                onCancel={() => !isDeleting && setDeletingCartera(null)}
+            />
         </div>
     );
 }

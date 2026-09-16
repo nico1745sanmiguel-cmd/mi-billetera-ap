@@ -30,14 +30,14 @@ const ThemeSelector = ({ theme, setTheme, isGlass }) => {
                                         ? 'bg-white/20 text-white shadow-lg shadow-black/20'
                                         : 'bg-white text-gray-800 shadow-md shadow-gray-200'
                                     : isGlass
-                                        ? 'text-white/40 hover:text-white/70'
-                                        : 'text-gray-400 hover:text-gray-600'
+                                        ? 'text-white/60 hover:text-white'
+                                        : 'text-gray-600 hover:text-gray-900'
                             }`}
                         >
                             <Icon
                                 size={15}
                                 className={`transition-colors duration-300 ${
-                                    isActive && key === 'light'  ? 'text-amber-500' :
+                                    isActive && key === 'light'  ? 'text-amber-600 dark:text-amber-400' :
                                     isActive && key === 'dark'   ? 'text-indigo-400' :
                                     isActive && key === 'system' ? 'text-emerald-400' : ''
                                 }`}

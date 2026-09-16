@@ -19,11 +19,17 @@ export const toggleNoteChecked = (id, checked) =>
 export const updateNote = (id, payload) =>
     updateDoc(doc(db, COL, id), payload);
 
-export const subscribeToNotes = (uid, callback) => {
+export const subscribeToNotes = (uid, callback, onError) => {
     const q = query(collection(db, COL), where("userId", "==", uid));
     return onSnapshot(q, (snapshot) => {
         const notes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         callback(notes);
+    }, (error) => {
+        if (onError) {
+            onError(error);
+        } else {
+            console.error("Error subscribing to notes:", error);
+        }
     });
 };
 

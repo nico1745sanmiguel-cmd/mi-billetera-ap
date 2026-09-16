@@ -1,5 +1,6 @@
 import React from 'react';
 import { Wallet, TrendingUp, TrendingDown, ArrowUpDown, Shield, ShoppingCart, ChevronRight } from 'lucide-react';
+import { renderHiddenAmount } from '../../../utils';
 
 const COLORS = ['#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#14B8A6', '#F97316'];
 
@@ -183,7 +184,7 @@ export default function TenenciasLista({
                                             <div>
                                                 <h4 className={`text-lg font-black leading-tight ${textColor}`}>{pos.especie}</h4>
                                                 <p className={`text-xs font-semibold ${secondaryTextColor}`}>
-                                                    {privacyMode ? '****' : pos.cantidad.toLocaleString('es-AR', { maximumFractionDigits: 6 })} unidades
+                                                    {privacyMode ? renderHiddenAmount('****', 'Cantidad oculta por privacidad') : pos.cantidad.toLocaleString('es-AR', { maximumFractionDigits: 6 })} unidades
                                                 </p>
                                             </div>
                                             <div className={`text-sm font-black px-2.5 py-1 rounded-lg ${

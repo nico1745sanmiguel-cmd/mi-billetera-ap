@@ -116,9 +116,12 @@ export default function Login() {
         {/* Formulario Email */}
         <form onSubmit={handleEmailAuth} className="space-y-5">
           <div className="group">
-            <label htmlFor="input-field" className="block text-xs font-bold text-white/50 mb-1.5 ml-1 uppercase tracking-wider group-focus-within:text-white/80 transition-colors">Email</label>
-            <input autoComplete="off" id="input-field"
+            <label htmlFor="login-email" className="block text-xs font-bold text-white/50 mb-1.5 ml-1 uppercase tracking-wider group-focus-within:text-white/80 transition-colors">Email</label>
+            <input
+              id="login-email"
+              name="email"
               type="email"
+              autoComplete="email"
               required
               value={email}
               onChange={e => setEmail(e.target.value)}
@@ -127,9 +130,12 @@ export default function Login() {
             />
           </div>
           <div className="group">
-            <label htmlFor="input-field" className="block text-xs font-bold text-white/50 mb-1.5 ml-1 uppercase tracking-wider group-focus-within:text-white/80 transition-colors">Contraseña</label>
-            <input autoComplete="off" id="input-field"
+            <label htmlFor="login-password" className="block text-xs font-bold text-white/50 mb-1.5 ml-1 uppercase tracking-wider group-focus-within:text-white/80 transition-colors">Contraseña</label>
+            <input
+              id="login-password"
+              name="password"
               type="password"
+              autoComplete={isRegistering ? "new-password" : "current-password"}
               required
               value={password}
               onChange={e => setPassword(e.target.value)}

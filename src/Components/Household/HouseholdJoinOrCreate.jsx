@@ -30,7 +30,8 @@ export default function HouseholdJoinOrCreate({
                 <p className={`text-sm mb-4 ${isGlass ? 'text-gray-400' : 'text-gray-500'}`}>Si tu pareja creó el hogar, ingresá su código aquí para unirte.</p>
 
                 <div className="flex flex-col md:flex-row gap-3">
-                    <input autoComplete="off" id="input-field"
+                    <input autoComplete="off" id="household-join-code-input"
+                        aria-label="Código de hogar"
                         type="text"
                         placeholder="000-000"
                         maxLength={6}

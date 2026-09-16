@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
 import { CalendarDays, PartyPopper, LayoutList, CalendarRange, CheckCircle2, RotateCcw } from 'lucide-react';
-import { formatMoney } from '../../../utils';
+import { formatMoney, renderHiddenAmount } from '../../../utils';
 import { useServices } from '../../../context/ServicesContext';
 import { useCards } from '../../../context/CardsContext';
 import { useSupermarket } from '../../../context/SupermarketContext';
@@ -103,7 +103,7 @@ export default function AgendaWidget({ currentDate, privacyMode, setView, onTogg
             .slice(0, AGENDA_MAX_ITEMS);
     }, [services, cardsWithDebt, targetMonthKey]);
 
-    const showMoney = (amount) => privacyMode ? '****' : formatMoney(amount);
+    const showMoney = (amount) => privacyMode ? renderHiddenAmount('****') : formatMoney(amount);
 
     const [viewMode, setViewMode] = useState(() => {
         try { return localStorage.getItem('agenda_widget_mode') || 'list'; } catch { return 'list'; }
@@ -212,7 +212,7 @@ export default function AgendaWidget({ currentDate, privacyMode, setView, onTogg
                     <div className="flex-1 overflow-hidden">
                         {compactItems.length === 0 ? (
                             <div className="h-full flex items-center justify-center">
-                                <p className="text-[10px] text-gray-400 dark:text-white/40 flex items-center gap-1">
+                                <p className="text-[10px] text-gray-600 dark:text-white/60 flex items-center gap-1">
                                     <PartyPopper size={12} /> Sin pendientes
                                 </p>
                             </div>
@@ -223,12 +223,12 @@ export default function AgendaWidget({ currentDate, privacyMode, setView, onTogg
                                     className="flex items-center justify-between px-3 py-2 border-b border-gray-50 dark:border-white/5 last:border-0"
                                 >
                                     <div className="flex items-center gap-2 min-w-0">
-                                        <div className={`w-6 h-6 rounded-lg flex flex-col items-center justify-center flex-shrink-0 ${item.day <= 5 ? 'bg-red-50 text-red-600 dark:bg-red-500/20 dark:text-red-300' : 'bg-gray-100 text-gray-500 dark:bg-white/10 dark:text-white/70'}`}>
-                                            <span className="text-[10px] font-bold leading-none">{item.day}</span>
+                                        <div className={`w-6 h-6 rounded-lg flex items-center justify-center text-[9px] font-bold flex-shrink-0 ${item.day <= 5 ? 'bg-red-50 text-red-600 dark:bg-red-500/20 dark:text-red-300' : 'bg-gray-100 text-gray-500 dark:bg-white/10 dark:text-white/70'}`}>
+                                            {item.day}
                                         </div>
-                                        <p className="text-xs font-semibold text-gray-800 dark:text-white/90 truncate">{item.name}</p>
+                                        <p className="font-semibold text-gray-700 dark:text-white/80 text-xs truncate">{item.name}</p>
                                     </div>
-                                    <p className="font-mono text-xs font-bold text-gray-700 dark:text-white flex-shrink-0 ml-1">{showMoney(item.amount)}</p>
+                                    <p className="font-mono font-bold text-gray-800 dark:text-white text-xs flex-shrink-0">{showMoney(item.amount)}</p>
                                 </div>
                             ))
                         )}
@@ -256,17 +256,21 @@ export default function AgendaWidget({ currentDate, privacyMode, setView, onTogg
     // ─── Modo COMPLETO ────────────────────────────────────────────────────────
     return (
         <>
-            <div className="h-full flex flex-col bg-white dark:bg-white/5 rounded-3xl border border-gray-100 dark:border-white/10 shadow-sm overflow-hidden mx-1 dark:backdrop-blur-md">
-                {/* HEADER */}
-                <div className="px-5 py-4 border-b border-gray-50 dark:border-white/5 flex justify-between items-center bg-gray-50/50 dark:bg-transparent">
-                    <button 
-                        aria-label={`Ver agenda completa de ${currentDate.toLocaleString('es-AR', { month: 'long' })}`} 
-                        type="button"
-                        className="font-bold text-gray-800 dark:text-white text-sm flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity min-h-[44px]"
-                        onClick={() => setView('services_manager')}
-                    >
-                        <CalendarDays size={18} /> Agenda {currentDate.toLocaleString('es-AR', { month: 'long' })}
-                    </button>
+            <div className="bg-white dark:bg-surface-glass border border-gray-100 dark:border-white/10 rounded-3xl overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col">
+                {/* Header */}
+                <div className="p-5 pb-3 flex justify-between items-center border-b border-gray-100 dark:border-white/5">
+                    <div className="flex items-center gap-2.5">
+                        <div className="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400">
+                            <CalendarDays size={20} />
+                        </div>
+                        <div>
+                            <h2 className="font-bold text-gray-800 dark:text-white text-base leading-tight">Agenda</h2>
+                            <p className="text-xs text-indigo-600 dark:text-indigo-400 font-bold uppercase tracking-wider">
+                                {currentDate.toLocaleString('es-AR', { month: 'long', year: 'numeric' })}
+                            </p>
+                        </div>
+                    </div>
+
                     <div className="flex items-center gap-2">
                         {/* Switch lista / semana */}
                         <div className="flex bg-gray-100 dark:bg-white/10 rounded-xl p-0.5" role="group" aria-label="Selector de vista de agenda">
@@ -276,7 +280,7 @@ export default function AgendaWidget({ currentDate, privacyMode, setView, onTogg
                                 type="button"
                                 onClick={() => switchMode('list')}
                                 title="Vista Lista"
-                                className={`min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg transition-all ${viewMode === 'list' ? 'bg-white dark:bg-white/20 shadow text-indigo-600 dark:text-white' : 'text-gray-400 dark:text-white/30 hover:text-gray-600 dark:hover:text-white/60'}`}
+                                className={`min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg transition-all ${viewMode === 'list' ? 'bg-white dark:bg-white/20 shadow text-indigo-600 dark:text-white' : 'text-gray-500 dark:text-white/60 hover:text-gray-700 dark:hover:text-white'}`}
                             >
                                 <LayoutList size={18} />
                             </button>
@@ -286,7 +290,7 @@ export default function AgendaWidget({ currentDate, privacyMode, setView, onTogg
                                 type="button"
                                 onClick={() => switchMode('week')}
                                 title="Vista Semana"
-                                className={`min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg transition-all ${viewMode === 'week' ? 'bg-white dark:bg-white/20 shadow text-indigo-600 dark:text-white' : 'text-gray-400 dark:text-white/30 hover:text-gray-600 dark:hover:text-white/60'}`}
+                                className={`min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg transition-all ${viewMode === 'week' ? 'bg-white dark:bg-white/20 shadow text-indigo-600 dark:text-white' : 'text-gray-500 dark:text-white/60 hover:text-gray-700 dark:hover:text-white'}`}
                             >
                                 <CalendarRange size={18} />
                             </button>
@@ -294,7 +298,7 @@ export default function AgendaWidget({ currentDate, privacyMode, setView, onTogg
                         <button 
                             aria-label="Ver todos los servicios y vencimientos" 
                             type="button"
-                            className="text-xs font-bold text-gray-400 dark:text-white/40 cursor-pointer hover:text-gray-600 dark:hover:text-white/60 transition-colors min-h-[44px] px-2 flex items-center"
+                            className="text-xs font-bold text-gray-600 dark:text-white/70 cursor-pointer hover:text-gray-800 dark:hover:text-white transition-colors min-h-[44px] px-2 flex items-center"
                             onClick={() => setView('services_manager')}
                         >
                             Ver todo →
@@ -317,7 +321,7 @@ export default function AgendaWidget({ currentDate, privacyMode, setView, onTogg
                                     </div>
                                     <div className="min-w-0">
                                         <p className="font-bold text-gray-800 dark:text-white/90 text-sm truncate">{item.name}</p>
-                                        <p className="text-xs text-gray-400 dark:text-white/40">{item.type === 'card_item' ? 'Tarjeta Crédito' : 'Servicio'}</p>
+                                        <p className="text-xs text-gray-500 dark:text-white/60">{item.type === 'card_item' ? 'Tarjeta Crédito' : 'Servicio'}</p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-3 flex-shrink-0">
@@ -330,7 +334,7 @@ export default function AgendaWidget({ currentDate, privacyMode, setView, onTogg
                                             id={`pay-btn-${item.id}`}
                                             onClick={() => handleTogglePaid(item)}
                                             title="Marcar como pagado"
-                                            className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-xl bg-gray-100 dark:bg-white/10 text-gray-400 dark:text-white/30 hover:bg-green-100 dark:hover:bg-green-500/20 hover:text-green-600 dark:hover:text-green-400 active:scale-90 transition-all flex items-center justify-center flex-shrink-0"
+                                            className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-xl bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-white/60 hover:bg-green-100 dark:hover:bg-green-500/20 hover:text-green-600 dark:hover:text-green-400 active:scale-90 transition-all flex items-center justify-center flex-shrink-0"
                                         >
                                             <CheckCircle2 size={18} />
                                         </button>
@@ -339,7 +343,7 @@ export default function AgendaWidget({ currentDate, privacyMode, setView, onTogg
                             </div>
                         ))}
                         {agenda.length === 0 && (
-                            <div className="p-6 text-center text-gray-400 dark:text-white/40">
+                            <div className="p-6 text-center text-gray-500 dark:text-white/60">
                                 <p className="text-xs flex items-center justify-center gap-1"><PartyPopper size={16} /> Nada pendiente este mes</p>
                             </div>
                         )}
@@ -352,7 +356,7 @@ export default function AgendaWidget({ currentDate, privacyMode, setView, onTogg
                         <div className="grid grid-cols-7 gap-1">
                             {/* Cabecera días */}
                             {DAYS_LABELS.map((label) => (
-                                <div key={label} className="text-center text-[9px] font-bold uppercase tracking-wider text-gray-400 dark:text-white/30 pb-1">
+                                <div key={label} className="text-center text-[9px] font-bold uppercase tracking-wider text-gray-500 dark:text-white/60 pb-1">
                                     {label}
                                 </div>
                             ))}
@@ -381,7 +385,7 @@ export default function AgendaWidget({ currentDate, privacyMode, setView, onTogg
                                         <div className={`text-[10px] font-bold flex justify-center items-center w-5 h-5 rounded-full mx-auto ${
                                             isToday
                                                 ? 'bg-indigo-600 text-white'
-                                                : 'text-gray-500 dark:text-white/50'
+                                                : 'text-gray-600 dark:text-white/70'
                                         }`}>
                                             {day.getDate()}
                                         </div>
@@ -424,11 +428,11 @@ export default function AgendaWidget({ currentDate, privacyMode, setView, onTogg
 
                         {/* Leyenda */}
                         <div className="flex items-center gap-3 mt-2 px-1">
-                            <span className="flex items-center gap-1 text-[9px] text-gray-400 dark:text-white/30 font-bold">
+                            <span className="flex items-center gap-1 text-[9px] text-gray-500 dark:text-white/60 font-bold">
                                 <span className="w-2.5 h-2.5 rounded-sm bg-indigo-100 dark:bg-indigo-500/30 border border-indigo-200 dark:border-indigo-500/40 inline-block"></span>
                                 Pagos
                             </span>
-                            <span className="flex items-center gap-1 text-[9px] text-gray-400 dark:text-white/30 font-bold">
+                            <span className="flex items-center gap-1 text-[9px] text-gray-500 dark:text-white/60 font-bold">
                                 <span className="w-2.5 h-2.5 rounded-sm bg-green-100 dark:bg-green-500/20 border border-green-200 dark:border-green-500/30 inline-block"></span>
                                 Planificador
                             </span>

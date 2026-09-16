@@ -8,6 +8,7 @@ import { useUI } from '../../context/UIContext';
 import OperationModal from './OperationModal';
 import OperationsTab from './Tabs/OperationsTab';
 import { useStopLossAlerts } from '../../hooks/useStopLossAlerts';
+import { renderHiddenAmount } from '../../utils';
 
 const PortfolioTab = lazy(() => import('./Tabs/PortfolioTab'));
 const AnalyticsTab = lazy(() => import('./Tabs/AnalyticsTab'));
@@ -69,7 +70,7 @@ export default function SavingsDashboard() {
     }, [posiciones, cauciones, liquidezPorCartera, dolarBlue, currencyView]);
 
     const formatCurrency = (amount, currency) => {
-        if (privacyMode) return '****';
+        if (privacyMode) return renderHiddenAmount('****');
         return currency === 'USD' ? usdFormatter.format(amount) : arsFormatter.format(amount);
     };
 
@@ -89,7 +90,7 @@ export default function SavingsDashboard() {
                     </div>
                     <div>
                         <h1 className={`text-xl font-black tracking-tight leading-none ${textColor}`}>Mis Ahorros</h1>
-                        <p className={`text-xs mt-0.5 ${isGlass ? 'text-white/50' : 'text-gray-400'}`}>Inversiones y saldos</p>
+                        <p className={`text-xs mt-0.5 ${isGlass ? 'text-white/60' : 'text-gray-500'}`}>Inversiones y saldos</p>
                     </div>
                 </div>
 
@@ -97,7 +98,7 @@ export default function SavingsDashboard() {
                     type="button"
                     aria-label="Configuración de Ahorros"
                     onClick={() => navigate('/settings_modules/savings')}
-                    className={`p-2.5 rounded-2xl transition-all active:scale-95 flex items-center justify-center ${
+                    className={`p-2.5 min-h-[44px] min-w-[44px] rounded-2xl transition-all active:scale-95 flex items-center justify-center ${
                         isGlass 
                             ? 'bg-white/10 hover:bg-white/20 text-white border border-white/15 shadow-sm' 
                             : 'bg-white hover:bg-gray-100 text-gray-700 shadow-sm border border-gray-200/80'
@@ -128,7 +129,7 @@ export default function SavingsDashboard() {
                         <button
                             type="button"
                             onClick={() => setCurrencyView(prev => prev === 'ARS' ? 'USD' : 'ARS')}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
+                            className={`flex items-center gap-1.5 min-h-[44px] px-3.5 py-2 rounded-full text-xs font-bold transition-all ${
                                 isGlass
                                     ? 'bg-white/10 hover:bg-white/20 text-white border border-white/20'
                                     : 'bg-white/20 hover:bg-white/30 text-white backdrop-blur-sm'
@@ -181,14 +182,14 @@ export default function SavingsDashboard() {
                             key={id}
                             type="button"
                             onClick={() => setActiveTab(id)}
-                            className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl text-xs font-bold transition-all duration-200 whitespace-nowrap ${
+                            className={`flex-1 flex items-center justify-center gap-1.5 min-h-[44px] py-2.5 px-2 rounded-xl text-xs font-bold transition-all duration-200 whitespace-nowrap ${
                                 isActive
                                     ? isGlass
                                         ? 'bg-white/20 text-white shadow-md'
-                                        : 'bg-white text-green-600 shadow-sm'
+                                        : 'bg-white text-green-700 shadow-sm'
                                     : isGlass
-                                        ? 'text-white/40 hover:text-white/70'
-                                        : 'text-gray-400 hover:text-gray-700'
+                                        ? 'text-white/60 hover:text-white'
+                                        : 'text-gray-600 hover:text-gray-900'
                             }`}
                         >
                             <Icon size={13} />
@@ -201,7 +202,7 @@ export default function SavingsDashboard() {
             {/* ── CONTENIDO DE TAB ── */}
             <div className="min-h-[300px]">
                 <Suspense fallback={
-                    <div className={`flex items-center justify-center p-12 text-sm font-bold ${isGlass ? 'text-white/50' : 'text-gray-400'}`}>
+                    <div className={`flex items-center justify-center p-12 text-sm font-bold ${isGlass ? 'text-white/60' : 'text-gray-500'}`}>
                         <div className="w-5 h-5 border-4 border-t-green-500 border-green-500/20 rounded-full animate-spin mr-3" />
                         Cargando...
                     </div>

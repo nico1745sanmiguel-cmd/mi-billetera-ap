@@ -72,7 +72,7 @@ export default function EnvelopeEditor({ envelope, onSave, onClose, isGlass }) {
                     <h3 className={`text-lg font-bold ${isGlass ? 'text-white' : 'text-gray-800'}`}>
                         {isNew ? 'Nuevo sobre' : 'Editar sobre'}
                     </h3>
-                    <button aria-label="Acción" type="button" onClick={onClose} className={`p-2 rounded-xl ${isGlass ? 'text-white/60 hover:bg-white/10' : 'text-gray-400 hover:bg-gray-100'}`}>
+                    <button aria-label="Cerrar" type="button" onClick={onClose} className={`min-h-[44px] min-w-[44px] flex items-center justify-center p-2 rounded-xl ${isGlass ? 'text-white/70 hover:bg-white/10' : 'text-gray-500 hover:bg-gray-100'}`}>
                         <X size={18} />
                     </button>
                 </div>
@@ -80,10 +80,10 @@ export default function EnvelopeEditor({ envelope, onSave, onClose, isGlass }) {
                 <div className="space-y-5">
                     {/* Nombre */}
                     <div>
-                        <label htmlFor="input-field" className={`text-xs font-bold uppercase tracking-wider mb-2 block ${isGlass ? 'text-white/50' : 'text-gray-400'}`}>
+                        <label htmlFor="envelope-label" className={`text-xs font-bold uppercase tracking-wider mb-2 block ${isGlass ? 'text-white/60' : 'text-gray-500'}`}>
                             <Tag size={11} className="inline mr-1" />Nombre
                         </label>
-                        <input autoComplete="off" id="input-field"
+                        <input autoComplete="off" id="envelope-label"
                             type="text"
                             placeholder="Ej: Alquiler, Ocio, Farmacia..."
                             value={label}
@@ -94,12 +94,13 @@ export default function EnvelopeEditor({ envelope, onSave, onClose, isGlass }) {
 
                     {/* Monto */}
                     <div>
-                        <label htmlFor="input-field" className={`text-xs font-bold uppercase tracking-wider mb-2 block ${isGlass ? 'text-white/50' : 'text-gray-400'}`}>
+                        <label htmlFor="envelope-budgeted" className={`text-xs font-bold uppercase tracking-wider mb-2 block ${isGlass ? 'text-white/60' : 'text-gray-500'}`}>
                             <Briefcase size={11} className="inline mr-1" />Monto asignado
                         </label>
                         <div className="relative">
-                            <span className={`absolute left-4 top-1/2 -translate-y-1/2 font-bold ${isGlass ? 'text-white/50' : 'text-gray-400'}`}>$</span>
-                            <input autoComplete="off" id="input-field"
+                            <span className={`absolute left-4 top-1/2 -translate-y-1/2 font-bold ${isGlass ? 'text-white/60' : 'text-gray-500'}`}>$</span>
+                            <input autoComplete="off" id="envelope-budgeted"
+                                aria-label="Monto asignado"
                                 type="text"
                                 inputMode="numeric"
                                 placeholder="0"
@@ -112,16 +113,16 @@ export default function EnvelopeEditor({ envelope, onSave, onClose, isGlass }) {
 
                     {/* Ícono */}
                     <div>
-                        <label htmlFor="input-field" className={`text-xs font-bold uppercase tracking-wider mb-2 block ${isGlass ? 'text-white/50' : 'text-gray-400'}`}>
+                        <p className={`text-xs font-bold uppercase tracking-wider mb-2 block ${isGlass ? 'text-white/60' : 'text-gray-500'}`}>
                             Ícono
-                        </label>
+                        </p>
                         <div className="grid grid-cols-6 gap-2">
                             {ENVELOPE_ICONS.map(ic => (
-                                <button aria-label="Acción" type="button"
+                                <button aria-label={ic.label} type="button"
                                     key={ic.id}
                                     onClick={() => setSelectedIcon(ic.id)}
                                     title={ic.label}
-                                    className={`h-10 rounded-xl text-xl flex items-center justify-center transition-all
+                                    className={`min-h-[44px] h-11 rounded-xl text-xl flex items-center justify-center transition-all
                                         ${selectedIcon === ic.id
                                             ? 'ring-2 ring-violet-500 scale-110 bg-violet-500/20'
                                             : (isGlass ? 'bg-white/5 hover:bg-white/10' : 'bg-gray-100 hover:bg-gray-200')}`}
@@ -134,27 +135,30 @@ export default function EnvelopeEditor({ envelope, onSave, onClose, isGlass }) {
 
                     {/* Color */}
                     <div>
-                        <label htmlFor="input-field" className={`text-xs font-bold uppercase tracking-wider mb-2 block ${isGlass ? 'text-white/50' : 'text-gray-400'}`}>
+                        <p className={`text-xs font-bold uppercase tracking-wider mb-2 block ${isGlass ? 'text-white/60' : 'text-gray-500'}`}>
                             <Palette size={11} className="inline mr-1" />Color
-                        </label>
-                        <div className="flex gap-3 flex-wrap">
+                        </p>
+                        <div className="flex gap-2 flex-wrap items-center">
                             {ENVELOPE_COLORS.map(c => (
-                                <button aria-label="Acción" type="button"
+                                <button aria-label={`Color ${c.id}`} type="button"
                                     key={c.id}
                                     onClick={() => setSelectedColor(c.id)}
-                                    className={`w-8 h-8 rounded-full ${c.bg} transition-all
+                                    className="min-h-[44px] min-w-[44px] flex items-center justify-center p-1 rounded-full"
+                                >
+                                    <div className={`w-8 h-8 rounded-full ${c.bg} transition-all
                                         ${selectedColor === c.id ? 'ring-2 ring-offset-2 scale-110 ring-violet-400' : 'opacity-60 hover:opacity-100'}`}
-                                />
+                                    />
+                                </button>
                             ))}
                         </div>
                     </div>
                 </div>
 
                 {/* Botón guardar */}
-                <button aria-label="Acción" type="button"
+                <button aria-label="Guardar sobre" type="button"
                     onClick={handleSave}
                     disabled={!label.trim() || !budgeted || saving}
-                    className="mt-6 w-full py-3.5 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-bold text-sm
+                    className="min-h-[44px] mt-6 w-full py-3.5 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-bold text-sm
                         disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 transition-all shadow-lg shadow-violet-500/30"
                 >
                     {saving ? 'Guardando...' : isNew ? 'Crear sobre' : 'Guardar cambios'}

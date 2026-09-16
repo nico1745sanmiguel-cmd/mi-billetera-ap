@@ -22,6 +22,16 @@ export default function ModuleDetailSettings({ onBack }) {
     const navigate = useNavigate();
     const { isGlass } = useUI();
 
+    const handleBack = () => {
+        if (typeof onBack === 'function') {
+            onBack();
+        } else if (window.history.state && window.history.state.idx > 0) {
+            navigate(-1);
+        } else {
+            navigate('/settings_modules');
+        }
+    };
+
     const moduleInfo = AVAILABLE_MODULES.find(m => m.id === moduleId);
 
     if (!moduleInfo) {
@@ -29,7 +39,7 @@ export default function ModuleDetailSettings({ onBack }) {
             <div className="space-y-4">
                 <div className={`rounded-2xl p-5 ${isGlass ? 'bg-white/10 border border-white/10 text-white' : 'bg-white shadow-sm border border-gray-100 text-gray-800'}`}>
                     <h2 className="text-lg font-bold">Módulo no encontrado</h2>
-                    <button aria-label="Acción" type="button" onClick={onBack || (() => navigate(-1))} className="mt-4 text-blue-500">Volver</button>
+                    <button aria-label="Volver" type="button" onClick={handleBack} className="mt-4 min-h-[44px] px-3 py-2 text-blue-500 font-bold inline-flex items-center">Volver</button>
                 </div>
             </div>
         );
@@ -40,29 +50,27 @@ export default function ModuleDetailSettings({ onBack }) {
     const renderSpecificSettings = () => {
         switch (moduleId) {
             case 'mobility':
-                // MobilitySettings ya tiene su propia card y botón de guardar/volver.
-                // Le pasamos el onBack para que regrese a la lista de módulos.
                 return (
                     <Suspense fallback={<LazyLoader />}>
-                        <MobilitySettings isGlass={isGlass} onBack={onBack || (() => navigate(-1))} />
+                        <MobilitySettings isGlass={isGlass} onBack={handleBack} />
                     </Suspense>
                 );
             case 'notes':
                 return (
                     <Suspense fallback={<LazyLoader />}>
-                        <NotesSettings isGlass={isGlass} onBack={onBack || (() => navigate(-1))} />
+                        <NotesSettings isGlass={isGlass} onBack={handleBack} />
                     </Suspense>
                 );
             case 'planner':
                 return (
                     <Suspense fallback={<LazyLoader />}>
-                        <PlannerSettings isGlass={isGlass} onBack={onBack || (() => navigate(-1))} />
+                        <PlannerSettings isGlass={isGlass} onBack={handleBack} />
                     </Suspense>
                 );
             case 'savings':
                 return (
                     <Suspense fallback={<LazyLoader />}>
-                        <SavingsSettings isGlass={isGlass} onBack={onBack || (() => navigate(-1))} />
+                        <SavingsSettings isGlass={isGlass} onBack={handleBack} />
                     </Suspense>
                 );
             default:
@@ -83,9 +91,9 @@ export default function ModuleDetailSettings({ onBack }) {
             {/* HEADER COMÚN */}
             <div className={`rounded-2xl p-5 ${isGlass ? 'bg-white/10 border border-white/10' : 'bg-gradient-to-r from-gray-800 to-gray-700 text-white shadow-lg'}`}>
                 <div className="flex items-center gap-3">
-                    <button aria-label="Acción" type="button"
-                        onClick={onBack || (() => navigate(-1))}
-                        className="p-2 rounded-xl bg-white/20 hover:bg-white/30 transition-all active:scale-95"
+                    <button aria-label="Volver" type="button"
+                        onClick={handleBack}
+                        className="min-h-[44px] min-w-[44px] flex items-center justify-center p-2.5 rounded-xl bg-white/20 hover:bg-white/30 transition-all active:scale-95"
                     >
                         <ArrowLeft size={18} />
                     </button>

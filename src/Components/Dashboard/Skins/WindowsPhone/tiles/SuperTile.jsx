@@ -39,7 +39,7 @@ const SuperTile = ({ superData, showMoney, navigate, animDelay = 0 }) => {
             size="1x1"
             front={front}
             back={back}
-            onClick={() => navigate('/supermarket')}
+            onClick={() => navigate('/super')}
             delay={3000}
             animDelay={animDelay}
             label="Ver supermercado"

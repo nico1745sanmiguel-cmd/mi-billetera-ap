@@ -8,6 +8,8 @@ const StopLossModal = React.lazy(() => import('../../../Components/Savings/StopL
 const ResumenPortfolio = React.lazy(() => import('./ResumenPortfolio'));
 import TenenciasLista from './TenenciasLista';
 import CaucionesActivas from './CaucionesActivas';
+import Skeleton from '../../../Components/UI/Skeleton';
+import { renderHiddenAmount } from '../../../utils';
 
 const COLORS = ['#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#14B8A6', '#F97316'];
 
@@ -15,7 +17,7 @@ const usdFormatter = new Intl.NumberFormat('es-AR', { style: 'currency', currenc
 const arsFormatter = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 });
 
 export default function PortfolioTab({ isGlass, privacyMode, currencyView = 'USD' }) {
-    const { posiciones, cauciones, liquidezPorCartera } = useSavings();
+    const { posiciones, cauciones, liquidezPorCartera, loading = false } = useSavings();
     const { dolarBlue } = useFinancial();
     
     const [sortConfig, setSortConfig] = useState({ key: null, direction: 'desc' });
@@ -33,7 +35,7 @@ export default function PortfolioTab({ isGlass, privacyMode, currencyView = 'USD
     const rate = dolarBlue || 1000;
 
     const formatAmount = (amount, currency) => {
-        if (privacyMode) return '****';
+        if (privacyMode) return renderHiddenAmount('****');
         return currency === 'USD' ? usdFormatter.format(amount) : arsFormatter.format(amount);
     };
 
@@ -258,6 +260,38 @@ export default function PortfolioTab({ isGlass, privacyMode, currencyView = 'USD
     const caucionesActivasList = cauciones || [];
     const hasCauciones = caucionesActivasList.length > 0;
     const hasLiquidez = Object.keys(liquidezPorCartera || {}).some(c => liquidezPorCartera[c].ARS > 0 || liquidezPorCartera[c].USD > 0);
+
+    if (loading) {
+        return (
+            <div className="space-y-6 animate-pulse" role="status" aria-label="Cargando portafolio">
+                <div className={`p-6 rounded-3xl border ${isGlass ? 'bg-white/5 border-white/10' : 'bg-white border-gray-100 shadow-sm'}`}>
+                    <div className="flex justify-between items-center mb-6">
+                        <Skeleton type="text" className="w-32 h-6" />
+                        <Skeleton type="rectangular" className="w-24 h-8 !rounded-xl" />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <Skeleton type="rectangular" className="h-20 !rounded-2xl" />
+                        <Skeleton type="rectangular" className="h-20 !rounded-2xl" />
+                        <Skeleton type="rectangular" className="h-20 !rounded-2xl" />
+                    </div>
+                </div>
+                <div className={`p-6 rounded-3xl border ${isGlass ? 'bg-white/5 border-white/10' : 'bg-white border-gray-100 shadow-sm'}`}>
+                    <Skeleton type="text" className="w-48 h-5 mb-4" />
+                    <div className="space-y-3">
+                        {[1, 2, 3].map(i => (
+                            <div key={i} className="flex justify-between items-center py-3 border-b border-gray-100 dark:border-white/5">
+                                <div className="space-y-2">
+                                    <Skeleton type="text" className="w-28 h-4" />
+                                    <Skeleton type="text" className="w-20 h-3" />
+                                </div>
+                                <Skeleton type="text" className="w-24 h-5" />
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     if (posiciones.length === 0 && !hasCauciones && !hasLiquidez) {
         return (

@@ -19,6 +19,7 @@ import SupermarketAddInput from './SupermarketAddInput';
 import SuperListItem from './SuperListItem';
 import SuperListSuggestions from './SuperListSuggestions';
 import ConfirmDialog from '../UI/ConfirmDialog';
+import Skeleton from '../UI/Skeleton';
 
 // FORMATOS
 const parseCurrencyInput = (val) => val.replace(/\D/g, '');
@@ -55,6 +56,7 @@ export default function SuperList() {
     
     // CONFIRM DIALOG
     const [itemToDelete, setItemToDelete] = useState(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     // TOAST STATE 🍞
     const [toast, setToast] = useState(null);
@@ -74,16 +76,17 @@ export default function SuperList() {
     };
 
     const confirmDelete = async () => {
-        if (itemToDelete) {
-            try {
-                await deleteSuperItem(itemToDelete);
-                showToast('Producto eliminado');
-            } catch (err) {
-                console.error('Error al eliminar producto:', err);
-                showToast('Error al eliminar producto');
-            } finally {
-                setItemToDelete(null);
-            }
+        if (!itemToDelete || isDeleting) return;
+        setIsDeleting(true);
+        try {
+            await deleteSuperItem(itemToDelete);
+            showToast('Producto eliminado');
+            setItemToDelete(null);
+        } catch (err) {
+            console.error('Error al eliminar producto:', err);
+            showToast('Error al eliminar producto');
+        } finally {
+            setIsDeleting(false);
         }
     };
 
@@ -339,10 +342,14 @@ export default function SuperList() {
         <>
             <ConfirmDialog 
                 isOpen={!!itemToDelete} 
-                onClose={() => setItemToDelete(null)} 
+                onClose={() => !isDeleting && setItemToDelete(null)} 
                 onConfirm={confirmDelete} 
                 title="Eliminar producto" 
                 message="¿Estás seguro que querés eliminar este producto de la lista?" 
+                confirmText={isDeleting ? 'Eliminando...' : 'Eliminar'}
+                cancelText="Cancelar"
+                isDanger={true}
+                isLoading={isDeleting}
             />
 
             {/* 1. TOAST GLOBAL (Portal-like, arriba de todo) */}
@@ -437,10 +444,10 @@ export default function SuperList() {
                 <div className="flex relative">
                 <div className="flex-1 space-y-3 pb-40">
                     {loading ? (
-                        <div className="space-y-3 animate-pulse">
-                            <div className={`h-24 rounded-3xl ${isGlass ? 'bg-white/5 border border-white/10' : 'bg-gray-200'}`} />
-                            <div className={`h-24 rounded-3xl ${isGlass ? 'bg-white/5 border border-white/10' : 'bg-gray-200'}`} />
-                            <div className={`h-24 rounded-3xl ${isGlass ? 'bg-white/5 border border-white/10' : 'bg-gray-200'}`} />
+                        <div className="space-y-3 animate-pulse" role="status" aria-label="Cargando productos">
+                            <Skeleton type="rectangular" className="h-24 !rounded-3xl" />
+                            <Skeleton type="rectangular" className="h-24 !rounded-3xl" />
+                            <Skeleton type="rectangular" className="h-24 !rounded-3xl" />
                         </div>
                     ) : (
                         monthlyList.map((item) => {

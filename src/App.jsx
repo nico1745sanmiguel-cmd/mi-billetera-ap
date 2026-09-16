@@ -4,6 +4,8 @@ import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-
 import { AnimatePresence, m, LazyMotion, domMax, MotionConfig } from 'framer-motion';
 import Navbar from './Components/Layout/Navbar';
 import MobileHeader from './Components/Layout/MobileHeader';
+import BottomNav from './Components/Layout/BottomNav';
+import ErrorBoundary from './Components/UI/ErrorBoundary';
 import GlobalToast from './Components/UI/GlobalToast';
 import { auth } from './firebase';
 import { signOut } from 'firebase/auth';
@@ -161,104 +163,138 @@ export default function App() {
                     {/* HEADER MÓVIL */}
                     <MobileHeader />
 
-                    <main className="max-w-5xl mx-auto p-4 mt-2 pb-10 w-full flex-grow relative overflow-hidden">
+                    <main className="max-w-5xl mx-auto p-4 mt-2 pb-24 md:pb-10 w-full flex-grow relative overflow-hidden">
                         <Suspense fallback={<LazyLoader />}>
                             <AnimatePresence mode="wait">
                                 <Routes location={location} key={location.pathname}>
                                     <Route path="/" element={<Navigate to="/dashboard" replace />} />
                                     
                                     <Route path="/dashboard" element={
-                                        <m.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}>
-                                            <Home
-                                                onLogout={handleLogout}
-                                                notifications={notifications}
-                                                onCardClick={handleCardClick}
-                                            />
-                                        </m.div>
+                                        <ErrorBoundary moduleName="Dashboard">
+                                            <m.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}>
+                                                <Home
+                                                    onLogout={handleLogout}
+                                                    notifications={notifications}
+                                                    onCardClick={handleCardClick}
+                                                />
+                                            </m.div>
+                                        </ErrorBoundary>
                                     } />
 
                                     <Route path="/services_manager" element={
                                         (isModuleEnabled('agenda') || isModuleEnabled('planner')) ? 
-                                        <m.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.2 }}><ServicesManager /></m.div> : <Navigate to="/dashboard" replace />
+                                        <ErrorBoundary moduleName="Servicios">
+                                            <m.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.2 }}><ServicesManager /></m.div>
+                                        </ErrorBoundary> : <Navigate to="/dashboard" replace />
                                     } />
 
                                     <Route path="/reconcile" element={
-                                        <m.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.2 }}>
-                                            <ReconciliationDesk onBack={() => navigate('/dashboard')} />
-                                        </m.div>
+                                        <ErrorBoundary moduleName="Conciliación">
+                                            <m.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.2 }}>
+                                                <ReconciliationDesk onBack={() => navigate('/dashboard')} />
+                                            </m.div>
+                                        </ErrorBoundary>
                                     } />
 
                                     <Route path="/household" element={
                                         isModuleEnabled('household') ? 
-                                        <m.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.2 }}><HouseholdManager onBack={() => navigate('/dashboard')} /></m.div> : <Navigate to="/dashboard" replace />
+                                        <ErrorBoundary moduleName="Hogar">
+                                            <m.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.2 }}><HouseholdManager onBack={() => navigate('/dashboard')} /></m.div>
+                                        </ErrorBoundary> : <Navigate to="/dashboard" replace />
                                     } />
 
                                     <Route path="/stats" element={
                                         isModuleEnabled('stats') ? 
-                                        <m.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}><Stats /></m.div> : <Navigate to="/dashboard" replace />
+                                        <ErrorBoundary moduleName="Estadísticas">
+                                            <m.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}><Stats /></m.div>
+                                        </ErrorBoundary> : <Navigate to="/dashboard" replace />
                                     } />
 
                                     <Route path="/purchase" element={
-                                        <m.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.2 }}>
-                                            <NewPurchase onSave={() => navigate('/dashboard')} />
-                                        </m.div>
+                                        <ErrorBoundary moduleName="Nueva Compra">
+                                            <m.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.2 }}>
+                                                <NewPurchase onSave={() => navigate('/dashboard')} />
+                                            </m.div>
+                                        </ErrorBoundary>
                                     } />
 
                                     <Route path="/super" element={
                                         isModuleEnabled('supermarket') ? 
-                                        <m.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}><SuperList /></m.div> : <Navigate to="/dashboard" replace />
+                                        <ErrorBoundary moduleName="Supermercado">
+                                            <m.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}><SuperList /></m.div>
+                                        </ErrorBoundary> : <Navigate to="/dashboard" replace />
                                     } />
 
                                     <Route path="/fresh" element={
                                         isModuleEnabled('supermarket') ? 
-                                        <m.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}><FreshShop /></m.div> : <Navigate to="/dashboard" replace />
+                                        <ErrorBoundary moduleName="Frescos">
+                                            <m.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}><FreshShop /></m.div>
+                                        </ErrorBoundary> : <Navigate to="/dashboard" replace />
                                     } />
 
                                     <Route path="/reparto" element={
                                         isModuleEnabled('household') ? 
-                                        <m.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.2 }}><SharedExpensesDashboard onBack={() => navigate('/dashboard')} /></m.div> : <Navigate to="/dashboard" replace />
+                                        <ErrorBoundary moduleName="Gastos Compartidos">
+                                            <m.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.2 }}><SharedExpensesDashboard onBack={() => navigate('/dashboard')} /></m.div>
+                                        </ErrorBoundary> : <Navigate to="/dashboard" replace />
                                     } />
 
                                     <Route path="/scanner" element={
                                         isModuleEnabled('supermarket') ? 
-                                        <m.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.2 }}><ReceiptScanner onBack={() => navigate('/super')} /></m.div> : <Navigate to="/dashboard" replace />
+                                        <ErrorBoundary moduleName="Escáner">
+                                            <m.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.2 }}><ReceiptScanner onBack={() => navigate('/super')} /></m.div>
+                                        </ErrorBoundary> : <Navigate to="/dashboard" replace />
                                     } />
 
                                     <Route path="/savings" element={
                                         isModuleEnabled('savings') ? 
-                                        <m.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} transition={{ duration: 0.2 }}><SavingsDashboard onBack={() => navigate('/dashboard')} /></m.div> : <Navigate to="/dashboard" replace />
+                                        <ErrorBoundary moduleName="Ahorros">
+                                            <m.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} transition={{ duration: 0.2 }}><SavingsDashboard onBack={() => navigate('/dashboard')} /></m.div>
+                                        </ErrorBoundary> : <Navigate to="/dashboard" replace />
                                     } />
 
                                     <Route path="/cards" element={
                                         isModuleEnabled('cards') ? 
-                                        <m.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} transition={{ duration: 0.2 }}><CardsDashboard /></m.div> : <Navigate to="/dashboard" replace />
+                                        <ErrorBoundary moduleName="Tarjetas">
+                                            <m.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} transition={{ duration: 0.2 }}><CardsDashboard /></m.div>
+                                        </ErrorBoundary> : <Navigate to="/dashboard" replace />
                                     } />
 
                                     <Route path="/mobility" element={
                                         isModuleEnabled('mobility') ? 
-                                        <m.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.2 }}><MobilityDashboard onBack={() => navigate('/dashboard')} /></m.div> : <Navigate to="/dashboard" replace />
+                                        <ErrorBoundary moduleName="Movilidad">
+                                            <m.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.2 }}><MobilityDashboard onBack={() => navigate('/dashboard')} /></m.div>
+                                        </ErrorBoundary> : <Navigate to="/dashboard" replace />
                                     } />
 
                                     <Route path="/salary" element={
                                         isModuleEnabled('salary') ? 
-                                        <m.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.2 }}><SalaryDashboard onBack={() => navigate('/dashboard')} /></m.div> : <Navigate to="/dashboard" replace />
+                                        <ErrorBoundary moduleName="Sueldos">
+                                            <m.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.2 }}><SalaryDashboard onBack={() => navigate('/dashboard')} /></m.div>
+                                        </ErrorBoundary> : <Navigate to="/dashboard" replace />
                                     } />
 
                                     <Route path="/settings_modules" element={
-                                        <m.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.2 }}>
-                                            <ModulesSettings onBack={() => navigate('/dashboard')} />
-                                        </m.div>
+                                        <ErrorBoundary moduleName="Módulos">
+                                            <m.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.2 }}>
+                                                <ModulesSettings onBack={() => { if (window.history.state && window.history.state.idx > 0) { navigate(-1); } else { navigate('/dashboard'); } }} />
+                                            </m.div>
+                                        </ErrorBoundary>
                                     } />
 
                                     <Route path="/settings_modules/:moduleId" element={
-                                        <m.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.2 }}>
-                                            <ModuleDetailSettings onBack={() => navigate('/settings_modules')} />
-                                        </m.div>
+                                        <ErrorBoundary moduleName="Detalle de Módulo">
+                                            <m.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.2 }}>
+                                                <ModuleDetailSettings onBack={() => { if (window.history.state && window.history.state.idx > 0) { navigate(-1); } else { navigate('/settings_modules'); } }} />
+                                            </m.div>
+                                        </ErrorBoundary>
                                     } />
 
                                     <Route path="/notes" element={
                                         isModuleEnabled('notes') ? 
-                                        <m.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.2 }}><NotesDashboard onBack={() => navigate('/dashboard')} /></m.div> : <Navigate to="/dashboard" replace />
+                                        <ErrorBoundary moduleName="Notas">
+                                            <m.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.2 }}><NotesDashboard onBack={() => { if (window.history.state && window.history.state.idx > 0) { navigate(-1); } else { navigate('/dashboard'); } }} /></m.div>
+                                        </ErrorBoundary> : <Navigate to="/dashboard" replace />
                                     } />
                                     
                                     {/* Fallback temporal a dashboard */}
@@ -267,6 +303,9 @@ export default function App() {
                             </AnimatePresence>
                         </Suspense>
                     </main>
+
+                    {/* BOTTOM NAVIGATION BAR MÓVIL */}
+                    <BottomNav />
                     {(location.pathname === '/dashboard' || location.pathname === '/') && (
                         <Suspense fallback={null}>
                             <DraggableFAB />

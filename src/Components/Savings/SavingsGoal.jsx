@@ -6,6 +6,7 @@ import SavingsGoalView from './SavingsGoalView';
 import ConfirmDialog from '../UI/ConfirmDialog';
 import { useFinancial } from '../../context/FinancialContext';
 import { useUI } from '../../context/UIContext';
+import { renderHiddenAmount } from '../../utils';
 
 const arsFormatter = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 });
 
@@ -42,7 +43,7 @@ export default function SavingsGoal() {
     const isComplete = goalAmount > 0 && progress >= 100;
 
     const formatCurrency = (amount) => {
-        if (privacyMode) return '****';
+        if (privacyMode) return renderHiddenAmount('****');
         return arsFormatter.format(amount);
     };
 

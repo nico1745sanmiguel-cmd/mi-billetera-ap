@@ -1,4 +1,5 @@
 // src/utils.js
+import React from 'react';
 
 const arsFormatter = new Intl.NumberFormat('es-AR', {
     style: 'currency',
@@ -52,4 +53,14 @@ export const parseInputNumber = (val) => {
   const digits = str.replace(/\D/g, '');
   if (!digits) return 0;
   return Number(digits) || 0;
+};
+
+// Helper accesible para renderizar montos ocultos con aria-hidden y texto para lectores de pantalla
+export const renderHiddenAmount = (placeholder = '••••', text = 'Monto oculto por privacidad') => {
+  return React.createElement(
+    'span',
+    { className: 'inline-flex items-center' },
+    React.createElement('span', { 'aria-hidden': 'true' }, placeholder),
+    React.createElement('span', { className: 'sr-only' }, text)
+  );
 };

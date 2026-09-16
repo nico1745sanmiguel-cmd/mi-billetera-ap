@@ -41,9 +41,9 @@ export default function ModulesSettings({ onBack }) {
             {/* HEADER */}
             <div className={`rounded-2xl p-5 ${isGlass ? 'bg-white/10 border border-white/10' : 'bg-gradient-to-r from-gray-800 to-gray-700 text-white shadow-lg'}`}>
                 <div className="flex items-center gap-3">
-                    <button aria-label="Acción" type="button"
+                    <button aria-label="Volver" type="button"
                         onClick={onBack}
-                        className="p-2 rounded-xl bg-white/20 hover:bg-white/30 transition-all active:scale-95"
+                        className="min-h-[44px] min-w-[44px] flex items-center justify-center p-2.5 rounded-xl bg-white/20 hover:bg-white/30 transition-all active:scale-95"
                     >
                         <ArrowLeft size={18} />
                     </button>
@@ -156,23 +156,27 @@ export default function ModulesSettings({ onBack }) {
 
                                 {/* ACTIONS: Settings & Toggle */}
                                 <div className="flex flex-col items-center gap-2 shrink-0">
-                                    <button aria-label="Acción" type="button"
+                                    <button aria-label={`Alternar módulo ${label}`} type="button"
                                         onClick={() => toggle(id)}
-                                        className={`w-12 h-6 rounded-full transition-all duration-300 relative ${
-                                            active
-                                                ? `bg-gradient-to-r ${color}`
-                                                : isGlass ? 'bg-white/20' : 'bg-gray-200'
-                                        }`}
+                                        className="min-h-[44px] min-w-[48px] flex items-center justify-center"
                                     >
-                                        <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all duration-300 ${
-                                            active ? 'left-7' : 'left-1'
-                                        }`} />
+                                        <div
+                                            className={`w-12 h-6 rounded-full transition-all duration-300 relative ${
+                                                active
+                                                    ? `bg-gradient-to-r ${color}`
+                                                    : isGlass ? 'bg-white/20' : 'bg-gray-200'
+                                            }`}
+                                        >
+                                            <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all duration-300 ${
+                                                active ? 'left-7' : 'left-1'
+                                            }`} />
+                                        </div>
                                     </button>
 
-                                    <button aria-label="Acción" type="button"
+                                    <button aria-label={`Configurar módulo ${label}`} type="button"
                                         onClick={() => navigate(`/settings_modules/${id}`)}
-                                        className={`p-1.5 rounded-lg transition-colors ${
-                                            isGlass ? 'text-white/50 hover:text-white/80 hover:bg-white/10' : 'text-gray-400 hover:text-gray-700 hover:bg-gray-100'
+                                        className={`min-h-[44px] min-w-[44px] flex items-center justify-center p-2.5 rounded-xl transition-colors ${
+                                            isGlass ? 'text-white/70 hover:text-white hover:bg-white/10' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-100'
                                         }`}
                                     >
                                         <Settings size={18} />

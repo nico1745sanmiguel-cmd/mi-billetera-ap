@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { CheckCircle2, AlertCircle, Info, X } from 'lucide-react';
+import { CheckCircle2, AlertCircle, AlertTriangle, Info, X } from 'lucide-react';
 
 const toastConfig = {
     success: {
@@ -10,6 +10,11 @@ const toastConfig = {
     error: {
         icon: AlertCircle,
         bg: 'bg-slate-900/95 text-red-400 border-red-500/30',
+        text: 'text-white',
+    },
+    warning: {
+        icon: AlertTriangle,
+        bg: 'bg-slate-900/95 text-amber-400 border-amber-500/30',
         text: 'text-white',
     },
     info: {
@@ -29,15 +34,17 @@ export default function Toast({ message, type = 'success', onClose }) {
 
     const cfg = toastConfig[type] || toastConfig.success;
     const Icon = cfg.icon;
+    const isError = type === 'error';
 
     return (
         <div 
-            role="status"
-            aria-live="polite"
-            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[150] w-auto max-w-[calc(100vw-2rem)] px-4"
+            role={isError ? "alert" : "status"}
+            aria-live={isError ? "assertive" : "polite"}
+            aria-atomic="true"
+            className="fixed bottom-[calc(1.5rem+env(safe-area-inset-bottom,0px))] left-1/2 -translate-x-1/2 z-[150] w-auto max-w-[calc(100vw-2rem)] px-4"
         >
             <div className={`
-                flex items-center gap-3 px-4 py-3 rounded-2xl shadow-2xl backdrop-blur-md border
+                flex items-center gap-3 px-4 py-2.5 rounded-2xl shadow-2xl backdrop-blur-md border
                 animate-fade-in-up transition-all duration-300
                 ${cfg.bg}
             `}>
@@ -49,7 +56,7 @@ export default function Toast({ message, type = 'success', onClose }) {
                     type="button"
                     onClick={onClose}
                     aria-label="Cerrar notificación"
-                    className="p-1 -mr-1 rounded-lg text-white/50 hover:text-white hover:bg-white/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+                    className="min-h-[44px] min-w-[44px] flex items-center justify-center p-1 -mr-2 rounded-lg text-white/50 hover:text-white hover:bg-white/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 shrink-0"
                 >
                     <X size={16} />
                 </button>

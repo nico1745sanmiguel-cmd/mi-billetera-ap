@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, Plus, Briefcase, Trash2, Pencil } from 'lucide-react';
+import ConfirmDialog from '../UI/ConfirmDialog';
 import { formatMoney, formatInputNumber, parseInputNumber } from '../../utils';
 import { useSalaryState, useSalaryDispatch } from '../../context/SalaryContext';
 
@@ -22,6 +23,8 @@ export default function SalarySourcesEditor({ onClose, isGlass }) {
     const [addingNew, setAddingNew] = useState(false);
     const [newLabel, setNewLabel] = useState('');
     const [newAmount, setNewAmount] = useState('');
+    const [deletingSource, setDeletingSource] = useState(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const totalIncome = localSources.reduce((acc, s) => acc + (Number(s.amount) || 0), 0);
 
@@ -41,8 +44,15 @@ export default function SalarySourcesEditor({ onClose, isGlass }) {
         setEditingId(null);
     };
 
-    const removeSource = (id) => {
-        setLocalSources(prev => prev.filter(s => s.id !== id));
+    const handleConfirmRemove = () => {
+        if (!deletingSource || isDeleting) return;
+        setIsDeleting(true);
+        try {
+            setLocalSources(prev => prev.filter(s => s.id !== deletingSource.id));
+            setDeletingSource(null);
+        } finally {
+            setIsDeleting(false);
+        }
     };
 
     const addSource = () => {
@@ -93,7 +103,8 @@ export default function SalarySourcesEditor({ onClose, isGlass }) {
                         <div key={source.id} className={`rounded-xl border p-3 ${isGlass ? 'bg-white/5 border-white/10' : 'bg-gray-50 border-gray-200'}`}>
                             {editingId === source.id ? (
                                 <div className="space-y-2">
-                                    <input autoComplete="off" id="input-field"
+                                    <input autoComplete="off" id={`edit-source-label-${source.id}`}
+                                        aria-label="Nombre de la fuente"
                                         type="text"
                                         value={editLabel}
                                         onChange={e => setEditLabel(e.target.value)}
@@ -102,7 +113,8 @@ export default function SalarySourcesEditor({ onClose, isGlass }) {
                                     />
                                     <div className="relative">
                                         <span className={`absolute left-3 top-1/2 -translate-y-1/2 font-bold text-sm ${isGlass ? 'text-white/50' : 'text-gray-400'}`}>$</span>
-                                        <input autoComplete="off" id="input-field"
+                                        <input autoComplete="off" id={`edit-source-amount-${source.id}`}
+                                            aria-label="Monto de la fuente"
                                             type="text"
                                             inputMode="numeric"
                                             value={editAmount ? formatInputNumber(editAmount) : ''}
@@ -125,7 +137,7 @@ export default function SalarySourcesEditor({ onClose, isGlass }) {
                                     <div className="flex gap-1">
                                         <button aria-label="Acción" type="button" onClick={() => startEdit(source)} className={`p-2 rounded-xl ${isGlass ? 'text-white/40 hover:bg-white/10' : 'text-gray-400 hover:bg-gray-200'}`}><Pencil size={14} /></button>
                                         {localSources.length > 1 && (
-                                            <button aria-label="Acción" type="button" onClick={() => removeSource(source.id)} className={`p-2 rounded-xl ${isGlass ? 'text-white/40 hover:bg-red-500/20 hover:text-red-300' : 'text-gray-400 hover:bg-red-50 hover:text-red-500'}`}><Trash2 size={14} /></button>
+                                            <button aria-label="Acción" type="button" onClick={() => setDeletingSource(source)} className={`p-2 rounded-xl ${isGlass ? 'text-white/40 hover:bg-red-500/20 hover:text-red-300' : 'text-gray-400 hover:bg-red-50 hover:text-red-500'}`}><Trash2 size={14} /></button>
                                         )}
                                     </div>
                                 </div>
@@ -136,7 +148,8 @@ export default function SalarySourcesEditor({ onClose, isGlass }) {
                     {/* Formulario nueva fuente */}
                     {addingNew && (
                         <div className={`rounded-xl border p-3 space-y-2 ${isGlass ? 'bg-white/5 border-violet-500/40' : 'bg-violet-50 border-violet-200'}`}>
-                            <input autoComplete="off" id="input-field"
+                            <input autoComplete="off" id="new-source-label"
+                                aria-label="Nombre de la nueva fuente"
                                 type="text"
                                 autoFocus
                                 placeholder="Ej: Freelance, Alquiler cobrado..."
@@ -146,7 +159,8 @@ export default function SalarySourcesEditor({ onClose, isGlass }) {
                             />
                             <div className="relative">
                                 <span className={`absolute left-3 top-1/2 -translate-y-1/2 font-bold text-sm ${isGlass ? 'text-white/50' : 'text-gray-400'}`}>$</span>
-                                <input autoComplete="off" id="input-field"
+                                <input autoComplete="off" id="new-source-amount"
+                                    aria-label="Monto de la nueva fuente"
                                     type="text"
                                     inputMode="numeric"
                                     placeholder="Monto"
@@ -183,6 +197,18 @@ export default function SalarySourcesEditor({ onClose, isGlass }) {
                     {saving ? 'Guardando...' : 'Guardar'}
                 </button>
             </div>
+
+            <ConfirmDialog
+                isOpen={Boolean(deletingSource)}
+                title="¿Eliminar fuente de ingreso?"
+                message={`¿Estás seguro de que deseas eliminar "${deletingSource?.label || 'esta fuente'}" (${deletingSource ? formatMoney(deletingSource.amount) : ''})? Deberás guardar los cambios para aplicarlo permanentemente.`}
+                confirmText={isDeleting ? "Eliminando..." : "Eliminar"}
+                cancelText="Cancelar"
+                isDanger={true}
+                isLoading={isDeleting}
+                onConfirm={handleConfirmRemove}
+                onCancel={() => !isDeleting && setDeletingSource(null)}
+            />
         </div>
     );
 }

@@ -162,7 +162,7 @@ export default function StopLossModal({ isOpen, onClose, asset, isGlass, currenc
                                 Stop Loss para {asset.especie}
                             </h2>
                         </div>
-                        <button type="button" aria-label="Cerrar modal de Stop Loss" onClick={onClose} className={`p-1.5 rounded-full transition-colors ${isGlass ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-600'}`}>
+                        <button type="button" aria-label="Cerrar modal de Stop Loss" onClick={onClose} className={`min-h-[44px] min-w-[44px] p-2.5 flex items-center justify-center rounded-full transition-colors ${isGlass ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-600'}`}>
                             <X size={18} />
                         </button>
                     </div>
@@ -270,13 +270,13 @@ export default function StopLossModal({ isOpen, onClose, asset, isGlass, currenc
                         {/* Alarma Activa */}
                         <div className="flex items-center justify-between p-1">
                             <div className="flex items-center gap-2">
-                                <Bell className={alarmaActiva ? 'text-yellow-500' : 'text-gray-400'} size={20} />
+                                <Bell className={alarmaActiva ? 'text-yellow-500' : 'text-gray-500'} size={20} />
                                 <div>
                                     <span className={`text-sm font-bold block ${textColor}`}>Notificación de escritorio</span>
                                     <span className={`text-xs block ${secondaryTextColor}`}>Avisar en el navegador si toca el stop</span>
                                 </div>
                             </div>
-                            <label className="relative inline-flex items-center cursor-pointer">
+                            <label className="relative inline-flex items-center justify-center cursor-pointer min-h-[44px] min-w-[48px]">
                                 <input
                                     type="checkbox"
                                     aria-label="Activar notificaciones de escritorio para este Stop Loss"
@@ -284,7 +284,7 @@ export default function StopLossModal({ isOpen, onClose, asset, isGlass, currenc
                                     onChange={(e) => handleAlarmaToggle(e.target.checked)}
                                     className="sr-only peer"
                                 />
-                                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-600"></div>
+                                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[10px] after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-600"></div>
                             </label>
                         </div>
 
@@ -296,7 +296,7 @@ export default function StopLossModal({ isOpen, onClose, asset, isGlass, currenc
                                     aria-label="Eliminar Stop Loss"
                                     onClick={handleDeleteClick}
                                     disabled={loading}
-                                    className={`p-3 rounded-xl transition-all ${isGlass ? 'bg-red-500/20 text-red-300 hover:bg-red-500/30' : 'bg-red-100 text-red-700 hover:bg-red-200'} flex items-center justify-center`}
+                                    className={`min-h-[44px] min-w-[44px] p-3 rounded-xl transition-all ${isGlass ? 'bg-red-500/20 text-red-300 hover:bg-red-500/30' : 'bg-red-100 text-red-700 hover:bg-red-200'} flex items-center justify-center`}
                                     title="Eliminar Stop Loss"
                                 >
                                     <Trash size={18} />
@@ -306,7 +306,7 @@ export default function StopLossModal({ isOpen, onClose, asset, isGlass, currenc
                                 type="submit"
                                 aria-label="Guardar configuración de Stop Loss"
                                 disabled={loading}
-                                className="flex-1 py-3 bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white font-bold rounded-xl text-sm transition-all shadow-md"
+                                className="flex-1 py-3 min-h-[44px] bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white font-bold rounded-xl text-sm transition-all shadow-md"
                             >
                                 {loading ? 'Guardando...' : 'Guardar Stop Loss'}
                             </button>
@@ -319,8 +319,10 @@ export default function StopLossModal({ isOpen, onClose, asset, isGlass, currenc
                         message={`¿Estás seguro de que deseas eliminar la orden de Stop Loss para ${asset.especie}?`}
                         confirmText={loading ? 'Eliminando...' : 'Eliminar'}
                         cancelText="Cancelar"
+                        isDanger={true}
+                        isLoading={loading}
                         onConfirm={handleConfirmDelete}
-                        onCancel={() => setIsConfirmDeleteOpen(false)}
+                        onCancel={() => !loading && setIsConfirmDeleteOpen(false)}
                         isGlass={isGlass}
                     />
                 </div>

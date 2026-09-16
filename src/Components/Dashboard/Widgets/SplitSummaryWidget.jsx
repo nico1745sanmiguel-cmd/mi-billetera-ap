@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { Scale, Wallet } from 'lucide-react';
-import { formatMoney } from '../../../utils';
+import { formatMoney, renderHiddenAmount } from '../../../utils';
 import { useCards } from '../../../context/CardsContext';
 import { useSupermarket } from '../../../context/SupermarketContext';
 import { useServices } from '../../../context/ServicesContext';
@@ -43,7 +43,7 @@ export default function SplitSummaryWidget({ setView, householdMembers, currentD
         return { grandTotal, breakdown, proporciones };
     }, [householdMembers, services, cardsWithDebt, supermarketItems, freshItems, targetMonthKey]);
 
-    const showMoney = (amount) => privacyMode ? '****' : formatMoney(amount);
+    const showMoney = (amount) => privacyMode ? renderHiddenAmount('****') : formatMoney(amount);
 
     return (
         <div 

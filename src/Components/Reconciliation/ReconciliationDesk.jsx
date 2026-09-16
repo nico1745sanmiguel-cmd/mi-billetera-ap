@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { ChevronLeft, Loader2, UploadCloud, Check } from 'lucide-react';
+import { ChevronLeft, Loader2, UploadCloud, Check, FileSearch } from 'lucide-react';
 import { parseBankText } from '../../utils/bankParser';
 import { extractTextFromPDF } from '../../utils/pdfParser';
 import { useAliases } from '../../hooks/useAliases';
@@ -145,7 +145,7 @@ const ReconciliationDesk = ({
 
             {/* HEADER */}
             <div className="flex items-center mb-6">
-                <button aria-label="Acción" type="button" onClick={onBack} className="mr-4 p-2 rounded-full hover:bg-white/10">
+                <button aria-label="Volver atrás" type="button" onClick={onBack} className={`min-h-[44px] min-w-[44px] flex items-center justify-center mr-4 p-2 rounded-full transition-colors ${isGlass ? 'hover:bg-white/10' : 'hover:bg-gray-200'}`}>
                     <ChevronLeft size={24} />
                 </button>
                 <h1 className="text-2xl font-bold">Conciliación Inteligente</h1>
@@ -179,10 +179,10 @@ const ReconciliationDesk = ({
                         onChange={(e) => setInputText(e.target.value)}
                     />
 
-                    <button aria-label="Acción" type="button"
+                    <button aria-label="Analizar gastos" type="button"
                         onClick={handleAnalyze}
                         disabled={!inputText.trim() || isProcessing}
-                        className="w-full py-4 rounded-xl bg-blue-600 hover:bg-blue-500 font-bold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full min-h-[44px] py-4 rounded-xl bg-blue-600 hover:bg-blue-500 font-bold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {isProcessing ? 'Leyendo PDF...' : 'Analizar Gastos'}
                     </button>
@@ -193,98 +193,120 @@ const ReconciliationDesk = ({
                 <div className="space-y-4">
                     <div className="flex justify-between items-center mb-2">
                         <h2 className="text-lg font-semibold">Resultados ({parsedItems.length})</h2>
-                        <button aria-label="Acción" type="button" onClick={() => setStep('input')} className="text-sm opacity-70 hover:opacity-100">Volver</button>
+                        <button aria-label="Volver al ingreso de comprobante" type="button" onClick={() => setStep('input')} className="min-h-[44px] px-3 py-1.5 inline-flex items-center text-sm opacity-70 hover:opacity-100 transition-opacity">Volver</button>
                     </div>
 
-                    {parsedItems.map((item, index) => (
-                        <div key={item.id || item.description || index} className={`p-4 rounded-2xl flex flex-col gap-3 ${item.status === 'saved' ? 'opacity-50' : ''
-                            } ${isGlass ? 'bg-white/5 border border-white/5' : 'bg-white shadow-sm'
-                            }`}>
-
-                            {/* FILA SUPERIOR: DATOS ORIGINALES */}
-                            <div className="flex justify-between items-start">
-                                <div>
-                                    <div className="font-mono text-xs opacity-60 mb-1">{item.originalDate}</div>
-                                    <div className="font-bold text-sm">{item.description}</div>
-                                </div>
-                                <div className="font-mono font-bold text-lg">${item.amount.toLocaleString('es-AR')}</div>
-                            </div>
-
-                            {/* FILA INFERIOR: ACCIÓN SUGERIDA */}
-                            {item.status === 'matched' && (
-                                <div className="bg-green-500/20 text-green-400 p-2 rounded-lg text-sm flex items-center gap-2">
-                                    <Check size={16} />
-                                    <span>Ya está cargado (posible coincidencia)</span>
-                                </div>
-                            )}
-
-                            {item.status === 'saved' && (
-                                <div className="text-center text-sm font-bold text-green-500">
-                                    ¡Guardado!
-                                </div>
-                            )}
-
-                            {item.status === 'recognized' && (
-                                <div className="flex flex-col gap-2">
-                                    <div className="text-sm opacity-80 flex gap-2 items-center">
-                                        <span className="text-blue-400">Detectado como:</span>
-                                        <span className="font-bold">{item.suggestedAlias}</span>
-                                    </div>
-                                    <button aria-label="Acción" type="button"
-                                        onClick={() => handleConfirmItem(item, index)}
-                                        className="w-full py-2 bg-blue-600/20 hover:bg-blue-600/40 text-blue-300 rounded-lg text-sm font-bold transition-colors"
-                                    >
-                                        Confirmar Gasto
-                                    </button>
-                                </div>
-                            )}
-
-                            {item.status === 'unknown' && (
-                                <div className="bg-orange-500/10 p-3 rounded-lg space-y-3">
-                                    <p className="text-xs text-orange-300 font-bold uppercase">Nuevo Movimiento Desconocido</p>
-
-                                    {/* Formulario Rápido en Línea */}
-                                    <div className="grid grid-cols-2 gap-2">
-                                        <input autoComplete="off" id="input-field"
-                                            type="text"
-                                            placeholder="Nombre (Alias)"
-                                            className={`p-2 rounded-lg text-sm ${isGlass ? 'bg-black/20' : 'bg-gray-50'}`}
-                                            onChange={(e) => {
-                                                const newItems = [...parsedItems];
-                                                newItems[index].newAliasName = e.target.value;
-                                                newItems[index].suggestedAlias = e.target.value;
-                                                setParsedItems(newItems);
-                                            }}
-                                        />
-                                        <select
-                                            className={`p-2 rounded-lg text-sm ${isGlass ? 'bg-black/20' : 'bg-gray-50'}`}
-                                            onChange={(e) => {
-                                                const newItems = [...parsedItems];
-                                                newItems[index].suggestedCategory = e.target.value;
-                                                setParsedItems(newItems);
-                                            }}
-                                        >
-                                            <option value="">Categoría</option>
-                                            <option value="supermercado">Super</option>
-                                            <option value="comida">Comida</option>
-                                            <option value="transporte">Taxi/Uber</option>
-                                            <option value="servicios">Servicios</option>
-                                            <option value="varios">Varios</option>
-                                        </select>
-                                    </div>
-
-                                    <button aria-label="Acción" type="button"
-                                        onClick={() => handleConfirmItem(item, index)}
-                                        disabled={!item.suggestedCategory || !item.suggestedAlias}
-                                        className="w-full py-2 bg-orange-500 text-white rounded-lg text-sm font-bold disabled:opacity-50"
-                                    >
-                                        Guardar y Recordar Alias
-                                    </button>
-                                </div>
-                            )}
-
+                    {parsedItems.length === 0 ? (
+                        <div className={`flex flex-col items-center justify-center p-8 rounded-2xl text-center border-2 border-dashed ${isGlass ? 'border-white/10 bg-white/5' : 'border-gray-200 bg-gray-50'}`}>
+                            <FileSearch size={40} className="mb-3 opacity-50 mx-auto" />
+                            <p className="font-bold text-base mb-1">No se detectaron movimientos</p>
+                            <p className={`text-sm max-w-sm mb-4 ${isGlass ? 'text-white/60' : 'text-gray-500'}`}>
+                                No pudimos encontrar gastos o transacciones en el texto ingresado. Verificá el formato o copiá directamente el detalle de tu resumen bancario.
+                            </p>
+                            <button
+                                type="button"
+                                aria-label="Volver a intentar conciliación"
+                                onClick={() => setStep('input')}
+                                className="min-h-[44px] px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded-xl inline-flex items-center justify-center transition-colors shadow-md active:scale-95"
+                            >
+                                Volver a intentar
+                            </button>
                         </div>
-                    ))}
+                    ) : (
+                        parsedItems.map((item, index) => (
+                            <div key={item.id || item.description || index} className={`p-4 rounded-2xl flex flex-col gap-3 ${item.status === 'saved' ? 'opacity-50' : ''
+                                } ${isGlass ? 'bg-white/5 border border-white/5' : 'bg-white shadow-sm'
+                                }`}>
+
+                                {/* FILA SUPERIOR: DATOS ORIGINALES */}
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <div className="font-mono text-xs opacity-60 mb-1">{item.originalDate}</div>
+                                        <div className="font-bold text-sm">{item.description}</div>
+                                    </div>
+                                    <div className="font-mono font-bold text-lg">${item.amount.toLocaleString('es-AR')}</div>
+                                </div>
+
+                                {/* FILA INFERIOR: ACCIÓN SUGERIDA */}
+                                {item.status === 'matched' && (
+                                    <div className="bg-green-500/20 text-green-400 p-2 rounded-lg text-sm flex items-center gap-2">
+                                        <Check size={16} />
+                                        <span>Ya está cargado (posible coincidencia)</span>
+                                    </div>
+                                )}
+
+                                {item.status === 'saved' && (
+                                    <div className="text-center text-sm font-bold text-green-500">
+                                        ¡Guardado!
+                                    </div>
+                                )}
+
+                                {item.status === 'recognized' && (
+                                    <div className="flex flex-col gap-2">
+                                        <div className="text-sm opacity-80 flex gap-2 items-center">
+                                            <span className="text-blue-400">Detectado como:</span>
+                                            <span className="font-bold">{item.suggestedAlias}</span>
+                                        </div>
+                                        <button aria-label={`Confirmar gasto: ${item.suggestedAlias || item.description}`} type="button"
+                                            onClick={() => handleConfirmItem(item, index)}
+                                            className="w-full min-h-[44px] py-2 bg-blue-600/20 hover:bg-blue-600/40 text-blue-300 rounded-lg text-sm font-bold transition-colors inline-flex items-center justify-center"
+                                        >
+                                            Confirmar Gasto
+                                        </button>
+                                    </div>
+                                )}
+
+                                {item.status === 'unknown' && (
+                                    <div className="bg-orange-500/10 p-3 rounded-lg space-y-3">
+                                        <p className="text-xs text-orange-300 font-bold uppercase">Nuevo Movimiento Desconocido</p>
+
+                                        {/* Formulario Rápido en Línea */}
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <input autoComplete="off" id={`reconciliation-alias-${index}`}
+                                                aria-label={`Alias para movimiento ${index + 1}`}
+                                                type="text"
+                                                placeholder="Nombre (Alias)"
+                                                value={item.newAliasName || ''}
+                                                className={`p-2 rounded-lg text-sm ${isGlass ? 'bg-black/20' : 'bg-gray-50'}`}
+                                                onChange={(e) => {
+                                                    const newItems = [...parsedItems];
+                                                    newItems[index].newAliasName = e.target.value;
+                                                    newItems[index].suggestedAlias = e.target.value;
+                                                    setParsedItems(newItems);
+                                                }}
+                                            />
+                                            <select
+                                                aria-label={`Categoría para movimiento ${index + 1}`}
+                                                value={item.suggestedCategory || ''}
+                                                className={`p-2 rounded-lg text-sm min-h-[44px] ${isGlass ? 'bg-black/20' : 'bg-gray-50'}`}
+                                                onChange={(e) => {
+                                                    const newItems = [...parsedItems];
+                                                    newItems[index].suggestedCategory = e.target.value;
+                                                    setParsedItems(newItems);
+                                                }}
+                                            >
+                                                <option value="">Categoría</option>
+                                                <option value="supermercado">Super</option>
+                                                <option value="comida">Comida</option>
+                                                <option value="transporte">Taxi/Uber</option>
+                                                <option value="servicios">Servicios</option>
+                                                <option value="varios">Varios</option>
+                                            </select>
+                                        </div>
+
+                                        <button aria-label={`Guardar y recordar alias para ${item.description}`} type="button"
+                                            onClick={() => handleConfirmItem(item, index)}
+                                            disabled={!item.suggestedCategory || !item.suggestedAlias}
+                                            className="w-full min-h-[44px] py-2 bg-orange-500 text-white rounded-lg text-sm font-bold disabled:opacity-50 inline-flex items-center justify-center"
+                                        >
+                                            Guardar y Recordar Alias
+                                        </button>
+                                    </div>
+                                )}
+
+                            </div>
+                        ))
+                    )}
                 </div>
             )}
 

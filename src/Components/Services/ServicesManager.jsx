@@ -5,7 +5,7 @@ import { useCards } from '../../context/CardsContext';
 import { useSupermarket } from '../../context/SupermarketContext';
 import { useServices } from '../../context/ServicesContext';
 import { collection, addDoc, deleteDoc, doc, updateDoc, setDoc, arrayUnion, arrayRemove, deleteField, serverTimestamp } from 'firebase/firestore';
-import { formatMoney } from '../../utils';
+import { formatMoney, renderHiddenAmount } from '../../utils';
 import { isModuleEnabled } from '../../utils/modulesUtils';
 import { useUI } from '../../context/UIContext';
 import ConfirmDialog from '../UI/ConfirmDialog';
@@ -40,22 +40,24 @@ const daysOfWeek = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
  * @returns {JSX.Element}
  */
 export default function ServicesManager() {
-    const { currentDate, privacyMode, isGlass } = useUI();
+    const { currentDate, privacyMode, isGlass, showToast } = useUI();
     const { userData } = useAuth();
     const householdId = userData?.householdId;
     const { cards, transactions } = useCards();
-    const { services } = useServices();
+    const { services, loading: loadingServices } = useServices();
     const { freshItems, plannerCategories } = useSupermarket();
     
     const [viewMode, setViewMode] = useState('list');
     const [isModalOpen, setIsModalOpen] = useState(false);
     // react-doctor-disable-next-line react-doctor/rerender-state-only-in-handlers
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+    const [isDeletingService, setIsDeletingService] = useState(false);
     const [editingService, setEditingService] = useState(null);
 
     const [form, setForm] = useState({ name: '', amount: '', day: '', frequency: 'Mensual', isShared: true });
+    const [errors, setErrors] = useState({});
 
-    const showMoney = (amount) => privacyMode ? '****' : formatMoney(amount);
+    const showMoney = (amount) => privacyMode ? renderHiddenAmount('****') : formatMoney(amount);
 
     const currentMonthKey = useMemo(() => {
         if (!currentDate) return '';
@@ -148,6 +150,7 @@ export default function ServicesManager() {
     }, [allItems]);
 
     const openModal = (item = null) => {
+        setErrors({});
         if (item) {
             // react-doctor-disable-next-line react-doctor/no-impure-state-updater
             setEditingService(item);
@@ -161,14 +164,33 @@ export default function ServicesManager() {
 
     const handleSave = async (e) => {
         e.preventDefault();
-        if (!form.amount || !auth.currentUser) return;
+        const newErrors = {};
+        if ((!editingService || editingService.type !== 'card') && !form.name?.trim()) {
+            newErrors.name = 'El nombre del servicio es obligatorio';
+        }
+        if (!form.amount || Number(form.amount) <= 0) {
+            newErrors.amount = 'El monto debe ser mayor a $ 0';
+        }
+
+        if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors);
+            const firstMessage = newErrors.name || newErrors.amount;
+            showToast(firstMessage, 'warning');
+            return;
+        }
+
+        setErrors({});
+        if (!auth.currentUser) {
+            showToast("Debes iniciar sesión para realizar esta acción", "error");
+            return;
+        }
         try {
             if (editingService && editingService.type === 'card') {
                 const cardRef = doc(db, 'cards', editingService.id);
                 await setDoc(cardRef, { monthlyStatements: { [currentMonthKey]: { totalDue: Number(form.amount) } }, adjustments: { [currentMonthKey]: Number(form.amount) } }, { merge: true });
             } else {
                 const data = {
-                    name: form.name, amount: Number(form.amount), day: Number(form.day) || 10, frequency: form.frequency, userId: auth.currentUser.uid,
+                    name: form.name.trim(), amount: Number(form.amount), day: Number(form.day) || 10, frequency: form.frequency, userId: auth.currentUser.uid,
                     ...(householdId && { householdId: householdId, ownerId: auth.currentUser.uid, isShared: form.isShared })
                 };
                 if (editingService) {
@@ -178,7 +200,10 @@ export default function ServicesManager() {
                 }
             }
             setIsModalOpen(false);
-        } catch (error) { alert("Error al guardar"); console.error(error); }
+        } catch (error) {
+            showToast("Error al guardar el servicio", "error");
+            console.error(error);
+        }
     };
 
     const handleDeleteRequest = () => {
@@ -186,14 +211,24 @@ export default function ServicesManager() {
     };
 
     const confirmDelete = async () => {
-        if (editingService.type === 'card') {
-            const cardRef = doc(db, 'cards', editingService.id);
-            await updateDoc(cardRef, { [`adjustments.${currentMonthKey}`]: deleteField(), [`monthlyStatements.${currentMonthKey}.totalDue`]: deleteField() });
-        } else {
-            await deleteDoc(doc(db, 'services', editingService.id));
+        if (!editingService || isDeletingService) return;
+        setIsDeletingService(true);
+        try {
+            if (editingService.type === 'card') {
+                const cardRef = doc(db, 'cards', editingService.id);
+                await updateDoc(cardRef, { [`adjustments.${currentMonthKey}`]: deleteField(), [`monthlyStatements.${currentMonthKey}.totalDue`]: deleteField() });
+            } else {
+                await deleteDoc(doc(db, 'services', editingService.id));
+            }
+            showToast("Registro eliminado con éxito", "success");
+            setIsDeleteOpen(false);
+            setIsModalOpen(false);
+        } catch (error) {
+            console.error(error);
+            showToast("Error al eliminar el registro", "error");
+        } finally {
+            setIsDeletingService(false);
         }
-        setIsDeleteOpen(false);
-        setIsModalOpen(false);
     };
 
     const togglePaid = async (item) => {
@@ -256,37 +291,38 @@ export default function ServicesManager() {
                 <div><h2 className={`text-xl font-bold ${isGlass ? 'text-white' : 'text-gray-800'}`}>Calendario</h2><p className={`text-xs font-bold uppercase ${isGlass ? 'text-indigo-300' : 'text-indigo-600'}`}>{currentDate.toLocaleString('es-AR', { month: 'long', year: 'numeric' })}</p></div>
                 <div className="flex items-center gap-2">
                     <div className={`hidden sm:flex items-center rounded-xl p-1 ${isGlass ? 'bg-white/10' : 'bg-gray-100'}`}>
-                        <button aria-label="Acción" type="button" onClick={() => setViewMode('list')} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${viewMode === 'list' ? (isGlass ? 'bg-indigo-600 text-white shadow-md' : 'bg-white text-gray-900 shadow-sm') : (isGlass ? 'text-white/50 hover:text-white' : 'text-gray-500 hover:text-gray-900')}`}>Lista</button>
-                        <button aria-label="Acción" type="button" onClick={() => setViewMode('calendar')} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${viewMode === 'calendar' ? (isGlass ? 'bg-indigo-600 text-white shadow-md' : 'bg-white text-gray-900 shadow-sm') : (isGlass ? 'text-white/50 hover:text-white' : 'text-gray-500 hover:text-gray-900')}`}>Mes</button>
+                        <button aria-label="Vista de Lista" type="button" onClick={() => setViewMode('list')} className={`min-h-[44px] px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center ${viewMode === 'list' ? (isGlass ? 'bg-indigo-600 text-white shadow-md' : 'bg-white text-gray-900 shadow-sm') : (isGlass ? 'text-white/70 hover:text-white' : 'text-gray-600 hover:text-gray-900')}`}>Lista</button>
+                        <button aria-label="Vista de Mes" type="button" onClick={() => setViewMode('calendar')} className={`min-h-[44px] px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center ${viewMode === 'calendar' ? (isGlass ? 'bg-indigo-600 text-white shadow-md' : 'bg-white text-gray-900 shadow-sm') : (isGlass ? 'text-white/70 hover:text-white' : 'text-gray-600 hover:text-gray-900')}`}>Mes</button>
                     </div>
-                    <button aria-label="Acción" type="button" onClick={() => openModal()} className={`text-xs px-4 py-2 rounded-2xl font-bold shadow-md flex items-center gap-1 active:scale-95 transition-transform ${isGlass ? 'bg-white text-indigo-900 hover:bg-indigo-50' : 'bg-gray-900 text-white hover:bg-black'}`}><span>+</span> Nuevo Fijo</button>
+                    <button aria-label="Nuevo gasto fijo" type="button" onClick={() => openModal()} className={`min-h-[44px] text-xs px-4 py-2.5 rounded-2xl font-bold shadow-md flex items-center gap-1 active:scale-95 transition-transform ${isGlass ? 'bg-white text-indigo-900 hover:bg-indigo-50' : 'bg-gray-900 text-white hover:bg-black'}`}><span>+</span> Nuevo Fijo</button>
                 </div>
             </div>
             
             <div className={`sm:hidden flex items-center rounded-xl p-1 mx-2 ${isGlass ? 'bg-white/10' : 'bg-gray-100'}`}>
-                <button aria-label="Acción" type="button" onClick={() => setViewMode('list')} className={`flex-1 px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${viewMode === 'list' ? (isGlass ? 'bg-indigo-600 text-white shadow-md' : 'bg-white text-gray-900 shadow-sm') : (isGlass ? 'text-white/50 hover:text-white' : 'text-gray-500 hover:text-gray-900')}`}>Lista</button>
-                <button aria-label="Acción" type="button" onClick={() => setViewMode('calendar')} className={`flex-1 px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${viewMode === 'calendar' ? (isGlass ? 'bg-indigo-600 text-white shadow-md' : 'bg-white text-gray-900 shadow-sm') : (isGlass ? 'text-white/50 hover:text-white' : 'text-gray-500 hover:text-gray-900')}`}>Mes</button>
+                <button aria-label="Vista de Lista" type="button" onClick={() => setViewMode('list')} className={`flex-1 min-h-[44px] px-4 py-2.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center ${viewMode === 'list' ? (isGlass ? 'bg-indigo-600 text-white shadow-md' : 'bg-white text-gray-900 shadow-sm') : (isGlass ? 'text-white/70 hover:text-white' : 'text-gray-600 hover:text-gray-900')}`}>Lista</button>
+                <button aria-label="Vista de Mes" type="button" onClick={() => setViewMode('calendar')} className={`flex-1 min-h-[44px] px-4 py-2.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center ${viewMode === 'calendar' ? (isGlass ? 'bg-indigo-600 text-white shadow-md' : 'bg-white text-gray-900 shadow-sm') : (isGlass ? 'text-white/70 hover:text-white' : 'text-gray-600 hover:text-gray-900')}`}>Mes</button>
             </div>
 
             {isModuleEnabled('household') && <RepartoPanel allItems={allItems} householdId={householdId} currentUid={currentUid} isGlass={isGlass} showMoney={showMoney} />}
             {isModuleEnabled('agenda') && <MareaSemanal weeklyData={weeklyData} isGlass={isGlass} showMoney={showMoney} />}
 
             {viewMode === 'list' ? (
-                <ServicesList allItems={allItems} isGlass={isGlass} householdId={householdId} showMoney={showMoney} getStatusLabel={getStatusLabel} openModal={openModal} togglePaid={togglePaid} currentDate={currentDate} />
+                <ServicesList allItems={allItems} isGlass={isGlass} householdId={householdId} showMoney={showMoney} getStatusLabel={getStatusLabel} openModal={openModal} togglePaid={togglePaid} currentDate={currentDate} loading={loadingServices} />
             ) : (
                 <ServicesCalendarView daysOfWeek={daysOfWeek} calendarDays={calendarDays} calendarItemsByDay={calendarItemsByDay} currentDate={currentDate} isGlass={isGlass} PLANNER_COLOR_MAP={PLANNER_COLOR_MAP} DEFAULT_PLANNER_COLORS={DEFAULT_PLANNER_COLORS} showMoney={showMoney} openModal={openModal} />
             )}
 
-            <ServiceModal isModalOpen={isModalOpen} setIsModalOpen={setIsModalOpen} editingService={editingService} form={form} setForm={setForm} handleSave={handleSave} handleDelete={handleDeleteRequest} isGlass={isGlass} householdId={householdId} />
+            <ServiceModal isModalOpen={isModalOpen} setIsModalOpen={setIsModalOpen} editingService={editingService} form={form} setForm={setForm} errors={errors} setErrors={setErrors} handleSave={handleSave} handleDelete={handleDeleteRequest} isGlass={isGlass} householdId={householdId} />
 
             <ConfirmDialog 
                 isOpen={isDeleteOpen}
                 title="Eliminar registro"
                 message="¿Estás seguro de que deseas eliminar este ítem? Esta acción no se puede deshacer."
                 onConfirm={confirmDelete}
-                onCancel={() => setIsDeleteOpen(false)}
+                onCancel={() => !isDeletingService && setIsDeleteOpen(false)}
                 isDanger={true}
-                confirmText="Eliminar"
+                isLoading={isDeletingService}
+                confirmText={isDeletingService ? "Eliminando..." : "Eliminar"}
             />
         </div>
     );

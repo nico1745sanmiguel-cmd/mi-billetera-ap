@@ -23,7 +23,7 @@ export default function PlannerSettings({ isGlass, onBack: _onBack }) {
 
     const card = `rounded-2xl p-4 transition-all ${isGlass ? 'bg-white/10 border border-white/10' : 'bg-white shadow-sm border border-gray-100'}`;
     const text = isGlass ? 'text-white' : 'text-gray-800';
-    const sub  = isGlass ? 'text-white/50' : 'text-gray-400';
+    const sub  = isGlass ? 'text-white/60' : 'text-gray-600';
 
     return (
         <div className="space-y-4 animate-fade-in">
@@ -40,15 +40,15 @@ export default function PlannerSettings({ isGlass, onBack: _onBack }) {
                 </div>
                 
                 <div className={`flex items-center w-full rounded-xl p-1 ${isGlass ? 'bg-white/5' : 'bg-gray-100'}`}>
-                    <button aria-label="Acción" type="button"
+                    <button aria-label="Vista Normal" type="button"
                         onClick={() => updateSetting('compactView', false)}
-                        className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all ${!settings.compactView ? (isGlass ? 'bg-fuchsia-500 text-white shadow-md' : 'bg-white text-fuchsia-600 shadow-sm') : (isGlass ? 'text-white/50' : 'text-gray-500')}`}
+                        className={`flex-1 min-h-[44px] py-2 text-xs font-semibold rounded-lg flex items-center justify-center transition-all ${!settings.compactView ? (isGlass ? 'bg-fuchsia-500 text-white shadow-md' : 'bg-white text-fuchsia-600 shadow-sm') : (isGlass ? 'text-white/60' : 'text-gray-600')}`}
                     >
                         Normal
                     </button>
-                    <button aria-label="Acción" type="button"
+                    <button aria-label="Vista Compacta" type="button"
                         onClick={() => updateSetting('compactView', true)}
-                        className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all ${settings.compactView ? (isGlass ? 'bg-fuchsia-500 text-white shadow-md' : 'bg-white text-fuchsia-600 shadow-sm') : (isGlass ? 'text-white/50' : 'text-gray-500')}`}
+                        className={`flex-1 min-h-[44px] py-2 text-xs font-semibold rounded-lg flex items-center justify-center transition-all ${settings.compactView ? (isGlass ? 'bg-fuchsia-500 text-white shadow-md' : 'bg-white text-fuchsia-600 shadow-sm') : (isGlass ? 'text-white/60' : 'text-gray-600')}`}
                     >
                         Compacta
                     </button>
@@ -67,11 +67,15 @@ export default function PlannerSettings({ isGlass, onBack: _onBack }) {
                             <p className={`text-xs ${sub}`}>Los ítems listos se esconden automáticamente</p>
                         </div>
                     </div>
-                    <button aria-label="Acción" type="button"
+                    <button aria-label="Ocultar completados automáticamente" type="button"
                         onClick={() => updateSetting('hideCompleted', !settings.hideCompleted)}
-                        className={`w-12 h-6 rounded-full transition-all duration-300 relative ${settings.hideCompleted ? 'bg-fuchsia-500' : (isGlass ? 'bg-white/20' : 'bg-gray-200')}`}
+                        className="min-h-[44px] min-w-[48px] flex items-center justify-center"
                     >
-                        <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all duration-300 ${settings.hideCompleted ? 'left-7' : 'left-1'}`} />
+                        <div
+                            className={`w-12 h-6 rounded-full transition-all duration-300 relative ${settings.hideCompleted ? 'bg-fuchsia-500' : (isGlass ? 'bg-white/20' : 'bg-gray-200')}`}
+                        >
+                            <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all duration-300 ${settings.hideCompleted ? 'left-7' : 'left-1'}`} />
+                        </div>
                     </button>
                 </div>
             </div>
@@ -126,9 +130,9 @@ export default function PlannerSettings({ isGlass, onBack: _onBack }) {
                         { id: 'price_desc', label: 'Mayor Precio' },
                         { id: 'alpha', label: 'Alfabético' }
                     ].map(opt => (
-                        <button aria-label="Acción" type="button" key={opt.id}
+                        <button aria-label={`Ordenar por ${opt.label}`} type="button" key={opt.id}
                             onClick={() => updateSetting('sortBy', opt.id)}
-                            className={`flex-1 py-1.5 text-[11px] font-semibold rounded-lg transition-all ${settings.sortBy === opt.id ? (isGlass ? 'bg-fuchsia-500 text-white shadow-md' : 'bg-white text-fuchsia-600 shadow-sm') : (isGlass ? 'text-white/50' : 'text-gray-500')}`}
+                            className={`flex-1 min-h-[44px] py-2 text-[11px] font-semibold rounded-lg flex items-center justify-center transition-all ${settings.sortBy === opt.id ? (isGlass ? 'bg-fuchsia-500 text-white shadow-md' : 'bg-white text-fuchsia-600 shadow-sm') : (isGlass ? 'text-white/60' : 'text-gray-600')}`}
                         >
                             {opt.label}
                         </button>
@@ -149,8 +153,9 @@ export default function PlannerSettings({ isGlass, onBack: _onBack }) {
                 </div>
                 
                 <div className={`flex items-center rounded-xl px-3 border w-full ${isGlass ? 'bg-black/30 border-white/10' : 'bg-gray-50 border-gray-200'}`}>
-                    <span className={`text-xs mr-2 font-bold ${isGlass ? 'text-gray-500' : 'text-gray-400'}`}>$</span>
-                    <input autoComplete="off" id="input-field"
+                    <span className={`text-xs mr-2 font-bold ${isGlass ? 'text-gray-400' : 'text-gray-600'}`}>$</span>
+                    <input autoComplete="off" id="planner-budget-alert-input"
+                        aria-label="Alerta de presupuesto"
                         type="tel"
                         className={`w-full bg-transparent outline-none text-sm font-bold text-left py-2.5 ${isGlass ? 'text-white' : 'text-gray-800'}`}
                         placeholder="0"

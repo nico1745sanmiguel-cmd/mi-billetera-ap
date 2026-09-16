@@ -1,6 +1,6 @@
 import React, { useMemo, memo } from 'react';
 import { ArrowLeft, Plus, CreditCard as CreditCardIcon, CheckCircle2, Clock } from 'lucide-react';
-import { formatMoney } from '../../utils';
+import { formatMoney, renderHiddenAmount } from '../../utils';
 import Skeleton from '../UI/Skeleton';
 import CardVisual from './CardVisual';
 
@@ -92,7 +92,7 @@ export function CardsListSkeleton({ isGlass }) {
 // ── Panel resumen del mes (total tarjetas) ───────────────────────────────────
 function MonthlyCardsSummary({ cards, monthKey, privacyMode, isGlass, onSelectCard }) {
     const text = isGlass ? 'text-white' : 'text-gray-800';
-    const sub  = isGlass ? 'text-white/50' : 'text-gray-500';
+    const sub  = isGlass ? 'text-white/60' : 'text-gray-500';
 
     // Sumamos el totalDue de cada tarjeta para el mes activo asegurando conversión numérica estricta
     const cardsWithData = useMemo(() => {
@@ -122,7 +122,7 @@ function MonthlyCardsSummary({ cards, monthKey, privacyMode, isGlass, onSelectCa
         return { grandTotal: grand, pendingTotal: pending };
     }, [cardsWithData]);
 
-    const showMoney = (amount) => (privacyMode ? '****' : formatMoney(amount));
+    const showMoney = (amount) => (privacyMode ? renderHiddenAmount('****') : formatMoney(amount));
 
     if (!cards || cards.length === 0) return null;
 
@@ -184,7 +184,7 @@ function MonthlyCardsSummary({ cards, monthKey, privacyMode, isGlass, onSelectCa
                                 {stmt?.dueDate ? (
                                     <p className={`text-[10px] ${sub}`}>Vence {formatDueDate(stmt.dueDate)}</p>
                                 ) : (
-                                    <p className="text-[10px] text-amber-500 font-semibold">Resumen pendiente</p>
+                                    <p className="text-[10px] text-amber-600 dark:text-amber-400 font-semibold">Resumen pendiente</p>
                                 )}
                             </div>
                         </div>
@@ -197,7 +197,7 @@ function MonthlyCardsSummary({ cards, monthKey, privacyMode, isGlass, onSelectCa
                             {isPaid ? (
                                 <span className="text-[10px] font-bold text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full">✓</span>
                             ) : stmt ? (
-                                <span className="text-[10px] font-bold text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-full">⏳</span>
+                                <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full">⏳</span>
                             ) : null}
                         </div>
                     </div>
@@ -212,7 +212,7 @@ const MemoizedMonthlyCardsSummary = memo(MonthlyCardsSummary);
 // ── Vista lista (carrusel + nueva tarjeta) ────────────────────────────────────
 export default function CardsList({ cards = [], loading = false, monthKey, privacyMode, isGlass, onSelectCard, onNewCard, onBack }) {
     const text = isGlass ? 'text-white' : 'text-gray-800';
-    const sub  = isGlass ? 'text-white/50' : 'text-gray-400';
+    const sub  = isGlass ? 'text-white/60' : 'text-gray-500';
 
     if (loading && cards.length === 0) {
         return <CardsListSkeleton isGlass={isGlass} />;

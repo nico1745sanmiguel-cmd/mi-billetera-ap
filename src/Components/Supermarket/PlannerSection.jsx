@@ -57,6 +57,8 @@ export default function PlannerSection({ catData, trips, currentMonthKey, isGlas
     // States for ConfirmDialog
     const [itemToDelete, setItemToDelete] = useState(null);
     const [isDeleteCatOpen, setIsDeleteCatOpen] = useState(false);
+    const [isDeletingCat, setIsDeletingCat] = useState(false);
+    const [isDeletingItem, setIsDeletingItem] = useState(false);
 
     const noteRef = useRef(null);
 
@@ -142,6 +144,8 @@ export default function PlannerSection({ catData, trips, currentMonthKey, isGlas
     };
 
     const confirmDeleteCategory = async () => {
+        if (isDeletingCat) return;
+        setIsDeletingCat(true);
         try {
             const itemsToDelete = trips.filter(t => t.category === catData.id);
             if (itemsToDelete.length > 0) {
@@ -149,25 +153,27 @@ export default function PlannerSection({ catData, trips, currentMonthKey, isGlas
             }
             await deletePlannerCategory(catData.id);
             showToast('Categoría eliminada', 'success');
+            setIsDeleteCatOpen(false);
         } catch (err) {
             console.error(err);
             showToast('Error al eliminar categoría', 'error');
         } finally {
-            setIsDeleteCatOpen(false);
+            setIsDeletingCat(false);
         }
     };
 
     const confirmDeleteItem = async () => {
-        if (itemToDelete) {
-            try {
-                await deleteFreshItem(itemToDelete);
-                showToast('Gasto eliminado', 'success');
-            } catch (err) {
-                console.error(err);
-                showToast('Error al eliminar gasto', 'error');
-            } finally {
-                setItemToDelete(null);
-            }
+        if (!itemToDelete || isDeletingItem) return;
+        setIsDeletingItem(true);
+        try {
+            await deleteFreshItem(itemToDelete);
+            showToast('Gasto eliminado', 'success');
+            setItemToDelete(null);
+        } catch (err) {
+            console.error(err);
+            showToast('Error al eliminar gasto', 'error');
+        } finally {
+            setIsDeletingItem(false);
         }
     };
 
@@ -201,7 +207,7 @@ export default function PlannerSection({ catData, trips, currentMonthKey, isGlas
                         <p className={`font-mono font-bold ${isGlass ? 'text-white' : 'text-gray-900'}`}>
                             {formatMoney(totalReal)}
                         </p>
-                        <p className={`text-[9px] font-bold ${isOverBudget ? (isGlass ? 'text-red-400' : 'text-red-500') : (isGlass ? 'text-white/40' : 'text-gray-400')}`}>
+                        <p className={`text-[9px] font-bold ${isOverBudget ? (isGlass ? 'text-red-400' : 'text-red-500') : (isGlass ? 'text-white/60' : 'text-gray-500')}`}>
                             Presup: {formatMoney(totalBudget)}
                         </p>
                     </div>
@@ -211,7 +217,7 @@ export default function PlannerSection({ catData, trips, currentMonthKey, isGlas
                             type="button"
                             onClick={handleDeleteCategoryRequest}
                             className={`min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl transition-colors ${
-                                isGlass ? 'text-white/20 hover:text-red-400 hover:bg-red-500/10' : 'text-gray-300 hover:text-red-500 hover:bg-red-50'
+                                isGlass ? 'text-white/60 hover:text-red-400 hover:bg-red-500/10' : 'text-gray-500 hover:text-red-500 hover:bg-red-50'
                             }`}
                         >
                             <Trash2 size={16} />
@@ -224,8 +230,8 @@ export default function PlannerSection({ catData, trips, currentMonthKey, isGlas
                         className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl"
                     >
                         {isOpen
-                            ? <ChevronUp size={18} className={isGlass ? 'text-white/40' : 'text-gray-400'} />
-                            : <ChevronDown size={18} className={isGlass ? 'text-white/40' : 'text-gray-400'} />
+                            ? <ChevronUp size={18} className={isGlass ? 'text-white/60' : 'text-gray-500'} />
+                            : <ChevronDown size={18} className={isGlass ? 'text-white/60' : 'text-gray-500'} />
                         }
                     </button>
                 </div>
@@ -235,7 +241,7 @@ export default function PlannerSection({ catData, trips, currentMonthKey, isGlas
                 <div className="px-4 pb-4 space-y-4">
                     {budgetTrips.length > 0 && (
                         <div className="space-y-2">
-                            <p className={`text-[10px] font-bold uppercase tracking-widest ${isGlass ? 'text-white/30' : 'text-gray-400'}`}>Pendiente / Presupuesto</p>
+                            <p className={`text-[10px] font-bold uppercase tracking-widest ${isGlass ? 'text-white/60' : 'text-gray-500'}`}>Pendiente / Presupuesto</p>
                             {budgetTrips.map(trip => (
                                 <TripCard key={trip.id} trip={trip} cfg={cfg} isGlass={isGlass} onDelete={setItemToDelete} onUpdateTotal={updateFreshTotal} onToggleCompleted={toggleFreshCompleted} compactView={settings.compactView} />
                             ))}
@@ -244,7 +250,7 @@ export default function PlannerSection({ catData, trips, currentMonthKey, isGlas
 
                     {!settings.hideCompleted && completedTrips.length > 0 && (
                         <div className="space-y-2">
-                            <p className={`text-[10px] font-bold uppercase tracking-widest ${isGlass ? 'text-white/30' : 'text-gray-400'}`}>Completado / Historial</p>
+                            <p className={`text-[10px] font-bold uppercase tracking-widest ${isGlass ? 'text-white/60' : 'text-gray-500'}`}>Completado / Historial</p>
                             {completedTrips.map(trip => (
                                 <TripCard key={trip.id} trip={trip} cfg={cfg} isGlass={isGlass} onDelete={setItemToDelete} onUpdateTotal={updateFreshTotal} onToggleCompleted={toggleFreshCompleted} compactView={settings.compactView} />
                             ))}
@@ -254,7 +260,7 @@ export default function PlannerSection({ catData, trips, currentMonthKey, isGlas
                     {/* Empty State amigable si no hay movimientos pendientes ni completados visibles */}
                     {budgetTrips.length === 0 && (settings.hideCompleted || completedTrips.length === 0) && (
                         <div className={`flex flex-col items-center justify-center py-6 px-4 rounded-2xl border text-center transition-all ${
-                            isGlass ? 'bg-white/[0.02] border-white/5 text-white/50' : 'bg-gray-50/70 border-gray-100 text-gray-400'
+                            isGlass ? 'bg-white/[0.02] border-white/5 text-white/60' : 'bg-gray-50/70 border-gray-100 text-gray-500'
                         }`}>
                             <Calendar size={22} className="mb-1.5 opacity-40 text-current" />
                             <p className="text-xs font-semibold">Sin movimientos aún este mes.</p>
@@ -266,11 +272,11 @@ export default function PlannerSection({ catData, trips, currentMonthKey, isGlas
                         isGlass ? 'bg-black/20 border-white/10' : 'bg-white border-gray-200 shadow-sm'
                     }`}>
                         <div className="flex justify-between items-center mb-1">
-                            <p className={`text-[10px] font-bold uppercase tracking-wider ${isGlass ? 'text-gray-500' : 'text-gray-400'}`}>
+                            <p className={`text-[10px] font-bold uppercase tracking-wider ${isGlass ? 'text-white/60' : 'text-gray-500'}`}>
                                 + Nuevo Ítem
                             </p>
                             <div className="flex items-center gap-1.5">
-                                <Calendar size={13} className="text-gray-400 flex-shrink-0" />
+                                <Calendar size={13} className="text-gray-500 flex-shrink-0" />
                                 <input
                                     autoComplete="off"
                                     id={`plan-date-${catData.id}`}
@@ -345,20 +351,24 @@ export default function PlannerSection({ catData, trips, currentMonthKey, isGlas
                 isOpen={isDeleteCatOpen}
                 title="¿Eliminar categoría?"
                 message={`¿Seguro que querés eliminar la categoría "${catData.label}" y todos sus gastos internos?`}
-                confirmText="Eliminar"
+                confirmText={isDeletingCat ? "Eliminando..." : "Eliminar"}
+                cancelText="Cancelar"
                 isDanger={true}
+                isLoading={isDeletingCat}
                 onConfirm={confirmDeleteCategory}
-                onCancel={() => setIsDeleteCatOpen(false)}
+                onCancel={() => !isDeletingCat && setIsDeleteCatOpen(false)}
             />
 
             <ConfirmDialog
                 isOpen={!!itemToDelete}
                 title="¿Borrar ítem?"
                 message="Esta acción no se puede deshacer."
-                confirmText="Borrar"
+                confirmText={isDeletingItem ? "Borrando..." : "Borrar"}
+                cancelText="Cancelar"
                 isDanger={true}
+                isLoading={isDeletingItem}
                 onConfirm={confirmDeleteItem}
-                onCancel={() => setItemToDelete(null)}
+                onCancel={() => !isDeletingItem && setItemToDelete(null)}
             />
         </div>
     );

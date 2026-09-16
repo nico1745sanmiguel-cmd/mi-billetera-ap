@@ -340,3 +340,178 @@ Integrity mode: development
 ### Documentación de Cambios
 - [ ] Cada agente documenta en un informe final estructurado: archivo afectado, línea de código exacta, diagnóstico del problema previo y solución implementada.
 
+## 2026-09-15T22:00:36Z
+
+Implementar la Fase 1 de mejoras críticas de UX/UI para "Mi Billetera" (React 18, Vite, Tailwind CSS, PWA), enfocada en seguridad contra pérdida de datos, ergonomía de áreas seguras en celulares y corrección de formularios.
+
+Working directory: c:\Users\Nico\.gemini\antigravity\scratch\mi-billetera-ap
+Integrity mode: development
+
+## Requirements
+
+### R1. Safe Areas y Ergonomía PWA en Pantallas con Notch / Barra de Gestos
+- Configurar el meta-tag de viewport en `index.html` con `viewport-fit=cover`.
+- Incorporar variables seguras de CSS (`env(safe-area-inset-top)` y `env(safe-area-inset-bottom)`) en la cabecera móvil (`MobileHeader.jsx`) y en elementos anclados al fondo (como `SupermarketAddInput.jsx`), evitando solapamientos con la barra de estado y la barra de navegación gestual del sistema operativo.
+
+### R2. Desacoplamiento y Unicidad de Campos en Formularios
+- Eliminar los identificadores duplicados `id="input-field"` en todos los formularios de la app (especialmente `Login.jsx`, `NewPurchase.jsx` y `ServiceModal.jsx`).
+- Asegurar que cada `<label htmlFor="...">` esté correctamente enlazado a su `<input id="...">` único (o migrar a `useId` / componente `Input.jsx`), permitiendo que el foco táctil y los gestores de contraseñas funcionen sin desvíos erráticos.
+
+### R3. Confirmación Obligatoria y Prevención de Doble Clic en Acciones Destructivas
+- Proteger contra borrados accidentales directos integrando `ConfirmDialog` antes de eliminar:
+  - Fuentes de ingreso en `SalarySourcesEditor.jsx`.
+  - Carteras en `CarterasPanel.jsx`.
+  - Notas en `NotesDashboard.jsx`.
+- En todos los diálogos de confirmación (`ConfirmDialog`), pasar y respetar `isLoading` para desactivar el botón y mostrar feedback visual mientras la operación asíncrona se procesa, previniendo dobles clics y peticiones duplicadas.
+- Reemplazar cualquier llamada residual a `window.confirm()` y `alert()` del navegador por `ConfirmDialog` o avisos integrados.
+
+## Acceptance Criteria
+
+### Ergonomía y Visualización Móvil
+- [ ] La cabecera superior y los inputs inferiores respetan los márgenes seguros del dispositivo sin solaparse con la barra de batería/reloj ni la línea de gestos del sistema.
+- [ ] La interfaz se adapta limpiamente sin saltos visuales ni scroll horizontal no deseado.
+
+### Accesibilidad de Formularios
+- [ ] En `Login.jsx`, hacer tap en "Contraseña" enfoca el campo de contraseña y no el de email.
+- [ ] No existen IDs repetidos en los componentes auditados.
+
+### Seguridad y Resiliencia en Borrados
+- [ ] Ninguna acción destructiva en salarios, carteras o notas borra datos sin que el usuario confirme explícitamente en un modal UI.
+- [ ] Durante el proceso de borrado, el botón queda deshabilitado (`disabled`) y en estado de carga impidiendo toques repetidos.
+- [ ] No existen llamadas a `window.confirm()` ni `alert()` nativos en los flujos modificados.
+- [ ] El proyecto compila limpiamente (`npm run build`).
+
+## 2026-09-16T10:28:27Z
+
+This is a single self-contained fix; keep it small and focused.
+Implementar la Fase 2 de mejoras críticas de UX/UI para "Mi Billetera" (React 18, Vite, Tailwind CSS, PWA), enfocada en Navegación fluida (reparación de rutas rotas y retroceso contextual), Accesibilidad Táctil (touch targets mínimo 44x44px) y Contraste Visual legible (cumplimiento WCAG AA).
+
+Working directory: c:\Users\Nico\.gemini\antigravity\scratch\mi-billetera-ap
+Integrity mode: development
+
+## Requirements
+
+### R1. Reparación de Enlaces y Navegación Contextual
+- En `SuperTile.jsx`, corregir la navegación de `navigate('/supermarket')` a `navigate('/super')`.
+- En pantallas con botón "Volver" (`onBack`), como `ModuleDetailSettings.jsx`, permitir retroceso contextual con `navigate(-1)` o vuelta al módulo de origen en lugar de expulsar rígidamente al usuario a `/dashboard` o romper el historial de navegación.
+
+### R2. Touch Targets Mínimos de 44x44px (Ergonomía Táctil)
+- Asegurar que todos los elementos interactivos cumplan el estándar de accesibilidad de al menos 44px de área de toque mediante padding o contenedores táctiles invisibles (`min-h-[44px] min-w-[44px]` o `p-2.5`/`p-3`):
+  - Switches y toggles en `HouseholdManager.jsx`, `ModulesSettings.jsx`, `PlannerSettings.jsx`, `MobilitySettings.jsx`, `NewPurchase.jsx` y `StopLossModal.jsx`.
+  - Botones de acción, iconos y tachos de basura en `ServicesList.jsx`, `NotesDashboard.jsx`, `OperationsTab.jsx`, `SharedExpensesDashboard.jsx`, `TradeForm.jsx` y `MobilitySettings.jsx`.
+  - Selectores de color en `CardDetail.jsx` y `EnvelopeEditor.jsx`.
+  - Pestañas secundarias en `ServicesManager.jsx` y selector ARS/USD en `SavingsDashboard.jsx`.
+
+### R3. Contraste Visual Legible (Estándar WCAG AA 4.5:1)
+- Corregir textos con bajo contraste sobre fondos claros:
+  - Reemplazar `text-gray-400` y `text-gray-300` sobre fondos blancos por `text-gray-600` o `text-gray-500` en subtítulos, metadata y montos en `NewPurchase.jsx`, `CardsList.jsx`, `PlannerSection.jsx`, `CardDetail.jsx` y `FinancialTarget.jsx`.
+  - Reemplazar `text-amber-500` sobre fondo blanco por `text-amber-600` o `text-amber-700` en `SavingsGoalView.jsx` y `CardsList.jsx`.
+- En modo oscuro / glass, elevar la opacidad de textos secundarios (`text-white/30` o `text-white/40` a `text-white/70` o `text-white/60`) en `WidgetSystem.jsx`, `AgendaWidget.jsx`, `SalaryWidget.jsx` y `ThemeSelector.jsx`.
+
+## Acceptance Criteria
+
+### Navegación
+- [ ] Hacer clic en el widget de supermercado (`SuperTile.jsx`) abre correctamente la vista `/super` sin redirecciones al Dashboard.
+- [ ] El botón volver en `ModuleDetailSettings.jsx` y vistas secundarias retorna limpiamente a la pantalla anterior sin atrapar al usuario.
+
+### Touch Targets
+- [ ] Todos los botones de acción, switches y selectores auditados tienen un área de pulsación de al menos 44x44px sin alterar la estética visual de los componentes pequeños.
+
+### Contraste
+- [ ] No existen textos de contenido ni montos con ratio inferior a 4.5:1 en modo claro ni en modo oscuro.
+
+### Verificación Técnica
+- [ ] `npm run build` compila con éxito (Exit Code 0).
+- [ ] Tests automatizados validan que la ruta `/super` es invocada y que los touch targets cumplen la cota mínima.
+
+## 2026-09-16T11:51:28Z
+
+This is a single self-contained fix; keep it small and focused.
+Implementar la Fase 3 de mejoras críticas de UX/UI para "Mi Billetera" (React 18, Vite, Tailwind CSS, PWA), enfocada en Feedback visual claro, Skeletons de carga consistentes (eliminación de parpadeos de 'vacío') y Validación visual accesible de formularios y errores.
+
+Working directory: c:\Users\Nico\.gemini\antigravity\scratch\mi-billetera-ap
+Integrity mode: development
+
+## Requirements
+
+### R1. Skeletons de Carga y Eliminación de Falsos 'Empty States'
+- En `NotesDashboard.jsx` y `ServicesList.jsx`, incorporar un indicador explícito de carga (`loading`) para que durante la conexión a la base de datos se muestre un esqueleto visual pulsante (`Skeleton.jsx`) en lugar de mostrar prematuramente "No se encontraron notas" o "Nada pendiente".
+- En `PortfolioTab.jsx`, mostrar feedback de carga inicial mientras se resuelven las operaciones de inversión antes de desplegar el mensaje de lista vacía.
+- En `SuperList.jsx`, unificar los divs de carga hardcodeados para reutilizar el componente base `Skeleton.jsx`.
+- En `ReconciliationDesk.jsx`, proporcionar un empty state claro con feedback si `parsedItems.length === 0` en el paso de revisión.
+
+### R2. Soporte Completo de Notificaciones Toast (Variante 'warning' y Accesibilidad)
+- En `Toast.jsx`, implementar la variante `'warning'` con paleta ámbar/amarilla e ícono de advertencia (`AlertTriangle`), asegurando que las llamadas existentes en `TripCard.jsx`, `PlannerSection.jsx` y `NotesSettings.jsx` ya no se muestren erróneamente de color verde de éxito.
+- Para mensajes de tipo `'error'`, configurar accesibilidad auditiva con `role="alert"` y `aria-live="assertive"`.
+
+### R3. Validación Visual de Formularios y Manejo de Excepciones
+- En `ServicesManager.jsx`, reemplazar el `return;` silencioso ante campos vacíos por marcado visual de error (borde rojo) y toast informativo indicando qué campo falta.
+- En `StatsDetails.jsx`, agregar notificación toast ante fallos en los bloques `catch` de edición y borrado de movimientos para que el usuario reciba feedback si la operación falla, en lugar de quedar en silencio.
+- En `NewPurchase.jsx` y `OperationModal.jsx`, resaltar visualmente los campos obligatorios incompletos cuando se intenta enviar el formulario.
+
+## Acceptance Criteria
+
+### Skeletons y Estados de Carga
+- [ ] En la carga inicial de Notas, Servicios y Portafolio, se renderizan Skeletons y no se muestra el mensaje de lista vacía durante el tiempo de espera de red.
+- [ ] `SuperList.jsx` utiliza el componente atómico `Skeleton.jsx`.
+
+### Notificaciones Toast
+- [ ] Invocaciones con tipo `'warning'` muestran estilos ámbar e ícono de advertencia, nunca el tilde verde de éxito.
+- [ ] Errores en Toasts tienen atributos accesibles `role="alert"` y `aria-live="assertive"`.
+
+### Formularios y Errores
+- [ ] Intentar guardar un servicio sin monto o nombre en `ServicesManager.jsx` produce feedback visual inmediato y advertencia al usuario.
+- [ ] Los errores en `StatsDetails.jsx` notifican al usuario con un Toast de error.
+- [ ] Formularios con campos faltantes destacan visualmente el error.
+
+### Verificación Técnica
+- [ ] `npm run build` compila limpiamente (Exit Code 0).
+- [ ] Tests automatizados validan la presencia de la variante warning, el uso de Skeletons y el feedback en formularios.
+
+## 2026-09-16T16:22:43Z
+
+This is a single self-contained fix; keep it small and focused.
+Implementar la Fase 4 de mejoras de UX/UI para "Mi Billetera" (React 18, Vite, Tailwind CSS, PWA), enfocada en Ergonomía Móvil (Bottom Navigation Bar persistente), Resiliencia (Error Boundaries a nivel de módulo), Accesibilidad (Modo Privacidad con aria-hidden y screen-reader tags) y Consistencia de Navegación en Desktop (Navbar completa con módulos activos).
+
+Working directory: c:\Users\Nico\.gemini\antigravity\scratch\mi-billetera-ap
+Integrity mode: development
+
+## Requirements
+
+### R1. Bottom Navigation Bar Móvil (Ergonomía de Pulgar)
+- Crear un componente `BottomNav.jsx` persistente para pantallas móviles (`md:hidden`), posicionado en la parte inferior respetando el área segura (`env(safe-area-inset-bottom)`).
+- Debe ofrecer accesos directos principales con touch targets >= 44x44px e iconos intuitivos (ej. Inicio/Dashboard, Nueva Compra, Servicios, Ahorro/Inversiones, Menú de Módulos).
+- Indicar visualmente la pestaña activa según `location.pathname` y permitir navegación rápida sin obligar al usuario a volver al Dashboard.
+- Asegurar que el contenido de la pantalla tenga padding inferior compensatorio en móvil para no quedar oculto detrás de la barra.
+
+### R2. Error Boundaries Granulares por Módulo
+- Extender el uso del componente `ErrorBoundary.jsx` existente envolviendo cada ruta o módulo principal en `App.jsx` de forma individual (en lugar de tener únicamente un boundary global que tire abajo toda la app si falla un módulo).
+- El fallback visual del ErrorBoundary modular debe mantener el header/navegación y ofrecer un botón accesible "Reintentar" o "Volver al Dashboard" con touch target >= 44px.
+
+### R3. Accesibilidad Semántica en Modo Privacidad
+- En los lugares donde `privacyMode` oculta montos (reemplazando por '****' o '••••'), envolver el texto oculto con atributos accesibles: `aria-hidden="true"` en los asteriscos y añadir un `span` con clase `sr-only` que indique "Monto oculto por privacidad" para que los lectores de pantalla anuncien el contexto y no deletreen asteriscos.
+
+### R4. Navbar Desktop Completa y Contextual
+- En `src/Components/Layout/Navbar.jsx`, actualizar la lista de enlaces para incluir los módulos activados que estaban omitidos (Servicios, Supermercado, Sueldos, Gastos Compartidos) según el resultado de `isModuleEnabled(...)` o agruparlos de forma elegante para evitar sobrecargar el ancho de pantalla.
+
+## Acceptance Criteria
+
+### Bottom Navigation Móvil
+- [ ] En pantallas móviles (`< 768px`) se visualiza una barra de navegación inferior fija con soporte de safe area (`pb-[env(safe-area-inset-bottom)]`).
+- [ ] Los botones tienen touch target >= 44x44px y cambian de estilo cuando su ruta está activa.
+- [ ] La barra no tapa contenido inferior (se añade padding o margen compensatorio en el layout).
+
+### Error Boundaries Modulares
+- [ ] Las rutas secundarias y módulos en `App.jsx` están protegidos por `ErrorBoundary`. Si una vista falla, el resto de la aplicación y la navegación continúan operativas.
+- [ ] El componente de error modular provee un botón de recuperación accesible.
+
+### Modo Privacidad Accesible
+- [ ] Los montos ocultos usan `aria-hidden="true"` y texto accesible para lectores de pantalla.
+
+### Navbar Desktop
+- [ ] Los módulos activos están accesibles desde desktop sin quedar truncados ni desbordar la barra.
+
+### Verificación Técnica
+- [ ] `npm run build` compila con éxito (Exit Code 0).
+- [ ] Test automatizado valida la presencia de `BottomNav`, la cobertura de `ErrorBoundary` en rutas clave y las etiquetas accesibles de privacidad.
+

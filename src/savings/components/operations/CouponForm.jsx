@@ -15,8 +15,13 @@ export default function CouponForm({
     fechaMode,
     setFechaMode,
     diasTenencia,
-    setDiasTenencia
+    setDiasTenencia,
+    errors = {},
+    setErrors
 }) {
+    const getFieldClass = (field) => errors?.[field] ? `${inputClasses} border-red-500 ring-2 ring-red-500/20` : inputClasses;
+    const clearError = (field) => { if (errors?.[field] && setErrors) setErrors(prev => ({ ...prev, [field]: null })); };
+
     return (
         <>
             {/* Fecha */}
@@ -28,7 +33,7 @@ export default function CouponForm({
                     <button
                         type="button"
                         onClick={() => setFechaMode(m => m === 'exacta' ? 'dias' : 'exacta')}
-                        className="text-xs text-green-500 font-bold hover:underline"
+                        className="min-h-[44px] inline-flex items-center px-2 -mr-2 text-xs text-green-500 font-bold hover:underline"
                     >
                         {fechaMode === 'exacta' ? 'Usar días de tenencia' : 'Usar fecha exacta'}
                     </button>
@@ -38,9 +43,12 @@ export default function CouponForm({
                         id="fecha"
                         type="date"
                         value={formData.fecha}
-                        onChange={(e) => setFormData({ ...formData, fecha: e.target.value })}
+                        onChange={(e) => {
+                            clearError('fecha');
+                            setFormData({ ...formData, fecha: e.target.value });
+                        }}
                         required
-                        className={inputClasses}
+                        className={getFieldClass('fecha')}
                     />
                 ) : (
                     <input
@@ -48,6 +56,7 @@ export default function CouponForm({
                         placeholder="Ej: 45 (calcula la fecha hacia atrás)"
                         value={diasTenencia}
                         onChange={(e) => {
+                            clearError('fecha');
                             setDiasTenencia(e.target.value);
                             const d = parseInt(e.target.value) || 0;
                             const dt = new Date();
@@ -58,9 +67,10 @@ export default function CouponForm({
                             setFormData({ ...formData, fecha: `${year}-${month}-${day}` });
                         }}
                         required
-                        className={inputClasses}
+                        className={getFieldClass('fecha')}
                     />
                 )}
+                {errors?.fecha && <p className="text-red-400 text-xs mt-1 font-medium">{errors.fecha}</p>}
                 {fechaMode === 'dias' && (
                     <div className={`text-xs mt-1 ${isGlass ? 'text-white/60' : 'text-gray-500'}`}>
                         Fecha calculada: {formData.fecha ? `${formData.fecha.split('-')[2]}/${formData.fecha.split('-')[1]}/${formData.fecha.split('-')[0]}` : '-'}
@@ -80,15 +90,19 @@ export default function CouponForm({
                                 type="text"
                                 placeholder="Escribí..."
                                 value={formData.cartera}
-                                onChange={(e) => setFormData({ ...formData, cartera: e.target.value })}
+                                onChange={(e) => {
+                                    clearError('cartera');
+                                    setFormData({ ...formData, cartera: e.target.value });
+                                }}
                                 required
-                                className={inputClasses}
+                                className={getFieldClass('cartera')}
                                 autoFocus
                             />
                             <button
                                 type="button"
-                                onClick={() => { setCustomCartera(false); setFormData({ ...formData, cartera: '' }); }}
-                                className={`px-3 rounded-xl transition-colors ${isGlass ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`}
+                                aria-label="Cancelar cartera personalizada"
+                                onClick={() => { clearError('cartera'); setCustomCartera(false); setFormData({ ...formData, cartera: '' }); }}
+                                className={`min-h-[44px] min-w-[44px] px-3 flex items-center justify-center rounded-xl transition-colors ${isGlass ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`}
                             >
                                 <X size={16} />
                             </button>
@@ -98,6 +112,7 @@ export default function CouponForm({
                             id="cartera"
                             value={carterasOpciones.includes(formData.cartera) ? formData.cartera : (formData.cartera ? 'OTRA_OPCION' : '')}
                             onChange={(e) => {
+                                clearError('cartera');
                                 if (e.target.value === 'OTRA_OPCION') {
                                     setCustomCartera(true);
                                     setFormData({ ...formData, cartera: '' });
@@ -106,7 +121,7 @@ export default function CouponForm({
                                 }
                             }}
                             required
-                            className={inputClasses}
+                            className={getFieldClass('cartera')}
                         >
                             <option value="" disabled>Seleccioná...</option>
                             {carterasOpciones.map(c => <option key={c} value={c}>{c}</option>)}
@@ -116,6 +131,7 @@ export default function CouponForm({
                             <option value="OTRA_OPCION">+ Escribir otra...</option>
                         </select>
                     )}
+                    {errors?.cartera && <p className="text-red-400 text-xs mt-1 font-medium">{errors.cartera}</p>}
                 </div>
 
                 <div>
@@ -129,15 +145,19 @@ export default function CouponForm({
                                 type="text"
                                 placeholder="Ej: AL30"
                                 value={formData.especie}
-                                onChange={(e) => setFormData({ ...formData, especie: e.target.value.toUpperCase() })}
+                                onChange={(e) => {
+                                    clearError('especie');
+                                    setFormData({ ...formData, especie: e.target.value.toUpperCase() });
+                                }}
                                 required
-                                className={inputClasses}
+                                className={getFieldClass('especie')}
                                 autoFocus
                             />
                             <button
                                 type="button"
-                                onClick={() => { setCustomEspecie(false); setFormData({ ...formData, especie: '' }); }}
-                                className={`px-3 rounded-xl transition-colors ${isGlass ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`}
+                                aria-label="Cancelar activo personalizado"
+                                onClick={() => { clearError('especie'); setCustomEspecie(false); setFormData({ ...formData, especie: '' }); }}
+                                className={`min-h-[44px] min-w-[44px] px-3 flex items-center justify-center rounded-xl transition-colors ${isGlass ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`}
                             >
                                 <X size={16} />
                             </button>
@@ -147,6 +167,7 @@ export default function CouponForm({
                             id="especie"
                             value={especiesOpciones.includes(formData.especie) ? formData.especie : (formData.especie ? 'OTRA_OPCION' : '')}
                             onChange={(e) => {
+                                clearError('especie');
                                 if (e.target.value === 'OTRA_OPCION') {
                                     setCustomEspecie(true);
                                     setFormData({ ...formData, especie: '' });
@@ -155,7 +176,7 @@ export default function CouponForm({
                                 }
                             }}
                             required
-                            className={inputClasses}
+                            className={getFieldClass('especie')}
                         >
                             <option value="" disabled>Seleccioná...</option>
                             {especiesOpciones.map(c => <option key={c} value={c}>{c}</option>)}
@@ -165,6 +186,7 @@ export default function CouponForm({
                             <option value="OTRA_OPCION">+ Escribir otra...</option>
                         </select>
                     )}
+                    {errors?.especie && <p className="text-red-400 text-xs mt-1 font-medium">{errors.especie}</p>}
                 </div>
             </div>
 
@@ -181,13 +203,18 @@ export default function CouponForm({
                             inputMode="decimal"
                             placeholder="Ej: 850 o 850,50"
                             value={formData.montoTotal || ''}
-                            onChange={(e) => setFormData({ ...formData, montoTotal: e.target.value })}
+                            onChange={(e) => {
+                                clearError('montoTotal');
+                                setFormData({ ...formData, montoTotal: e.target.value });
+                            }}
                             required
-                            className={inputClasses}
+                            className={getFieldClass('montoTotal')}
                         />
+                        {errors?.montoTotal && <p className="text-red-400 text-xs mt-1 font-medium">{errors.montoTotal}</p>}
                     </div>
                     <div className="w-1/3">
                         <select
+                            aria-label="Moneda del cobro"
                             value={formData.monedaPrecio}
                             onChange={(e) => setFormData({ ...formData, monedaPrecio: e.target.value })}
                             className={inputClasses}

@@ -7,7 +7,7 @@ import {
 import { useCards } from '../../context/CardsContext';
 import { useServices } from '../../context/ServicesContext';
 import { useSupermarket } from '../../context/SupermarketContext';
-import { formatMoney } from '../../utils';
+import { formatMoney, renderHiddenAmount } from '../../utils';
 import { useUI } from '../../context/UIContext';
 import StatsDetails from './StatsDetails';
 import { useStatsData } from '../../hooks/useStatsData';
@@ -79,7 +79,7 @@ export default function Stats() {
     const currentChartTotal = chartData.reduce((acc, i) => acc + i.value, 0);
 
     // Helpers UI
-    const showMoney = (amount) => privacyMode ? '****' : formatMoney(amount);
+    const showMoney = (amount) => privacyMode ? renderHiddenAmount('****') : formatMoney(amount);
     
     const glassClass = isGlass ? 'bg-white/5 border-white/10 text-white backdrop-blur-md' : 'bg-white border-gray-100 text-gray-800';
     const glassTextSecondary = isGlass ? 'text-white/60' : 'text-gray-400';

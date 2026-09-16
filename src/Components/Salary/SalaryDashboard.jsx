@@ -6,7 +6,7 @@ import { useUI } from '../../context/UIContext';
 import { useServices } from '../../context/ServicesContext';
 import { useCards } from '../../context/CardsContext';
 import { useSupermarket } from '../../context/SupermarketContext';
-import { formatMoney } from '../../utils';
+import { formatMoney, renderHiddenAmount } from '../../utils';
 import { calcularProporciones, calcularAportesExactos, obtenerTotalGastosCompartidos } from '../../utils/salaryUtils';
 import { buildCardsWithDebt } from '../../utils/cardDebtUtils';
 import EnvelopeCard from './EnvelopeCard';
@@ -76,7 +76,7 @@ function SalaryDashboardInner({ onBack }) {
     const percent = totalIncome > 0 ? Math.min(100, Math.round((totalBudgeted / totalIncome) * 100)) : 0;
     const isOverBudget = totalFree < 0;
 
-    const showMoney = (amount) => privacyMode ? '••••' : formatMoney(amount);
+    const showMoney = (amount) => privacyMode ? renderHiddenAmount('••••') : formatMoney(amount);
 
     if (loading) {
         return (

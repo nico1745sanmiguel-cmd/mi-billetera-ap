@@ -6,9 +6,10 @@ import { getCache, setCache } from '../../utils/cache';
 import { COLLECTIONS, CACHE_KEYS } from '../../config/constants';
 
 export const useSavingsData = () => {
-    const { user, userData } = useAuth();
+    const { user, userData, loadingUser } = useAuth();
     
     const [savingsTransactions, setSavingsTransactions] = useState(() => getCache(CACHE_KEYS.SAVINGS_TRANSACTIONS, []));
+    const [loading, setLoading] = useState(() => !getCache(CACHE_KEYS.SAVINGS_TRANSACTIONS, null));
     const [carterasPersonalizadas, setCarterasPersonalizadas] = useState(() => getCache(CACHE_KEYS.SAVINGS_CARTERAS, []));
     const [manualAssetPrices, setManualAssetPrices] = useState({});
 
@@ -17,7 +18,14 @@ export const useSavingsData = () => {
 
     // Listener de transacciones (depende solo de IDs primitivos para no re-suscribir en re-renders)
     useEffect(() => {
-        if (!uid) return;
+        if (loadingUser) {
+            setLoading(true);
+            return;
+        }
+        if (!uid) {
+            setLoading(false);
+            return;
+        }
         const queryField = householdId ? "householdId" : "userId";
         const queryValue = householdId ? householdId : uid;
 
@@ -27,11 +35,15 @@ export const useSavingsData = () => {
         const unsubSavings = onSnapshot(q, (snap) => {
             const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
             setSavingsTransactions(data);
+            setLoading(false);
             setCache(CACHE_KEYS.SAVINGS_TRANSACTIONS, data);
-        }, (error) => console.error(`Offline/Error for ${COLLECTIONS.SAVINGS_TRANSACTIONS}:`, error));
+        }, (error) => {
+            console.error(`Offline/Error for ${COLLECTIONS.SAVINGS_TRANSACTIONS}:`, error);
+            setLoading(false);
+        });
 
         return () => unsubSavings();
-    }, [uid, householdId]);
+    }, [uid, householdId, loadingUser]);
 
     // Listener unificado de 'savings_asset_prices' (carteras y overrides de precios manuales juntos)
     useEffect(() => {
@@ -148,6 +160,7 @@ export const useSavingsData = () => {
 
     return {
         savingsTransactions,
+        loading,
         carterasPersonalizadas,
         manualAssetPrices,
         addSavingsTransaction,

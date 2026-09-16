@@ -27,11 +27,11 @@ function SalaryWidgetInner({ setView, privacyMode, size }) {
                     <Briefcase size={18} />
                 </div>
                 <div className="relative z-10 w-full min-w-0">
-                    <p className="text-[10px] uppercase font-bold text-gray-500 dark:text-white/50 tracking-wider mb-0.5">Sueldo</p>
+                    <p className="text-[10px] uppercase font-bold text-gray-600 dark:text-white/60 tracking-wider mb-0.5">Sueldo</p>
                     {loading && totalIncome === 0 ? (
                         <Skeleton type="title" width="80px" className="!h-6 mx-auto" />
                     ) : totalIncome === 0 ? (
-                        <p className="text-xs text-gray-400 dark:text-white/40 font-medium">Sin configurar</p>
+                        <p className="text-xs text-gray-600 dark:text-white/60 font-medium">Sin configurar</p>
                     ) : (
                         <>
                             <p className="text-lg font-extrabold text-violet-700 dark:text-violet-300 font-mono truncate w-full">
@@ -43,7 +43,7 @@ function SalaryWidgetInner({ setView, privacyMode, size }) {
                                     style={{ width: `${percent}%` }}
                                 />
                             </div>
-                            <p className="text-[9px] text-gray-400 dark:text-white/30 mt-0.5">{percent}% asig.</p>
+                            <p className="text-[9px] text-gray-500 dark:text-white/60 mt-0.5">{percent}% asig.</p>
                         </>
                     )}
                 </div>
@@ -71,10 +71,10 @@ function SalaryWidgetInner({ setView, privacyMode, size }) {
                     </div>
                     <div>
                         <h3 className="font-bold text-base text-gray-800 dark:text-white leading-tight">Sueldo del mes</h3>
-                        <p className="text-[10px] uppercase font-bold text-gray-500 dark:text-white/50 tracking-wider">Plan de ingresos</p>
+                        <p className="text-[10px] uppercase font-bold text-gray-600 dark:text-white/60 tracking-wider">Plan de ingresos</p>
                     </div>
                 </div>
-                <div aria-hidden="true" className="w-11 h-11 flex items-center justify-center text-gray-400 dark:text-white/40 group-hover:text-violet-600 dark:group-hover:text-violet-300 transition-colors">
+                <div aria-hidden="true" className="w-11 h-11 flex items-center justify-center text-gray-500 dark:text-white/60 group-hover:text-violet-600 dark:group-hover:text-violet-300 transition-colors">
                     <ChevronRight size={20} />
                 </div>
             </div>
@@ -86,14 +86,14 @@ function SalaryWidgetInner({ setView, privacyMode, size }) {
                         <Skeleton type="text" width="100%" />
                     </div>
                 ) : totalIncome === 0 ? (
-                    <p className="text-sm text-gray-400 dark:text-white/40 font-medium">Sin configurar · Tocá para empezar</p>
+                    <p className="text-sm text-gray-600 dark:text-white/60 font-medium">Sin configurar · Tocá para empezar</p>
                 ) : (
                     <>
                         <div className="flex items-end gap-3 mb-3">
                             <p className="text-3xl font-extrabold text-violet-700 dark:text-violet-300 font-mono">
                                 {showMoney(totalIncome)}
                             </p>
-                            <p className="text-xs font-semibold text-gray-500 dark:text-white/50 mb-1.5 bg-white/60 dark:bg-black/20 px-2 py-1 rounded-lg flex items-center gap-1">
+                            <p className="text-xs font-semibold text-gray-600 dark:text-white/70 mb-1.5 bg-white/60 dark:bg-black/20 px-2 py-1 rounded-lg flex items-center gap-1">
                                 <Wallet size={12} className="text-violet-400" />
                                 Libre: {showMoney(totalFree)}
                             </p>
@@ -105,7 +105,7 @@ function SalaryWidgetInner({ setView, privacyMode, size }) {
                                 style={{ width: `${percent}%` }}
                             />
                         </div>
-                        <p className="text-[10px] text-gray-400 dark:text-white/30 mt-1">{percent}% asignado</p>
+                        <p className="text-[10px] text-gray-500 dark:text-white/60 mt-1">{percent}% asignado</p>
                     </>
                 )}
             </div>

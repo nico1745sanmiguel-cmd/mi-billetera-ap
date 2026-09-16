@@ -55,6 +55,7 @@ export default function NewPurchase({ onSave }) {
     const [category, setCategory] = useState('varios');
     const [isShared, setIsShared] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
+    const [submitAttempted, setSubmitAttempted] = useState(false);
 
     const setDateToday = () => setDate(getLocalDateString(new Date()));
     const setDateYesterday = () => {
@@ -97,17 +98,18 @@ export default function NewPurchase({ onSave }) {
 
     const handleSave = async (e) => {
         e.preventDefault();
+        setSubmitAttempted(true);
         if (isSaving) return;
 
         const numAmount = Number(amount);
         if (!numAmount || numAmount <= 0) {
-            showToast("Ingresa un monto válido mayor a $ 0", "error");
+            showToast("Ingresa un monto válido mayor a $ 0", "warning");
             return;
         }
 
         if (type === 'credit') {
             if (!selectedCardId || !cards.some(c => c.id === selectedCardId)) {
-                showToast("Debes seleccionar una tarjeta para compras con crédito", "error");
+                showToast("Debes seleccionar una tarjeta para compras con crédito", "warning");
                 return;
             }
         }
@@ -143,7 +145,8 @@ export default function NewPurchase({ onSave }) {
     };
 
     const isCreditMissingCard = type === 'credit' && (!selectedCardId || cards.length === 0);
-    const isSubmitDisabled = isSaving || !amount || Number(amount) <= 0 || isCreditMissingCard;
+    const amountHasError = submitAttempted && (!amount || Number(amount) <= 0);
+    const creditCardHasError = submitAttempted && isCreditMissingCard;
 
     return (
         <div className="animate-fade-in max-w-lg mx-auto pb-32">
@@ -152,49 +155,75 @@ export default function NewPurchase({ onSave }) {
 
                 {/* 1. PAYMENT METHOD (TOP) */}
                 <div className={`flex p-1 rounded-2xl mx-1 ${isGlass ? 'bg-white/5' : 'bg-gray-200'}`}>
-                    <button aria-label="Acción"
+                    <button aria-label="Efectivo o Débito"
                         type="button"
                         disabled={isSaving}
-                        onClick={() => setType('cash')}
-                        className={`flex-1 py-4 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${type === 'cash' ? (isGlass ? 'bg-white/10 text-green-300 shadow-sm border border-white/5' : 'bg-white text-green-600 shadow-sm') : (isGlass ? 'text-white/30 hover:text-white/60' : 'text-gray-400')} ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        onClick={() => {
+                            if (submitAttempted) setSubmitAttempted(false);
+                            setType('cash');
+                        }}
+                        className={`flex-1 py-4 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${type === 'cash' ? (isGlass ? 'bg-white/10 text-green-300 shadow-sm border border-white/5' : 'bg-white text-green-600 shadow-sm') : (isGlass ? 'text-white/60 hover:text-white' : 'text-gray-600')} ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
                         <Banknote size={18} /> Efectivo / Débito
                     </button>
-                    <button aria-label="Acción"
+                    <button aria-label="Crédito"
                         type="button"
                         disabled={isSaving}
-                        onClick={() => setType('credit')}
-                        className={`flex-1 py-4 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${type === 'credit' ? (isGlass ? 'bg-white/10 text-blue-300 shadow-sm border border-white/5' : 'bg-white text-blue-600 shadow-sm') : (isGlass ? 'text-white/30 hover:text-white/60' : 'text-gray-400')} ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        onClick={() => {
+                            if (submitAttempted) setSubmitAttempted(false);
+                            setType('credit');
+                        }}
+                        className={`flex-1 py-4 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${type === 'credit' ? (isGlass ? 'bg-white/10 text-blue-300 shadow-sm border border-white/5' : 'bg-white text-blue-600 shadow-sm') : (isGlass ? 'text-white/60 hover:text-white' : 'text-gray-600')} ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
                         <CreditCard size={18} /> Crédito
                     </button>
                 </div>
 
                 {/* 2. AMOUNT INPUT (HUGE) */}
-                <div className="text-center py-4">
+                <div className={`text-center py-4 px-3 rounded-3xl transition-all border-2 ${
+                    amountHasError
+                        ? 'border-red-500 bg-red-500/10 ring-2 ring-red-500/20'
+                        : 'border-transparent'
+                }`}>
                     <div className="flex justify-center items-center gap-1">
-                        <span className={`text-4xl font-bold ${isGlass ? 'text-white/30' : 'text-gray-300'}`}>$</span>
-                        <input autoComplete="off" id="input-field"
+                        <span className={`text-4xl font-bold ${amountHasError ? 'text-red-400' : (isGlass ? 'text-white/60' : 'text-gray-500')}`}>$</span>
+                        <input
+                            autoComplete="off"
+                            id="purchase-amount"
+                            aria-label="Monto de la compra"
                             type="tel"
                             disabled={isSaving}
                             value={amount === '' ? '' : formatInputNumber(amount)}
                             onChange={(e) => {
+                                if (submitAttempted) setSubmitAttempted(false);
                                 const raw = e.target.value;
                                 setAmount(raw === '' ? '' : parseInputNumber(raw));
                             }}
-                            className={`text-5xl font-bold w-full text-center outline-none bg-transparent tracking-tighter ${isGlass ? 'text-white placeholder-white/10' : 'text-gray-800 placeholder-gray-200'} ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            className={`text-5xl font-bold w-full text-center outline-none bg-transparent tracking-tighter ${
+                                amountHasError
+                                    ? 'text-red-500 placeholder-red-300'
+                                    : (isGlass ? 'text-white placeholder-white/10' : 'text-gray-800 placeholder-gray-200')
+                            } ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}
                             placeholder="0"
                         />
                     </div>
+                    {amountHasError && (
+                        <p className="text-xs text-red-400 font-medium mt-1">El monto debe ser mayor a 0</p>
+                    )}
                 </div>
 
                 {/* 3. CREDIT CARD PANEL (If Credit) */}
                 {type === 'credit' && (
-                    <div className={`p-5 rounded-[30px] border relative overflow-hidden transition-all ${isGlass ? 'bg-white/5 border-white/10' : 'bg-white border-gray-100'}`}>
+                    <div className={`p-5 rounded-[30px] border relative overflow-hidden transition-all ${
+                        creditCardHasError ? 'border-red-500 ring-2 ring-red-500/20' : (isGlass ? 'bg-white/5 border-white/10' : 'bg-white border-gray-100')
+                    }`}>
 
                         {/* Selector Tarjetas */}
                         <div className="mb-6">
-                            <label htmlFor="input-field" className={`block text-xs font-bold uppercase mb-3 ml-1 ${isGlass ? 'text-white/40' : 'text-gray-400'}`}>Seleccionar Tarjeta</label>
+                            <div className="flex items-center justify-between mb-3 ml-1">
+                                <p className={`block text-xs font-bold uppercase ${creditCardHasError ? 'text-red-400' : (isGlass ? 'text-white/70' : 'text-gray-600')}`}>Seleccionar Tarjeta</p>
+                                {creditCardHasError && <span className="text-xs text-red-400 font-medium">Obligatorio</span>}
+                            </div>
                             
                             {loadingCards ? (
                                 <div className="flex gap-3 overflow-x-auto pb-2 hide-scrollbar">
@@ -218,10 +247,13 @@ export default function NewPurchase({ onSave }) {
                             ) : (
                                 <div className="flex gap-3 overflow-x-auto pb-2 hide-scrollbar">
                                     {cards.map((card) => (
-                                        <button aria-label="Acción" type="button"
+                                        <button aria-label={`Seleccionar tarjeta ${card.name}`} type="button"
                                             key={card.id}
                                             disabled={isSaving}
-                                            onClick={() => setSelectedCardId(card.id)}
+                                            onClick={() => {
+                                                if (submitAttempted) setSubmitAttempted(false);
+                                                setSelectedCardId(card.id);
+                                            }}
                                             className={`flex-shrink-0 cursor-pointer border-2 rounded-2xl p-4 w-40 relative transition-all text-left ${selectedCardId === card.id
                                                 ? (isGlass ? 'border-blue-400/50 bg-blue-600/20' : 'border-blue-500 bg-blue-50')
                                                 : (isGlass ? 'border-white/5 bg-white/5 hover:bg-white/10' : 'border-gray-100 bg-white hover:border-gray-200')
@@ -251,7 +283,7 @@ export default function NewPurchase({ onSave }) {
                         {/* Slider y Selector de Cuotas (1 a 60) */}
                         <div className="mb-8">
                             <div className="flex justify-between items-center mb-2">
-                                <label htmlFor="purchase-installments-input" className={`text-xs font-bold uppercase ${isGlass ? 'text-white/40' : 'text-gray-400'}`}>Cuotas (1 a 60)</label>
+                                <label htmlFor="purchase-installments-input" className={`text-xs font-bold uppercase ${isGlass ? 'text-white/70' : 'text-gray-600'}`}>Cuotas (1 a 60)</label>
                                 <div className="flex items-center gap-1">
                                     <input
                                         id="purchase-installments-input"
@@ -312,7 +344,7 @@ export default function NewPurchase({ onSave }) {
                                 className={`w-full h-2 rounded-lg appearance-none cursor-pointer ${isGlass ? 'bg-white/10' : 'bg-gray-200'} accent-blue-500 ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}
                             />
                             {Number(amount) > 0 && installments > 0 && (
-                                <p className={`text-center text-xs mt-3 font-medium ${isGlass ? 'text-white/50' : 'text-gray-400'}`}>
+                                <p className={`text-center text-xs mt-3 font-medium ${isGlass ? 'text-white/70' : 'text-gray-600'}`}>
                                     Cuota Mensual: <span className={`font-bold ${isGlass ? 'text-white' : 'text-gray-800'}`}>{formatMoney(Math.round((Number(amount) / installments) * 100) / 100)}</span>
                                 </p>
                             )}
@@ -320,11 +352,11 @@ export default function NewPurchase({ onSave }) {
 
                         {/* FUTURE IMPACT CHART */}
                         <div className={`rounded-2xl p-4 ${isGlass ? 'bg-black/20 border border-white/5' : 'bg-gray-50 border border-gray-100'}`}>
-                            <h4 className={`text-[10px] font-bold uppercase mb-3 ${isGlass ? 'text-white/40' : 'text-gray-400'}`}>Tu Compromiso Futuro (6 Meses)</h4>
+                            <h4 className={`text-[10px] font-bold uppercase mb-3 ${isGlass ? 'text-white/70' : 'text-gray-600'}`}>Tu Compromiso Futuro (6 Meses)</h4>
                             <div className="space-y-2">
                                 {projections.map((p, idx) => (
                                     <div key={p.monthLabel || idx} className="flex items-center gap-3 text-xs">
-                                        <div className={`w-8 font-bold ${isGlass ? 'text-white/60' : 'text-gray-500'}`}>{p.monthLabel}</div>
+                                        <div className={`w-8 font-bold ${isGlass ? 'text-white/70' : 'text-gray-600'}`}>{p.monthLabel}</div>
                                         <div className={`flex-1 h-2 rounded-full overflow-hidden ${isGlass ? 'bg-white/10' : 'bg-gray-200'}`}>
                                             <div className="h-full bg-blue-500/30" style={{ width: `${(p.existing / (p.total * 1.2 || 1)) * 100}%` }}></div> {/* Base Debt */}
                                             {p.newImpact > 0 && (
@@ -332,7 +364,7 @@ export default function NewPurchase({ onSave }) {
                                             )}
                                             {/* Fix overlapping logic visually simplified */}
                                         </div>
-                                        <div className={`w-20 text-right font-mono font-bold ${p.newImpact > 0 ? (isGlass ? 'text-blue-300' : 'text-blue-600') : (isGlass ? 'text-white/40' : 'text-gray-400')}`}>
+                                        <div className={`w-20 text-right font-mono font-bold ${p.newImpact > 0 ? (isGlass ? 'text-blue-300' : 'text-blue-600') : (isGlass ? 'text-white/60' : 'text-gray-500')}`}>
                                             {formatMoney(p.total)}
                                         </div>
                                     </div>
@@ -374,28 +406,28 @@ export default function NewPurchase({ onSave }) {
                                     type="button"
                                     disabled={isSaving}
                                     onClick={setDateToday}
-                                    className={`px-2.5 py-0.5 rounded-lg text-[11px] font-bold transition-all border ${
+                                    className={`min-h-[44px] px-3.5 py-2 rounded-xl text-xs font-bold inline-flex items-center justify-center transition-all border ${
                                         date === getLocalDateString(new Date())
                                             ? (isGlass ? 'bg-white/20 text-white border-white/30' : 'bg-gray-200 text-gray-800 border-gray-300')
-                                            : (isGlass ? 'bg-white/5 text-white/50 border-white/10 hover:bg-white/10' : 'bg-gray-100 text-gray-500 border-gray-200 hover:bg-gray-200')
+                                            : (isGlass ? 'bg-white/5 text-white/70 border-white/10 hover:bg-white/10' : 'bg-gray-100 text-gray-600 border-gray-200 hover:bg-gray-200')
                                     }`}
                                 >
                                     Hoy
-                                </button>
-                                <button
-                                    type="button"
-                                    disabled={isSaving}
-                                    onClick={setDateYesterday}
-                                    className={`px-2.5 py-0.5 rounded-lg text-[11px] font-bold transition-all border ${
-                                        isGlass ? 'bg-white/5 text-white/50 border-white/10 hover:bg-white/10' : 'bg-gray-100 text-gray-500 border-gray-200 hover:bg-gray-200'
-                                    }`}
-                                >
-                                    Ayer
-                                </button>
+                                 </button>
+                                 <button
+                                     type="button"
+                                     disabled={isSaving}
+                                     onClick={setDateYesterday}
+                                     className={`min-h-[44px] px-3.5 py-2 rounded-xl text-xs font-bold inline-flex items-center justify-center transition-all border ${
+                                         isGlass ? 'bg-white/5 text-white/70 border-white/10 hover:bg-white/10' : 'bg-gray-100 text-gray-600 border-gray-200 hover:bg-gray-200'
+                                     }`}
+                                 >
+                                     Ayer
+                                 </button>
                             </div>
                         </div>
                         <div className={`flex items-center gap-3 px-3.5 py-2.5 rounded-2xl border transition-all ${isGlass ? 'bg-white/5 border-white/10 text-white focus-within:border-blue-400/50 focus-within:bg-white/10' : 'bg-gray-50 border-gray-200 text-gray-800 focus-within:border-blue-500 focus-within:bg-white'}`}>
-                            <CalendarDays size={18} className={isGlass ? 'text-white/40' : 'text-gray-400'} />
+                            <CalendarDays size={18} className={isGlass ? 'text-white/60' : 'text-gray-500'} />
                             <input
                                 id="purchase-date"
                                 aria-label="Fecha del gasto"
@@ -409,7 +441,7 @@ export default function NewPurchase({ onSave }) {
                     </div>
 
                     <div className="mt-4">
-                        <label htmlFor="purchase-description" className={`block text-xs font-bold uppercase mb-1.5 ml-1 ${isGlass ? 'text-white/40' : 'text-gray-400'}`}>
+                        <label htmlFor="purchase-description" className={`block text-xs font-bold uppercase mb-1.5 ml-1 ${isGlass ? 'text-white/70' : 'text-gray-600'}`}>
                             Descripción
                         </label>
                         <input
@@ -431,10 +463,12 @@ export default function NewPurchase({ onSave }) {
                     <div className={`p-4 mb-6 rounded-[24px] border flex items-center justify-between ${isGlass ? 'bg-white/5 border-white/10' : 'bg-white border-gray-100'}`}>
                         <div>
                             <p className={`text-sm font-bold ${isGlass ? 'text-white' : 'text-gray-800'}`}>Compartir en Hogar</p>
-                            <p className={`text-[10px] ${isGlass ? 'text-white/50' : 'text-gray-500'}`}>Visible para el reparto proporcional</p>
+                            <p className={`text-[10px] ${isGlass ? 'text-white/70' : 'text-gray-600'}`}>Visible para el reparto proporcional</p>
                         </div>
-                        <button aria-label="Acción" type="button" disabled={isSaving} onClick={() => setIsShared(!isShared)} className={`w-12 h-7 rounded-full transition-colors relative focus:outline-none flex-shrink-0 ${isShared ? 'bg-indigo-600' : 'bg-gray-400'} ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                            <div className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full transition-transform ${isShared ? 'translate-x-5' : 'translate-x-0'}`}></div>
+                        <button aria-label="Alternar compartir gasto en el hogar" type="button" disabled={isSaving} onClick={() => setIsShared(!isShared)} className={`min-h-[44px] min-w-[48px] inline-flex items-center justify-center focus:outline-none flex-shrink-0 ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                            <div className={`w-12 h-7 rounded-full transition-colors relative ${isShared ? 'bg-indigo-600' : 'bg-gray-400'}`}>
+                                <div className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full transition-transform ${isShared ? 'translate-x-5' : 'translate-x-0'}`}></div>
+                            </div>
                         </button>
                     </div>
                 )}
@@ -443,9 +477,9 @@ export default function NewPurchase({ onSave }) {
                 <button
                     aria-label="Confirmar gasto"
                     type="submit"
-                    disabled={isSubmitDisabled}
+                    disabled={isSaving}
                     className={`w-full py-4 rounded-[30px] font-bold shadow-lg transition-all text-lg flex justify-center items-center gap-2 ${
-                        isSubmitDisabled
+                        isSaving
                             ? (isGlass ? 'bg-white/20 text-white/50 cursor-not-allowed' : 'bg-gray-300 text-gray-500 cursor-not-allowed')
                             : (isGlass ? 'bg-white text-indigo-900 border border-white/50 hover:bg-indigo-50 active:scale-95' : 'bg-gray-900 text-white shadow-gray-400 active:scale-95')
                     }`}

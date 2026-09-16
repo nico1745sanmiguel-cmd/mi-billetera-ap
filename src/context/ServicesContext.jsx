@@ -16,15 +16,23 @@ export const useServices = () => {
 };
 
 export const ServicesProvider = ({ children }) => {
-    const { user, userData } = useAuth();
+    const { user, userData, loadingUser } = useAuth();
     
     const [services, setServices] = useState(() => getCache(CACHE_KEYS.SERVICES, []));
+    const [loading, setLoading] = useState(() => !getCache(CACHE_KEYS.SERVICES, null));
 
     const uid = user?.uid;
     const householdId = userData?.householdId;
 
     useEffect(() => {
-        if (!uid) return;
+        if (loadingUser) {
+            setLoading(true);
+            return;
+        }
+        if (!uid) {
+            setLoading(false);
+            return;
+        }
 
         const queryField = householdId ? "householdId" : "userId";
         const queryValue = householdId ? householdId : uid;
@@ -33,11 +41,15 @@ export const ServicesProvider = ({ children }) => {
         const unsubServices = onSnapshot(q, (snap) => {
             const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
             setServices(data);
+            setLoading(false);
             setCache(CACHE_KEYS.SERVICES, data);
-        }, (error) => console.error(`Offline/Error for ${COLLECTIONS.SERVICES}:`, error));
+        }, (error) => {
+            console.error(`Offline/Error for ${COLLECTIONS.SERVICES}:`, error);
+            setLoading(false);
+        });
 
         return () => unsubServices();
-    }, [uid, householdId]);
+    }, [uid, householdId, loadingUser]);
 
     const visibleServices = useMemo(() => {
         if (!ENABLE_HOUSEHOLD || !householdId) return services;
@@ -45,8 +57,9 @@ export const ServicesProvider = ({ children }) => {
     }, [services, householdId, uid]);
 
     const value = useMemo(() => ({
-        services: visibleServices
-    }), [visibleServices]);
+        services: visibleServices,
+        loading
+    }), [visibleServices, loading]);
 
     return (
         <ServicesContext.Provider value={value}>

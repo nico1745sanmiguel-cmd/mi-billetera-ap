@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
+    "test": "node tests/ux_ui/phase3_ux_empirical_test.mjs",
     "preview": "vite preview"
   },
   "dependencies": {
