@@ -61,41 +61,52 @@ export const fetchAssetPrices = async (especiesWithCarteras, dolarBlue) => {
 
     // 1. Revisar cache y separar por tipo
     for (const esp of Object.keys(especiesWithCarteras)) {
-        const cacheKey = `price_${esp}`;
-        const cached = getCache(cacheKey, null);
-        
-        if (cached && (now - cached.timestamp < CACHE_TTL_MS)) {
-            result[esp] = { price: cached.price, change: cached.change || 0 };
-            continue;
+        const carteras = Array.from(especiesWithCarteras[esp] || []);
+        let allCached = carteras.length > 0;
+
+        for (const c of carteras) {
+            const carteraKey = `price_${c}_${esp}`;
+            const cachedCartera = getCache(carteraKey, null);
+            if (cachedCartera && (now - cachedCartera.timestamp < CACHE_TTL_MS)) {
+                result[`${c}_${esp}`] = { price: cachedCartera.price, change: cachedCartera.change || 0 };
+            } else {
+                allCached = false;
+            }
         }
+
+        const cacheKey = `price_${esp}`;
+        const cachedGeneric = getCache(cacheKey, null);
+        if (cachedGeneric && (now - cachedGeneric.timestamp < CACHE_TTL_MS)) {
+            if (!result[esp]) result[esp] = { price: cachedGeneric.price, change: cachedGeneric.change || 0 };
+        } else if (!allCached) {
+            allCached = false;
+        }
+
+        if (allCached) continue;
 
         if (CRYPTO_MAP[esp]) {
             toFetchCoinGecko.push(esp);
         } else {
-            // Verificar si la cartera sugiere que es un activo del exterior
-            const carteras = Array.from(especiesWithCarteras[esp] || []);
-            let isIntl = false;
-            let isLocal = false;
-            
-            for (const c of carteras) {
-                const lowerC = c.toLowerCase();
-                if (LOCAL_BROKERS.some(lb => lowerC.includes(lb))) isLocal = true;
-                if (INTL_BROKERS.some(ib => lowerC.includes(ib))) isIntl = true;
-            }
-
             // Verificar si es un bono local argentino (ej: AL30, TX26, GD30D)
             const isBond = /^[a-zA-Z]{2,4}\d{2}[a-zA-Z]?$/.test(esp);
 
-            // Si es un bono, lo mandamos a Data912 directo.
             if (isBond) {
                 toFetchData912.push(esp);
-            }
-            // Si sabemos que es internacional y no hay indicios de que sea local, omitimos Data912
-            // y usamos Yahoo Finance para buscar el precio de la accion en origen.
-            else if (!isIntl || isLocal) {
+            } else if (carteras.length === 0) {
                 toFetchData912.push(esp);
             } else {
-                toFetchYahoo.push(esp);
+                let hasIntl = false;
+                let hasLocal = false;
+                for (const c of carteras) {
+                    const lowerC = c.toLowerCase();
+                    if (INTL_BROKERS.some(ib => lowerC.includes(ib))) {
+                        hasIntl = true;
+                    } else {
+                        hasLocal = true;
+                    }
+                }
+                if (hasIntl && !toFetchYahoo.includes(esp)) toFetchYahoo.push(esp);
+                if (hasLocal && !toFetchData912.includes(esp)) toFetchData912.push(esp);
             }
         }
     }
@@ -114,6 +125,12 @@ export const fetchAssetPrices = async (especiesWithCarteras, dolarBlue) => {
                     const change = data[id].usd_24h_change || 0;
                     result[esp] = { price, change };
                     setCache(`price_${esp}`, { price, change, timestamp: now });
+
+                    const carteras = Array.from(especiesWithCarteras[esp] || []);
+                    for (const c of carteras) {
+                        result[`${c}_${esp}`] = { price, change };
+                        setCache(`price_${c}_${esp}`, { price, change, timestamp: now });
+                    }
                 }
             }
         } catch (error) {
@@ -121,12 +138,9 @@ export const fetchAssetPrices = async (especiesWithCarteras, dolarBlue) => {
         }
     }
 
-    // 3. Fetch Data912
+    // 3. Fetch Data912 (CEDEARs, Acciones Locales y Bonos Argentinos)
     if (toFetchData912.length > 0 && dolarBlue) {
         try {
-            // Data912 tiene dos endpoints: live/arg_cedears y live/arg_stocks
-            // Para no hacer requests separados por especie, hacemos un fetch general de ambos y armamos un mapa
-            
             // CEDEARS
             let cedearsData = [];
             try {
@@ -181,8 +195,22 @@ export const fetchAssetPrices = async (especiesWithCarteras, dolarBlue) => {
 
                     // Si el bono cotiza en dólares (especie D o C), ya está en USD y no se divide por Dólar Blue
                     const priceUSD = isDollarBond ? priceARS : (priceARS / dolarBlue); 
-                    result[esp] = { price: priceUSD, change };
-                    setCache(`price_${esp}`, { price: priceUSD, change, timestamp: now });
+                    
+                    const carteras = Array.from(especiesWithCarteras[esp] || []);
+                    let hasLocal = false;
+                    for (const c of carteras) {
+                        const lowerC = c.toLowerCase();
+                        if (!INTL_BROKERS.some(ib => lowerC.includes(ib))) {
+                            result[`${c}_${esp}`] = { price: priceUSD, change };
+                            setCache(`price_${c}_${esp}`, { price: priceUSD, change, timestamp: now });
+                            hasLocal = true;
+                        }
+                    }
+
+                    if (!result[esp] || hasLocal || carteras.length === 0) {
+                        result[esp] = { price: priceUSD, change };
+                        setCache(`price_${esp}`, { price: priceUSD, change, timestamp: now });
+                    }
                 }
             }
 
@@ -191,7 +219,7 @@ export const fetchAssetPrices = async (especiesWithCarteras, dolarBlue) => {
         }
     }
 
-    // 4. Fetch Yahoo Finance a través de Cloud Function para acciones internacionales (US Stocks)
+    // 4. Fetch Yahoo Finance a través de Cloud Function para acciones internacionales (US Stocks / ADRs)
     if (toFetchYahoo.length > 0) {
         try {
             const fetchYahooFn = httpsCallable(functions, 'fetchYahooFinance');
@@ -203,8 +231,22 @@ export const fetchAssetPrices = async (especiesWithCarteras, dolarBlue) => {
                     const priceData = data[esp];
                     const price = typeof priceData === 'object' ? parseFloat(priceData.price) : parseFloat(priceData);
                     const change = typeof priceData === 'object' ? parseFloat(priceData.change) : 0;
-                    result[esp] = { price, change };
-                    setCache(`price_${esp}`, { price, change, timestamp: now });
+                    
+                    const carteras = Array.from(especiesWithCarteras[esp] || []);
+                    let hasIntl = false;
+                    for (const c of carteras) {
+                        const lowerC = c.toLowerCase();
+                        if (INTL_BROKERS.some(ib => lowerC.includes(ib))) {
+                            result[`${c}_${esp}`] = { price, change };
+                            setCache(`price_${c}_${esp}`, { price, change, timestamp: now });
+                            hasIntl = true;
+                        }
+                    }
+
+                    if (!result[esp] || hasIntl || carteras.length === 0) {
+                        result[esp] = { price, change };
+                        setCache(`price_${esp}`, { price, change, timestamp: now });
+                    }
                 }
             }
         } catch (error) {

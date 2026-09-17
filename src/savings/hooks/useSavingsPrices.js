@@ -41,15 +41,46 @@ export const useSavingsPrices = (savingsTransactions = [], dolarBlue, manualPric
         return () => unsub();
     }, [uid, householdId, manualPrices]);
 
-    // Calcular especies únicas para las que necesitamos buscar precios
+    // Calcular especies únicas y sus carteras con tenencia activa para cotizaciones precisas
     const especiesWithCarteras = useMemo(() => {
-        const map = {};
+        const balances = {};
         (savingsTransactions || []).forEach(tx => {
             if (!tx.especie) return;
             const esp = tx.especie.toUpperCase();
-            if (!map[esp]) map[esp] = new Set();
-            if (tx.cartera) map[esp].add(tx.cartera);
+            if (esp === 'USD' || esp === 'ARS') return;
+            const cant = parseFloat(tx.cantidad) || 0;
+            const cartera = tx.cartera || 'default';
+            const key = `${cartera}_${esp}`;
+
+            if (!balances[key]) balances[key] = { cartera: tx.cartera, especie: esp, cantidad: 0 };
+
+            if (['compra', 'deposito', 'ingreso', 'ajuste'].includes(tx.tipo)) {
+                balances[key].cantidad += cant;
+            } else if (['venta', 'retiro', 'egreso'].includes(tx.tipo)) {
+                balances[key].cantidad -= cant;
+            }
         });
+
+        const map = {};
+        // 1. Priorizar carteras con tenencia activa (> 0)
+        Object.values(balances).forEach(b => {
+            if (b.cantidad > 0.0001) {
+                if (!map[b.especie]) map[b.especie] = new Set();
+                if (b.cartera) map[b.especie].add(b.cartera);
+            }
+        });
+
+        // 2. Fallback para especies sin tenencia activa pero presentes en transacciones
+        (savingsTransactions || []).forEach(tx => {
+            if (!tx.especie) return;
+            const esp = tx.especie.toUpperCase();
+            if (esp === 'USD' || esp === 'ARS') return;
+            if (!map[esp]) {
+                map[esp] = new Set();
+                if (tx.cartera) map[esp].add(tx.cartera);
+            }
+        });
+
         return map;
     }, [savingsTransactions]);
 

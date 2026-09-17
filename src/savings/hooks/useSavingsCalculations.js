@@ -75,7 +75,8 @@ export const useSavingsCalculations = (savingsTransactions = [], assetPrices = {
             } else if (pos.especie === 'ARS') {
                 currentPriceUSD = 1 / rate;
             } else {
-                const assetData = assetPrices[pos.especie];
+                const carteraKey = pos.cartera ? `${pos.cartera}_${pos.especie}` : null;
+                const assetData = (carteraKey && assetPrices[carteraKey]) || assetPrices[pos.especie];
                 if (assetData && typeof assetData === 'object' && !Array.isArray(assetData)) {
                     currentPriceUSD = assetData.price || 0;
                     variacionDiaria = assetData.change || 0;
