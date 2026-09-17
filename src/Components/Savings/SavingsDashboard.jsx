@@ -12,6 +12,7 @@ import { renderHiddenAmount } from '../../utils';
 
 const PortfolioTab = lazy(() => import('./Tabs/PortfolioTab'));
 const AnalyticsTab = lazy(() => import('./Tabs/AnalyticsTab'));
+const ImportCaptureModal = lazy(() => import('../../savings/components/operations/ImportCaptureModal'));
 
 const arsFormatter = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 });
 const usdFormatter = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
@@ -31,6 +32,7 @@ export default function SavingsDashboard() {
     const { posiciones, cauciones, liquidezPorCartera } = useSavings();
     const { dolarBlue } = useFinancial();
     const [showAddModal, setShowAddModal] = useState(false);
+    const [showImportModal, setShowImportModal] = useState(false);
     const [currencyView, setCurrencyView] = useState('ARS');
     const [activeTab, setActiveTab] = useState('portafolio');
 
@@ -213,28 +215,53 @@ export default function SavingsDashboard() {
                     {activeTab === 'objetivo'    && <SavingsGoal />}
                 </Suspense>
             </div>
+            </div>
 
-            {/* ── FAB: Nueva Operación ── */}
-            <button
-                type="button"
-                aria-label="Nueva Operación"
-                onClick={() => setShowAddModal(true)}
-                className={`fixed bottom-20 right-5 z-40 flex items-center gap-2 px-5 py-3.5 rounded-2xl font-black text-sm text-white shadow-2xl transition-all duration-200 active:scale-95 ${
-                    isGlass
-                        ? 'bg-green-500/80 hover:bg-green-500 backdrop-blur-md border border-green-400/30 shadow-green-500/30'
-                        : 'bg-green-500 hover:bg-green-600 shadow-green-500/40'
-                }`}
-            >
-                <Plus size={18} strokeWidth={3} />
-                <span>Nueva Operación</span>
-            </button>
+            {/* ── FABs ── */}
+            <div className="fixed bottom-20 right-5 z-40 flex flex-col gap-3 items-end">
+                <button
+                    type="button"
+                    aria-label="Importar Captura"
+                    onClick={() => setShowImportModal(true)}
+                    className={`flex items-center justify-center p-3.5 rounded-full font-black text-white shadow-xl transition-all duration-200 active:scale-95 ${
+                        isGlass
+                            ? 'bg-emerald-600/80 hover:bg-emerald-600 backdrop-blur-md border border-emerald-400/30 shadow-emerald-500/30'
+                            : 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/40'
+                    }`}
+                    title="Importar Captura con IA"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
+                </button>
+                
+                <button
+                    type="button"
+                    aria-label="Nueva Operación"
+                    onClick={() => setShowAddModal(true)}
+                    className={`flex items-center gap-2 px-5 py-3.5 rounded-2xl font-black text-sm text-white shadow-2xl transition-all duration-200 active:scale-95 ${
+                        isGlass
+                            ? 'bg-green-500/80 hover:bg-green-500 backdrop-blur-md border border-green-400/30 shadow-green-500/30'
+                            : 'bg-green-500 hover:bg-green-600 shadow-green-500/40'
+                    }`}
+                >
+                    <Plus size={18} strokeWidth={3} />
+                    <span>Nueva Operación</span>
+                </button>
+            </div>
 
-            {/* ── Modal de operación ── */}
+            {/* ── Modales ── */}
             {showAddModal && (
                 <OperationModal
                     onClose={() => setShowAddModal(false)}
                     isGlass={isGlass}
                 />
+            )}
+            {showImportModal && (
+                <Suspense fallback={<div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center"><div className="animate-spin h-8 w-8 border-4 border-green-500 rounded-full border-t-transparent"></div></div>}>
+                    <ImportCaptureModal
+                        onClose={() => setShowImportModal(false)}
+                        isGlass={isGlass}
+                    />
+                </Suspense>
             )}
         </div>
     );

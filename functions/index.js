@@ -351,3 +351,85 @@ exports.fetchYahooFinance = functions.https.onCall(async (data, context) => {
     return result;
 });
 
+// ─── ENDPOINT 4: ESCÁNER DE CARTERAS (Imagen a JSON) ───
+exports.analyzeSavingsCapture = functions.https.onCall(async (data, context) => {
+    if (!context.auth) {
+        throw new functions.https.HttpsError('unauthenticated', 'El usuario debe estar autenticado.');
+    }
+
+    const GROQ_API_KEY = process.env.GROQ_API_KEY || functions.config().groq?.apikey;
+    if (!GROQ_API_KEY) {
+        console.error("GROQ_API_KEY no está configurada en el servidor.");
+        throw new functions.https.HttpsError('internal', 'La API Key de IA no está configurada.');
+    }
+
+    const { base64Image, carteraDestino } = data;
+    if (!base64Image) {
+        throw new functions.https.HttpsError('invalid-argument', 'Falta la imagen (base64Image).');
+    }
+
+    const promptText = `Sos un experto analista financiero. Analizá esta captura de pantalla de un broker o billetera virtual de Argentina.
+La cartera de destino asignada por el usuario es: "${carteraDestino || 'General'}".
+Extraé los activos o movimientos de inversión detectados.
+Respondé SOLAMENTE con un array en formato JSON puro. NINGUN TEXTO EXTRA. NO USES MARKDOWN.
+Cada objeto del array debe representar una operación de compra o tenencia detectada, y debe tener exactamente estas claves:
+- "ticker": el símbolo del activo (ej: GGAL, AL30, BTC). Si no lo sabés, poné null.
+- "especie": nombre descriptivo del activo (ej: "Grupo Financiero Galicia", "Bono AL30", "Bitcoin"). Si no lo sabés, usá el ticker.
+- "cantidad": número (float), cantidad de nominales o tokens.
+- "precioUnitario": número (float), precio por unidad. Si solo hay importe total, calculalo o poné null.
+- "monedaPrecio": "ARS" o "USD".
+- "tipo": siempre debe ser "compra" (para tenencias o compras), o "venta" si detectas explícitamente que es una venta.
+- "fecha": fecha de la operación en formato "YYYY-MM-DD". Si no hay fecha, poné la fecha de hoy.
+- "nota": texto breve con algún detalle extra o si detectaste algo dudoso.
+
+No incluyas pesos ARS o USD como "saldos líquidos" a menos que sean un fondo común de inversión o crypto explícitamente comprada. Enfocate en los activos.`;
+
+    try {
+        const response = await fetchWithRetry('https://api.groq.com/openai/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${GROQ_API_KEY}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                model: 'llama-3.2-90b-vision-preview', // Update model if needed, using a good vision model
+                messages: [
+                    {
+                        role: "user",
+                        content: [
+                            { type: "text", text: promptText },
+                            { type: "image_url", image_url: { url: base64Image } }
+                        ]
+                    }
+                ],
+                temperature: 0.1,
+                max_tokens: 1500
+            })
+        });
+
+        const result = await response.json();
+        
+        if (result.error) {
+           console.error("Error from Groq API:", result.error);
+           throw new Error(result.error.message || 'Error en Groq API');
+        }
+
+        let content = result.choices[0].message.content.trim();
+        
+        // Limpiar markdown residual
+        if (content.startsWith('```json')) {
+            content = content.replace(/^```json/, '').replace(/```$/, '').trim();
+        } else if (content.startsWith('```')) {
+            content = content.replace(/^```/, '').replace(/```$/, '').trim();
+        }
+
+        const parsedContent = JSON.parse(content);
+        return parsedContent;
+
+    } catch (error) {
+        console.error("Error en analyzeSavingsCapture:", error);
+        throw new functions.https.HttpsError('internal', \`Error al analizar captura: \${error.message}\`);
+    }
+});
+
+
