@@ -2,8 +2,9 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useSavings } from '../../../context/SavingsContext';
 import { useUI } from '../../../context/UIContext';
 import ConfirmDialog from '../../UI/ConfirmDialog';
-import { Search, Filter, Edit2, Trash2, ArrowUpRight, ArrowDownRight, RefreshCcw, Wallet, Tag, ArrowRight, RotateCcw } from 'lucide-react';
+import { Search, Filter, Edit2, Trash2, ArrowUpRight, ArrowDownRight, RefreshCcw, Wallet, Tag, ArrowRight, RotateCcw, Sparkles } from 'lucide-react';
 import OperationModal from '../OperationModal';
+import BatchOperationsModal from '../BatchOperationsModal';
 import { renderHiddenAmount } from '../../../utils';
 
 const arsFormatter = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 });
@@ -69,6 +70,7 @@ export default function OperationsTab({ isGlass, privacyMode }) {
     const [editingTx, setEditingTx] = useState(null);
     const [deletingTx, setDeletingTx] = useState(null);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [showBatchModal, setShowBatchModal] = useState(false);
 
     const formatAmount = (amount, formatter) => privacyMode ? renderHiddenAmount('****') : formatter.format(amount);
 
@@ -129,12 +131,28 @@ export default function OperationsTab({ isGlass, privacyMode }) {
         <div className={`rounded-3xl p-6 sm:p-8 ${cardBg} animate-fade-in`}>
             
             <div className="mb-8">
-                <h3 className={`font-bold flex items-center gap-2 mb-6 ${textColor}`}>
-                    Historial de Operaciones
-                    <span className={`text-xs font-black px-2 py-0.5 rounded-full ${isGlass ? 'bg-white/10' : 'bg-gray-100'}`}>
-                        {filtered.length}
-                    </span>
-                </h3>
+                <div className="flex items-center justify-between gap-3 mb-6">
+                    <h3 className={`font-bold flex items-center gap-2 ${textColor}`}>
+                        Historial de Operaciones
+                        <span className={`text-xs font-black px-2 py-0.5 rounded-full ${isGlass ? 'bg-white/10' : 'bg-gray-100'}`}>
+                            {filtered.length}
+                        </span>
+                    </h3>
+
+                    <button
+                        type="button"
+                        onClick={() => setShowBatchModal(true)}
+                        className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-sm ${
+                            isGlass
+                                ? 'bg-gradient-to-r from-emerald-500/20 to-green-500/20 hover:from-emerald-500/30 hover:to-green-500/30 text-emerald-300 border border-emerald-500/30 shadow-green-500/10'
+                                : 'bg-green-50 hover:bg-green-100 text-green-700 border border-green-200 shadow-green-500/5'
+                        }`}
+                        title="Cargar lote de operaciones recientes detectadas"
+                    >
+                        <Sparkles size={15} className="text-green-500" />
+                        <span>Carga Rápida</span>
+                    </button>
+                </div>
 
                 {/* FILTROS TIPO CHIP (Scrollable horizontal) */}
                 <div className="space-y-4">
@@ -341,6 +359,13 @@ export default function OperationsTab({ isGlass, privacyMode }) {
                     initialData={editingTx} 
                     onClose={() => setEditingTx(null)} 
                     isGlass={isGlass} 
+                />
+            )}
+
+            {showBatchModal && (
+                <BatchOperationsModal
+                    onClose={() => setShowBatchModal(false)}
+                    isGlass={isGlass}
                 />
             )}
 

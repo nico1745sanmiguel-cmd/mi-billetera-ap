@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { db } from '../../firebase';
-import { collection, onSnapshot, query, where, or, addDoc, serverTimestamp, doc, setDoc, deleteDoc } from 'firebase/firestore';
+import { collection, onSnapshot, query, where, or, addDoc, serverTimestamp, doc, setDoc, deleteDoc, writeBatch } from 'firebase/firestore';
 import { useAuth } from '../../context/AuthContext';
 import { getCache, setCache } from '../../utils/cache';
 import { COLLECTIONS, CACHE_KEYS } from '../../config/constants';
@@ -91,6 +91,30 @@ export const useSavingsData = () => {
         }
     }, [user, userData]);
 
+    const addBatchSavingsTransactions = useCallback(async (transactionsList) => {
+        if (!user || !Array.isArray(transactionsList) || transactionsList.length === 0) return;
+        const batch = writeBatch(db);
+        const colRef = collection(db, COLLECTIONS.SAVINGS_TRANSACTIONS);
+        
+        transactionsList.forEach(t => {
+            const newDocRef = doc(colRef);
+            batch.set(newDocRef, {
+                ...t,
+                userId: user.uid,
+                ownerId: user.uid,
+                householdId: userData?.householdId || null,
+                createdAt: serverTimestamp()
+            });
+        });
+
+        try {
+            await batch.commit();
+        } catch (error) {
+            console.error("Error adding batch savings transactions:", error);
+            throw error;
+        }
+    }, [user, userData]);
+
     const updateSavingsTransaction = useCallback(async (id, data) => {
         if (!user || !id) return;
         try {
@@ -164,6 +188,7 @@ export const useSavingsData = () => {
         carterasPersonalizadas,
         manualAssetPrices,
         addSavingsTransaction,
+        addBatchSavingsTransactions,
         updateSavingsTransaction,
         deleteSavingsTransaction,
         addCartera,
