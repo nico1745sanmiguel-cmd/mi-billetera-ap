@@ -314,6 +314,12 @@ export default function SuperList() {
         });
     };
 
+    const handleSetQuantity = async (item, newQtyVal) => {
+        const newQty = Math.max(1, parseInt(newQtyVal, 10) || 1);
+        if (item.quantity === newQty) return;
+        await updateSuperQuantity(item.id, newQty);
+    };
+
     const handleExportToAI = () => {
         const checkedItems = monthlyList.filter(item => item.checked);
         if (checkedItems.length === 0) {
@@ -370,7 +376,7 @@ export default function SuperList() {
             </div>
 
             {/* HEADER FIXED (Siempre visible arriba) */}
-            <div className={`fixed top-[64px] left-0 right-0 z-40 pt-4 pb-4 mb-2 transition-all shadow-sm px-6 border-b ${isGlass ? 'bg-[#0f0c29]/95 border-white/10 text-white backdrop-blur-md' : 'bg-[#f3f4f6]/95 border-gray-200/50 text-gray-800 backdrop-blur-sm'}`}>
+            <div className={`fixed top-0 left-0 right-0 z-40 pt-[calc(1rem+env(safe-area-inset-top,0px))] pb-4 mb-2 transition-all shadow-sm px-6 border-b ${isGlass ? 'bg-[#0f0c29]/95 border-white/10 text-white backdrop-blur-md' : 'bg-[#f3f4f6]/95 border-gray-200/50 text-gray-800 backdrop-blur-sm'}`}>
                 <div className="flex justify-between items-end mb-2">
                     <div>
                         <div className="flex items-center gap-3">
@@ -380,19 +386,17 @@ export default function SuperList() {
                                     aria-label="Escanear ticket de compra"
                                     type="button" 
                                     onClick={() => navigate('/scanner')}
-                                    className={`min-h-[44px] px-3.5 py-2 text-xs font-bold rounded-2xl uppercase tracking-wider flex items-center gap-1.5 transition-all active:scale-95 shadow-sm ${isGlass ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30 hover:bg-purple-500/30' : 'bg-purple-100 text-purple-700 border border-purple-200 hover:bg-purple-200'}`}
+                                    className={`min-h-[44px] min-w-[44px] flex items-center justify-center rounded-2xl transition-all active:scale-95 shadow-sm ${isGlass ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30 hover:bg-purple-500/30' : 'bg-purple-100 text-purple-700 border border-purple-200 hover:bg-purple-200'}`}
                                 >
-                                    <Camera size={16} />
-                                    Escanear
+                                    <Camera size={20} />
                                 </button>
                                 <button
                                     aria-label="Exportar lista para análisis de IA"
                                     type="button"
                                     onClick={handleExportToAI}
-                                    className={`min-h-[44px] px-3.5 py-2 text-xs font-bold rounded-2xl uppercase tracking-wider flex items-center gap-1.5 transition-all active:scale-95 shadow-sm ${isGlass ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 hover:bg-indigo-500/30' : 'bg-indigo-100 text-indigo-700 border border-indigo-200 hover:bg-indigo-200'}`}
+                                    className={`min-h-[44px] min-w-[44px] flex items-center justify-center rounded-2xl transition-all active:scale-95 shadow-sm ${isGlass ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 hover:bg-indigo-500/30' : 'bg-indigo-100 text-indigo-700 border border-indigo-200 hover:bg-indigo-200'}`}
                                 >
-                                    <Copy size={16} />
-                                    Exportar a IA
+                                    <Copy size={20} />
                                 </button>
                             </div>
                         </div>
@@ -465,6 +469,7 @@ export default function SuperList() {
                                     handleToggle={handleToggle}
                                     setItemToDelete={setItemToDelete}
                                     handleUpdateQuantity={handleUpdateQuantity}
+                                    handleSetQuantity={handleSetQuantity}
                                     lastAddedId={lastAddedId}
                                     focusedItemId={focusedItemId}
                                     handleUpdatePrice={handleUpdatePrice}

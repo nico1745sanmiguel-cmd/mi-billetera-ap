@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Check, Trash2 } from 'lucide-react';
 import { formatMoney } from '../../utils';
 
@@ -6,10 +6,24 @@ const formatInputCurrency = (val) => val ? '$ ' + Number(val).toLocaleString('es
 
 const SuperListItem = ({
     item, history, subtotal, isGlass, itemsRefs, 
-    handleToggle, setItemToDelete, handleUpdateQuantity, 
+    handleToggle, setItemToDelete, handleUpdateQuantity, handleSetQuantity,
     lastAddedId, focusedItemId, handleUpdatePrice, 
     handlePriceFocus, handlePriceBlur
 }) => {
+    const [localQty, setLocalQty] = useState(item.quantity);
+
+    useEffect(() => {
+        setLocalQty(item.quantity);
+    }, [item.quantity]);
+
+    const handleQtyBlur = () => {
+        const val = parseInt(localQty, 10);
+        if (isNaN(val) || val < 1) {
+            setLocalQty(item.quantity); // revert
+        } else {
+            handleSetQuantity(item, val);
+        }
+    };
     return (
         <div
             ref={el => itemsRefs.current[item.id] = el}
@@ -76,9 +90,17 @@ const SuperListItem = ({
                     >
                         -
                     </button>
-                    <span className={`min-w-[32px] text-center text-sm font-bold ${isGlass ? 'text-white' : 'text-gray-700'}`}>
-                        {item.quantity}
-                    </span>
+                    <input
+                        type="tel"
+                        aria-label={`Cantidad de ${item.name}`}
+                        className={`w-10 bg-transparent text-center text-sm font-bold outline-none ${isGlass ? 'text-white' : 'text-gray-700'}`}
+                        value={localQty}
+                        onChange={(e) => setLocalQty(e.target.value)}
+                        onBlur={handleQtyBlur}
+                        onFocus={(e) => e.target.select()}
+                        onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
+                        enterKeyHint="done"
+                    />
                     <button
                         aria-label={`Aumentar cantidad de ${item.name}`}
                         type="button"

@@ -43,6 +43,10 @@ function MobileHeader() {
 
     const isHomeActive = location.pathname === '/dashboard' || location.pathname === '/';
 
+    if (location.pathname === '/super') {
+        return null;
+    }
+
     return (
         <div className={`md:hidden px-4 pt-[calc(0.625rem+env(safe-area-inset-top,0px))] pb-2.5 shadow-sm sticky top-0 z-40 flex items-center justify-between gap-2 transition-all duration-300 ${
             isGlass

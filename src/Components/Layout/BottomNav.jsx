@@ -22,7 +22,7 @@ function BottomNav() {
     const currentPath = location.pathname;
 
     // En la vista de escáner de tickets se oculta para no tapar el disparador de cámara
-    if (currentPath === '/scanner') {
+    if (currentPath === '/scanner' || currentPath === '/super') {
         return null;
     }
 
