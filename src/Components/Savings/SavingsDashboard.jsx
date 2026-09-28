@@ -215,7 +215,6 @@ export default function SavingsDashboard() {
                     {activeTab === 'objetivo'    && <SavingsGoal />}
                 </Suspense>
             </div>
-            </div>
 
             {/* ── FABs ── */}
             <div className="fixed bottom-20 right-5 z-40 flex flex-col gap-3 items-end">
