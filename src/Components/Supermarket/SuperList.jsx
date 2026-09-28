@@ -107,7 +107,7 @@ export default function SuperList() {
     const handleLetterClick = (letter) => {
         // react-doctor-disable-next-line react-doctor/no-impure-state-updater
         setActiveLetter(letter);
-        const target = monthlyList.find(i => i.name && i.name.toUpperCase().startsWith(letter) && !i.checked);
+        const target = monthlyList.find(i => i.name && i.name.toUpperCase().startsWith(letter));
         if (target && itemsRefs.current[target.id]) {
             const element = itemsRefs.current[target.id];
             // 170px para compensar el header más grande (con el nuevo chip slider)
@@ -377,41 +377,40 @@ export default function SuperList() {
 
             {/* HEADER FIXED (Siempre visible arriba) */}
             <div className={`fixed top-0 left-0 right-0 z-40 pt-[calc(1rem+env(safe-area-inset-top,0px))] pb-4 mb-2 transition-all shadow-sm px-6 border-b ${isGlass ? 'bg-[#0f0c29]/95 border-white/10 text-white backdrop-blur-md' : 'bg-[#f3f4f6]/95 border-gray-200/50 text-gray-800 backdrop-blur-sm'}`}>
-                <div className="flex justify-between items-end mb-2">
+                <div className="flex justify-between items-start mb-2">
                     <div>
-                        <div className="flex items-center gap-3">
-                            <h2 className={`text-xl font-bold ${isGlass ? 'text-white' : 'text-gray-800'}`}>Supermercado</h2>
-                            <div className="flex flex-wrap gap-2 items-center">
-                                <button
-                                    aria-label="Escanear ticket de compra"
-                                    type="button" 
-                                    onClick={() => navigate('/scanner')}
-                                    className={`min-h-[44px] min-w-[44px] flex items-center justify-center rounded-2xl transition-all active:scale-95 shadow-sm ${isGlass ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30 hover:bg-purple-500/30' : 'bg-purple-100 text-purple-700 border border-purple-200 hover:bg-purple-200'}`}
-                                >
-                                    <Camera size={20} />
-                                </button>
-                                <button
-                                    aria-label="Exportar lista para análisis de IA"
-                                    type="button"
-                                    onClick={handleExportToAI}
-                                    className={`min-h-[44px] min-w-[44px] flex items-center justify-center rounded-2xl transition-all active:scale-95 shadow-sm ${isGlass ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 hover:bg-indigo-500/30' : 'bg-indigo-100 text-indigo-700 border border-indigo-200 hover:bg-indigo-200'}`}
-                                >
-                                    <Copy size={20} />
-                                </button>
-                            </div>
-                        </div>
-                        <p className={`text-xs font-bold uppercase mt-1 capitalize ${isGlass ? 'text-purple-300' : 'text-purple-600'}`}>
+                        <h2 className={`text-xl font-bold ${isGlass ? 'text-white' : 'text-gray-800'}`}>Supermercado</h2>
+                        <p className={`text-xs font-bold uppercase mt-0.5 capitalize ${isGlass ? 'text-purple-300' : 'text-purple-600'}`}>
                             Lista de {(currentDate || new Date()).toLocaleString('es-AR', { month: 'long' })}
                         </p>
                     </div>
-                    <div className="text-right">
-                        {/* Lógica Visual: Si hay algo checkeado es "En Carrito", si no es "Presupuesto" */}
-                        <p className={`text-[10px] uppercase font-bold ${isGlass ? 'text-white/50' : 'text-gray-400'}`}>
-                            {totals.checkedCount > 0 ? 'En Carrito' : 'Presupuesto'}
-                        </p>
-                        <p className={`text-2xl font-bold ${totals.checkedCount > 0 ? (isGlass ? 'text-white' : 'text-gray-900') : (isGlass ? 'text-white/40' : 'text-gray-400')}`}>
-                            {formatMoney(totals.checkedCount > 0 ? totals.real : totals.estimated)}
-                        </p>
+                    <div className="flex items-center gap-3">
+                        <div className="flex flex-col gap-1.5">
+                            <button
+                                aria-label="Escanear ticket de compra"
+                                type="button" 
+                                onClick={() => navigate('/scanner')}
+                                className={`h-[34px] w-[34px] flex items-center justify-center rounded-[10px] transition-all active:scale-95 shadow-sm ${isGlass ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30 hover:bg-purple-500/30' : 'bg-purple-100 text-purple-700 border border-purple-200 hover:bg-purple-200'}`}
+                            >
+                                <Camera size={16} />
+                            </button>
+                            <button
+                                aria-label="Exportar lista para análisis de IA"
+                                type="button"
+                                onClick={handleExportToAI}
+                                className={`h-[34px] w-[34px] flex items-center justify-center rounded-[10px] transition-all active:scale-95 shadow-sm ${isGlass ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 hover:bg-indigo-500/30' : 'bg-indigo-100 text-indigo-700 border border-indigo-200 hover:bg-indigo-200'}`}
+                            >
+                                <Copy size={16} />
+                            </button>
+                        </div>
+                        <div className="text-right">
+                            <p className={`text-[10px] uppercase font-bold ${isGlass ? 'text-white/50' : 'text-gray-400'}`}>
+                                {totals.checkedCount > 0 ? 'En Carrito' : 'Presupuesto'}
+                            </p>
+                            <p className={`text-2xl font-bold ${totals.checkedCount > 0 ? (isGlass ? 'text-white' : 'text-gray-900') : (isGlass ? 'text-white/40' : 'text-gray-400')}`}>
+                                {formatMoney(totals.checkedCount > 0 ? totals.real : totals.estimated)}
+                            </p>
+                        </div>
                     </div>
                 </div>
 
@@ -426,7 +425,7 @@ export default function SuperList() {
                 {/* ÍNDICE ALFABÉTICO (Chips horizontales seguros) */}
                 <style>{`.hide-scrollbar::-webkit-scrollbar { display: none; }`}</style>
                 <div className="flex gap-2 overflow-x-auto mt-4 pb-1 snap-x hide-scrollbar" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-                    {[...new Set(monthlyList.flatMap(i => !i.checked && i.name ? [(i.name[0] || '?').toUpperCase()] : []))].sort().map(letter => (
+                    {[...new Set(monthlyList.flatMap(i => i.name ? [(i.name[0] || '?').toUpperCase()] : []))].sort().map(letter => (
                         <button
                             aria-label={`Filtrar por letra ${letter}`}
                             key={letter}
