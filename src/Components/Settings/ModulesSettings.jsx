@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Puzzle, Sparkles, Settings } from 'lucide-react';
+import { ArrowLeft, Puzzle, Sparkles, Settings, Layout } from 'lucide-react';
 import { CACHE_KEYS } from '../../config/constants';
 import { setCache } from '../../utils/cache';
 import { useUI } from '../../context/UIContext';
@@ -22,12 +22,27 @@ export default function ModulesSettings({ onBack }) {
     const { isGlass, motionPreference, setMotionPreference } = useUI();
     const { user } = useAuth();
     const [enabled, setEnabled] = useState(loadModules);
+    const [showBottomNav, setShowBottomNav] = useState(() => {
+        return localStorage.getItem('app_show_bottom_nav') !== 'false';
+    });
     const navigate = useNavigate();
 
     const toggle = (id) => {
         setEnabled(prev => {
             const next = { ...prev, [id]: !prev[id] };
             saveModules(next, user?.uid);
+            return next;
+        });
+    };
+
+    const toggleBottomNav = () => {
+        setShowBottomNav(prev => {
+            const next = !prev;
+            localStorage.setItem('app_show_bottom_nav', String(next));
+            if (user?.uid) {
+                savePreferences(user.uid, { show_bottom_nav: next });
+            }
+            window.dispatchEvent(new CustomEvent('modulesChanged'));
             return next;
         });
     };
@@ -93,6 +108,42 @@ export default function ModulesSettings({ onBack }) {
                             {option.label}
                         </button>
                     ))}
+                </div>
+            </div>
+
+            {/* SECCIÓN: BARRA DE NAVEGACIÓN INFERIOR */}
+            <div className={`${card} mt-4`}>
+                <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0">
+                            <Layout size={16} />
+                        </div>
+                        <div>
+                            <h3 className={`font-bold text-sm ${text}`}>Barra inferior de accesos</h3>
+                            <p className={`text-xs ${sub}`}>Accesos directos fijos en el pie de pantalla</p>
+                        </div>
+                    </div>
+                    
+                    <button
+                        aria-label="Alternar barra inferior de accesos"
+                        type="button"
+                        onClick={toggleBottomNav}
+                        className="min-h-[44px] min-w-[48px] flex items-center justify-center shrink-0"
+                    >
+                        <div
+                            className={`w-12 h-6 rounded-full transition-all duration-300 relative ${
+                                showBottomNav
+                                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600'
+                                    : isGlass ? 'bg-white/20' : 'bg-gray-200'
+                            }`}
+                        >
+                            <span
+                                className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all duration-300 ${
+                                    showBottomNav ? 'left-7' : 'left-1'
+                                }`}
+                            />
+                        </div>
+                    </button>
                 </div>
             </div>
 

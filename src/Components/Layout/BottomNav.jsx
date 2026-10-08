@@ -21,6 +21,12 @@ function BottomNav() {
 
     const currentPath = location.pathname;
 
+    // Si el usuario desactivó la barra inferior en Módulos, no renderizar
+    const showBottomNav = localStorage.getItem('app_show_bottom_nav') !== 'false';
+    if (!showBottomNav) {
+        return null;
+    }
+
     // En la vista de escáner de tickets se oculta para no tapar el disparador de cámara
     if (currentPath === '/scanner' || currentPath === '/super') {
         return null;
