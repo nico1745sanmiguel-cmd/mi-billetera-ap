@@ -22,8 +22,8 @@ export default defineConfig({
         start_url: "/",
         scope: "/",
         display: "standalone",
-        theme_color: "#ffffff",
-        background_color: "#f3f4f6",
+        theme_color: "#02213d",
+        background_color: "#02213d",
         icons: [
           {
             src: "/icon-192.webp",
