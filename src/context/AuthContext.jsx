@@ -79,6 +79,9 @@ export const AuthProvider = ({ children }) => {
                         if (prefs.enabled_modules) setCache(CACHE_KEYS.ENABLED_MODULES, prefs.enabled_modules);
                         if (prefs.widget_order) setCache(CACHE_KEYS.WIDGET_ORDER, prefs.widget_order);
                         if (prefs.widget_sizes) setCache(CACHE_KEYS.WIDGET_SIZES, prefs.widget_sizes);
+                        if (prefs.show_bottom_nav !== undefined) {
+                            localStorage.setItem('app_show_bottom_nav', String(prefs.show_bottom_nav));
+                        }
                         // Disparar eventos por si la vista ya renderizó con el cache viejo
                         window.dispatchEvent(new CustomEvent('modulesChanged'));
                     }
