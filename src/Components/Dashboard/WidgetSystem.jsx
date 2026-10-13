@@ -94,6 +94,55 @@ function WidgetWrapper({ widgetKey, children, size, onToggleSize, getDragProps, 
     );
 }
 
+// ─── DesktopWidgetGrid ─────────────────────────────────────────────────────────
+// Layout de 2 columnas para desktop/tablet (≥768px).
+// Los widgets se distribuyen alternados: pares → izq, impares → der.
+// El drag & drop existente reordena el array `order` y las columnas se recalculan.
+export function DesktopWidgetGrid({ order, getWidgetNode, getSize, toggleSize, getDragProps, draggingItem }) {
+    const activeKeys = order.filter(key => !!getWidgetNode(key, 'full'));
+
+    if (activeKeys.length === 0) {
+        return (
+            <div className="hidden md:block p-8 text-center bg-gray-50 dark:bg-white/5 rounded-3xl border border-dashed border-gray-200 dark:border-white/10 my-2">
+                <p className="text-sm font-bold text-gray-700 dark:text-white/80 mb-1">Sin widgets activos</p>
+                <p className="text-xs text-gray-600 dark:text-white/60">Podés activar módulos desde el menú superior en Ajustes de Módulos.</p>
+            </div>
+        );
+    }
+
+    const leftCol  = activeKeys.filter((_, i) => i % 2 === 0);
+    const rightCol = activeKeys.filter((_, i) => i % 2 !== 0);
+
+    const renderCol = (keys) =>
+        keys.map((key) => {
+            const size = getSize(key);
+            const node = getWidgetNode(key, size);
+            if (!node) return null;
+            return (
+                <WidgetWrapper
+                    key={key}
+                    widgetKey={key}
+                    size={size}
+                    onToggleSize={(k, newSize) => {
+                        const current = getSize(k);
+                        if (current !== newSize) toggleSize(k);
+                    }}
+                    getDragProps={getDragProps}
+                    isDragging={draggingItem === key}
+                >
+                    {node}
+                </WidgetWrapper>
+            );
+        });
+
+    return (
+        <div className="hidden md:grid grid-cols-2 gap-4 items-start">
+            <div className="flex flex-col gap-4">{renderCol(leftCol)}</div>
+            <div className="flex flex-col gap-4">{renderCol(rightCol)}</div>
+        </div>
+    );
+}
+
 // ─── WidgetGrid ────────────────────────────────────────────────────────────────
 export function WidgetGrid({ order, getWidgetNode, getSize, toggleSize, getDragProps, draggingItem }) {
     const activeKeys = order.filter(key => !!getWidgetNode(key, 'full'));

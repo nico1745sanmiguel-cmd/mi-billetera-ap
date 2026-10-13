@@ -36,12 +36,14 @@ const PlannerWidget = React.lazy(() => import('./Widgets/PlannerWidget'));
 const SkinsModal = React.lazy(() => import('./Skins/SkinsModal'));
 const WPTileGrid = React.lazy(() => import('./Skins/WindowsPhone/WPTileGrid'));
 import { isModuleEnabled } from '../../utils/modulesUtils';
-import { WidgetGrid } from './WidgetSystem';
 
 import UserMenu from './UserMenu';
 import ThemeSelector from './ThemeSelector';
 import CriticalAlert from './CriticalAlert';
 import SkeletonDashboard from '../UI/SkeletonDashboard';
+import DesktopDashboardHeader from '../Layout/DesktopDashboardHeader';
+import { WidgetGrid, DesktopWidgetGrid } from './WidgetSystem';
+
 
 const handleCacheRefresh = async () => {
     if ('serviceWorker' in navigator) {
@@ -294,92 +296,114 @@ const Home = memo(({ onLogout, notifications = EMPTY_ARRAY, onCardClick }) => {
     };
 
     return (
-        <div className="space-y-6 animate-fade-in pb-8">
-            <div className="flex justify-between items-center px-2 pt-2">
-                <div className="flex flex-col">
-                    <span className="text-xs text-gray-400 dark:text-white/70 font-bold uppercase tracking-wider">Tu Panel</span>
-                    <h1 className="text-xl font-bold text-gray-800 dark:text-white">
-                        Hola, {user?.displayName?.split(' ')[0] || 'Usuario'} 👋
-                    </h1>
+        <>
+            {/* ══ HEADER DESKTOP (sticky, reemplaza Navbar en /dashboard) ══ */}
+            <DesktopDashboardHeader
+                unreadNotifsCount={unreadNotifsCount}
+                onLogout={onLogout}
+                setIsNotificationsOpen={setIsNotificationsOpen}
+                setIsSkinsOpen={setIsSkinsOpen}
+            />
+
+            {/* ══ CONTENIDO DEL DASHBOARD ══ */}
+            <div className="space-y-6 animate-fade-in pb-8">
+
+                {/* Saludo + UserMenu — solo mobile */}
+                <div className="flex md:hidden justify-between items-center px-2 pt-2">
+                    <div className="flex flex-col">
+                        <span className="text-xs text-gray-400 dark:text-white/70 font-bold uppercase tracking-wider">Tu Panel</span>
+                        <h1 className="text-xl font-bold text-gray-800 dark:text-white">
+                            Hola, {user?.displayName?.split(' ')[0] || 'Usuario'} 👋
+                        </h1>
+                    </div>
+                    <UserMenu
+                        user={user}
+                        unreadNotifsCount={unreadNotifsCount}
+                        onLogout={onLogout}
+                        setIsNotificationsOpen={setIsNotificationsOpen}
+                        setIsSkinsOpen={setIsSkinsOpen}
+                        isModuleEnabled={isModuleEnabled}
+                    />
                 </div>
-                <UserMenu 
-                    user={user}
-                    unreadNotifsCount={unreadNotifsCount}
-                    onLogout={onLogout}
-                    setIsNotificationsOpen={setIsNotificationsOpen}
-                    setIsSkinsOpen={setIsSkinsOpen}
-                    isModuleEnabled={isModuleEnabled}
-                />
-            </div>
 
-            <CriticalAlert criticalAlert={criticalAlert} showMoney={showMoney} />
+                <CriticalAlert criticalAlert={criticalAlert} showMoney={showMoney} />
 
-            {skin === 'windowsphone' ? (
-                <React.Suspense fallback={<SkeletonDashboard isGlass={isGlass} />}>
-                    <WPTileGrid 
-                        navigate={navigate}
+                {skin === 'windowsphone' ? (
+                    <React.Suspense fallback={<SkeletonDashboard isGlass={isGlass} />}>
+                        <WPTileGrid
+                            navigate={navigate}
+                            privacyMode={privacyMode}
+                            showMoney={showMoney}
+                            totalNeed={totalNeed}
+                            totalPaid={totalPaid}
+                            cardsWithDebt={cardsWithDebt}
+                            agenda={agenda}
+                            services={services}
+                            superData={superData}
+                            currentDate={currentDate}
+                            splitData={splitData}
+                        />
+                    </React.Suspense>
+                ) : (
+                    <React.Suspense fallback={<SkeletonDashboard isGlass={isGlass} />}>
+                        {/* MOBILE — lista vertical */}
+                        <div className="md:hidden">
+                            <WidgetGrid
+                                order={order}
+                                getWidgetNode={getWidgetNode}
+                                getSize={getSize}
+                                toggleSize={toggleSize}
+                                getDragProps={getDragProps}
+                                draggingItem={draggingItem}
+                            />
+                        </div>
+
+                        {/* DESKTOP — 2 columnas */}
+                        <DesktopWidgetGrid
+                            order={order}
+                            getWidgetNode={getWidgetNode}
+                            getSize={getSize}
+                            toggleSize={toggleSize}
+                            getDragProps={getDragProps}
+                            draggingItem={draggingItem}
+                        />
+                    </React.Suspense>
+                )}
+
+                <ThemeSelector theme={theme} setTheme={setTheme} isGlass={isGlass} />
+
+                <button aria-label="Actualizar aplicación y recargar datos" type="button"
+                    onClick={handleCacheRefresh}
+                    className="w-full py-4 mt-3 rounded-full border border-gray-100 dark:border-white/10 text-gray-400 dark:text-white/40 text-xs font-bold uppercase tracking-widest hover:bg-gray-50 dark:hover:bg-white/5 hover:text-gray-600 dark:hover:text-white/80 transition-all flex items-center justify-center gap-2 group min-h-[44px]"
+                >
+                    <RefreshCw size={16} className="group-hover:rotate-180 transition-transform duration-500 ease-out" />
+                    <span>Actualizar Aplicación</span>
+                </button>
+
+                {isNotificationsOpen && (
+                    <NotificationsModal
+                        notifications={notifications}
+                        user={user}
                         privacyMode={privacyMode}
-                        showMoney={showMoney}
-                        totalNeed={totalNeed}
-                        totalPaid={totalPaid}
-                        cardsWithDebt={cardsWithDebt}
-                        agenda={agenda}
-                        services={services}
-                        superData={superData}
-                        currentDate={currentDate}
-                        splitData={splitData}
+                        setIsNotificationsOpen={setIsNotificationsOpen}
+                        handleMarkAsRead={handleMarkAsRead}
+                        showToast={showToast}
                     />
-                </React.Suspense>
-            ) : (
-                <React.Suspense fallback={<SkeletonDashboard isGlass={isGlass} />}>
-                    <WidgetGrid
-                        order={order}
-                        getWidgetNode={getWidgetNode}
-                        getSize={getSize}
-                        toggleSize={toggleSize}
-                        getDragProps={getDragProps}
-                        draggingItem={draggingItem}
-                    />
-                </React.Suspense>
-            )}
+                )}
 
-
-
-            <ThemeSelector theme={theme} setTheme={setTheme} isGlass={isGlass} />
-
-            <button aria-label="Actualizar aplicación y recargar datos" type="button"
-                onClick={handleCacheRefresh}
-                className="w-full py-4 mt-3 rounded-full border border-gray-100 dark:border-white/10 text-gray-400 dark:text-white/40 text-xs font-bold uppercase tracking-widest hover:bg-gray-50 dark:hover:bg-white/5 hover:text-gray-600 dark:hover:text-white/80 transition-all flex items-center justify-center gap-2 group min-h-[44px]"
-            >
-                <RefreshCw size={16} className="group-hover:rotate-180 transition-transform duration-500 ease-out" />
-                <span>Actualizar Aplicación</span>
-            </button>
-
-
-
-            {isNotificationsOpen && (
-                <NotificationsModal 
-                    notifications={notifications} 
-                    user={user} 
-                    privacyMode={privacyMode} 
-                    setIsNotificationsOpen={setIsNotificationsOpen} 
-                    handleMarkAsRead={handleMarkAsRead}
-                    showToast={showToast}
-                />
-            )}
-
-            {isSkinsOpen && (
-                <React.Suspense fallback={null}>
-                    <SkinsModal 
-                        isOpen={isSkinsOpen}
-                        onClose={() => setIsSkinsOpen(false)}
-                        currentSkin={skin}
-                        onSelectSkin={setSkin}
-                    />
-                </React.Suspense>
-            )}
-        </div>
+                {isSkinsOpen && (
+                    <React.Suspense fallback={null}>
+                        <SkinsModal
+                            isOpen={isSkinsOpen}
+                            onClose={() => setIsSkinsOpen(false)}
+                            currentSkin={skin}
+                            onSelectSkin={setSkin}
+                        />
+                    </React.Suspense>
+                )}
+            </div>
+        </>
     );
 });
 
-export default Home;
+export default Home;

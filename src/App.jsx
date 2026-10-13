@@ -7,6 +7,7 @@ import MobileHeader from './Components/Layout/MobileHeader';
 import BottomNav from './Components/Layout/BottomNav';
 import ErrorBoundary from './Components/UI/ErrorBoundary';
 import GlobalToast from './Components/UI/GlobalToast';
+
 import { auth } from './firebase';
 import { signOut } from 'firebase/auth';
 import { useFinancial } from './context/FinancialContext';
@@ -155,15 +156,18 @@ export default function App() {
                         <InstallPrompt />
                     </Suspense>
 
-                    {/* NAVBAR DESKTOP */}
-                    <div className="hidden md:block relative">
-                        <Navbar privacyMode={privacyMode} setPrivacyMode={setPrivacyMode} isGlass={isGlass} />
-                    </div>
+                    {/* NAVBAR DESKTOP — se oculta en /dashboard (lo reemplaza DesktopDashboardHeader) */}
+                    {location.pathname !== '/dashboard' && location.pathname !== '/' && (
+                        <div className="hidden md:block relative">
+                            <Navbar privacyMode={privacyMode} setPrivacyMode={setPrivacyMode} isGlass={isGlass} />
+                        </div>
+                    )}
 
                     {/* HEADER MÓVIL */}
                     <MobileHeader />
 
                     <main className="max-w-5xl mx-auto p-4 mt-2 pb-24 md:pb-10 w-full flex-grow relative overflow-hidden">
+
                         <Suspense fallback={<LazyLoader />}>
                             <AnimatePresence mode="wait">
                                 <Routes location={location} key={location.pathname}>
