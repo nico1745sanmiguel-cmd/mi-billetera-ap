@@ -44,7 +44,7 @@ const handleUpdatePrice = async (item, rawValue) => {
 export default function SuperList() {
     const { currentDate, isGlass } = useUI();
     const navigate = useNavigate();
-    const { userData } = useAuth();
+    const { user, userData } = useAuth();
     const householdId = userData?.householdId;
     const { superItems: items, loading } = useSupermarket();
     
@@ -91,17 +91,32 @@ export default function SuperList() {
     };
 
     // 1. CLAVE DEL MES (MÁQUINA DEL TIEMPO ⏳)
-    const currentMonthKey = useMemo(() => formatMonthKey(currentDate), [currentDate]);
+    const realCurrentMonthKey = useMemo(() => {
+        const today = new Date();
+        return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+    }, []);
+
+    const currentMonthKey = useMemo(() => {
+        return formatMonthKey(currentDate) || realCurrentMonthKey;
+    }, [currentDate, realCurrentMonthKey]);
 
     // 2. LISTA FILTRADA Y ORDENADA
     const monthlyList = useMemo(() => {
         return items
-            .filter(item => item.month === currentMonthKey)
+            .filter(item => {
+                // 1. Si el ítem tiene mes asignado y coincide con el mes seleccionado
+                if (item.month === currentMonthKey) return true;
+                // 2. Compatibilidad con ítems históricos sin mes: si estamos en el mes actual se muestran
+                if (!item.month && currentMonthKey === realCurrentMonthKey) return true;
+                // 3. Ítems pendientes no comprados de meses anteriores se mantienen visibles en el mes actual
+                if (!item.checked && currentMonthKey === realCurrentMonthKey) return true;
+                return false;
+            })
             .sort((a, b) => {
                 if (a.checked !== b.checked) return a.checked ? 1 : -1;
                 return (a.name || '').localeCompare(b.name || '');
             });
-    }, [items, currentMonthKey]);
+    }, [items, currentMonthKey, realCurrentMonthKey]);
 
     // Navegación alfabética segura (click/touch directo)
     const handleLetterClick = (letter) => {
@@ -125,14 +140,15 @@ export default function SuperList() {
     // Auto-agregar ítems de frecuencia regular en un mes vacío (solo si no es un mes histórico pasado)
     const autoAddRunRef = useRef(new Set());
     useEffect(() => {
-        if (!currentMonthKey || !auth.currentUser) return;
+        const currentUser = user || auth.currentUser;
+        if (!currentMonthKey || !currentUser) return;
         if (monthlyList.length > 0) return;          // ya hay ítems este mes
         if (prediction.auto.length === 0) return;    // sin predicciones automáticas
         if (autoAddRunRef.current.has(currentMonthKey)) return; // ya corrió
 
         const today = new Date();
-        const realCurrentMonthKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
-        if (currentMonthKey < realCurrentMonthKey) return; // no generar compras ficticias en el pasado
+        const realKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+        if (currentMonthKey < realKey) return; // no generar compras ficticias en el pasado
 
         autoAddRunRef.current.add(currentMonthKey);
 
@@ -142,11 +158,11 @@ export default function SuperList() {
                 price: item.price || 0,
                 quantity: item.quantity || 1,
                 checked: false,
-                userId: auth.currentUser.uid,
+                userId: currentUser.uid,
                 month: currentMonthKey,
                 ...(householdId && {
                     householdId,
-                    ownerId: auth.currentUser.uid,
+                    ownerId: currentUser.uid,
                     isShared: true,
                 }),
             })
@@ -155,7 +171,7 @@ export default function SuperList() {
             .then(() => showToast(`🛒 ${prediction.auto.length} ítems agregados automáticamente`))
             .catch(err => console.error('Error en auto-add:', err));
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [currentMonthKey, monthlyList.length, prediction.auto]);
+    }, [currentMonthKey, monthlyList.length, prediction.auto, user]);
 
     // Estado para la tarjeta de sugerencias
     const [selectedSuggestions, setSelectedSuggestions] = useState({});
@@ -172,7 +188,8 @@ export default function SuperList() {
     }, [currentMonthKey, prediction.suggestions.length]);
 
     const handleConfirmSuggestions = async () => {
-        if (!auth.currentUser) return;
+        const currentUser = user || auth.currentUser;
+        if (!currentUser) return;
         const toAdd = prediction.suggestions.filter(s => selectedSuggestions[s.name.toLowerCase()]);
         if (toAdd.length === 0) { setShowSuggestions(false); return; }
         setIsAddingSuggestions(true);
@@ -183,11 +200,11 @@ export default function SuperList() {
                     price: item.price || 0,
                     quantity: item.quantity || 1,
                     checked: false,
-                    userId: auth.currentUser.uid,
+                    userId: currentUser.uid,
                     month: currentMonthKey,
                     ...(householdId && {
                         householdId,
-                        ownerId: auth.currentUser.uid,
+                        ownerId: currentUser.uid,
                         isShared: true,
                     }),
                 })
@@ -209,7 +226,8 @@ export default function SuperList() {
             itemsRefs.current[lastAddedId].scrollIntoView({ behavior: 'smooth', block: 'center' });
 
             // Enfocar el input de precio del nuevo item
-            const priceInputEl = itemsRefs.current[lastAddedId].querySelector('input[type="tel"]');
+            const priceInputEl = itemsRefs.current[lastAddedId].querySelector(`#price-input-${lastAddedId}`)
+                || itemsRefs.current[lastAddedId].querySelector('input[type="tel"]:last-of-type');
             if (priceInputEl) {
                 timerId = setTimeout(() => priceInputEl.focus(), 300);
             }
@@ -245,18 +263,19 @@ export default function SuperList() {
 
     // --- HANDLERS ---
     const handleAdd = async (itemName) => {
-        if (!itemName || !auth.currentUser) return;
+        const currentUser = user || auth.currentUser;
+        if (!itemName || !currentUser) return;
         try {
             const docRef = await addSuperItem({
                 name: itemName,
                 price: 0,
                 quantity: 1,
                 checked: false,
-                userId: auth.currentUser.uid,
+                userId: currentUser.uid,
                 month: currentMonthKey,
                 ...(householdId && {
                     householdId,
-                    ownerId: auth.currentUser.uid,
+                    ownerId: currentUser.uid,
                     isShared: true
                 })
             });

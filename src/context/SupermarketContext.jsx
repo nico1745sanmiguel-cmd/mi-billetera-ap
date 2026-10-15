@@ -50,8 +50,8 @@ export const SupermarketProvider = ({ children }) => {
 
         const syncData = (collectionName, setState, cacheKey) => {
             const q = householdId
-                ? query(collection(db, collectionName), or(where("householdId", "==", householdId), where("userId", "==", user.uid)))
-                : query(collection(db, collectionName), where("userId", "==", user.uid));
+                ? query(collection(db, collectionName), or(where("householdId", "==", householdId), where("userId", "==", uid)))
+                : query(collection(db, collectionName), where("userId", "==", uid));
             return onSnapshot(q, (snap) => {
                 const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
                 setState(data);
@@ -76,7 +76,7 @@ export const SupermarketProvider = ({ children }) => {
 
     const visibleSuperItems = useMemo(() => {
         if (!ENABLE_HOUSEHOLD || !householdId) return superItems;
-        return superItems.filter(item => !item.ownerId || item.isShared === true || item.ownerId === uid);
+        return superItems.filter(item => !item.ownerId || item.isShared !== false || item.ownerId === uid);
     }, [superItems, householdId, uid]);
 
     const visibleFreshItems = useMemo(() => {
