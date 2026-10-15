@@ -22,24 +22,7 @@ import ConfirmDialog from '../UI/ConfirmDialog';
 import Skeleton from '../UI/Skeleton';
 
 // FORMATOS
-const parseCurrencyInput = (val) => val.replace(/\D/g, '');
-
-const handleToggle = async (item) => {
-    try {
-        await toggleSuperChecked(item.id, !item.checked);
-    } catch (err) {
-        console.error('Error al cambiar estado del ítem:', err);
-    }
-};
-
-const handleUpdatePrice = async (item, rawValue) => {
-    try {
-        const numericValue = parseCurrencyInput(rawValue);
-        await updateSuperPrice(item.id, numericValue);
-    } catch (err) {
-        console.error('Error al actualizar precio:', err);
-    }
-};
+const parseCurrencyInput = (val) => String(val || '').replace(/\D/g, '');
 
 export default function SuperList() {
     const { currentDate, isGlass } = useUI();
@@ -262,25 +245,46 @@ export default function SuperList() {
     };
 
     // --- HANDLERS ---
+    const handleToggle = async (item) => {
+        try {
+            await toggleSuperChecked(item.id, !item.checked);
+        } catch (err) {
+            console.error('Error al cambiar estado del ítem:', err);
+            showToast('Error al marcar producto. Revisá los permisos.');
+        }
+    };
+
+    const handleUpdatePrice = async (item, rawValue) => {
+        try {
+            const numericValue = Number(parseCurrencyInput(rawValue)) || 0;
+            await updateSuperPrice(item.id, numericValue);
+        } catch (err) {
+            console.error('Error al actualizar precio:', err);
+            showToast('Error al guardar precio');
+        }
+    };
+
     const handleAdd = async (itemName) => {
         const currentUser = user || auth.currentUser;
-        if (!itemName || !currentUser) return;
+        if (!itemName?.trim()) return;
+        if (!currentUser) {
+            showToast('Verificando sesión... por favor reintentá en un instante.');
+            return;
+        }
         try {
             const docRef = await addSuperItem({
-                name: itemName,
+                name: itemName.trim(),
                 price: 0,
                 quantity: 1,
                 checked: false,
                 userId: currentUser.uid,
+                ownerId: currentUser.uid,
+                isShared: true,
                 month: currentMonthKey,
-                ...(householdId && {
-                    householdId,
-                    ownerId: currentUser.uid,
-                    isShared: true
-                })
+                ...(householdId && { householdId })
             });
             setLastAddedId(docRef.id);
-            showToast('Agregado', async () => {
+            showToast(`"${itemName.trim()}" agregado`, async () => {
                 try {
                     await deleteSuperItem(docRef.id);
                 } catch (e) {
@@ -289,7 +293,7 @@ export default function SuperList() {
             });
         } catch (error) {
             console.error('Error al agregar ítem:', error);
-            showToast('Error al agregar el ítem');
+            showToast('Error al agregar el ítem. Revisá la conexión.');
         }
     };
 

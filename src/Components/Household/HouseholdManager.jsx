@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Wallet, CreditCard, ShoppingCart, Lightbulb } from 'lucide-react';
+import { Wallet, CreditCard, ShoppingCart, Lightbulb, Users, KeyRound } from 'lucide-react';
 import { db } from '../../firebase';
 import { doc, getDoc, updateDoc, collection, query, where, getDocs, writeBatch } from 'firebase/firestore';
-import { checkAndMigrateToHousehold } from '../../utils/householdMigration';
+import { createNewHousehold } from '../../utils/householdMigration';
+import { invalidateHouseholdCache } from '../../services/householdService';
 import { useAuth } from '../../context/AuthContext';
 import { useUI } from '../../context/UIContext';
 import LoadingState from '../UI/LoadingState';
@@ -93,48 +94,88 @@ export default function HouseholdManager({ onBack }) {
     };
 
     const handleJoin = async () => {
-        if (joinCode.length < 6) return;
+        const cleanCode = joinCode.trim();
+        if (cleanCode.length < 6) return;
         setJoinStatus("searching");
         try {
-            const q = query(collection(db, 'households'), where("inviteCode", "==", joinCode));
+            const q = query(collection(db, 'households'), where("inviteCode", "==", cleanCode));
             const querySnapshot = await getDocs(q);
-            if (querySnapshot.empty) return setJoinStatus("error_not_found");
+            if (querySnapshot.empty) {
+                setJoinStatus("error_not_found");
+                return;
+            }
 
             const targetHouseholdDoc = querySnapshot.docs[0];
             const targetHouseholdId = targetHouseholdDoc.id;
             const targetHouseholdData = targetHouseholdDoc.data();
 
+            // 1. Asignar householdId al usuario
             await updateDoc(doc(db, 'users', user.uid), { householdId: targetHouseholdId });
-            const newMembers = [...(targetHouseholdData.members || []), user.uid];
+
+            // 2. Agregar el usuario a members del hogar destino
+            const newMembers = [...new Set([...(targetHouseholdData.members || []), user.uid])];
             await updateDoc(doc(db, 'households', targetHouseholdId), { members: newMembers });
 
+            // 3. Si estaba en un hogar anterior solitario, removerlo
+            if (householdId && householdId !== targetHouseholdId && household) {
+                const remaining = (household.members || []).filter(id => id !== user.uid);
+                await updateDoc(doc(db, 'households', householdId), { members: remaining });
+            }
+
+            // 4. Migrar todos los datos personales al nuevo hogar (buscando por userId y ownerId)
             const batch = writeBatch(db);
-            const collectionsToUpdate = ['cards', 'transactions', 'supermarket_items', 'services'];
-            const snaps = await Promise.all(collectionsToUpdate.map(collName => 
-                getDocs(query(collection(db, collName), where("ownerId", "==", user.uid)))
-            ));
-            snaps.forEach(snap => snap.forEach(docSnap => batch.update(docSnap.ref, { householdId: targetHouseholdId })));
+            const collectionsToUpdate = ['cards', 'transactions', 'supermarket_items', 'fresh_purchases', 'services'];
+            const snaps = await Promise.all(collectionsToUpdate.flatMap(collName => [
+                getDocs(query(collection(db, collName), where("ownerId", "==", user.uid))).then(s => ({ collName, s })),
+                getDocs(query(collection(db, collName), where("userId", "==", user.uid))).then(s => ({ collName, s }))
+            ]));
+
+            const seenDocIds = new Set();
+            snaps.forEach(({ collName, s }) => {
+                s.forEach(docSnap => {
+                    if (!seenDocIds.has(docSnap.id)) {
+                        seenDocIds.add(docSnap.id);
+                        let isShared = false;
+                        if (collName === 'supermarket_items' || collName === 'fresh_purchases' || collName === 'services') isShared = true;
+                        batch.update(docSnap.ref, { 
+                            householdId: targetHouseholdId,
+                            ownerId: user.uid,
+                            isShared
+                        });
+                    }
+                });
+            });
             await batch.commit();
 
-            setJoinStatus("success");
+            invalidateHouseholdCache();
             await refreshUserData();
+
+            const snap = await getDoc(doc(db, 'households', targetHouseholdId));
+            if (snap.exists()) setHousehold(snap.data());
+
+            setJoinStatus("success");
+            setJoinCode("");
+            showToast("¡Te uniste con éxito al grupo familiar!", "success");
         } catch (error) {
-            console.error(error);
+            console.error("Error joining household:", error);
             setJoinStatus("error");
+            showToast("Error al unirse al hogar. Verificá los permisos.", "error");
         }
     };
 
     const handleCreate = async () => {
         setCreateStatus("creating");
         try {
-            const newId = await checkAndMigrateToHousehold(user);
+            const newId = await createNewHousehold(user);
             if (!newId) return setCreateStatus("error");
+            invalidateHouseholdCache();
             await refreshUserData();
             const snap = await getDoc(doc(db, 'households', newId));
             if (snap.exists()) setHousehold(snap.data());
             setCreateStatus("success");
+            showToast("¡Hogar creado con éxito!", "success");
         } catch (error) {
-            console.error(error);
+            console.error("Error creating household:", error);
             setCreateStatus("error");
         }
     };
@@ -152,6 +193,7 @@ export default function HouseholdManager({ onBack }) {
                 const newMembers = (household.members || []).filter(id => id !== user.uid);
                 await updateDoc(doc(db, 'households', householdId), { members: newMembers });
             }
+            invalidateHouseholdCache();
             await refreshUserData();
             setHousehold(null);
             setIsLeaveOpen(false);
@@ -172,42 +214,72 @@ export default function HouseholdManager({ onBack }) {
     const confirmRestoreOldHousehold = async () => {
         setIsRestoring(true);
         try {
-            const q = query(collection(db, 'households'), where('members', 'array-contains', user.uid));
-            const snaps = await getDocs(q);
-            const myHouseholds = snaps.docs.map(d => ({ id: d.id, ...d.data() }));
-            
-            const oldHouseholds = myHouseholds.filter(h => h.id !== householdId);
-            
-            if (oldHouseholds.length === 0) {
-                showToast("No se encontró ningún hogar anterior en la base de datos.", "info");
+            // Buscar hogares donde el usuario figure en members O como ownerId
+            const [snapsMembers, snapsOwner] = await Promise.all([
+                getDocs(query(collection(db, 'households'), where('members', 'array-contains', user.uid))),
+                getDocs(query(collection(db, 'households'), where('ownerId', '==', user.uid)))
+            ]);
+
+            const map = new Map();
+            snapsMembers.docs.forEach(d => map.set(d.id, { id: d.id, ...d.data() }));
+            snapsOwner.docs.forEach(d => map.set(d.id, { id: d.id, ...d.data() }));
+
+            const candidateHouseholds = Array.from(map.values()).filter(h => h.id !== householdId);
+
+            if (candidateHouseholds.length === 0) {
+                showToast("No se encontró ningún otro hogar registrado con tu usuario. Ingresá el código de 6 dígitos de tu pareja abajo.", "info");
                 setIsRestoreOpen(false);
                 return;
             }
-            
-            const targetId = oldHouseholds[0].id;
-            
-            if (household && household.members && household.members.length === 1) {
-                // await deleteDoc(doc(db, 'households', householdId)); // Optional, better to leave it to avoid errors
-            }
+
+            // Preferir un hogar que tenga más de 1 miembro (el familiar)
+            const target = candidateHouseholds.find(h => (h.members || []).length > 1) || candidateHouseholds[0];
+            const targetId = target.id;
 
             await updateDoc(doc(db, 'users', user.uid), { householdId: targetId });
-            
+
+            // Asegurar que el usuario esté en la lista de members del hogar
+            if (!(target.members || []).includes(user.uid)) {
+                await updateDoc(doc(db, 'households', targetId), { 
+                    members: [...(target.members || []), user.uid] 
+                });
+            }
+
+            // Migrar items personales a este hogar
             const batch = writeBatch(db);
-            const collectionsToUpdate = ['cards', 'transactions', 'supermarket_items', 'services'];
-            const collectionsSnaps = await Promise.all(collectionsToUpdate.map(collName => 
-                getDocs(query(collection(db, collName), where("ownerId", "==", user.uid)))
-            ));
-            collectionsSnaps.forEach(snap => snap.forEach(docSnap => batch.update(docSnap.ref, { householdId: targetId })));
+            const collectionsToUpdate = ['cards', 'transactions', 'supermarket_items', 'fresh_purchases', 'services'];
+            const snaps = await Promise.all(collectionsToUpdate.flatMap(collName => [
+                getDocs(query(collection(db, collName), where("ownerId", "==", user.uid))).then(s => ({ collName, s })),
+                getDocs(query(collection(db, collName), where("userId", "==", user.uid))).then(s => ({ collName, s }))
+            ]));
+
+            const seenDocIds = new Set();
+            snaps.forEach(({ collName, s }) => {
+                s.forEach(docSnap => {
+                    if (!seenDocIds.has(docSnap.id)) {
+                        seenDocIds.add(docSnap.id);
+                        let isShared = false;
+                        if (collName === 'supermarket_items' || collName === 'fresh_purchases' || collName === 'services') isShared = true;
+                        batch.update(docSnap.ref, { 
+                            householdId: targetId,
+                            ownerId: user.uid,
+                            isShared
+                        });
+                    }
+                });
+            });
             await batch.commit();
 
+            invalidateHouseholdCache();
             await refreshUserData();
+
             const snap = await getDoc(doc(db, 'households', targetId));
             if (snap.exists()) setHousehold(snap.data());
-            
-            showToast("¡Hogar anterior restaurado con éxito! Tus datos volvieron a la normalidad.", "success");
+
+            showToast(`¡Hogar restaurado con éxito! Reconectado a "${target.name || 'tu hogar'}"`, "success");
             setIsRestoreOpen(false);
         } catch (e) {
-            console.error(e);
+            console.error("Error restoring household:", e);
             showToast("Hubo un error al intentar restaurar el hogar.", "error");
         } finally {
             setIsRestoring(false);
@@ -306,6 +378,41 @@ export default function HouseholdManager({ onBack }) {
                                     </button>
                                 </div>
                             </div>
+                        </div>
+
+                        {/* UNIRSE A OTRO HOGAR CON CÓDIGO */}
+                        <div className={`border p-6 rounded-3xl ${isGlass ? 'bg-white/5 border-white/10' : 'bg-white border-gray-100 shadow-sm'}`}>
+                            <div className="mb-3">
+                                <h3 className={`text-lg font-bold flex items-center gap-2 ${isGlass ? 'text-white' : 'text-gray-800'}`}>
+                                    <span className="w-2 h-6 bg-indigo-500 rounded-full"></span><KeyRound size={20} className="text-indigo-500" /> Vincularme a otro Hogar
+                                </h3>
+                                <p className={`text-xs mt-1 ${isGlass ? 'text-gray-400' : 'text-gray-500'}`}>
+                                    Si tu pareja ya tiene un hogar creado, ingresá su código de 6 dígitos para unirte y sincronizar automáticamente todas tus listas y gastos.
+                                </p>
+                            </div>
+                            <div className="flex flex-col sm:flex-row gap-3 mt-4">
+                                <input
+                                    autoComplete="off"
+                                    type="text"
+                                    placeholder="000000"
+                                    maxLength={6}
+                                    value={joinCode}
+                                    onChange={(e) => setJoinCode(e.target.value.replace(/\D/g, ''))}
+                                    className={`flex-1 border rounded-2xl px-4 py-3 text-center tracking-widest font-mono text-xl transition-colors focus:outline-none focus:border-indigo-500 ${isGlass ? 'bg-black/50 border-white/10 text-white' : 'bg-gray-50 border-gray-200 text-gray-800'}`}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={handleJoin}
+                                    disabled={joinStatus === 'searching' || joinCode.length < 6}
+                                    className="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-3 rounded-2xl font-bold disabled:opacity-50 transition-all active:scale-95 shadow-md shadow-indigo-900/30 shrink-0"
+                                >
+                                    {joinStatus === 'searching' ? 'Buscando...' : 'Unirme con Código'}
+                                </button>
+                            </div>
+                            {joinStatus === 'searching' && <p className="text-indigo-400 text-xs mt-2 text-center animate-pulse">Buscando hogar...</p>}
+                            {joinStatus === 'success' && <p className="text-green-500 text-xs mt-2 text-center font-bold">¡Te uniste con éxito al hogar!</p>}
+                            {joinStatus === 'error_not_found' && <p className="text-red-400 text-xs mt-2 text-center">Código incorrecto o no encontrado.</p>}
+                            {joinStatus === 'error' && <p className="text-red-400 text-xs mt-2 text-center">Ocurrió un error al unirte al hogar.</p>}
                         </div>
 
                         <div className="pt-4">

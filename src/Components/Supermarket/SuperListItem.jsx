@@ -11,10 +11,18 @@ const SuperListItem = ({
     handlePriceFocus, handlePriceBlur
 }) => {
     const [localQty, setLocalQty] = useState(item.quantity);
+    const [localPrice, setLocalPrice] = useState(() => item.price ? formatInputCurrency(item.price) : '');
+    const isEditingPriceRef = React.useRef(false);
 
     useEffect(() => {
         setLocalQty(item.quantity);
     }, [item.quantity]);
+
+    useEffect(() => {
+        if (!isEditingPriceRef.current) {
+            setLocalPrice(item.price ? formatInputCurrency(item.price) : '');
+        }
+    }, [item.price]);
 
     const handleQtyBlur = () => {
         const val = parseInt(localQty, 10);
@@ -23,6 +31,26 @@ const SuperListItem = ({
         } else {
             handleSetQuantity(item, val);
         }
+    };
+
+    const handlePriceInputChange = (e) => {
+        const raw = e.target.value.replace(/\D/g, '');
+        setLocalPrice(raw ? '$ ' + Number(raw).toLocaleString('es-AR') : '');
+    };
+
+    const handlePriceInputFocus = (e) => {
+        isEditingPriceRef.current = true;
+        handlePriceFocus(item);
+        e.target.select();
+    };
+
+    const handlePriceInputBlur = () => {
+        isEditingPriceRef.current = false;
+        const numeric = Number(localPrice.replace(/\D/g, '')) || 0;
+        if (numeric !== (item.price || 0)) {
+            handleUpdatePrice(item, String(numeric));
+        }
+        handlePriceBlur(item);
     };
     return (
         <div
@@ -127,10 +155,10 @@ const SuperListItem = ({
                         className={`w-full bg-transparent outline-none text-sm font-bold text-right transition-colors duration-150 ${
                             item.checked ? 'text-purple-700' : (isGlass ? 'text-white' : 'text-gray-800')
                         }`}
-                        value={item.price ? formatInputCurrency(item.price) : ''}
-                        onChange={(e) => handleUpdatePrice(item, e.target.value)}
-                        onFocus={(e) => { handlePriceFocus(item); e.target.select(); }}
-                        onBlur={() => handlePriceBlur(item)}
+                        value={localPrice}
+                        onChange={handlePriceInputChange}
+                        onFocus={handlePriceInputFocus}
+                        onBlur={handlePriceInputBlur}
                         onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
                         enterKeyHint="done"
                         placeholder="$ 0"

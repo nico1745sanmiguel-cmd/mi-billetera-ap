@@ -31,8 +31,9 @@ export const AuthProvider = ({ children }) => {
         if (!user) return;
         try {
             const currentHouseholdId = await checkAndMigrateToHousehold(user);
-            setUserData({ householdId: currentHouseholdId });
-            setCache('userData', { householdId: currentHouseholdId });
+            const newUserData = currentHouseholdId ? { householdId: currentHouseholdId } : null;
+            setUserData(newUserData);
+            setCache('userData', newUserData);
 
             if (currentHouseholdId) {
                 const { members } = await fetchHouseholdWithMembers(currentHouseholdId, true);
@@ -58,11 +59,12 @@ export const AuthProvider = ({ children }) => {
                     setUserData(cachedUserData);
                 }
 
-                // Traer el dato real de Firebase (y migrar si es necesario)
+                // Traer el dato real de Firebase (sin forzar creación automática)
                 const currentHouseholdId = await checkAndMigrateToHousehold(currentUser);
+                const newUserData = currentHouseholdId ? { householdId: currentHouseholdId } : null;
                 if (!cachedUserData || cachedUserData.householdId !== currentHouseholdId) {
-                    setUserData({ householdId: currentHouseholdId });
-                    setCache('userData', { householdId: currentHouseholdId });
+                    setUserData(newUserData);
+                    setCache('userData', newUserData);
                 }
 
                 // Sincronizar sesión con la app Android nativa si estamos dentro de WebView
