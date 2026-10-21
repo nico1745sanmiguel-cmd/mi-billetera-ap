@@ -72,6 +72,9 @@ function WidgetWrapper({ widgetKey, children, size, onToggleSize, getDragProps, 
             draggable={dragProps.draggable}
             onDragStart={dragProps.onDragStart}
             onDragEnter={dragProps.onDragEnter}
+            onDragOver={dragProps.onDragOver}
+            onDrop={dragProps.onDrop}
+            onDragEnd={dragProps.onDragEnd}
             onTouchEnd={(e) => {
                 if (!menuOpen && longPressHandlers.onTouchEnd) longPressHandlers.onTouchEnd(e);
                 if (dragProps.onTouchEnd) dragProps.onTouchEnd(e);
@@ -96,8 +99,8 @@ function WidgetWrapper({ widgetKey, children, size, onToggleSize, getDragProps, 
 
 // ─── DesktopWidgetGrid ─────────────────────────────────────────────────────────
 // Layout de 2 columnas para desktop/tablet (≥768px).
-// Los widgets se distribuyen alternados: pares → izq, impares → der.
-// El drag & drop existente reordena el array `order` y las columnas se recalculan.
+// Se distribuye en CSS grid de 2 columnas continuas.
+// El drag & drop reordena el array `order` de forma natural y predecible.
 export function DesktopWidgetGrid({ order, getWidgetNode, getSize, toggleSize, getDragProps, draggingItem }) {
     const activeKeys = order.filter(key => !!getWidgetNode(key, 'full'));
 
@@ -110,35 +113,29 @@ export function DesktopWidgetGrid({ order, getWidgetNode, getSize, toggleSize, g
         );
     }
 
-    const leftCol  = activeKeys.filter((_, i) => i % 2 === 0);
-    const rightCol = activeKeys.filter((_, i) => i % 2 !== 0);
-
-    const renderCol = (keys) =>
-        keys.map((key) => {
-            const size = getSize(key);
-            const node = getWidgetNode(key, size);
-            if (!node) return null;
-            return (
-                <WidgetWrapper
-                    key={key}
-                    widgetKey={key}
-                    size={size}
-                    onToggleSize={(k, newSize) => {
-                        const current = getSize(k);
-                        if (current !== newSize) toggleSize(k);
-                    }}
-                    getDragProps={getDragProps}
-                    isDragging={draggingItem === key}
-                >
-                    {node}
-                </WidgetWrapper>
-            );
-        });
-
     return (
-        <div className="hidden md:grid grid-cols-2 gap-4 items-start">
-            <div className="flex flex-col gap-4">{renderCol(leftCol)}</div>
-            <div className="flex flex-col gap-4">{renderCol(rightCol)}</div>
+        <div className="hidden md:grid md:grid-cols-2 gap-4 items-start">
+            {activeKeys.map((key) => {
+                const size = getSize(key);
+                const node = getWidgetNode(key, size);
+                if (!node) return null;
+                return (
+                    <div key={key} className="w-full min-w-0 flex flex-col">
+                        <WidgetWrapper
+                            widgetKey={key}
+                            size={size}
+                            onToggleSize={(k, newSize) => {
+                                const current = getSize(k);
+                                if (current !== newSize) toggleSize(k);
+                            }}
+                            getDragProps={getDragProps}
+                            isDragging={draggingItem === key}
+                        >
+                            {node}
+                        </WidgetWrapper>
+                    </div>
+                );
+            })}
         </div>
     );
 }

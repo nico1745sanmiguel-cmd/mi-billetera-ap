@@ -1,50 +1,72 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
 
 export function useDragReorder(initialOrder) {
   const [order, setOrder] = useState(initialOrder);
   const [draggingItem, setDraggingItem] = useState(null);
-  const dragItemNode = useRef();
+  const dragItemNode = useRef(null);
 
-  const handleDragStart = (e, item) => {
-    dragItemNode.current = e.target;
-    dragItemNode.current.addEventListener('dragend', handleDragEnd);
-    // react-doctor-disable-next-line react-doctor/no-impure-state-updater
-    setDraggingItem(item);
-    setTimeout(() => {
-        if(dragItemNode.current) dragItemNode.current.classList.add('opacity-50', 'scale-95');
-    }, 0);
-  };
-
-  const handleDragEnter = (e, targetItem) => {
-    if (draggingItem !== null && draggingItem !== targetItem) {
-      const oldIdx = order.indexOf(draggingItem);
-      const newIdx = order.indexOf(targetItem);
-      
-      const newOrder = [...order];
-      newOrder.splice(oldIdx, 1);
-      newOrder.splice(newIdx, 0, draggingItem);
-      
-      setOrder(newOrder);
-    }
-  };
-
-  const handleDragEnd = () => {
+  const handleDragEnd = useCallback(() => {
     setDraggingItem(null);
-    if(dragItemNode.current) {
-        dragItemNode.current.classList.remove('opacity-50', 'scale-95');
-        dragItemNode.current.removeEventListener('dragend', handleDragEnd);
+    if (dragItemNode.current) {
+      dragItemNode.current.classList.remove('opacity-50', 'scale-95');
     }
     dragItemNode.current = null;
-  };
+  }, []);
 
-  const getDragProps = (id) => ({
+  const handleDragStart = useCallback((e, item) => {
+    dragItemNode.current = e.currentTarget;
+    setDraggingItem(item);
+    if (e.dataTransfer) {
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', item);
+    }
+    setTimeout(() => {
+      if (dragItemNode.current) {
+        dragItemNode.current.classList.add('opacity-50', 'scale-95');
+      }
+    }, 0);
+  }, []);
+
+  const handleDragEnter = useCallback((e, targetItem) => {
+    e.preventDefault();
+    setDraggingItem((currentDragging) => {
+      if (currentDragging !== null && currentDragging !== targetItem) {
+        setOrder((prevOrder) => {
+          const oldIdx = prevOrder.indexOf(currentDragging);
+          const newIdx = prevOrder.indexOf(targetItem);
+          if (oldIdx === -1 || newIdx === -1) return prevOrder;
+
+          const newOrder = [...prevOrder];
+          newOrder.splice(oldIdx, 1);
+          newOrder.splice(newIdx, 0, currentDragging);
+          return newOrder;
+        });
+      }
+      return currentDragging;
+    });
+  }, []);
+
+  const handleDragOver = useCallback((e) => {
+    e.preventDefault();
+    if (e.dataTransfer) {
+      e.dataTransfer.dropEffect = 'move';
+    }
+  }, []);
+
+  const handleDrop = useCallback((e) => {
+    e.preventDefault();
+    handleDragEnd();
+  }, [handleDragEnd]);
+
+  const getDragProps = useCallback((id) => ({
     draggable: true,
-    // react-doctor-disable-next-line react-doctor/no-impure-state-updater
     onDragStart: (e) => handleDragStart(e, id),
-    // react-doctor-disable-next-line react-doctor/no-impure-state-updater
     onDragEnter: (e) => handleDragEnter(e, id),
-    onTouchEnd: handleDragEnd
-  });
+    onDragOver: handleDragOver,
+    onDrop: handleDrop,
+    onDragEnd: handleDragEnd,
+    onTouchEnd: handleDragEnd,
+  }), [handleDragStart, handleDragEnter, handleDragOver, handleDrop, handleDragEnd]);
 
-  return { order, getDragProps, draggingItem };
+  return { order, getDragProps, draggingItem, setOrder };
 }

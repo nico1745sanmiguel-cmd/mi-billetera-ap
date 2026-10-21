@@ -70,12 +70,18 @@ const handleCacheRefresh = async () => {
 const getInitialOrder = () => {
     const saved = getCache(CACHE_KEYS.WIDGET_ORDER, null);
     const legacy = localStorage.getItem('widget_order');
-    const raw = saved || (legacy ? JSON.parse(legacy) : null);
-    if (raw) {
+    let raw = saved;
+    if (!raw && legacy) {
+        try { raw = JSON.parse(legacy); } catch (e) { console.error("Error leyendo legacy widget_order", e); }
+    }
+    if (Array.isArray(raw) && raw.length > 0) {
         try {
-            const hasAll = DEFAULT_WIDGET_ORDER.every(k => raw.includes(k));
-            if (hasAll && raw.length === DEFAULT_WIDGET_ORDER.length) return raw;
-        } catch (e) { console.error("Error leyendo orden", e); }
+            const validKeys = raw.filter(k => DEFAULT_WIDGET_ORDER.includes(k));
+            const unique = [...new Set(validKeys)];
+            const missing = DEFAULT_WIDGET_ORDER.filter(k => !unique.includes(k));
+            const merged = [...unique, ...missing];
+            if (merged.length === DEFAULT_WIDGET_ORDER.length) return merged;
+        } catch (e) { console.error("Error procesando orden", e); }
     }
     return DEFAULT_WIDGET_ORDER;
 };
@@ -149,9 +155,12 @@ const Home = memo(({ onLogout, notifications = EMPTY_ARRAY, onCardClick }) => {
     }, [targetMonthKey, householdId, showToast]);
 
 
-    const { order, getDragProps, draggingItem } = useDragReorder(getInitialOrder());
+    const { order, getDragProps, draggingItem, setOrder } = useDragReorder(getInitialOrder());
     useEffect(() => {
         setCache(CACHE_KEYS.WIDGET_ORDER, order);
+        try {
+            localStorage.setItem('widget_order', JSON.stringify(order));
+        } catch (e) { console.error('Error guardando widget_order en localStorage:', e); }
         if (user?.uid) {
             savePreferences(user.uid, { widget_order: order });
         }
