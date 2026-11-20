@@ -5,7 +5,7 @@
  */
 
 import { db } from '../firebase';
-import { collection, addDoc, deleteDoc, doc, updateDoc } from 'firebase/firestore';
+import { collection, addDoc, deleteDoc, doc, updateDoc, writeBatch } from 'firebase/firestore';
 import { COLLECTIONS } from '../config/constants';
 
 const COL = COLLECTIONS.SUPERMARKET;
@@ -59,3 +59,20 @@ export const toggleSuperChecked = (id, checked) =>
  */
 export const updateSuperFields = (id, fields) =>
     updateDoc(doc(db, COL, id), fields);
+
+/**
+ * Elimina una lista de ítems del supermercado en lote atómico.
+ * @param {string[]} itemIds
+ */
+export const clearSupermarketItems = async (itemIds) => {
+    if (!itemIds || itemIds.length === 0) return;
+    const batchSize = 450;
+    for (let i = 0; i < itemIds.length; i += batchSize) {
+        const chunk = itemIds.slice(i, i + batchSize);
+        const batch = writeBatch(db);
+        chunk.forEach(id => {
+            batch.delete(doc(db, COL, id));
+        });
+        await batch.commit();
+    }
+};

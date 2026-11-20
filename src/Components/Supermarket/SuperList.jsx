@@ -12,6 +12,8 @@ import {
     updateSuperPrice,
     updateSuperQuantity,
     toggleSuperChecked,
+    updateSuperFields,
+    clearSupermarketItems,
 } from '../../repositories/supermarketRepository';
 import { useUI } from '../../context/UIContext';
 import { analyzePurchaseFrequency } from '../../utils/purchasePrediction';
@@ -40,6 +42,8 @@ export default function SuperList() {
     // CONFIRM DIALOG
     const [itemToDelete, setItemToDelete] = useState(null);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [isClearDialogOpen, setIsClearDialogOpen] = useState(false);
+    const [isClearingList, setIsClearingList] = useState(false);
 
     // TOAST STATE 🍞
     const [toast, setToast] = useState(null);
@@ -70,6 +74,22 @@ export default function SuperList() {
             showToast('Error al eliminar producto');
         } finally {
             setIsDeleting(false);
+        }
+    };
+
+    const handleClearList = async () => {
+        if (isClearingList || monthlyList.length === 0) return;
+        setIsClearingList(true);
+        try {
+            const itemIds = monthlyList.map(item => item.id);
+            await clearSupermarketItems(itemIds);
+            showToast('Lista del mes vaciada correctamente');
+            setIsClearDialogOpen(false);
+        } catch (err) {
+            console.error('Error al vaciar la lista:', err);
+            showToast('Error al vaciar la lista');
+        } finally {
+            setIsClearingList(false);
         }
     };
 
@@ -228,7 +248,8 @@ export default function SuperList() {
         const real = monthlyList.reduce((acc, i) => i.checked ? acc + ((Number(i.price) || 0) * (Number(i.quantity) || 1)) : acc, 0);
         const count = monthlyList.length;
         const checkedCount = monthlyList.filter(i => i.checked).length;
-        return { estimated, real, count, checkedCount };
+        const pendingCount = count - checkedCount;
+        return { estimated, real, count, checkedCount, pendingCount };
     }, [monthlyList]);
 
     // 5. HISTORIAL DE PRECIOS 📉
@@ -247,7 +268,14 @@ export default function SuperList() {
     // --- HANDLERS ---
     const handleToggle = async (item) => {
         try {
-            await toggleSuperChecked(item.id, !item.checked);
+            const newChecked = !item.checked;
+            const updates = { checked: newChecked };
+            // Si el ítem viene de un mes anterior o no tiene mes asignado,
+            // al tildarlo lo asociamos al mes en curso para que no desaparezca
+            if (item.month !== currentMonthKey) {
+                updates.month = currentMonthKey;
+            }
+            await updateSuperFields(item.id, updates);
         } catch (err) {
             console.error('Error al cambiar estado del ítem:', err);
             showToast('Error al marcar producto. Revisá los permisos.');
@@ -257,7 +285,19 @@ export default function SuperList() {
     const handleUpdatePrice = async (item, rawValue) => {
         try {
             const numericValue = Number(parseCurrencyInput(rawValue)) || 0;
-            await updateSuperPrice(item.id, numericValue);
+            const updates = { price: numericValue };
+
+            // Si el ítem viene de un mes anterior o no tiene mes, lo asignamos a este mes
+            if (item.month !== currentMonthKey) {
+                updates.month = currentMonthKey;
+            }
+
+            // Si se ingresa un precio > 0 y no estaba tildado, se marca automáticamente como comprado
+            if (numericValue > 0 && !item.checked) {
+                updates.checked = true;
+            }
+
+            await updateSuperFields(item.id, updates);
         } catch (err) {
             console.error('Error al actualizar precio:', err);
             showToast('Error al guardar precio');
@@ -315,15 +355,7 @@ export default function SuperList() {
 
     const handlePriceBlur = async (item) => {
         if (!editingItemRef.current || editingItemRef.current.id !== item.id) return;
-        const { initialPrice } = editingItemRef.current;
-        const currentPrice = item.price;
         setFocusedItemId(null);
-
-        if (currentPrice !== initialPrice) {
-            showToast('Precio actualizado', async () => {
-                await updateSuperPrice(item.id, initialPrice);
-            });
-        }
         editingItemRef.current = null;
     };
 
@@ -331,16 +363,28 @@ export default function SuperList() {
         const oldQty = item.quantity;
         const newQty = Math.max(1, item.quantity + delta);
         if (oldQty === newQty) return;
-        await updateSuperQuantity(item.id, newQty);
+        const updates = { quantity: newQty };
+        if (item.month !== currentMonthKey) {
+            updates.month = currentMonthKey;
+        }
+        await updateSuperFields(item.id, updates);
         showToast('Cantidad modificada', async () => {
-            await updateSuperQuantity(item.id, oldQty);
+            const rollback = { quantity: oldQty };
+            if (item.month !== currentMonthKey) {
+                rollback.month = item.month;
+            }
+            await updateSuperFields(item.id, rollback);
         });
     };
 
     const handleSetQuantity = async (item, newQtyVal) => {
         const newQty = Math.max(1, parseInt(newQtyVal, 10) || 1);
         if (item.quantity === newQty) return;
-        await updateSuperQuantity(item.id, newQty);
+        const updates = { quantity: newQty };
+        if (item.month !== currentMonthKey) {
+            updates.month = currentMonthKey;
+        }
+        await updateSuperFields(item.id, updates);
     };
 
     const handleExportToAI = () => {
@@ -379,6 +423,19 @@ export default function SuperList() {
                 cancelText="Cancelar"
                 isDanger={true}
                 isLoading={isDeleting}
+            />
+
+            <ConfirmDialog 
+                isOpen={isClearDialogOpen} 
+                onClose={() => !isClearingList && setIsClearDialogOpen(false)} 
+                onConfirm={handleClearList} 
+                title="¿Vaciar lista de este mes?" 
+                message={`Se eliminarán todos los ${monthlyList.length} productos de ${(currentDate || new Date()).toLocaleString('es-AR', { month: 'long' })}. Esta acción no se puede deshacer.`} 
+                confirmText={isClearingList ? 'Vaciando...' : 'Vaciar lista'}
+                cancelText="Cancelar"
+                isDanger={true}
+                isLoading={isClearingList}
+                confirmWord="BORRAR"
             />
 
             {/* 1. TOAST GLOBAL (Portal-like, arriba de todo) */}
@@ -426,13 +483,18 @@ export default function SuperList() {
                                 <Copy size={16} />
                             </button>
                         </div>
-                        <div className="text-right">
-                            <p className={`text-[10px] uppercase font-bold ${isGlass ? 'text-white/50' : 'text-gray-400'}`}>
-                                {totals.checkedCount > 0 ? 'En Carrito' : 'Presupuesto'}
+                        <div className="text-right flex flex-col items-end">
+                            <p className={`text-[10px] uppercase font-bold tracking-wider ${isGlass ? 'text-white/60' : 'text-gray-500'}`}>
+                                {totals.checkedCount > 0 ? 'En Carrito' : 'Total Estimado'}
                             </p>
-                            <p className={`text-2xl font-bold ${totals.checkedCount > 0 ? (isGlass ? 'text-white' : 'text-gray-900') : (isGlass ? 'text-white/40' : 'text-gray-400')}`}>
+                            <p className={`text-2xl font-bold leading-tight ${totals.checkedCount > 0 ? (isGlass ? 'text-white' : 'text-gray-900') : (isGlass ? 'text-white/70' : 'text-gray-600')}`}>
                                 {formatMoney(totals.checkedCount > 0 ? totals.real : totals.estimated)}
                             </p>
+                            {totals.checkedCount > 0 && totals.pendingCount > 0 && totals.estimated > totals.real && (
+                                <p className={`text-[10px] font-semibold tracking-tight ${isGlass ? 'text-white/50' : 'text-gray-400'}`}>
+                                    Total lista: {formatMoney(totals.estimated)}
+                                </p>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -440,7 +502,10 @@ export default function SuperList() {
                 {/* BARRA DE PROGRESO */}
                 <div className={`p-1 rounded-full shadow-inner border flex items-center gap-2 ${isGlass ? 'bg-black/20 border-white/5' : 'bg-white border-gray-100'}`}>
                     <div className={`flex-1 h-1.5 rounded-full overflow-hidden relative ${isGlass ? 'bg-white/10' : 'bg-gray-100'}`}>
-                        <div className="h-full bg-purple-500 transition-all duration-500" style={{ width: `${totals.estimated > 0 ? (totals.real / totals.estimated) * 100 : 0}%` }}></div>
+                        <div 
+                            className="h-full bg-purple-500 transition-all duration-500" 
+                            style={{ width: `${totals.count > 0 ? (totals.checkedCount / totals.count) * 100 : 0}%` }}
+                        />
                     </div>
                     <span className={`text-[9px] font-bold min-w-[50px] text-right ${isGlass ? 'text-white/50' : 'text-gray-400'}`}>{totals.checkedCount}/{totals.count}</span>
                 </div>
@@ -524,6 +589,28 @@ export default function SuperList() {
                             isAddingSuggestions={isAddingSuggestions}
                             isGlass={isGlass}
                         />
+                    )}
+
+                    {/* BOTÓN VACIAR LISTA DEL MES */}
+                    {!loading && monthlyList.length > 0 && (
+                        <div className="pt-8 pb-4 flex flex-col items-center justify-center">
+                            <button
+                                aria-label="Vaciar toda la lista del mes"
+                                type="button"
+                                onClick={() => setIsClearDialogOpen(true)}
+                                className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl text-xs font-bold transition-all active:scale-95 border ${
+                                    isGlass 
+                                        ? 'text-red-300 hover:text-white bg-red-500/15 hover:bg-red-500/25 border-red-500/30 shadow-sm' 
+                                        : 'text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 border-red-200 shadow-sm'
+                                }`}
+                            >
+                                <Trash2 size={15} />
+                                <span>Vaciar lista de este mes</span>
+                            </button>
+                            <p className={`text-[11px] mt-1.5 font-medium ${isGlass ? 'text-white/40' : 'text-gray-400'}`}>
+                                Elimina todos los productos de este mes para empezar de nuevo
+                            </p>
+                        </div>
                     )}
                 </div>
 

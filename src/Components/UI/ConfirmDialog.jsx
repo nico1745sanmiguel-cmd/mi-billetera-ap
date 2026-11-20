@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { AlertTriangle } from 'lucide-react';
 
@@ -12,9 +12,21 @@ export default function ConfirmDialog({
     confirmText = 'Confirmar',
     cancelText = 'Cancelar',
     isDanger = false,
-    isLoading = false
+    isLoading = false,
+    confirmWord = null
 }) {
     const cancelBtnRef = useRef(null);
+    const wordInputRef = useRef(null);
+    const [inputWord, setInputWord] = useState('');
+
+    const isWordConfirmed = !confirmWord || inputWord.trim().toUpperCase() === confirmWord.trim().toUpperCase();
+
+    // Resetear palabra al abrir/cerrar
+    useEffect(() => {
+        if (!isOpen) {
+            setInputWord('');
+        }
+    }, [isOpen]);
 
     const handleClose = useCallback(() => {
         if (isLoading) return;
@@ -38,19 +50,23 @@ export default function ConfirmDialog({
         window.addEventListener('keydown', handleKeyDown);
         // Pequeño timeout para asegurar montaje en el DOM antes del foco
         const timer = setTimeout(() => {
-            cancelBtnRef.current?.focus();
+            if (confirmWord && wordInputRef.current) {
+                wordInputRef.current.focus();
+            } else {
+                cancelBtnRef.current?.focus();
+            }
         }, 50);
 
         return () => {
             window.removeEventListener('keydown', handleKeyDown);
             clearTimeout(timer);
         };
-    }, [isOpen, isLoading, handleClose]);
+    }, [isOpen, isLoading, handleClose, confirmWord]);
 
     if (!isOpen) return null;
 
     const handleConfirmClick = async () => {
-        if (isLoading) return;
+        if (isLoading || !isWordConfirmed) return;
         if (onConfirm) {
             const result = onConfirm();
             if (result && typeof result.then === 'function') {
@@ -63,6 +79,13 @@ export default function ConfirmDialog({
         }
         if (!isLoading) {
             handleClose();
+        }
+    };
+
+    const handleInputKeyDown = (e) => {
+        if (e.key === 'Enter' && isWordConfirmed) {
+            e.preventDefault();
+            handleConfirmClick();
         }
     };
 
@@ -97,6 +120,25 @@ export default function ConfirmDialog({
                     </div>
                 </div>
 
+                {confirmWord && (
+                    <div className="mb-6 space-y-2">
+                        <label htmlFor="confirm-word-input" className="block text-xs font-semibold text-gray-600 dark:text-gray-300">
+                            Escribí <span className="font-bold text-red-500 dark:text-red-400 uppercase tracking-wider">{confirmWord}</span> para confirmar:
+                        </label>
+                        <input
+                            ref={wordInputRef}
+                            id="confirm-word-input"
+                            type="text"
+                            autoComplete="off"
+                            value={inputWord}
+                            onChange={(e) => setInputWord(e.target.value)}
+                            onKeyDown={handleInputKeyDown}
+                            placeholder={`Escribí ${confirmWord}`}
+                            className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-white/10 bg-gray-50 dark:bg-white/5 text-gray-900 dark:text-white text-sm font-bold tracking-wider placeholder:text-gray-400 outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition-all uppercase"
+                        />
+                    </div>
+                )}
+
                 <div className="flex gap-3">
                     <button
                         ref={cancelBtnRef}
@@ -110,11 +152,11 @@ export default function ConfirmDialog({
                     </button>
                     <button
                         type="button"
-                        disabled={isLoading}
+                        disabled={isLoading || !isWordConfirmed}
                         onClick={handleConfirmClick}
                         aria-label={confirmText}
                         className={`flex-1 min-h-[44px] py-3 px-4 rounded-xl font-bold text-sm text-white active:scale-95 transition-all shadow-md focus-visible:outline-none focus-visible:ring-2 flex items-center justify-center gap-2 ${
-                            isLoading ? 'opacity-80 cursor-wait' : ''
+                            isLoading || !isWordConfirmed ? 'opacity-40 cursor-not-allowed' : ''
                         } ${
                             isDanger 
                                 ? 'bg-red-500 hover:bg-red-600 shadow-red-500/25 focus-visible:ring-red-400' 

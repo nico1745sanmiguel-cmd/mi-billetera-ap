@@ -47,7 +47,7 @@ const SuperListItem = ({
     const handlePriceInputBlur = () => {
         isEditingPriceRef.current = false;
         const numeric = Number(localPrice.replace(/\D/g, '')) || 0;
-        if (numeric !== (item.price || 0)) {
+        if (numeric !== (item.price || 0) || (numeric > 0 && !item.checked)) {
             handleUpdatePrice(item, String(numeric));
         }
         handlePriceBlur(item);
